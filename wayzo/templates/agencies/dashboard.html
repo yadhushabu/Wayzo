@@ -1,0 +1,9 @@
+<h2>{{ agency.agency_name }} Dashboard</h2>
+
+<p><b>License:</b> {{ agency.license_number }}</p>
+<p><b>City:</b> {{ agency.city }}</p>
+<p><b>Mobile:</b> {{ agency.mobile }}</p>
+<p><b>Address:</b> {{ agency.address }}</p>
+
+<a href="{{ agency.license_document.url }}">View License</a>
+<a href="{% url'logout' %}">Logout</a>

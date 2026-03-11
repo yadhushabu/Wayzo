@@ -1,0 +1,204 @@
+<h2>{{ restaurant.restaurant_name }}</h2>
+
+{% if user.profile_picture %}
+<img src="{{ user.profile_picture.url }}" width="120" style="border-radius:50%;">
+{% endif %}
+
+{% if restaurant.city or restaurant.state %}
+<p><b>{{ restaurant.city }}, {{ restaurant.state }}</b></p>
+{% endif %}
+
+{% if restaurant.mobile %}
+<p><b>Mobile:</b> {{ restaurant.mobile }}</p>
+{% endif %}
+
+<hr>
+
+<h3>Quick Actions</h3>
+
+<div style="display:flex;gap:15px">
+
+    <a href="{% url 'edit_restaurantprofile' %}">
+        <button>Edit Profile</button>
+    </a>
+
+    <a href="{% url 'manage_gallery' %}">
+        <button>Manage Gallery</button>
+    </a>
+
+    {% if restaurant.menu_file %}
+    <a href="{{ restaurant.menu_file.url }}">
+        <button>Menu</button>
+    </a>
+{% endif %}
+
+</div>
+
+<hr>
+
+{% if restaurant.description %}
+<h3>Description</h3>
+<p>{{ restaurant.description }}</p>
+{% endif %}
+
+
+{% if restaurant.property_type %}
+<h3>Property Type</h3>
+<p>{{ restaurant.property_type }}</p>
+{% endif %}
+
+
+{% if restaurant.opening_time or restaurant.closing_time %}
+<h3>Opening Hours</h3>
+<p>{{ restaurant.opening_time }} - {{ restaurant.closing_time }}</p>
+{% endif %}
+
+
+{% if restaurant.checkin_time or restaurant.checkout_time %}
+<h3>Check-in / Check-out</h3>
+<p>{{ restaurant.checkin_time }} / {{ restaurant.checkout_time }}</p>
+{% endif %}
+
+
+{% if restaurant.cuisine_type.all %}
+<h3>Cuisine</h3>
+
+<ul>
+{% for cuisine in restaurant.cuisine_type.all %}
+<li>{{ cuisine.name }}</li>
+{% endfor %}
+</ul>
+
+{% endif %}
+
+
+{% if restaurant.food_type %}
+<h3>Food Type</h3>
+<p>{{ restaurant.food_type }}</p>
+{% endif %}
+
+
+{% if restaurant.menu_file %}
+<h3>Menu</h3>
+<p><a href="{{ restaurant.menu_file.url }}">View Menu</a></p>
+{% endif %}
+
+
+{% if restaurant.total_rooms or restaurant.room_type or restaurant.price_range %}
+<h3>Accommodation</h3>
+
+{% if restaurant.total_rooms %}
+<p>Total Rooms: {{ restaurant.total_rooms }}</p>
+{% endif %}
+
+{% if restaurant.room_type %}
+<p>Room Type: {{ restaurant.room_type }}</p>
+{% endif %}
+
+{% if restaurant.price_range %}
+<p>Price Range: {{ restaurant.price_range }}</p>
+{% endif %}
+
+{% endif %}
+
+
+{% if restaurant.wifi or restaurant.parking or restaurant.air_conditioning or restaurant.swimming_pool or restaurant.live_music or restaurant.pet_friendly or restaurant.room_service or restaurant.breakfast_available or restaurant.restaurant_available or restaurant.gym or restaurant.taxi_service %}
+
+<h3>Amenities</h3>
+
+<ul>
+
+{% if restaurant.wifi %}
+<li>Wifi</li>
+{% endif %}
+
+{% if restaurant.parking %}
+<li>Parking</li>
+{% endif %}
+
+{% if restaurant.air_conditioning %}
+<li>Air Conditioning</li>
+{% endif %}
+
+{% if restaurant.swimming_pool %}
+<li>Swimming Pool</li>
+{% endif %}
+
+{% if restaurant.live_music %}
+<li>Live Music</li>
+{% endif %}
+
+{% if restaurant.pet_friendly %}
+<li>Pet Friendly</li>
+{% endif %}
+
+{% if restaurant.room_service %}
+<li>Room Service</li>
+{% endif %}
+
+{% if restaurant.breakfast_available %}
+<li>Breakfast Available</li>
+{% endif %}
+
+{% if restaurant.restaurant_available %}
+<li>Restaurant Available</li>
+{% endif %}
+
+{% if restaurant.gym %}
+<li>Gym</li>
+{% endif %}
+
+{% if restaurant.taxi_service %}
+<li>Taxi Service</li>
+{% endif %}
+
+</ul>
+
+{% endif %}
+
+
+{% if restaurant.website or restaurant.instagram %}
+<h3>Links</h3>
+
+{% if restaurant.website %}
+<p>Website: <a href="{{ restaurant.website }}">{{ restaurant.website }}</a></p>
+{% endif %}
+
+{% if restaurant.instagram %}
+<p>Instagram: {{ restaurant.instagram }}</p>
+{% endif %}
+
+{% endif %}
+
+
+{% if images %}
+<hr>
+
+<h3>Gallery Preview</h3>
+
+<div style="display:grid;grid-template-columns:repeat(auto-fill,200px);gap:15px">
+
+{% for img in images %}
+
+<div>
+
+<img src="{{ img.image.url }}"
+     width="200"
+     style="border-radius:8px">
+
+<p style="text-align:center">
+{{ img.get_section_display }}
+</p>
+
+</div>
+
+{% endfor %}
+
+</div>
+
+{% endif %}
+
+
+<hr>
+
+<a href="{% url 'logout' %}">Logout</a>

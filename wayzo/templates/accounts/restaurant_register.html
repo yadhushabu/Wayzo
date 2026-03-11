@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Restaurant Registration</title>
+</head>
+<body>
+    <h3>Restaurant Registration</h3>
+
+    <form method="POST" enctype="multipart/form-data">
+        {% csrf_token %}
+        {{ form.non_field_errors }}
+
+    {% for field in form %}
+        <div>
+            <label>{{ field.label }}</label><br>
+            {{ field }}
+            <div style="color:red">
+                {{ field.errors }}
+            </div>
+        </div>
+        <br>
+    {% endfor %}
+    
+
+    <button type="submit">Register Traveller</button>
+    </form>
+
+    <a href="{% url 'index' %}">Back to home</a>
+</body>
+</html>

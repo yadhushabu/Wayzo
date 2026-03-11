@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Agencies Registration</title>
+</head>
+<body>
+    <h3>Agencies Registration</h3>
+
+    <form method="POST" enctype="multipart/form-data">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Register Agencies</button>
+    </form>
+
+    <a href="{% url 'index' %}">Back to home</a>
+</body>
+</html>

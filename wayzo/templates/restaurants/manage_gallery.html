@@ -1,0 +1,33 @@
+<h2>Manage Gallery</h2>
+
+<form method="POST" enctype="multipart/form-data">
+
+{% csrf_token %}
+
+<select name="section">
+
+<option value="rooms">Rooms</option>
+<option value="entrance">Entrance</option>
+<option value="cafeteria">Cafeteria</option>
+<option value="parking">Parking</option>
+<option value="activities">Activities</option>
+
+</select>
+
+<input type="file" name="image" multiple>
+
+<button type="submit">Upload</button>
+
+</form>
+
+<hr>
+
+<h3>Current Images</h3>
+
+{% for img in images %}
+
+<img src="{{ img.image.url }}" width="200">
+
+{% endfor %}
+
+<a href="{% url 'restaurant_dashboard' %}">Back to Dashboard</a>

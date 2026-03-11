@@ -1,0 +1,25 @@
+<h2>Traveller Dashboard</h2>
+
+<h3>Restaurants</h3>
+
+{% for r in restaurants %}
+<div>
+    <h4>{{ r.restaurant_name }}</h4>
+    <p>{{ r.city }}</p>
+    <p>{{ r.mobile }}</p>
+</div>
+{% endfor %}
+
+<hr>
+
+<h3>Agencies</h3>
+
+{% for a in agencies %}
+<div>
+    <h4>{{ a.agency_name }}</h4>
+    <p>{{ a.city }}</p>
+    <p>{{ a.mobile }}</p>
+</div>
+{% endfor %}
+
+<a href="{% url 'logout' %}">Logout</a>
