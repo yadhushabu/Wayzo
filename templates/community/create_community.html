@@ -1,0 +1,21 @@
+<h2>Create Community</h2>
+
+<form method="POST" enctype="multipart/form-data">
+    {% csrf_token %}
+    {{ form.as_p }}
+    {{ form.is_private }}
+
+<div id="approval-field">
+    {{ form.join_approval_required }}
+</div>
+
+<script>
+document.getElementById("id_is_private").addEventListener("change", function(){
+    document.getElementById("approval-field").style.display = this.checked ? "block" : "none";
+});
+</script>
+    <button type="submit">Create</button>
+</form>
+<hr>
+<a href="{% url 'community_home' %}">Back to Community</a>
+<a href="{% url 'user_profile' %}">Back to Dashboard</a>

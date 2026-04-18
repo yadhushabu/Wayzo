@@ -1,0 +1,12 @@
+<h2>My Travel Plans</h2>
+
+{% for plan in plans %}
+  <div>
+    <h3>{{ plan.destination.name }}</h3>
+    <p>{{ plan.number_of_days }} days</p>
+
+    <a href="{% url 'generate_itinerary' plan.destination.id %}">
+      Generate Itinerary
+    </a>
+  </div>
+{% endfor %}

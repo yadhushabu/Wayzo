@@ -1,0 +1,356 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>My Bookings</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f5f7fb;
+            margin: 0;
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: 40px auto;
+            padding: 20px;
+        }
+
+        h2 {
+            margin-bottom: 20px;
+        }
+
+        .booking-card {
+            background: #fff;
+            border-radius: 12px;
+            display: flex;
+            gap: 20px;
+            padding: 15px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            align-items: center;
+        }
+
+        .booking-img {
+            width: 180px;
+            height: 120px;
+            border-radius: 10px;
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+
+        .booking-img img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .booking-details {
+            flex: 1;
+        }
+
+        .booking-details h3 {
+            margin: 0 0 8px;
+        }
+
+        .booking-meta {
+            font-size: 14px;
+            color: #555;
+            margin-bottom: 6px;
+        }
+
+        .status {
+            font-weight: bold;
+        }
+
+        .pending { color: orange; }
+        .confirmed { color: green; }
+        .cancelled { color: red; }
+
+        .btn-view {
+            padding: 8px 14px;
+            border-radius: 8px;
+            background: #4f46e5;
+            color: #fff;
+            text-decoration: none;
+            font-size: 14px;
+        }
+
+        .btn-view:hover {
+            background: #3730a3;
+        }
+
+        .btn-cancel {
+            margin-top: 8px;
+            display: inline-block;
+            font-size: 13px;
+            color: red;
+            text-decoration: none;
+        }
+
+        .section {
+            margin-bottom: 40px;
+        }
+
+        .no-bookings {
+            text-align: center;
+            margin-top: 40px;
+            color: #777;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+
+    <h2>🧳 My Bookings</h2>
+
+    <!-- ================= PACKAGE BOOKINGS ================= -->
+<div class="section">
+    <h2>📦 Package Bookings</h2>
+
+    {% if package_bookings %}
+        {% for booking in package_bookings %}
+            <div class="booking-card">
+
+                <!-- IMAGE -->
+                <div class="booking-img">
+                    {% if booking.package.images.all %}
+                        <img src="{{ booking.package.images.all.0.image.url }}">
+                    {% else %}
+                        <img src="{% static 'images/default.jpg' %}">
+                    {% endif %}
+                </div>
+
+                <!-- DETAILS -->
+                <div class="booking-details">
+                    <h3>{{ booking.package.title }}</h3>
+
+                    <div class="booking-meta">👤 Travellers: {{ booking.travellers_count }}</div>
+                    <div class="booking-meta">📅 Travel Date: {{ booking.travel_date }}</div>
+
+                    <div class="booking-meta">💰 Total: ₹{{ booking.total_amount }}</div>
+                    <div class="booking-meta">💳 Advance: ₹{{ booking.advance_amount }}</div>
+                    <div class="booking-meta">💰 Remaining: ₹{{ booking.remaining_amount }}</div>
+
+
+                    <div class="booking-meta">
+    Payment:
+    {% if booking.payment_status == "pending" %}
+    💳 Payment: Not Paid
+{% elif booking.payment_status == "partial" %}
+    💳 Payment: Advance Paid (30%)
+{% elif booking.payment_status == "paid" %}
+    💳 Payment: Fully Paid
+{% endif %}
+</div>
+<div style="margin-top:8px;">
+    <div style="background:#e5e7eb;border-radius:10px;height:8px;">
+        <div style="
+            width: {{ booking.payment_progress }}%;
+            background:#4f46e5;
+            height:8px;
+            border-radius:10px;
+        "></div>
+    </div>
+    <small>{{ booking.payment_progress }}% paid</small>
+</div>
+
+
+                    <!-- STATUS -->
+                    <div class="booking-meta">
+                        Status:
+                        {% if booking.status == "pending" %}
+                            <span class="status pending">Pending</span>
+                        {% elif booking.status == "confirmed" %}
+                            <span class="status confirmed">Confirmed</span>
+                        {% elif booking.status == "cancelled" %}
+                            <span class="status cancelled">Cancelled</span>
+                        {% else %}
+                            <span>Unknown</span>
+                        {% endif %}
+                    </div>
+
+                    <!-- PAYMENT BUTTONS -->
+                     <div class="booking-meta">
+    💳 Advance: ₹<span id="advance-{{ booking.id }}">{{ booking.advance_amount }}</span>
+</div>
+
+<div class="booking-meta">
+    💰 Remaining: ₹<span id="remaining-{{ booking.id }}">{{ booking.remaining_amount }}</span>
+</div>
+                    {% if booking.status == "pending" and booking.payment_status == "pending" %}
+                        <button onclick="openPaymentModal({{ booking.id }}, 'advance')">
+                            Pay Advance
+                        </button>
+                    {% endif %}
+
+                    {% if booking.status == "confirmed" and booking.payment_status == "partial" %}
+    <a href="{% url 'travellers:pay_remaining' booking.id %}">
+        Pay Remaining
+    </a>
+{% endif %}
+
+
+                    <!-- CANCEL -->
+                    {% if booking.status == "pending" or booking.status == "confirmed" %}
+                        <a href="{% url 'travellers:cancel_booking' booking.id %}" class="btn-cancel"
+                           onclick="return confirm('Are you sure you want to cancel?')">
+                            Cancel Booking
+                        </a>
+                    {% endif %}
+
+                    <!-- REFUND INFO -->
+                    {% if booking.status == "cancelled" %}
+                        <div class="booking-meta">
+                            ❌ Cancelled by: {{ booking.cancelled_by }}
+                        </div>
+                        <div class="booking-meta">
+                            💸 Refund: ₹{{ booking.refund_amount }} ({{ booking.refund_percentage }}%)
+                        </div>
+                    {% endif %}
+                </div>
+
+                <!-- ACTION -->
+                <div>
+                    <a href="{% url 'travellers:package_detail' booking.package.id %}" class="btn-view">
+                        View
+                    </a>
+
+                    <a href="{% url 'travellers:download_invoice' booking.id %}" class="btn-view">
+                        Download Invoice
+                    </a>
+                </div>
+
+            </div>
+        {% endfor %}
+
+    {% else %}
+        <div class="no-bookings">
+            <p>No package bookings yet 😕</p>
+        </div>
+    {% endif %}
+</div>
+
+
+    <!-- ================= PROPERTY BOOKINGS ================= -->
+    <div class="section">
+        <h2>🏨 Property Bookings</h2>
+
+        {% if property_bookings %}
+            {% for booking in property_bookings %}
+                <div class="booking-card">
+
+                    <!-- Dummy Image -->
+                    <div class="booking-img">
+                        <img src="{% static 'images/default.jpg' %}">
+                    </div>
+
+                    <!-- Details -->
+                    <div class="booking-details">
+                        <h3>{{ booking.property.name }}</h3>
+
+                        <div class="booking-meta">📌 Type: {{ booking.booking_type }}</div>
+                        <div class="booking-meta">
+                            Status:
+                            {% if booking.status == "pending" %}
+                                <span class="status pending">Pending</span>
+                            {% elif booking.status == "confirmed" %}
+                                <span class="status confirmed">Confirmed</span>
+                            {% else %}
+                                <span class="status cancelled">Cancelled</span>
+                            {% endif %}
+                        </div>
+
+                        {% if booking.booking_type == "table" %}
+                            <div class="booking-meta">📅 Date: {{ booking.booking_date }}</div>
+                            <div class="booking-meta">⏰ Time: {{ booking.time }}</div>
+                            <div class="booking-meta">👥 Guests: {{ booking.guests }}</div>
+                        {% else %}
+                            <div class="booking-meta">📅 Check-in: {{ booking.check_in }}</div>
+                            <div class="booking-meta">📅 Check-out: {{ booking.check_out }}</div>
+                            <div class="booking-meta">🛏 Rooms: {{ booking.rooms }}</div>
+                            <div class="booking-meta">👥 Guests: {{ booking.guests }}</div>
+                        {% endif %}
+                    </div>
+
+                </div>
+            {% endfor %}
+        {% else %}
+            <div class="no-bookings">
+                <p>No property bookings yet 😕</p>
+            </div>
+        {% endif %}
+    </div>
+
+
+    <!-- Messages -->
+    {% if messages %}
+        {% for message in messages %}
+            <p style="color:green;">{{ message }}</p>
+        {% endfor %}
+    {% endif %}
+
+</div>
+<div id="paymentModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5);">
+    <div style="background:#fff; width:400px; margin:100px auto; padding:20px; border-radius:10px;">
+        <h3>Select Payment Method</h3>
+
+        <p id="paymentAmount"></p>
+
+        <button onclick="pay('card')">💳 Card</button><br><br>
+        <button onclick="pay('upi')">📱 UPI</button><br><br>
+        <button onclick="pay('netbanking')">🏦 Net Banking</button><br><br>
+
+        <button onclick="closeModal()">Cancel</button>
+    </div>
+</div>
+<script>
+let currentBooking = null;
+
+function openPaymentModal(id, status) {
+    currentBooking = id;
+
+    let amountText = status === "pending" 
+        ? "Pay Advance (30%)" 
+        : "Pay Remaining Amount";
+
+    document.getElementById("paymentAmount").innerText = amountText;
+
+    document.getElementById("paymentModal").style.display = "block";
+}
+
+function closeModal() {
+    document.getElementById("paymentModal").style.display = "none";
+}
+
+function pay(method) {
+    alert("Demo Payment via " + method);
+
+    // redirect after fake payment
+    window.location.href = "/traveller/pay-advance/" + currentBooking + "/";
+}
+</script>
+<script>
+function openPaymentModal(bookingId, paymentType) {
+    let amount = 0;
+
+    if (paymentType === 'advance') {
+        amount = document.getElementById(`advance-${bookingId}`).innerText;
+    } else {
+        amount = document.getElementById(`remaining-${bookingId}`).innerText;
+    }
+
+    const confirmPay = confirm(
+        `Proceed to pay ${paymentType.toUpperCase()} amount?\nAmount: ₹${amount}`
+    );
+
+    if (confirmPay) {
+        window.location.href = `/traveller/pay/${bookingId}/${paymentType}/`;
+    }
+}
+</script>
+</body>
+</html>

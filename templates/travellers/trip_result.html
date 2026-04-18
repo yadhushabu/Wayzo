@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{{ trip.destination }} Itinerary</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+        .day { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; border-radius: 15px; margin: 20px 0; }
+        .time-slot { background: rgba(255,255,255,0.1); padding: 15px; border-radius: 10px; margin: 10px 0; }
+        table { width: 100%; border-collapse: collapse; margin: 10px 0; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid rgba(255,255,255,0.2); }
+    </style>
+</head>
+<body>
+    <h1>✈️ {{ trip.destination }} Trip Plan</h1>
+    <p><strong>Dates:</strong> {{ trip.start_date }} → {{ trip.end_date }} ({{ trip.days }} days)</p>
+    
+    <div class="trip-details">
+        <p>👥 {{ trip.adults }} adults, {{ trip.children }} kids | 💰 {{ trip.budget }} budget</p>
+        <p>🍽️ {{ trip.food_type }} | 🏨 {{ trip.stay_type }} | 🚗 {{ trip.transport }}</p>
+    </div>
+    
+    <div class="generated-plan">
+        {{ trip.generated_plan|safe }}
+    </div>
+    
+    <a href="{% url 'trip_regenerate' trip.id %}" class="btn">🔄 Regenerate with AI</a>
+</body>
+</html>

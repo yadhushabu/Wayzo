@@ -1,0 +1,613 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wayzo | Sign In</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --gray-100:     #F8F9FC;
+            --gray-150:     #F1F3F8;
+            --gray-200:     #E9EDF2;
+            --gray-300:     #DCE2EA;
+            --gray-400:     #BEC7D1;
+            --gray-500:     #9AA3AF;
+            --gray-600:     #6E7682;
+            --gray-700:     #4A515C;
+            --gray-800:     #2E343D;
+            --gray-850:     #21262E;
+            --gray-900:     #191E24;
+            --gray-950:     #0F1217;
+            --accent-muted: #5B6E8C;
+            --accent-deep:  #3A4A67;
+            --accent-light: #8A9CBA;
+            --accent-pale:  #EFF2F9;
+            --white:        #FFFFFF;
+            --text-dark:    #1E242C;
+            --text-soft:    #3C4350;
+            --text-light:   #6F7886;
+        }
+
+        html { height: 100%; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            min-height: 100vh;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            overflow-x: hidden;
+            color: var(--text-dark);
+        }
+
+        /* ══ LEFT — full video panel (mirrors hero) ══ */
+        .left-panel {
+            position: relative;
+            overflow: hidden;
+            min-height: 100vh;
+        }
+        .left-video {
+            position: absolute; inset: 0;
+            background: linear-gradient(135deg, #1A1F2A 0%, #2D3543 100%);
+        }
+        .left-video video {
+            width: 100%; height: 100%;
+            object-fit: cover; display: block;
+            filter: brightness(0.62) contrast(1.08) grayscale(0.2);
+        }
+        .left-overlay {
+            position: absolute; inset: 0;
+            background: linear-gradient(to bottom,
+                rgba(15,18,23,0.45) 0%,
+                rgba(15,18,23,0.65) 60%,
+                rgba(15,18,23,0.85) 100%);
+        }
+        .left-content {
+            position: relative; z-index: 2;
+            height: 100%;
+            display: flex; flex-direction: column;
+            justify-content: space-between;
+            padding: 2.5rem;
+        }
+        /* Logo top-left */
+        .left-logo {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.65rem; font-weight: 600; letter-spacing: -0.02em;
+            color: white; text-decoration: none;
+        }
+        /* Hero phrase bottom-left */
+        .left-phrase {
+            padding-bottom: 1rem;
+        }
+        .left-phrase h2 {
+            font-family: 'Playfair Display', serif;
+            font-size: clamp(2rem, 3.5vw, 3.2rem);
+            font-weight: 400; color: white;
+            line-height: 1.15; letter-spacing: -0.01em;
+            margin-bottom: 1rem;
+        }
+        .left-phrase h2 em {
+            font-style: italic;
+            color: rgba(190,199,209,0.85);
+        }
+        .left-phrase p {
+            font-size: 0.92rem; font-weight: 400;
+            color: rgba(255,255,255,0.55);
+            line-height: 1.7; max-width: 340px;
+        }
+        .left-phrase .phrase-divider {
+            width: 40px; height: 1.5px;
+            background: rgba(138,156,186,0.6);
+            margin-bottom: 1rem; border-radius: 2px;
+        }
+        /* Register links teaser at bottom */
+        .left-register {
+            display: flex; gap: 1rem; flex-wrap: wrap;
+            padding-top: 1.5rem;
+            border-top: 1px solid rgba(255,255,255,0.1);
+        }
+        .left-reg-link {
+            font-size: 0.75rem; color: rgba(255,255,255,0.5);
+            text-decoration: none; font-weight: 400;
+            letter-spacing: 0.03em;
+            transition: color 0.2s;
+        }
+        .left-reg-link:hover { color: rgba(255,255,255,0.85); }
+        .left-reg-sep { color: rgba(255,255,255,0.2); font-size: 0.75rem; }
+
+        /* ══ RIGHT — login form panel ══ */
+        .right-panel {
+            background: var(--gray-100);
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            padding: 3rem 2rem;
+            min-height: 100vh;
+            overflow-y: auto;
+        }
+        .form-wrap {
+            width: 100%;
+            max-width: 400px;
+            animation: fadeUp 0.7s cubic-bezier(0.2, 0.9, 0.4, 1.1) both;
+        }
+
+        /* Form header */
+        .form-header {
+            margin-bottom: 2.2rem;
+        }
+        .form-header .eyebrow {
+            font-size: 0.7rem; font-weight: 600; letter-spacing: 0.12em;
+            text-transform: uppercase; color: var(--accent-muted);
+            margin-bottom: 0.5rem; display: block;
+        }
+        .form-header h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: 2.2rem; font-weight: 500;
+            color: var(--gray-900); letter-spacing: -0.01em;
+            line-height: 1.1; margin-bottom: 0.5rem;
+        }
+        .form-header p {
+            font-size: 0.9rem; color: var(--text-light);
+            font-weight: 400; line-height: 1.6;
+        }
+
+        /* Messages */
+        .message-wrap { margin-bottom: 1.5rem; }
+        .message {
+            padding: 0.85rem 1rem;
+            border-radius: 12px;
+            font-size: 0.84rem; font-weight: 500;
+            display: flex; align-items: center; gap: 0.6rem;
+            animation: slideIn 0.3s ease;
+        }
+        .message.error {
+            background: #FEF2F2;
+            border: 1px solid #FCA5A5;
+            color: #991B1B;
+        }
+        .message.success {
+            background: #F0FDF4;
+            border: 1px solid #86EFAC;
+            color: #166534;
+        }
+        .message svg { flex-shrink: 0; width: 16px; height: 16px; }
+
+        /* Form fields */
+        .form-group { margin-bottom: 1.3rem; }
+        .form-group label {
+            display: block;
+            font-size: 0.72rem; font-weight: 600;
+            text-transform: uppercase; letter-spacing: 0.06em;
+            color: var(--gray-700); margin-bottom: 0.55rem;
+        }
+        .input-wrap {
+            position: relative; display: flex; align-items: center;
+        }
+        .input-icon {
+            position: absolute; left: 0.95rem;
+            display: flex; align-items: center; pointer-events: none;
+        }
+        .input-icon svg {
+            width: 16px; height: 16px;
+            stroke: var(--gray-400); stroke-width: 1.8;
+            transition: stroke 0.2s;
+        }
+        .form-group input {
+            width: 100%;
+            padding: 0.85rem 1rem 0.85rem 2.7rem;
+            font-size: 0.92rem; font-family: 'Inter', sans-serif;
+            border: 1.5px solid var(--gray-200);
+            border-radius: 12px;
+            background: var(--white);
+            color: var(--text-dark);
+            transition: all 0.2s;
+        }
+        .form-group input:focus {
+            outline: none;
+            border-color: var(--accent-muted);
+            box-shadow: 0 0 0 3px rgba(91,110,140,0.1);
+        }
+        .form-group input:focus ~ .input-icon svg,
+        .input-wrap:focus-within .input-icon svg {
+            stroke: var(--accent-muted);
+        }
+        .form-group input::placeholder { color: var(--gray-400); }
+
+        /* Password toggle */
+        .pw-toggle {
+            position: absolute; right: 0.95rem;
+            background: none; border: none; cursor: pointer;
+            display: flex; align-items: center; padding: 0;
+            color: var(--gray-400);
+            transition: color 0.2s;
+        }
+        .pw-toggle:hover { color: var(--gray-700); }
+        .pw-toggle svg { width: 16px; height: 16px; stroke: currentColor; stroke-width: 1.8; fill: none; }
+
+        /* Options row */
+        .form-options {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 1.8rem; font-size: 0.8rem;
+        }
+        .checkbox-label {
+            display: flex; align-items: center; gap: 0.5rem;
+            cursor: pointer; color: var(--gray-600);
+        }
+        .checkbox-label input[type="checkbox"] {
+            width: 15px; height: 15px;
+            accent-color: var(--accent-deep);
+            cursor: pointer;
+        }
+        .forgot-link {
+            color: var(--accent-muted); text-decoration: none;
+            font-weight: 500; transition: color 0.2s;
+        }
+        .forgot-link:hover { color: var(--accent-deep); }
+
+        /* Submit button */
+        .submit-btn {
+            width: 100%; padding: 0.95rem;
+            background: var(--gray-900); color: white;
+            border: none; border-radius: 40px;
+            font-size: 0.88rem; font-weight: 600;
+            font-family: 'Inter', sans-serif;
+            letter-spacing: 0.02em; cursor: pointer;
+            display: flex; align-items: center; justify-content: center; gap: 0.6rem;
+            transition: all 0.25s ease;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+        }
+        .submit-btn:hover {
+            background: var(--accent-deep);
+            transform: translateY(-1px);
+            box-shadow: 0 8px 20px rgba(58,74,103,0.25);
+        }
+        .submit-btn:active { transform: translateY(0); }
+        .submit-btn svg { width: 17px; height: 17px; stroke: currentColor; stroke-width: 2; fill: none; }
+        .submit-btn.loading { pointer-events: none; opacity: 0.75; }
+
+        /* Divider */
+        .divider {
+            display: flex; align-items: center;
+            margin: 1.5rem 0; color: var(--gray-400);
+            font-size: 0.68rem; font-weight: 500;
+            letter-spacing: 0.08em; text-transform: uppercase;
+        }
+        .divider::before, .divider::after {
+            content: ''; flex: 1;
+            border-bottom: 1px solid var(--gray-200);
+        }
+        .divider span { margin: 0 1rem; }
+
+        /* Social buttons */
+        .social-row { display: flex; gap: 0.75rem; }
+        .social-btn {
+            flex: 1; padding: 0.75rem;
+            background: var(--white); border: 1.5px solid var(--gray-200);
+            border-radius: 40px; cursor: pointer;
+            display: flex; align-items: center; justify-content: center; gap: 0.5rem;
+            font-size: 0.8rem; font-weight: 500; color: var(--gray-700);
+            font-family: 'Inter', sans-serif;
+            transition: all 0.2s;
+        }
+        .social-btn:hover {
+            background: var(--gray-150);
+            border-color: var(--gray-300);
+            transform: translateY(-1px);
+        }
+
+        /* Bottom register strip */
+        .form-footer {
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--gray-200);
+            display: flex; flex-direction: column; align-items: center; gap: 0.9rem;
+        }
+        .form-footer p { font-size: 0.85rem; color: var(--gray-600); }
+        .form-footer a {
+            color: var(--accent-deep); font-weight: 600;
+            text-decoration: none; transition: color 0.2s;
+        }
+        .form-footer a:hover { color: var(--accent-muted); text-decoration: underline; }
+        .back-home {
+            display: inline-flex; align-items: center; gap: 0.4rem;
+            font-size: 0.78rem; font-weight: 500;
+            color: var(--gray-500); text-decoration: none;
+            padding: 0.4rem 0.9rem; border-radius: 40px;
+            transition: all 0.2s;
+        }
+        .back-home:hover { color: var(--accent-deep); background: var(--accent-pale); }
+        .back-home svg { width: 14px; height: 14px; stroke: currentColor; stroke-width: 2; fill: none; }
+
+        /* Field error */
+        .field-error {
+            font-size: 0.72rem; color: #991B1B;
+            margin-top: 0.35rem; margin-left: 0.4rem;
+            display: flex; align-items: center; gap: 0.3rem;
+            animation: slideIn 0.2s ease;
+        }
+        .field-error svg { width: 11px; height: 11px; flex-shrink: 0; }
+
+        /* Animations */
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(-8px); }
+            to   { opacity: 1; transform: translateX(0); }
+        }
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to   { transform: rotate(360deg); }
+        }
+
+        /* Responsive — stack on mobile */
+        @media (max-width: 860px) {
+            body { grid-template-columns: 1fr; }
+            .left-panel { display: none; }
+            .right-panel { padding: 2.5rem 1.5rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ══ LEFT: VIDEO PANEL ══ -->
+    <div class="left-panel">
+        <div class="left-video">
+            <video autoplay muted loop playsinline>
+                <source src="{% static 'videos/hero.mp4' %}" type="video/mp4">
+            </video>
+        </div>
+        <div class="left-overlay"></div>
+        <div class="left-content">
+            <!-- Brand logo -->
+            <a class="left-logo" href="{% url 'index' %}">Wayzo</a>
+
+            <!-- Centre phrase -->
+            <div class="left-phrase">
+                <div class="phrase-divider"></div>
+                <h2>
+                    Welcome back.<br>
+                    <em>Your journey awaits.</em>
+                </h2>
+                <p>
+                    Sign in to access your travel plans, saved destinations,
+                    and personalised recommendations.
+                </p>
+            </div>
+
+            <!-- Register links at bottom -->
+            <div>
+                <div class="left-register">
+                    <span style="font-size:0.72rem;color:rgba(255,255,255,0.3);letter-spacing:0.06em;text-transform:uppercase;">New here?</span>
+                    <a href="{% url 'traveller_register' %}" class="left-reg-link">Traveller</a>
+                    <span class="left-reg-sep">·</span>
+                    <a href="{% url 'agency_register' %}" class="left-reg-link">Agency</a>
+                    <span class="left-reg-sep">·</span>
+                    <a href="{% url 'restaurant_register' %}" class="left-reg-link">Restaurant</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ══ RIGHT: FORM PANEL ══ -->
+    <div class="right-panel">
+        <div class="form-wrap">
+
+            <!-- Header -->
+            <div class="form-header">
+                <span class="eyebrow">Sign In</span>
+                <h1>Welcome back</h1>
+                <p>Enter your credentials to continue your journey.</p>
+            </div>
+
+            <!-- Django messages -->
+            {% if messages %}
+            <div class="message-wrap">
+                {% for message in messages %}
+                <div class="message {{ message.tags }}">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        {% if message.tags == 'error' %}
+                            <circle cx="12" cy="12" r="10"/>
+                            <line x1="12" y1="8" x2="12" y2="12"/>
+                            <line x1="12" y1="16" x2="12.01" y2="16"/>
+                        {% else %}
+                            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                            <polyline points="22 4 12 14.01 9 11.01"/>
+                        {% endif %}
+                    </svg>
+                    {{ message }}
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <!-- Login Form -->
+            <form method="post" id="loginForm" novalidate>
+                {% csrf_token %}
+
+                <div class="form-group">
+                    <label for="username">Username</label>
+                    <div class="input-wrap">
+                        <span class="input-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                                <circle cx="12" cy="7" r="4"/>
+                            </svg>
+                        </span>
+                        <input type="text" name="username" id="username"
+                               placeholder="Your username" required autofocus>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <div class="input-wrap">
+                        <span class="input-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                <rect x="3" y="11" width="18" height="11" rx="2"/>
+                                <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                            </svg>
+                        </span>
+                        <input type="password" name="password" id="password"
+                               placeholder="Your password" required>
+                        <button type="button" class="pw-toggle" id="pwToggle" title="Show/hide password">
+                            <svg id="eyeIcon" viewBox="0 0 24 24">
+                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                                <circle cx="12" cy="12" r="3"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="form-options">
+                    <label class="checkbox-label">
+                        <input type="checkbox" name="remember_me" id="remember_me">
+                        <span>Remember me</span>
+                    </label>
+                    <a href="#" class="forgot-link">Forgot password?</a>
+                </div>
+
+                <button type="submit" class="submit-btn" id="submitBtn">
+                    <span id="btnText">Sign In</span>
+                    <svg id="btnArrow" viewBox="0 0 24 24">
+                        <line x1="5" y1="12" x2="19" y2="12"/>
+                        <polyline points="12 5 19 12 12 19"/>
+                    </svg>
+                </button>
+            </form>
+
+            <div class="divider"><span>or continue with</span></div>
+
+            <div class="social-row">
+                <button class="social-btn" onclick="alert('Integrate Google OAuth in production')">
+                    <svg width="16" height="16" viewBox="0 0 24 24">
+                        <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                        <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                        <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                        <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                    </svg>
+                    Google
+                </button>
+                <button class="social-btn" onclick="alert('Integrate X OAuth in production')">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.74l7.73-8.835L1.254 2.25H8.08l4.259 5.63 5.905-5.63zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+                    </svg>
+                    X / Twitter
+                </button>
+            </div>
+
+            <!-- Footer -->
+            <div class="form-footer">
+                <p>Don't have an account? <a href="{% url 'traveller_register' %}">Create free account</a></p>
+                <a href="{% url 'index' %}" class="back-home">
+                    <svg viewBox="0 0 24 24"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+                    Back to home
+                </a>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+    (function () {
+        const form        = document.getElementById('loginForm');
+        const userInput   = document.getElementById('username');
+        const passInput   = document.getElementById('password');
+        const rememberCb  = document.getElementById('remember_me');
+        const submitBtn   = document.getElementById('submitBtn');
+        const btnText     = document.getElementById('btnText');
+        const btnArrow    = document.getElementById('btnArrow');
+        const pwToggle    = document.getElementById('pwToggle');
+        const eyeIcon     = document.getElementById('eyeIcon');
+
+        // ── Remember me: restore username
+        if (localStorage.getItem('wz_remember') === '1') {
+            const saved = localStorage.getItem('wz_username');
+            if (saved) { userInput.value = saved; rememberCb.checked = true; }
+        }
+
+        // ── Password show/hide toggle
+        let pwVisible = false;
+        pwToggle.addEventListener('click', () => {
+            pwVisible = !pwVisible;
+            passInput.type = pwVisible ? 'text' : 'password';
+            eyeIcon.innerHTML = pwVisible
+                ? `<path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94"/>
+                   <path d="M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19"/>
+                   <line x1="1" y1="1" x2="23" y2="23"/>`
+                : `<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                   <circle cx="12" cy="12" r="3"/>`;
+        });
+
+        // ── Clear field error on input
+        [userInput, passInput].forEach(el => {
+            el.addEventListener('input', () => {
+                el.style.borderColor = '';
+                el.style.backgroundColor = '';
+                const err = el.closest('.form-group').querySelector('.field-error');
+                if (err) err.remove();
+            });
+        });
+
+        // ── Form submit
+        form.addEventListener('submit', function (e) {
+            // clear existing errors
+            document.querySelectorAll('.field-error').forEach(el => el.remove());
+            let valid = true;
+
+            if (!userInput.value.trim()) {
+                showError(userInput, 'Please enter your username');
+                valid = false;
+            }
+            if (!passInput.value) {
+                showError(passInput, 'Please enter your password');
+                valid = false;
+            }
+            if (!valid) { e.preventDefault(); return; }
+
+            // Remember me
+            if (rememberCb.checked) {
+                localStorage.setItem('wz_remember', '1');
+                localStorage.setItem('wz_username', userInput.value.trim());
+            } else {
+                localStorage.removeItem('wz_remember');
+                localStorage.removeItem('wz_username');
+            }
+
+            // Loading state
+            btnText.textContent = 'Signing in…';
+            btnArrow.innerHTML = `<circle cx="12" cy="12" r="9" stroke-dasharray="56" stroke-dashoffset="0"
+                style="animation:spin 0.8s linear infinite;transform-origin:center"/>`;
+            submitBtn.classList.add('loading');
+
+            // Fallback re-enable after 6s
+            setTimeout(() => {
+                if (submitBtn.classList.contains('loading')) {
+                    btnText.textContent = 'Sign In';
+                    btnArrow.innerHTML = `<line x1="5" y1="12" x2="19" y2="12"/>
+                        <polyline points="12 5 19 12 12 19"/>`;
+                    submitBtn.classList.remove('loading');
+                }
+            }, 6000);
+        });
+
+        function showError(input, msg) {
+            input.style.borderColor = '#FCA5A5';
+            input.style.backgroundColor = '#FEF2F2';
+            const div = document.createElement('div');
+            div.className = 'field-error';
+            div.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"/>
+                <line x1="12" y1="8" x2="12" y2="12"/>
+                <line x1="12" y1="16" x2="12.01" y2="16"/>
+            </svg>${msg}`;
+            input.closest('.form-group').appendChild(div);
+        }
+    })();
+    </script>
+</body>
+</html>

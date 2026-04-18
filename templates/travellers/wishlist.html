@@ -1,0 +1,184 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>My Wishlist</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #f5f7fb;
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: auto;
+            padding: 20px;
+        }
+
+        .page-title {
+            font-size: 26px;
+            font-weight: bold;
+            margin-bottom: 20px;
+        }
+
+        .wishlist-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+        }
+
+        .wishlist-card {
+            background: #fff;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            transition: 0.3s;
+        }
+
+        .wishlist-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .wishlist-image img {
+            width: 100%;
+            height: 180px;
+            object-fit: cover;
+        }
+
+        .wishlist-content {
+            padding: 15px;
+        }
+
+        .wishlist-content h3 {
+            margin: 0 0 10px;
+            font-size: 18px;
+        }
+
+        .price {
+            color: #28a745;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .agency {
+            font-size: 14px;
+            color: #777;
+        }
+
+        .wishlist-actions {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 15px;
+        }
+
+        .btn {
+            text-decoration: none;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 14px;
+            color: #fff;
+        }
+
+        .btn-book {
+            background: #007bff;
+        }
+
+        .btn-remove {
+            background: #dc3545;
+        }
+
+        .empty-state {
+            text-align: center;
+            margin-top: 80px;
+        }
+
+        .empty-state img {
+            width: 200px;
+            margin-bottom: 20px;
+        }
+
+        .btn-explore {
+            display: inline-block;
+            margin-top: 10px;
+            background: #28a745;
+            color: white;
+            padding: 10px 15px;
+            border-radius: 6px;
+            text-decoration: none;
+        }
+
+        .top-bar {
+            background: #111;
+            color: white;
+            padding: 15px 20px;
+            font-size: 18px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="top-bar">
+        💖 My Wishlist
+    </div>
+
+    <div class="container">
+
+        {% if items %}
+            <div class="wishlist-grid">
+                {% for item in items %}
+                    <div class="wishlist-card">
+
+                        <!-- Image -->
+                        <div class="wishlist-image">
+                            {% if item.package.images.first %}
+                                <img src="{{ item.package.images.first.image.url }}" alt="{{ item.package.title }}">
+                            {% else %}
+                                <img src="{% static 'images/default.jpg' %}" alt="No Image">
+                            {% endif %}
+                        </div>
+
+                        <!-- Content -->
+                        <div class="wishlist-content">
+                            <h3>{{ item.package.title }}</h3>
+
+                            <p class="price">₹ {{ item.package.price }}</p>
+
+                            <p class="agency">
+                                By {{ item.package.agency.user.username }}
+                            </p>
+
+                            <div class="wishlist-actions">
+                                <a href="{% url 'travellers:book_package' item.package.id %}" class="btn btn-book">
+                                    Book
+                                </a>
+
+                                <a href="{% url 'travellers:wishlist_remove' item.package.id %}" class="btn btn-remove">
+                                    Remove
+                                </a>
+                            </div>
+                        </div>
+
+                    </div>
+                {% endfor %}
+            </div>
+
+        {% else %}
+            <div class="empty-state">
+                <img src="{% static 'images/empty_wishlist.svg' %}" alt="Empty Wishlist">
+                <h2>Your wishlist is empty 😢</h2>
+                <p>Explore packages and add your favorites</p>
+
+                <a href="{% url 'travellers:all_packages' %}" class="btn-explore">
+                    Explore Packages
+                </a>
+            </div>
+        {% endif %}
+
+    </div>
+
+</body>
+</html>

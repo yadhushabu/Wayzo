@@ -1,0 +1,33 @@
+<h2>Notifications 🔔</h2>
+
+{% for n in notifications %}
+
+    <div>
+        <p>{{ n.message }}</p>
+
+        {% if n.notification_type == "join_request" %}
+
+            {% if n.request.status == "pending" %}
+                <a href="{% url 'accept_request' n.request.id %}">✅ Accept</a>
+
+            {% elif n.request.status == "approved" %}
+                <p style="color: green;">✔ You accepted this request</p>
+
+            {% elif n.request.status == "rejected" %}
+                <p style="color: red;">❌ Request rejected</p>
+            {% endif %}
+
+        {% endif %}
+
+        {% if n.profile_post %}
+            <a href="{% url 'travellers:user_profile' n.profile_post.user.id %}">
+                View Post
+            </a>
+        {% endif %}
+    </div>
+
+{% empty %}
+
+    <p>No notifications</p>
+
+{% endfor %}

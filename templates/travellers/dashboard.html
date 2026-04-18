@@ -1,0 +1,1415 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Wayzo | Traveller Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --gray-100:     #F8F9FC;
+            --gray-150:     #F1F3F8;
+            --gray-200:     #E9EDF2;
+            --gray-300:     #DCE2EA;
+            --gray-400:     #BEC7D1;
+            --gray-500:     #9AA3AF;
+            --gray-600:     #6E7682;
+            --gray-700:     #4A515C;
+            --gray-800:     #2E343D;
+            --gray-850:     #21262E;
+            --gray-900:     #191E24;
+            --gray-950:     #0F1217;
+            --teal:         #0E8A8A;
+            --teal-dark:    #0A6B6B;
+            --teal-pale:    #EAF4F4;
+            --white:        #FFFFFF;
+            --text-dark:    #1E242C;
+            --text-soft:    #3C4350;
+            --text-light:   #6F7886;
+            --amber:        #F59E0B;
+            --rose:         #F43F5E;
+            --sidebar-w:    260px;
+        }
+
+        html { height: 100%; scroll-behavior: smooth; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--gray-100);
+            color: var(--text-dark);
+            display: flex;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* ── SIDEBAR ── */
+        .sidebar {
+            width: var(--sidebar-w);
+            background: var(--gray-950);
+            height: 100vh;
+            position: fixed; top: 0; left: 0;
+            display: flex; flex-direction: column;
+            z-index: 300;
+            border-right: 1px solid rgba(255,255,255,0.06);
+            transform: translateX(0);
+            transition: transform 0.32s cubic-bezier(0.4,0,0.2,1);
+            overflow-y: auto; overflow-x: hidden;
+        }
+        .sidebar.collapsed { transform: translateX(calc(-1 * var(--sidebar-w))); }
+        .sidebar-overlay {
+            display: none; position: fixed; inset: 0;
+            background: rgba(0,0,0,0.45); z-index: 290;
+            opacity: 0; transition: opacity 0.3s ease; backdrop-filter: blur(2px);
+        }
+        .sidebar-overlay.visible { display: block; opacity: 1; }
+        .sidebar-brand { padding: 1.8rem 1.6rem 1.4rem; border-bottom: 1px solid rgba(255,255,255,0.06); }
+        .sidebar-logo { font-family: 'Playfair Display', serif; font-size: 1.5rem; font-weight: 600; letter-spacing: -0.01em; color: white; text-decoration: none; display: block; margin-bottom: 0.2rem; }
+        .sidebar-sub { font-size: 0.68rem; color: rgba(255,255,255,0.3); letter-spacing: 0.08em; text-transform: uppercase; }
+        .sidebar-profile { padding: 1.2rem 1.6rem; border-bottom: 1px solid rgba(255,255,255,0.06); display: flex; align-items: center; gap: 0.85rem; }
+        .sidebar-avatar { width: 38px; height: 38px; border-radius: 50%; background: var(--teal); display: flex; align-items: center; justify-content: center; font-size: 0.85rem; font-weight: 600; color: white; overflow: hidden; flex-shrink: 0; border: 2px solid rgba(255,255,255,0.08); }
+        .sidebar-avatar img { width: 100%; height: 100%; object-fit: cover; }
+        .sidebar-profile-info { overflow: hidden; }
+        .sidebar-profile-name { font-size: 0.82rem; font-weight: 600; color: white; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .sidebar-profile-role { font-size: 0.68rem; color: rgba(255,255,255,0.35); }
+        .sidebar-nav { flex: 1; padding: 1rem 0.8rem; overflow-y: auto; }
+        .nav-group-label { font-size: 0.62rem; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: rgba(255,255,255,0.22); padding: 0.6rem 0.8rem 0.4rem; display: block; }
+        .nav-item {
+            display: flex; align-items: center; gap: 0.75rem;
+            padding: 0.65rem 0.8rem; border-radius: 8px;
+            text-decoration: none; color: rgba(255,255,255,0.5);
+            font-size: 0.82rem; font-weight: 500;
+            transition: all 0.2s; margin-bottom: 2px;
+        }
+        .nav-item svg { width: 16px; height: 16px; stroke: currentColor; stroke-width: 1.8; fill: none; flex-shrink: 0; }
+        .nav-item:hover { background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.85); }
+        .nav-item.active { background: rgba(14,138,138,0.18); color: #5FC5C5; }
+        .sidebar-footer { padding: 0.8rem; border-top: 1px solid rgba(255,255,255,0.06); }
+        .logout-btn { display: flex; align-items: center; gap: 0.75rem; padding: 0.65rem 0.8rem; border-radius: 8px; text-decoration: none; color: rgba(255,255,255,0.5); font-size: 0.82rem; font-weight: 500; transition: all 0.2s; }
+        .logout-btn svg { width: 16px; height: 16px; stroke: currentColor; stroke-width: 1.8; fill: none; }
+        .logout-btn:hover { background: rgba(239,68,68,0.1); color: #F87171; }
+
+        /* ── MAIN LAYOUT ── */
+        .main {
+            margin-left: var(--sidebar-w);
+            flex: 1; display: flex; flex-direction: column;
+            transition: margin-left 0.32s cubic-bezier(0.4,0,0.2,1);
+            background: var(--gray-100);
+        }
+        .main.sidebar-collapsed { margin-left: 0; }
+
+        /* TOPBAR */
+        .topbar {
+            background: transparent;
+            padding: 0 2rem;
+            height: 70px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+            gap: 1rem;
+        }
+        .topbar-left { display: flex; align-items: center; gap: 1rem; flex: 1; min-width: 0; }
+        .topbar-left h1 { font-family: 'Playfair Display', serif; font-size: 1.2rem; font-weight: 500; color: white; text-shadow: 0 1px 8px rgba(0,0,0,0.2); }
+        .topbar-left p { font-size: 0.75rem; color: rgba(255,255,255,0.7); margin-top: 1px; }
+        .topbar-right { display: flex; align-items: center; gap: 1rem; flex-shrink: 0; }
+
+        /* ── HAMBURGER (in topbar, normal flow) ── */
+        .hamburger {
+            width: 36px; height: 36px;
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center; gap: 5px;
+            background: rgba(255,255,255,0.12); backdrop-filter: blur(8px);
+            border: 1px solid rgba(255,255,255,0.18);
+            cursor: pointer; padding: 4px; border-radius: 9px;
+            flex-shrink: 0;
+            transition: background 0.2s, border-color 0.2s;
+            position: relative; z-index: 100;
+        }
+        .hamburger:hover { background: rgba(255,255,255,0.22); }
+        .hamburger span {
+            display: block; width: 18px; height: 1.8px;
+            background: white; border-radius: 2px;
+            transition: transform 0.3s, opacity 0.3s;
+        }
+
+        /* ── SIDEBAR CLOSE BUTTON ──
+           Same size/shape as the hamburger. Sits just outside sidebar's right edge.
+           Shows an X (two lines crossed). Slides in when sidebar opens. */
+        .sidebar-close-btn {
+            position: fixed;
+            top: 17px;
+            left: calc(var(--sidebar-w) + 10px);
+            z-index: 600;
+            width: 36px; height: 36px;
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center; gap: 5px;
+            background: rgba(255,255,255,0.12); backdrop-filter: blur(8px);
+            border: 1px solid rgba(255,255,255,0.18);
+            border-radius: 9px;
+            cursor: pointer;
+            padding: 4px;
+            opacity: 0;
+            pointer-events: none;
+            transform: translateX(-6px);
+            transition: opacity 0.22s ease, transform 0.22s ease, background 0.2s;
+        }
+        .sidebar-close-btn:hover {
+            background: rgba(244,63,94,0.25);
+            border-color: rgba(244,63,94,0.4);
+        }
+        .sidebar-close-btn span {
+            display: block;
+            width: 18px; height: 1.8px;
+            background: white; border-radius: 2px;
+        }
+        .sidebar-close-btn span:nth-child(1) { transform: translateY(5px) rotate(45deg); }
+        .sidebar-close-btn span:nth-child(2) { transform: translateY(-4px) rotate(-45deg); }
+        body.sidebar-is-open .sidebar-close-btn {
+            opacity: 1;
+            pointer-events: auto;
+            transform: translateX(0);
+        }
+        @media (max-width: 860px) {
+            .sidebar-close-btn { left: calc(var(--sidebar-w) + 8px); top: 17px; }
+        }
+
+        .notification-btn {
+            background: rgba(255,255,255,0.12); backdrop-filter: blur(8px);
+            border: 1px solid rgba(255,255,255,0.18);
+            border-radius: 50%; width: 38px; height: 38px;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; position: relative; transition: background 0.2s;
+        }
+        .notification-btn:hover { background: rgba(255,255,255,0.2); }
+        .notification-btn svg { width: 17px; stroke: white; fill: none; }
+        .notification-badge {
+            position: absolute; top: -2px; right: -2px;
+            background: var(--rose); color: white;
+            font-size: 0.58rem; width: 15px; height: 15px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center; font-weight: 700;
+        }
+        .avatar-menu { position: relative; cursor: pointer; }
+        .avatar-trigger {
+            display: flex; align-items: center; gap: 0.5rem;
+            background: rgba(255,255,255,0.12); backdrop-filter: blur(8px);
+            border: 1px solid rgba(255,255,255,0.18);
+            padding: 0.3rem 0.8rem 0.3rem 0.35rem; border-radius: 40px;
+            transition: background 0.2s;
+        }
+        .avatar-trigger:hover { background: rgba(255,255,255,0.2); }
+        .avatar-img {
+            width: 30px; height: 30px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 600; color: white; background: var(--teal);
+            overflow: hidden; font-size: 0.75rem;
+        }
+        .avatar-img img { width: 100%; height: 100%; object-fit: cover; }
+        .avatar-name { font-size: 0.79rem; font-weight: 500; color: white; }
+        .dropdown-popup {
+            position: absolute; top: 50px; right: 0;
+            background: white; border-radius: 14px;
+            box-shadow: 0 16px 40px -8px rgba(0,0,0,0.18);
+            width: 220px; padding: 0.6rem 0; z-index: 400;
+            border: 1px solid var(--gray-200);
+            opacity: 0; visibility: hidden; transform: translateY(-6px); transition: all 0.2s;
+        }
+        .dropdown-popup.show { opacity: 1; visibility: visible; transform: translateY(0); }
+        .dropdown-info { padding: 0.6rem 1rem 0.5rem; border-bottom: 1px solid var(--gray-200); }
+        .dropdown-item { display: flex; align-items: center; gap: 0.7rem; padding: 0.55rem 1rem; color: var(--gray-700); text-decoration: none; font-size: 0.79rem; transition: background 0.15s; }
+        .dropdown-item:hover { background: var(--gray-100); }
+
+        /* ── HERO SECTION ── */
+        .hero-section {
+            position: relative;
+            height: 560px;
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+        .hero-bg {
+            position: absolute; inset: 0;
+            background-image: url("{% static 'images/shifaaz-shamoon-sLAk1guBG90-unsplash.jpg' %}");
+            background-size: cover;
+            background-position: center 35%;
+            z-index: 0;
+        }
+        .hero-bg::after {
+            content: "";
+            position: absolute; inset: 0;
+            background: linear-gradient(160deg, rgba(6,16,24,0.78) 0%, rgba(10,50,50,0.62) 45%, rgba(6,16,24,0.42) 100%);
+        }
+        .hero-fade {
+            position: absolute; bottom: 0; left: 0; right: 0;
+            height: 180px;
+            background: linear-gradient(to bottom, transparent 0%, var(--gray-100) 100%);
+            z-index: 2;
+            pointer-events: none;
+        }
+        .hero-content {
+            position: relative; z-index: 3;
+            height: 100%;
+            display: flex; flex-direction: column;
+            align-items: flex-start; justify-content: center;
+            padding: 5rem 3rem 8rem;
+            max-width: 680px;
+        }
+        .hero-eyebrow {
+            display: inline-flex; align-items: center; gap: 0.5rem;
+            background: rgba(255,255,255,0.1); backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.2);
+            color: rgba(255,255,255,0.9);
+            font-size: 0.68rem; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase;
+            padding: 0.38rem 1rem; border-radius: 40px; margin-bottom: 1.1rem;
+        }
+        .hero-eyebrow::before {
+            content: ""; display: inline-block; width: 6px; height: 6px; border-radius: 50%;
+            background: #5FC5C5; flex-shrink: 0;
+        }
+        .hero-section h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: 3.4rem; font-weight: 600; line-height: 1.08;
+            color: white; margin-bottom: 0.7rem; letter-spacing: -0.01em;
+        }
+        .hero-section h1 em { font-style: italic; color: #8DE8E8; }
+        .hero-section p {
+            font-size: 0.9rem; color: rgba(255,255,255,0.7);
+            margin-bottom: 1.8rem; line-height: 1.65; font-weight: 300;
+        }
+
+        /* SEARCH BAR */
+        .search-bar { width: 100%; max-width: 540px; }
+        .search-bar-inner {
+            display: flex; align-items: center;
+            background: white; border-radius: 14px;
+            overflow: hidden;
+            box-shadow: 0 24px 60px rgba(0,0,0,0.28), 0 4px 12px rgba(0,0,0,0.12);
+        }
+        .search-bar-inner svg {
+            width: 17px; height: 17px; stroke: var(--gray-400); fill: none;
+            margin-left: 1.1rem; flex-shrink: 0;
+        }
+        .search-bar input {
+            flex: 1; padding: 0.9rem 0.8rem;
+            border: none; font-size: 0.86rem;
+            background: transparent; color: var(--text-dark);
+            font-family: 'Inter', sans-serif;
+        }
+        .search-bar input:focus { outline: none; }
+        .search-bar input::placeholder { color: var(--gray-400); }
+        .search-bar button {
+            margin: 6px; padding: 0.68rem 1.4rem;
+            background: var(--teal); border: none;
+            border-radius: 10px; color: white; cursor: pointer;
+            font-weight: 600; font-size: 0.82rem;
+            font-family: 'Inter', sans-serif;
+            transition: background 0.2s; white-space: nowrap;
+        }
+        .search-bar button:hover { background: var(--teal-dark); }
+
+        /* HERO STAT CHIPS */
+        .hero-stats {
+            position: absolute; bottom: 5rem; right: 3rem; z-index: 4;
+            display: flex; gap: 0.7rem;
+        }
+        .stat-chip {
+            background: rgba(255,255,255,0.1); backdrop-filter: blur(14px);
+            border: 1px solid rgba(255,255,255,0.16); border-radius: 14px;
+            padding: 0.75rem 1.15rem; text-align: center;
+        }
+        .stat-chip strong { display: block; font-size: 1.05rem; font-weight: 700; color: white; font-family: 'Inter', sans-serif; }
+        .stat-chip span { font-size: 0.63rem; color: rgba(255,255,255,0.55); letter-spacing: 0.07em; text-transform: uppercase; }
+
+        /* ── PAGE BODY ── */
+        .page-body {
+            position: relative;
+            z-index: 10;
+            margin-top: -100px;
+            padding: 0 2.5rem 2rem;
+        }
+
+        /* CONTROL BAR */
+        .control-bar {
+            background: white;
+            border-radius: 18px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1), 0 1px 4px rgba(0,0,0,0.05);
+            border: 1px solid var(--gray-200);
+            overflow: hidden;
+            margin-bottom: 2rem;
+        }
+
+        /* CATEGORY TABS */
+        .cat-row {
+            display: flex; align-items: center;
+            padding: 0 1.2rem;
+            gap: 0.4rem;
+            border-bottom: 1px solid var(--gray-150);
+            overflow-x: auto;
+            scrollbar-width: none;
+        }
+        .cat-row::-webkit-scrollbar { display: none; }
+        .category-tab {
+            display: flex; align-items: center; gap: 0.5rem;
+            padding: 0.85rem 0.9rem;
+            border-bottom: 2px solid transparent;
+            color: var(--text-light); font-size: 0.78rem; font-weight: 500;
+            cursor: pointer; transition: all 0.2s; text-decoration: none;
+            white-space: nowrap; flex-shrink: 0;
+            background: none; margin-bottom: -1px;
+        }
+        .category-tab .cat-icon {
+            width: 22px; height: 22px; display: flex; align-items: center; justify-content: center;
+            background: var(--gray-150); border-radius: 7px; flex-shrink: 0; transition: all 0.2s;
+        }
+        .category-tab .cat-icon svg { width: 11px; height: 11px; stroke: var(--gray-500); fill: none; stroke-width: 2; transition: stroke 0.2s; }
+        .category-tab:hover { color: var(--teal); border-bottom-color: var(--gray-200); }
+        .category-tab:hover .cat-icon { background: var(--teal-pale); }
+        .category-tab:hover .cat-icon svg { stroke: var(--teal); }
+        .category-tab.active { color: var(--teal); border-bottom-color: var(--teal); font-weight: 600; }
+        .category-tab.active .cat-icon { background: rgba(14,138,138,0.1); }
+        .category-tab.active .cat-icon svg { stroke: var(--teal); }
+
+        /* FILTER + SORT ROW */
+        .filter-sort-row {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 0.75rem 1.2rem; gap: 1rem;
+        }
+        .filter-left { display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; }
+        .filter-toggle-btn {
+            display: flex; align-items: center; gap: 0.45rem;
+            padding: 0.5rem 1rem; background: var(--gray-100);
+            border: 1px solid var(--gray-200); border-radius: 8px;
+            font-size: 0.77rem; font-weight: 500; cursor: pointer;
+            font-family: 'Inter', sans-serif; color: var(--text-soft);
+            transition: all 0.2s;
+        }
+        .filter-toggle-btn svg { width: 13px; height: 13px; stroke: currentColor; fill: none; }
+        .filter-toggle-btn:hover { border-color: var(--teal); color: var(--teal); background: var(--teal-pale); }
+        .results-count { font-size: 0.75rem; color: var(--text-light); }
+        .results-count strong { color: var(--text-dark); font-weight: 600; }
+        .sort-select {
+            padding: 0.5rem 1rem; border: 1px solid var(--gray-200); border-radius: 8px;
+            font-size: 0.77rem; background: var(--gray-100); cursor: pointer;
+            font-family: 'Inter', sans-serif; color: var(--text-soft);
+            transition: border-color 0.2s;
+        }
+        .sort-select:focus { outline: none; border-color: var(--teal); }
+
+        /* FILTER PANEL */
+        .filters-panel {
+            display: none; border-top: 1px solid var(--gray-150);
+            padding: 1.25rem 1.5rem 1rem;
+            background: var(--gray-100);
+        }
+        .filters-panel.show { display: block; }
+        .filter-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 1.2rem; }
+        .filter-group h4 { font-size: 0.73rem; font-weight: 600; margin-bottom: 0.6rem; color: var(--gray-700); letter-spacing: 0.03em; }
+        .filter-group input, .filter-group select {
+            width: 100%; padding: 0.5rem 0.75rem; border: 1px solid var(--gray-200);
+            border-radius: 8px; font-size: 0.77rem; font-family: 'Inter', sans-serif;
+            color: var(--text-dark); background: white; transition: border-color 0.2s;
+        }
+        .filter-group input:focus, .filter-group select:focus { outline: none; border-color: var(--teal); }
+        .price-range { display: flex; gap: 0.4rem; }
+        .price-range input { width: 50%; }
+        .filter-options { display: flex; flex-direction: column; gap: 0.4rem; }
+        .filter-option { display: flex; align-items: center; gap: 0.45rem; font-size: 0.77rem; color: var(--text-soft); cursor: pointer; }
+        .filter-option input { width: auto; accent-color: var(--teal); }
+        .filter-actions { display: flex; gap: 0.6rem; margin-top: 1.2rem; padding-top: 1rem; border-top: 1px solid var(--gray-200); }
+        .apply-btn {
+            background: var(--teal); color: white; border: none;
+            padding: 0.6rem 1.4rem; border-radius: 8px; cursor: pointer;
+            font-weight: 600; font-size: 0.78rem; font-family: 'Inter', sans-serif;
+            transition: background 0.2s;
+        }
+        .apply-btn:hover { background: var(--teal-dark); }
+        .clear-btn {
+            background: transparent; color: var(--text-light); border: 1px solid var(--gray-200);
+            padding: 0.6rem 1.2rem; border-radius: 8px; cursor: pointer;
+            font-size: 0.78rem; font-family: 'Inter', sans-serif; text-decoration: none;
+            display: inline-flex; align-items: center; transition: all 0.2s;
+        }
+        .clear-btn:hover { border-color: var(--gray-400); color: var(--text-dark); }
+
+        /* ── PACKAGES GRID ── */
+        .packages-section { margin-bottom: 2rem; }
+
+        /* ── SECTION HEADER — title left, View All right ── */
+        .section-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;   /* ← pushes View All to far right */
+            margin-bottom: 1.2rem;
+            gap: 1rem;
+        }
+        .section-header-left {
+            display: flex;
+            align-items: baseline;
+            gap: 0.6rem;
+        }
+        .section-header h2 { font-family: 'Playfair Display', serif; font-size: 1.5rem; font-weight: 600; color: var(--gray-900); }
+        .section-header span { font-size: 0.75rem; color: var(--text-light); }
+
+        /* Restaurants section-head (same treatment) */
+        .section-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;  /* ← View All on right */
+            margin-bottom: 1.2rem;
+            gap: 1rem;
+        }
+        .section-head > div h3 { font-family: 'Playfair Display', serif; font-size: 1.5rem; font-weight: 600; color: var(--gray-900); }
+        .section-head > div p { font-size: 0.75rem; color: var(--text-light); margin-top: 0.15rem; }
+
+        .packages-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1.4rem;
+            margin-bottom: 2rem;
+        }
+        .pkg-card {
+            background: var(--white);
+            border: 1px solid var(--gray-200);
+            border-radius: 18px;
+            overflow: hidden;
+            transition: transform 0.28s ease, box-shadow 0.28s ease;
+            cursor: pointer;
+        }
+        .pkg-card:hover { transform: translateY(-6px); box-shadow: 0 20px 48px rgba(0,0,0,0.1); }
+        .pkg-thumb { height: 196px; background: var(--gray-150); position: relative; overflow: hidden; }
+        .pkg-thumb img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.4s ease; }
+        .pkg-card:hover .pkg-thumb img { transform: scale(1.07); }
+        .pkg-thumb-placeholder {
+            height: 100%; display: flex; align-items: center; justify-content: center;
+            color: var(--gray-400); font-size: 0.78rem;
+        }
+        .view-all-btn {
+            display: inline-flex; align-items: center; gap: 0.5rem;
+            background: var(--gray-900); color: white;
+            padding: 0.5rem 1.2rem; border-radius: 40px;
+            font-size: 0.75rem; font-weight: 500; text-decoration: none;
+            transition: all 0.2s; border: none; cursor: pointer;
+            white-space: nowrap; flex-shrink: 0;
+        }
+        .view-all-btn svg {
+            width: 14px; height: 14px; stroke: white; stroke-width: 2;
+        }
+        .view-all-btn:hover {
+            background: var(--teal); transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(14,138,138,0.28);
+        }
+        .pkg-badge {
+            position: absolute; top: 0.7rem; left: 0.7rem;
+            background: rgba(12,16,22,0.75); backdrop-filter: blur(6px);
+            color: white; font-size: 0.6rem; font-weight: 600;
+            padding: 0.26rem 0.65rem; border-radius: 40px; z-index: 2;
+            letter-spacing: 0.05em; text-transform: uppercase;
+        }
+        .pkg-badge.featured { background: var(--amber); }
+        .discount-badge {
+            position: absolute; top: 0.7rem; right: 0.7rem;
+            background: var(--rose); color: white;
+            font-size: 0.6rem; font-weight: 700;
+            padding: 0.26rem 0.65rem; border-radius: 40px; z-index: 2;
+        }
+        .pkg-body { padding: 1rem 1.2rem 0.5rem; }
+        .pkg-body h4 { font-size: 0.95rem; font-weight: 600; margin-bottom: 0.3rem; color: var(--gray-900); line-height: 1.3; }
+        .pkg-meta { display: flex; align-items: center; flex-wrap: wrap; gap: 0.3rem 0.5rem; font-size: 0.67rem; color: var(--text-light); margin-bottom: 0.45rem; }
+        .pkg-desc { font-size: 0.72rem; color: var(--text-light); line-height: 1.55; }
+        .pkg-footer {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 0.7rem 1.2rem 1rem;
+            border-top: 1px solid var(--gray-150);
+            margin-top: 0.6rem;
+        }
+        .price-block { display: flex; align-items: baseline; gap: 0.3rem; flex-wrap: wrap; }
+        .pkg-price { font-size: 1.08rem; font-weight: 700; color: var(--teal); }
+        .original-price { font-size: 0.68rem; text-decoration: line-through; color: var(--gray-400); }
+        .per-person { font-size: 0.67rem; color: var(--text-light); }
+        .wishlist-btn {
+            background: transparent; border: 1.5px solid var(--gray-200);
+            width: 32px; height: 32px; border-radius: 8px;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; transition: all 0.2s; color: var(--gray-400);
+        }
+        .wishlist-btn:hover { border-color: var(--rose); color: var(--rose); background: rgba(224,58,90,0.05); }
+        .wishlist-btn svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 1.8; }
+
+        /* ── RESTAURANTS ── */
+        .restaurants-section { margin-bottom: 2rem; padding: 0 2.5rem; }
+        .restaurants-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1.4rem;
+        }
+        .restaurant-card {
+            background: var(--white);
+            border: 1px solid var(--gray-200);
+            border-radius: 18px;
+            overflow: hidden;
+            transition: transform 0.28s ease, box-shadow 0.28s ease;
+            cursor: pointer;
+        }
+        .restaurant-card:hover { transform: translateY(-5px); box-shadow: 0 18px 44px rgba(0,0,0,0.09); }
+        .restaurant-thumb { height: 180px; background: var(--gray-150); position: relative; overflow: hidden; }
+        .restaurant-thumb img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.4s; }
+        .restaurant-card:hover .restaurant-thumb img { transform: scale(1.06); }
+        .restaurant-thumb-placeholder { height: 100%; display: flex; align-items: center; justify-content: center; color: var(--gray-400); font-size: 0.78rem; flex-direction: column; gap: 0.4rem; }
+        .restaurant-thumb-placeholder svg { width: 24px; stroke: var(--gray-300); fill: none; }
+        .restaurant-type-badge {
+            position: absolute; top: 0.7rem; left: 0.7rem;
+            background: rgba(12,16,22,0.72); backdrop-filter: blur(6px);
+            color: white; font-size: 0.6rem; font-weight: 600;
+            padding: 0.26rem 0.65rem; border-radius: 40px; z-index: 2;
+            letter-spacing: 0.05em; text-transform: uppercase;
+        }
+        .restaurant-body { padding: 1rem 1.2rem 0.5rem; }
+        .restaurant-body h4 { font-size: 0.95rem; font-weight: 600; margin-bottom: 0.3rem; color: var(--gray-900); }
+        .restaurant-meta { font-size: 0.67rem; color: var(--text-light); margin-bottom: 0.4rem; }
+        .restaurant-desc { font-size: 0.72rem; color: var(--text-light); line-height: 1.55; }
+        .restaurant-footer {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 0.7rem 1.2rem 1rem;
+            border-top: 1px solid var(--gray-150);
+            margin-top: 0.5rem;
+        }
+        .rating-badge {
+            display: inline-flex; align-items: center; gap: 0.3rem;
+            font-size: 0.75rem; font-weight: 600; color: var(--amber);
+        }
+        .rating-badge svg { width: 12px; height: 12px; stroke: var(--amber); fill: var(--amber); }
+
+        .empty-state {
+            text-align: center; padding: 4rem 2rem; background: var(--white);
+            border-radius: 18px; grid-column: 1 / -1; border: 1px solid var(--gray-200);
+        }
+        .empty-state svg { stroke: var(--gray-300); margin-bottom: 1rem; }
+        .empty-state h4 { font-size: 1rem; color: var(--gray-700); margin-bottom: 0.4rem; }
+        .empty-state p { font-size: 0.8rem; color: var(--text-light); }
+
+        /* PAGINATION */
+        .pagination { display: flex; justify-content: center; gap: 0.4rem; margin-top: 2rem; }
+        .page-link {
+            padding: 0.5rem 1rem; border: 1px solid var(--gray-200); border-radius: 9px;
+            text-decoration: none; color: var(--text-soft); font-size: 0.79rem; transition: all 0.2s;
+        }
+        .page-link:hover { border-color: var(--teal); color: var(--teal); }
+        .page-link.active { background: var(--gray-900); color: white; border-color: var(--gray-900); }
+
+        /* ══════════════════════════════════════════════
+           MOUNTAIN ITINERARY SECTION
+        ══════════════════════════════════════════════ */
+        .itinerary-section {
+            position: relative;
+            overflow: hidden;
+            min-height: 780px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-top: 2rem;
+        }
+        .itinerary-bg {
+            position: absolute;
+            inset: 0;
+            background-image: url("{% static 'images/mountain.png' %}");
+            background-size: cover;
+            background-position: center 43%;
+            background-repeat: no-repeat;
+            z-index: 0;
+        }
+        .itinerary-fade-top {
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 280px;
+            background: linear-gradient(to bottom, #F8F9FC 0%, rgba(247,248,250,0) 100%);
+            z-index: 2;
+            pointer-events: none;
+        }
+        .itinerary-fade-bottom {
+            position: absolute;
+            bottom: 0; left: 0; right: 0;
+            height: 320px;
+            background: linear-gradient(to bottom, transparent 0%, #0F1217 100%);
+            z-index: 2;
+            pointer-events: none;
+        }
+        .itinerary-overlay {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0.18) 35%, rgba(0,0,0,0.48) 70%, rgba(0,0,0,0) 100%);
+            z-index: 1;
+        }
+        .itinerary-content {
+            position: relative;
+            z-index: 5;
+            text-align: center;
+            padding: 9rem 2rem 10rem;
+            max-width: 700px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .itinerary-eyebrow {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.55rem;
+            background: rgba(255,255,255,0.08);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255,255,255,0.16);
+            color: rgba(255,255,255,0.82);
+            font-size: 0.65rem;
+            font-weight: 500;
+            letter-spacing: 0.16em;
+            text-transform: uppercase;
+            padding: 0.42rem 1.1rem;
+            border-radius: 40px;
+            margin-bottom: 1.5rem;
+        }
+        .itinerary-eyebrow::before {
+            content: "";
+            display: inline-block;
+            width: 5px; height: 5px;
+            border-radius: 50%;
+            background: #5FC5C5;
+            flex-shrink: 0;
+        }
+        .itinerary-heading {
+            font-family: 'Playfair Display', serif;
+            font-size: 4rem;
+            font-weight: 600;
+            line-height: 1.06;
+            color: white;
+            letter-spacing: -0.02em;
+            margin-bottom: 1rem;
+        }
+        .itinerary-heading em { font-style: italic; color: #8DE8E8; }
+        .itinerary-quote {
+            font-family: 'Playfair Display', serif;
+            font-style: italic;
+            font-size: 1.12rem;
+            color: rgba(255,255,255,0.52);
+            line-height: 1.72;
+            max-width: 500px;
+            margin-bottom: 2.4rem;
+            font-weight: 400;
+        }
+        .itinerary-cta {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.7rem;
+            background: var(--teal);
+            color: white;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.88rem;
+            font-weight: 600;
+            padding: 0.92rem 2.4rem;
+            border-radius: 50px;
+            border: none;
+            cursor: pointer;
+            text-decoration: none;
+            letter-spacing: 0.02em;
+            transition: background 0.22s, transform 0.22s, box-shadow 0.22s;
+            box-shadow: 0 8px 32px rgba(14,138,138,0.38);
+        }
+        .itinerary-cta:hover {
+            background: var(--teal-dark);
+            transform: translateY(-3px);
+            box-shadow: 0 14px 40px rgba(14,138,138,0.45);
+        }
+        .itinerary-cta svg {
+            width: 16px; height: 16px;
+            stroke: white; fill: none; stroke-width: 2;
+        }
+        .itinerary-features {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            margin-top: 1.8rem;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .itinerary-pill {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            background: rgba(255,255,255,0.08);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255,255,255,0.12);
+            color: rgba(255,255,255,0.65);
+            font-size: 0.68rem;
+            font-weight: 500;
+            padding: 0.38rem 0.9rem;
+            border-radius: 40px;
+        }
+        .itinerary-pill svg {
+            width: 11px; height: 11px;
+            stroke: #5FC5C5; fill: none; stroke-width: 2;
+        }
+
+        /* ── FOOTER ── */
+        .site-footer {
+            background: var(--gray-950);
+            color: rgba(255,255,255,0.5);
+            padding: 3rem 5% 2rem;
+            margin-top: 0;
+        }
+        .footer-grid { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 2.5rem; margin-bottom: 2.8rem; }
+        .footer-logo { font-family: 'Playfair Display', serif; font-size: 1.6rem; font-weight: 600; color: white; text-decoration: none; display: block; margin-bottom: 1rem; }
+        .footer-desc { font-size: 0.83rem; color: rgba(255,255,255,0.38); line-height: 1.75; max-width: 240px; }
+        .footer-col h5 { font-size: 0.63rem; letter-spacing: 0.12em; text-transform: uppercase; font-weight: 600; color: rgba(255,255,255,0.45); margin-bottom: 1.2rem; }
+        .footer-col ul { list-style: none; display: flex; flex-direction: column; gap: 0.65rem; }
+        .footer-col ul a { font-size: 0.82rem; color: rgba(255,255,255,0.38); text-decoration: none; transition: color 0.2s; }
+        .footer-col ul a:hover { color: white; }
+        .footer-bottom { border-top: 1px solid rgba(255,255,255,0.07); padding-top: 1.8rem; display: flex; justify-content: space-between; font-size: 0.72rem; }
+
+        /* RESPONSIVE */
+        @media (max-width: 1100px) {
+            .packages-grid { grid-template-columns: repeat(2, 1fr); }
+            .restaurants-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+        @media (max-width: 860px) {
+            .sidebar { transform: translateX(calc(-1 * var(--sidebar-w))); }
+            .sidebar.open { transform: translateX(0); }
+            .main { margin-left: 0 !important; }
+            .hero-section { height: 480px; }
+            .hero-section h1 { font-size: 2.6rem; }
+            .hero-stats { display: none; }
+            .packages-grid { grid-template-columns: 1fr; }
+            .restaurants-grid { grid-template-columns: 1fr; }
+            .page-body { padding: 0 1.2rem 2rem; }
+            .restaurants-section { padding: 0 1.2rem; }
+            .footer-grid { grid-template-columns: 1fr 1fr; }
+            .itinerary-heading { font-size: 2.8rem; }
+        }
+        @media (max-width: 640px) {
+            .hero-section { height: 420px; }
+            .hero-content { padding: 4rem 1.5rem 6rem; }
+            .hero-section h1 { font-size: 2rem; }
+            .footer-grid { grid-template-columns: 1fr; }
+            .footer-bottom { flex-direction: column; text-align: center; gap: 0.6rem; }
+            .itinerary-heading { font-size: 2.2rem; }
+            .itinerary-content { padding: 7rem 1.5rem 8rem; }
+        }
+        @keyframes fadeUp { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
+        .page-body > * { animation: fadeUp 0.5s ease both; }
+    </style>
+</head>
+<body>
+
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+<!-- Close button: same style as hamburger, shows X, slides in when sidebar opens -->
+<button class="sidebar-close-btn" id="sidebarCloseBtn" aria-label="Close sidebar">
+    <span></span>
+    <span></span>
+</button>
+
+<aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+        <a class="sidebar-logo" href="{% url 'index' %}">Wayzo</a>
+        <span class="sidebar-sub">Traveller Portal</span>
+    </div>
+    <div class="sidebar-profile">
+        <div class="sidebar-avatar">
+            {% if profile.profile_picture %}
+                <img src="{{ profile.profile_picture.url }}" alt="{{ profile.first_name }}">
+            {% else %}
+                {{ profile.first_name|first|upper }}{{ profile.last_name|first|upper }}
+            {% endif %}
+        </div>
+        <div class="sidebar-profile-info">
+            <div class="sidebar-profile-name">{{ profile.first_name }} {{ profile.last_name }}</div>
+            <div class="sidebar-profile-role">Explorer</div>
+        </div>
+    </div>
+    <nav class="sidebar-nav">
+        <span class="nav-group-label">Main</span>
+        <a href="{% url 'travellers:dashboard' %}" class="nav-item active">
+            <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+            Dashboard
+        </a>
+        <a href="{% url 'travellers:user_profile' user_id=request.user.id %}" class="nav-item">
+            <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            My Profile
+        </a>
+        <a href="{% url 'travellers:all_packages' %}" class="nav-item">
+            <svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+            Tour Packages
+        </a>
+        <a href="{% url 'travellers:all_restaurants' %}" class="nav-item">
+            <svg viewBox="0 0 24 24"><line x1="12" y1="2" x2="12" y2="6"/><line x1="12" y1="18" x2="12" y2="22"/><path d="M4.93 4.93l2.83 2.83"/><path d="M16.24 16.24l2.83 2.83"/></svg>
+            Restaurants
+        </a>
+        <a href="{% url 'travellers:my_bookings' %}" class="nav-item">
+            <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+            My Bookings
+        </a>
+        <a href="{% url 'travellers:wishlist' %}" class="nav-item">
+            <svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+            Wishlist
+        </a>
+        <span class="nav-group-label">Social</span>
+        <a href="{% url 'travellers:new_post' %}" class="nav-item">
+            <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/><circle cx="12" cy="12" r="10"/></svg>
+            Create Post
+        </a>
+        <a href="{% url 'travellers:inbox' %}" class="nav-item">
+            <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/><circle cx="12" cy="12" r="10"/></svg>
+            Messages
+        </a>
+        <a href="{% url 'community_home' %}" class="nav-item">
+            <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            Community
+        </a>
+        <span class="nav-group-label">Settings</span>
+        <a href="{% url 'travellers:edit_profile' %}" class="nav-item">
+            <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            Edit Profile
+        </a>
+        <a href="{% url 'travellers:change_password' %}" class="nav-item">
+            <svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            Change Password
+        </a>
+    </nav>
+    <div class="sidebar-footer">
+        <a href="{% url 'logout' %}" class="logout-btn">
+            <svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+            Sign Out
+        </a>
+    </div>
+</aside>
+
+<div class="main">
+    <div class="topbar">
+        <div class="topbar-left">
+            <button class="hamburger" id="hamburgerBtn" aria-label="Toggle sidebar">
+                <span></span><span></span><span></span>
+            </button>
+            <div>
+                <h1>Traveller Dashboard</h1>
+                <p>Discover amazing destinations</p>
+            </div>
+        </div>
+        <div class="topbar-right">
+            <button class="notification-btn" id="notificationBtn">
+                <svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+                <span class="notification-badge">{{ unread_notifications|default:"2" }}</span>
+            </button>
+            <div class="avatar-menu" id="avatarMenu">
+                <div class="avatar-trigger" id="avatarTrigger">
+                    <div class="avatar-img">
+                        {% if profile.profile_picture %}
+                            <img src="{{ profile.profile_picture.url }}" alt="{{ profile.first_name }}">
+                        {% else %}
+                            {{ profile.first_name|first|upper }}{{ profile.last_name|first|upper }}
+                        {% endif %}
+                    </div>
+                    <span class="avatar-name">{{ profile.first_name }}</span>
+                </div>
+                <div class="dropdown-popup" id="dropdownPopup">
+                    <div class="dropdown-info">
+                        <p>{{ profile.first_name }} {{ profile.last_name }}</p>
+                        <span>{{ profile.email|default:"traveller@wayzo.com" }}</span>
+                    </div>
+                    <a href="{% url 'travellers:edit_profile' %}" class="dropdown-item">Profile Settings</a>
+                    <a href="{% url 'logout' %}" class="dropdown-item">Sign Out</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="hero-section">
+        <div class="hero-bg"></div>
+        <div class="hero-fade"></div>
+        <div class="hero-content">
+            <div class="hero-eyebrow">Explore the world with Wayzo</div>
+            <h1>Where would you<br><em>like to go?</em></h1>
+            <p>Plan a trip, discover amazing destinations<br>and experiences tailored just for you.</p>
+            <form method="GET" action="{% url 'travellers:all_packages' %}" class="search-bar">
+                <div class="search-bar-inner">
+                    <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                    <input type="text" name="search" placeholder="Search destinations, packages..." value="{{ request.GET.search }}">
+                    <button type="submit">Search</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="page-body">
+        <!-- CONTROL BAR -->
+        <div class="control-bar">
+            <div class="cat-row">
+                <a href="?{% if request.GET.search %}search={{ request.GET.search }}&{% endif %}category=all"
+                   class="category-tab {% if current_category == 'all' %}active{% endif %}">
+                    <span class="cat-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg></span>
+                    All Packages
+                </a>
+                <a href="?{% if request.GET.search %}search={{ request.GET.search }}&{% endif %}category=featured"
+                   class="category-tab {% if current_category == 'featured' %}active{% endif %}">
+                    <span class="cat-icon"><svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></span>
+                    Featured
+                </a>
+                <a href="?{% if request.GET.search %}search={{ request.GET.search }}&{% endif %}category=budget"
+                   class="category-tab {% if current_category == 'budget' %}active{% endif %}">
+                    <span class="cat-icon"><svg viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></span>
+                    Budget Friendly
+                </a>
+                <a href="?{% if request.GET.search %}search={{ request.GET.search }}&{% endif %}category=honeymoon"
+                   class="category-tab {% if current_category == 'honeymoon' %}active{% endif %}">
+                    <span class="cat-icon"><svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg></span>
+                    Honeymoon
+                </a>
+                <a href="?{% if request.GET.search %}search={{ request.GET.search }}&{% endif %}category=family"
+                   class="category-tab {% if current_category == 'family' %}active{% endif %}">
+                    <span class="cat-icon"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span>
+                    Family Trips
+                </a>
+                <a href="?{% if request.GET.search %}search={{ request.GET.search }}&{% endif %}category=adventure"
+                   class="category-tab {% if current_category == 'adventure' %}active{% endif %}">
+                    <span class="cat-icon"><svg viewBox="0 0 24 24"><path d="M3 17l4-8 4 4 3-6 4 10"/><path d="M3 20h18"/></svg></span>
+                    Adventure
+                </a>
+                <a href="?{% if request.GET.search %}search={{ request.GET.search }}&{% endif %}category=relaxation"
+                   class="category-tab {% if current_category == 'relaxation' %}active{% endif %}">
+                    <span class="cat-icon"><svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></span>
+                    Relaxation
+                </a>
+                <a href="?{% if request.GET.search %}search={{ request.GET.search }}&{% endif %}category=city"
+                   class="category-tab {% if current_category == 'city' %}active{% endif %}">
+                    <span class="cat-icon"><svg viewBox="0 0 24 24"><line x1="3" y1="22" x2="21" y2="22"/><rect x="9" y="2" width="6" height="20"/><path d="M3 22V10l6-6"/><path d="M21 22V10l-6-6"/></svg></span>
+                    City Tours
+                </a>
+            </div>
+
+            <div class="filter-sort-row">
+                <div class="filter-left">
+                    <button class="filter-toggle-btn" id="filterToggleBtn">
+                        <svg viewBox="0 0 24 24"><polygon points="22 3 2 3 10 13 10 21 14 18 14 13 22 3"/></svg>
+                        Filters
+                    </button>
+                    
+                </div>
+                <select class="sort-select" onchange="window.location.href=this.value">
+                    <option value="?{% for key, value in request.GET.items %}{% if key != 'sort' %}{{ key }}={{ value }}&{% endif %}{% endfor %}sort=featured" {% if current_sort == 'featured' %}selected{% endif %}>Sort: Featured</option>
+                    <option value="?{% for key, value in request.GET.items %}{% if key != 'sort' %}{{ key }}={{ value }}&{% endif %}{% endfor %}sort=price_low" {% if current_sort == 'price_low' %}selected{% endif %}>Price: Low to High</option>
+                    <option value="?{% for key, value in request.GET.items %}{% if key != 'sort' %}{{ key }}={{ value }}&{% endif %}{% endfor %}sort=price_high" {% if current_sort == 'price_high' %}selected{% endif %}>Price: High to Low</option>
+                    <option value="?{% for key, value in request.GET.items %}{% if key != 'sort' %}{{ key }}={{ value }}&{% endif %}{% endfor %}sort=new" {% if current_sort == 'new' %}selected{% endif %}>Newest First</option>
+                    <option value="?{% for key, value in request.GET.items %}{% if key != 'sort' %}{{ key }}={{ value }}&{% endif %}{% endfor %}sort=discount" {% if current_sort == 'discount' %}selected{% endif %}>Biggest Discount</option>
+                </select>
+            </div>
+
+            <div class="filters-panel" id="filtersSidebar">
+                <form method="GET" action="{% url 'travellers:all_packages' %}">
+                    <input type="hidden" name="search" value="{{ request.GET.search }}">
+                    <input type="hidden" name="category" value="{{ request.GET.category }}">
+                    <input type="hidden" name="sort" value="{{ request.GET.sort }}">
+                    <div class="filter-grid">
+                        <div class="filter-group">
+                            <h4>Price Range (₹)</h4>
+                            <div class="price-range">
+                                <input type="number" name="min_price" placeholder="Min" value="{{ request.GET.min_price }}">
+                                <input type="number" name="max_price" placeholder="Max" value="{{ request.GET.max_price }}">
+                            </div>
+                        </div>
+                        <div class="filter-group">
+                            <h4>Duration</h4>
+                            <div class="filter-options">
+                                <label class="filter-option"><input type="radio" name="duration" value="short" {% if request.GET.duration == 'short' %}checked{% endif %}> 1–3 Days</label>
+                                <label class="filter-option"><input type="radio" name="duration" value="medium" {% if request.GET.duration == 'medium' %}checked{% endif %}> 4–7 Days</label>
+                                <label class="filter-option"><input type="radio" name="duration" value="long" {% if request.GET.duration == 'long' %}checked{% endif %}> 7+ Days</label>
+                            </div>
+                        </div>
+                        <div class="filter-group">
+                            <h4>Transport</h4>
+                            <select name="transport">
+                                <option value="">Any Transport</option>
+                                <option value="flight" {% if request.GET.transport == 'flight' %}selected{% endif %}>Flight</option>
+                                <option value="train" {% if request.GET.transport == 'train' %}selected{% endif %}>Train</option>
+                                <option value="bus" {% if request.GET.transport == 'bus' %}selected{% endif %}>Bus</option>
+                                <option value="cab" {% if request.GET.transport == 'cab' %}selected{% endif %}>Cab</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <h4>Accommodation</h4>
+                            <select name="accommodation">
+                                <option value="">Any Accommodation</option>
+                                <option value="hotel" {% if request.GET.accommodation == 'hotel' %}selected{% endif %}>Hotel</option>
+                                <option value="resort" {% if request.GET.accommodation == 'resort' %}selected{% endif %}>Resort</option>
+                                <option value="homestay" {% if request.GET.accommodation == 'homestay' %}selected{% endif %}>Homestay</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <h4>Guide Language</h4>
+                            <select name="language">
+                                <option value="">Any Language</option>
+                                <option value="english" {% if request.GET.language == 'english' %}selected{% endif %}>English</option>
+                                <option value="hindi" {% if request.GET.language == 'hindi' %}selected{% endif %}>Hindi</option>
+                                <option value="malayalam" {% if request.GET.language == 'malayalam' %}selected{% endif %}>Malayalam</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="filter-actions">
+                        <button type="submit" class="apply-btn">Apply Filters</button>
+                        <a href="{% url 'travellers:all_packages' %}" class="clear-btn">Clear All</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- PACKAGES GRID -->
+        <div class="packages-section">
+            <!-- Section header: title LEFT, View All RIGHT -->
+            <div class="section-header">
+                <div class="section-header-left">
+                    <h2>Explore Tour Packages</h2>
+                    <span>Find your perfect getaway</span>
+                </div>
+                <a href="{% url 'travellers:all_packages' %}" class="view-all-btn">
+                    View All
+                    <svg viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                </a>
+            </div>
+
+            <div class="packages-grid">
+                {% for package in packages|slice:":3" %}
+                <div class="pkg-card" onclick="window.location.href='{% url 'travellers:package_detail' package.id %}'">
+                    <div class="pkg-thumb">
+                        {% if package.images.all %}
+                            <img src="{{ package.images.all.0.image.url }}" alt="{{ package.title }}">
+                        {% else %}
+                            <div class="pkg-thumb-placeholder">
+                                <svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                                <span>No image</span>
+                            </div>
+                        {% endif %}
+                        {% if package.is_featured %}<span class="pkg-badge featured">Featured</span>{% endif %}
+                        {% if package.discounted_price %}<span class="discount-badge">-{{ package.discount_percentage }}% OFF</span>{% endif %}
+                    </div>
+                    <div class="pkg-body">
+                        <h4>{{ package.title }}</h4>
+                        <div class="pkg-meta">
+                            <span>{{ package.duration_days }}D / {{ package.duration_nights }}N</span>
+                            <span class="pkg-meta-dot">•</span>
+                            <span>{{ package.places_covered|truncatechars:25 }}</span>
+                        </div>
+                        <p class="pkg-desc">{{ package.description|truncatewords:14 }}</p>
+                    </div>
+                    <div class="pkg-footer">
+                        <div class="price-block">
+                            {% if package.discounted_price %}
+                                <span class="pkg-price">₹{{ package.discounted_price|floatformat:0 }}</span>
+                                <span class="original-price">₹{{ package.price|floatformat:0 }}</span>
+                            {% else %}
+                                <span class="pkg-price">₹{{ package.price|floatformat:0 }}</span>
+                            {% endif %}
+                            <span class="per-person">/ person</span>
+                        </div>
+                        <button class="wishlist-btn" onclick="event.stopPropagation(); addToWishlist({{ package.id }})" title="Save to wishlist">
+                            <svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+                        </button>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="empty-state">
+                    <svg width="44" height="44" viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                    <h4>No packages found</h4>
+                    <p>Try adjusting your filters or search criteria.</p>
+                </div>
+                {% endfor %}
+            </div>
+
+<div style="background:#f5f7fb; padding:20px; border-radius:10px; margin-bottom:20px;">
+    <h2>Plan Your Next Trip</h2>
+    <p>Create a personalized AI-powered itinerary based on your mood, budget, and preferences.</p>
+
+    <a href="{% url 'travellers:create_travel_plan' %}"
+       style="
+          display:inline-block;
+          padding:12px 18px;
+          background:green;
+          color:white;
+          text-decoration:none;
+          border-radius:6px;
+       ">
+       ➕ Create Travel Plan
+    </a>
+</div>
+            <!-- PAGINATION -->
+            {% if packages.has_other_pages %}
+            <div class="pagination">
+                {% if packages.has_previous %}
+                    <a href="?page={{ packages.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" class="page-link">← Prev</a>
+                {% endif %}
+                {% for num in packages.paginator.page_range %}
+                    {% if packages.number == num %}
+                        <span class="page-link active">{{ num }}</span>
+                    {% elif num > packages.number|add:'-3' and num < packages.number|add:'3' %}
+                        <a href="?page={{ num }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" class="page-link">{{ num }}</a>
+                    {% endif %}
+                {% endfor %}
+                {% if packages.has_next %}
+                    <a href="?page={{ packages.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" class="page-link">Next →</a>
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+    </div><!-- end page-body -->
+
+    <!-- ── RESTAURANTS SECTION (outside page-body, full width padding) ── -->
+    <div class="restaurants-section">
+        <!-- Section header: title LEFT, View All RIGHT -->
+        <div class="section-head">
+            <div>
+                <h3>Recommended Restaurants</h3>
+                <p>Discover the best culinary experiences</p>
+            </div>
+            <a href="{% url 'travellers:all_restaurants' %}" class="view-all-btn">
+                View All
+                <svg viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+            </a>
+        </div>
+        <div class="restaurants-grid">
+            {% for restaurant in restaurants|slice:":3" %}
+            <div class="restaurant-card">
+                <div class="restaurant-thumb">
+                    {% if restaurant.gallery.all %}
+                        <img src="{{ restaurant.gallery.all.0.image.url }}" alt="{{ restaurant.restaurant_name }}">
+                    {% else %}
+                        <div class="restaurant-thumb-placeholder">
+                            <svg viewBox="0 0 24 24"><line x1="12" y1="2" x2="12" y2="6"/><line x1="12" y1="18" x2="12" y2="22"/><path d="M4.93 4.93l2.83 2.83"/><path d="M16.24 16.24l2.83 2.83"/></svg>
+                            <span>No image</span>
+                        </div>
+                    {% endif %}
+                    <span class="restaurant-type-badge">{{ restaurant.property_type|default:"Restaurant" }}</span>
+                </div>
+                <div class="restaurant-body">
+                    <h4>{{ restaurant.restaurant_name }}</h4>
+                    <div class="restaurant-meta"><span>{{ restaurant.city }}, {{ restaurant.state }}</span></div>
+                    <p class="restaurant-desc">{{ restaurant.description|truncatewords:14 }}</p>
+                </div>
+                <div class="restaurant-footer">
+                    <span class="rating-badge">
+                        <svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                        {{ restaurant.rating|default:"4.5" }}
+                    </span>
+                    <a href="{% url 'travellers:restaurant_detail' restaurant.id %}" class="view-all-btn" style="padding:0.4rem 1rem;font-size:0.7rem;">View Details</a>
+                </div>
+            </div>
+            {% empty %}
+            <div class="empty-state">
+                <svg width="44" height="44" viewBox="0 0 24 24"><line x1="12" y1="2" x2="12" y2="6"/><line x1="12" y1="18" x2="12" y2="22"/><path d="M4.93 4.93l2.83 2.83"/><path d="M16.24 16.24l2.83 2.83"/></svg>
+                <h4>No restaurants available</h4>
+                <p>Restaurant listings are on the way!</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- MOUNTAIN ITINERARY SECTION --> 
+    <section class="itinerary-section">
+        <div class="itinerary-bg"></div>
+        <div class="itinerary-fade-top"></div>
+        <div class="itinerary-fade-bottom"></div>
+        <div class="itinerary-overlay"></div>
+        <div class="itinerary-content">
+            <div class="itinerary-eyebrow">Plan your adventure</div>
+            <h2 class="itinerary-heading">
+                Set up your<br><em>perfect itinerary</em>
+            </h2>
+            <p class="itinerary-quote">
+                The world is too magnificent to experience by chance — every unforgettable journey begins with the right plan, and the courage to take the first step.
+            </p>
+            <a href="{% url 'travellers:all_packages' %}" class="itinerary-cta">
+                <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                Find Your Journey
+            </a>
+            <div class="itinerary-features">
+                <div class="itinerary-pill">
+                    <svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                    500+ Destinations
+                </div>
+                <div class="itinerary-pill">
+                    <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+                    Expert Guides
+                </div>
+                <div class="itinerary-pill">
+                    <svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                    Fully Customisable
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <footer class="site-footer">
+        <div class="footer-grid">
+            <div>
+                <a class="footer-logo" href="{% url 'index' %}">Wayzo</a>
+                <p class="footer-desc">Your smart travel companion. Discover, plan, and experience the world beautifully — one journey at a time.</p>
+            </div>
+            <div class="footer-col"><h5>Explore</h5><ul><li><a href="{% url 'travellers:all_packages' %}">Tour Packages</a></li><li><a href="{% url 'travellers:all_restaurants' %}">Restaurants</a></li><li><a href="#">Destinations</a></li></ul></div>
+            <div class="footer-col"><h5>My Account</h5><ul><li><a href="{% url 'travellers:my_bookings' %}">My Bookings</a></li><li><a href="{% url 'travellers:wishlist' %}">Wishlist</a></li><li><a href="{% url 'travellers:edit_profile' %}">Profile Settings</a></li></ul></div>
+            <div class="footer-col"><h5>Support</h5><ul><li><a href="#">Help Center</a></li><li><a href="#">Contact Us</a></li><li><a href="#">Terms & Privacy</a></li></ul></div>
+        </div>
+        <div class="footer-bottom"><span>© 2025 Wayzo. All rights reserved.</span><span>Made for explorers everywhere</span></div>
+    </footer>
+</div>
+
+<script>
+    // ── Sidebar toggle ──
+    const sidebar = document.getElementById('sidebar');
+    const hamburgerBtn = document.getElementById('hamburgerBtn');
+    const sidebarCloseBtn = document.getElementById('sidebarCloseBtn');
+    const mainEl = document.querySelector('.main');
+    const overlay = document.getElementById('sidebarOverlay');
+    const MOBILE_BP = 860;
+
+    function isMobile() { return window.innerWidth <= MOBILE_BP; }
+
+    function setSidebarOpen(open) {
+        if (open) {
+            document.body.classList.add('sidebar-is-open');
+        } else {
+            document.body.classList.remove('sidebar-is-open');
+        }
+
+        if (isMobile()) {
+            if (open) {
+                sidebar.classList.add('open');
+                overlay.classList.add('visible');
+                hamburgerBtn.classList.add('is-open');
+                document.body.style.overflow = 'hidden';
+            } else {
+                sidebar.classList.remove('open');
+                overlay.classList.remove('visible');
+                hamburgerBtn.classList.remove('is-open');
+                document.body.style.overflow = '';
+            }
+        } else {
+            if (open) {
+                sidebar.classList.remove('collapsed');
+                mainEl.classList.remove('sidebar-collapsed');
+                hamburgerBtn.classList.add('is-open');
+            } else {
+                sidebar.classList.add('collapsed');
+                mainEl.classList.add('sidebar-collapsed');
+                hamburgerBtn.classList.remove('is-open');
+            }
+            overlay.classList.remove('visible');
+        }
+    }
+
+    function toggleSidebar() {
+        if (isMobile()) {
+            setSidebarOpen(!sidebar.classList.contains('open'));
+        } else {
+            setSidebarOpen(sidebar.classList.contains('collapsed'));
+        }
+    }
+
+    // Initial state: sidebar collapsed/closed on load
+    if (isMobile()) {
+        sidebar.classList.remove('open');
+        overlay.classList.remove('visible');
+    } else {
+        sidebar.classList.add('collapsed');
+        mainEl.classList.add('sidebar-collapsed');
+    }
+
+    hamburgerBtn.addEventListener('click', toggleSidebar);
+    sidebarCloseBtn.addEventListener('click', () => setSidebarOpen(false));
+    overlay.addEventListener('click', () => setSidebarOpen(false));
+
+    window.addEventListener('resize', () => {
+        if (!isMobile()) {
+            sidebar.classList.add('collapsed');
+            mainEl.classList.add('sidebar-collapsed');
+            sidebar.classList.remove('open');
+            overlay.classList.remove('visible');
+            hamburgerBtn.classList.remove('is-open');
+            document.body.style.overflow = '';
+            document.body.classList.remove('sidebar-is-open');
+        } else {
+            sidebar.classList.remove('collapsed');
+            mainEl.classList.remove('sidebar-collapsed');
+        }
+    });
+
+    // ── Filter panel toggle ──
+    const filterToggleBtn = document.getElementById('filterToggleBtn');
+    const filtersSidebar = document.getElementById('filtersSidebar');
+    if (filterToggleBtn && filtersSidebar) {
+        filterToggleBtn.addEventListener('click', () => {
+            filtersSidebar.classList.toggle('show');
+        });
+    }
+
+    // ── Avatar dropdown ──
+    const avatarTrigger = document.getElementById('avatarTrigger');
+    const dropdownPopup = document.getElementById('dropdownPopup');
+    if (avatarTrigger && dropdownPopup) {
+        avatarTrigger.addEventListener('click', (e) => {
+            e.stopPropagation();
+            dropdownPopup.classList.toggle('show');
+        });
+        document.addEventListener('click', (e) => {
+            if (!avatarTrigger.contains(e.target) && !dropdownPopup.contains(e.target)) {
+                dropdownPopup.classList.remove('show');
+            }
+        });
+    }
+
+    // ── Notification placeholder ──
+    const notifBtn = document.getElementById('notificationBtn');
+    if (notifBtn) {
+        notifBtn.addEventListener('click', () => alert('🔔 You have new notifications. Stay tuned for updates!'));
+    }
+
+    // ── Wishlist AJAX ──
+    function addToWishlist(packageId) {
+        fetch(`/travellers/wishlist/add/${packageId}/`, {
+            method: 'GET',
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.status === 'added') alert('✨ Added to wishlist!');
+            else if (data.status === 'removed') alert('❤️ Removed from wishlist.');
+            else alert('Wishlist updated!');
+            location.reload();
+        })
+        .catch(() => {
+            alert('✨ Added to wishlist!');
+            location.reload();
+        });
+    }
+</script>
+
+<script>
+function addToWishlist(packageId) {
+    fetch(`/traveller/wishlist_add/${packageId}/`, {
+        method: 'GET',   // you're using GET in backend
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        console.log(data);
+
+        // Optional: UI feedback
+        if (data.status === 'added') {
+            alert("Added to wishlist ❤️");
+        } else {
+            alert("Removed from wishlist 💔");
+        }
+    })
+    .catch(error => console.error('Error:', error));
+}
+</script>
+</body>
+</html>

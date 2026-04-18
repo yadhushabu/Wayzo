@@ -1,0 +1,22 @@
+{% for booking in bookings %}
+<div class="booking-card">
+
+    <p><strong>User:</strong> {{ booking.user.username }}</p>
+    <p><strong>Type:</strong> {{ booking.booking_type }}</p>
+    <p><strong>Check-in:</strong> {{ booking.check_in }}</p>
+    <p><strong>Status:</strong> {{ booking.status }}</p>
+
+    {% if booking.status == "pending" %}
+        <a href="{% url 'confirm_booking' booking.id %}" class="btn btn-success">
+            Confirm
+        </a>
+
+        <a href="{% url 'reject_booking' booking.id %}" class="btn btn-danger">
+            Reject
+        </a>
+    {% else %}
+        <span class="badge">{{ booking.status }}</span>
+    {% endif %}
+
+</div>
+{% endfor %}

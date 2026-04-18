@@ -1,0 +1,889 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Attraction to {{ destination.name }}</title>
+    
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Select2 CSS for better multi-select -->
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            background: white;
+            border-radius: 15px;
+            padding: 20px 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        
+        .header h2 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+        
+        .header h2 i {
+            color: #667eea;
+            margin-right: 10px;
+        }
+        
+        .destination-info {
+            background: #f0f4ff;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 15px;
+        }
+        
+        .destination-info i {
+            color: #667eea;
+            margin-right: 10px;
+        }
+        
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+        }
+        
+        .form-container {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        
+        .map-container {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 20px;
+        }
+        
+        .map-container h3 {
+            margin-bottom: 15px;
+            color: #333;
+        }
+        
+        #map {
+            height: 400px;
+            border-radius: 10px;
+            border: 2px solid #e0e0e0;
+        }
+        
+        .coordinates {
+            margin-top: 15px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+        
+        .coordinates p {
+            margin: 5px 0;
+            font-size: 14px;
+        }
+        
+        .coordinates i {
+            color: #667eea;
+            width: 25px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+        
+        label i {
+            margin-right: 8px;
+            color: #667eea;
+        }
+        
+        label .required {
+            color: #ff4444;
+        }
+        
+        .help-text {
+            font-size: 12px;
+            color: #666;
+            margin-top: 5px;
+        }
+        
+        input, select, textarea {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.3s;
+            font-family: inherit;
+        }
+        
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        select[multiple] {
+            min-height: 120px;
+            padding: 8px;
+        }
+        
+        select[multiple] option {
+            padding: 8px;
+            margin: 2px 0;
+            border-radius: 4px;
+        }
+        
+        select[multiple] option:checked {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .priority-buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        
+        .priority-btn {
+            flex: 1;
+            padding: 10px;
+            border: 2px solid #e0e0e0;
+            background: white;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: center;
+        }
+        
+        .priority-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .priority-btn.selected {
+            border-color: #667eea;
+            background: #f0f4ff;
+        }
+        
+        .priority-1 { border-left: 4px solid #ff4444; }
+        .priority-2 { border-left: 4px solid #ff7744; }
+        .priority-3 { border-left: 4px solid #ffaa44; }
+        .priority-4 { border-left: 4px solid #ffdd44; }
+        .priority-5 { border-left: 4px solid #44ff44; }
+        
+        .costs-section {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 2px solid #e0e0e0;
+        }
+        
+        .cost-item {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            position: relative;
+        }
+        
+        .cost-item .delete-row {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            color: #ff4444;
+            cursor: pointer;
+            background: white;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 12px;
+        }
+        
+        .cost-item .delete-row:hover {
+            background: #ff4444;
+            color: white;
+        }
+        
+        .add-cost-btn {
+            background: #f0f4ff;
+            border: 2px dashed #667eea;
+            padding: 10px;
+            text-align: center;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-top: 10px;
+            color: #667eea;
+            font-weight: 600;
+        }
+        
+        .add-cost-btn:hover {
+            background: #667eea;
+            color: white;
+        }
+        
+        button[type="submit"] {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.3s;
+            margin-top: 20px;
+        }
+        
+        button[type="submit"]:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+        
+        .search-box {
+            margin-bottom: 15px;
+        }
+        
+        .search-box input {
+            padding-left: 40px;
+            background-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" fill="%23666" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>');
+            background-repeat: no-repeat;
+            background-position: 12px center;
+            background-size: 18px;
+        }
+        
+        .alert {
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .alert-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        @media (max-width: 768px) {
+            .grid-2 {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .errorlist {
+            color: #ff4444;
+            list-style: none;
+            margin-top: 5px;
+            font-size: 12px;
+        }
+        
+        .errorlist li {
+            margin-top: 3px;
+        }
+        
+        input.error, select.error, textarea.error {
+            border-color: #ff4444;
+        }
+        
+        .selected-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 10px;
+        }
+        
+        .tag {
+            background: #e0e0e0;
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 12px;
+        }
+        
+        /* Custom scrollbar */
+        .form-container::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        .form-container::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+        
+        .form-container::-webkit-scrollbar-thumb {
+            background: #667eea;
+            border-radius: 10px;
+        }
+    </style>
+    
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <!-- jQuery and Select2 JS -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h2>
+                <i class="fas fa-plus-circle"></i> 
+                Add Attraction to {{ destination.name }}
+            </h2>
+            <div class="destination-info">
+                <i class="fas fa-map-marker-alt"></i>
+                <strong>Destination:</strong> {{ destination.name }}
+                {% if destination.latitude and destination.longitude %}
+                <br>
+                <i class="fas fa-location-dot"></i>
+                <small>Location: {{ destination.latitude }}, {{ destination.longitude }}</small>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Display form errors -->
+        {% if form.errors %}
+        <div class="alert alert-error">
+            <i class="fas fa-exclamation-circle"></i>
+            Please correct the errors below.
+        </div>
+        {% endif %}
+        
+        <div class="grid-2">
+            <!-- Form Section -->
+            <div class="form-container">
+                <form method="post" enctype="multipart/form-data" id="attraction-form">
+                    {% csrf_token %}
+                    
+                    <!-- Destination field (hidden) -->
+                    <input type="hidden" name="destination" value="{{ destination.id }}">
+                    
+                    <!-- Name -->
+                    <div class="form-group">
+                        <label><i class="fas fa-landmark"></i> Attraction Name <span class="required">*</span></label>
+                        <input type="text" name="name" id="attraction-name" 
+                               value="{{ form.name.value|default:'' }}"
+                               placeholder="e.g., Taj Mahal, Eiffel Tower" required>
+                        {% if form.name.errors %}
+                            <ul class="errorlist">{{ form.name.errors }}</ul>
+                        {% endif %}
+                        <div class="help-text">Enter attraction name - map will auto-locate it</div>
+                    </div>
+                    
+                    <!-- Description -->
+                    <div class="form-group">
+                        <label><i class="fas fa-align-left"></i> Description</label>
+                        <textarea name="description" rows="3" placeholder="Describe the attraction...">{{ form.description.value|default:'' }}</textarea>
+                        {% if form.description.errors %}
+                            <ul class="errorlist">{{ form.description.errors }}</ul>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Latitude & Longitude (hidden) -->
+                    <input type="hidden" name="latitude" id="latitude-input" value="{{ form.latitude.value|default:'' }}">
+                    <input type="hidden" name="longitude" id="longitude-input" value="{{ form.longitude.value|default:'' }}">
+                    
+                    <!-- Priority Score -->
+                    <div class="form-group">
+                        <label><i class="fas fa-star"></i> Priority Score 
+                            <span class="help-text">(How important is this attraction?)</span>
+                        </label>
+                        <div class="priority-buttons" id="priority-buttons">
+                            <div class="priority-btn priority-1" data-priority="1">
+                                <i class="fas fa-fire"></i> Must Visit
+                                <br><small>Essential - Cannot miss</small>
+                            </div>
+                            <div class="priority-btn priority-2" data-priority="2">
+                                <i class="fas fa-thumbs-up"></i> Very Important
+                                <br><small>High priority</small>
+                            </div>
+                            <div class="priority-btn priority-3" data-priority="3">
+                                <i class="fas fa-smile"></i> Nice to See
+                                <br><small>Good to include</small>
+                            </div>
+                            <div class="priority-btn priority-4" data-priority="4">
+                                <i class="fas fa-clock"></i> If Time Permits
+                                <br><small>Low priority</small>
+                            </div>
+                            <div class="priority-btn priority-5" data-priority="5">
+                                <i class="fas fa-coffee"></i> Optional
+                                <br><small>Skip if busy</small>
+                            </div>
+                        </div>
+                        <input type="hidden" name="priority_score" id="priority_score" value="{{ form.priority_score.value|default:'1' }}">
+                        {% if form.priority_score.errors %}
+                            <ul class="errorlist">{{ form.priority_score.errors }}</ul>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Average Time Needed -->
+                    <div class="form-group">
+                        <label><i class="fas fa-hourglass-half"></i> Average Time Needed (minutes)</label>
+                        <input type="number" name="average_time_needed" 
+                               value="{{ form.average_time_needed.value|default:'' }}"
+                               placeholder="e.g., 120 for 2 hours">
+                        {% if form.average_time_needed.errors %}
+                            <ul class="errorlist">{{ form.average_time_needed.errors }}</ul>
+                        {% endif %}
+                        <div class="help-text">How many minutes typically needed to visit this place?</div>
+                    </div>
+                    
+                    <!-- Entry Fee -->
+                    <div class="form-group">
+                        <label><i class="fas fa-ticket-alt"></i> Entry Fee (in local currency)</label>
+                        <input type="number" name="entry_fee" 
+                               value="{{ form.entry_fee.value|default:'0' }}">
+                        {% if form.entry_fee.errors %}
+                            <ul class="errorlist">{{ form.entry_fee.errors }}</ul>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Extra Cost Per Person -->
+                    <div class="form-group">
+                        <label><i class="fas fa-dollar-sign"></i> Extra Cost Per Person</label>
+                        <input type="number" name="extra_cost_per_person" 
+                               value="{{ form.extra_cost_per_person.value|default:'0' }}">
+                        <div class="help-text">Jeep safari, cruise, activities etc.</div>
+                    </div>
+                    
+                    <!-- Group Cost -->
+                    <div class="form-group">
+                        <label><i class="fas fa-users"></i> Group Cost</label>
+                        <input type="number" name="group_cost" 
+                               value="{{ form.group_cost.value|default:'0' }}">
+                        <div class="help-text">Cost for group activities (boat, private tour, etc.)</div>
+                    </div>
+                    
+                    <!-- Activities - Multi Select -->
+                    <div class="form-group">
+                        <label><i class="fas fa-hiking"></i> Activities <span class="required">*</span></label>
+                        <select name="activities" multiple class="multi-select" id="activities-select" required>
+                            <option value="trekking" {% if 'trekking' in form.activities.value %}selected{% endif %}>🥾 Trekking</option>
+                            <option value="jet ski" {% if 'jet ski' in form.activities.value %}selected{% endif %}>🛥️ Jet Ski</option>
+                            <option value="cruise" {% if 'cruise' in form.activities.value %}selected{% endif %}>🚢 Cruise</option>
+                            <option value="nightlife" {% if 'nightlife' in form.activities.value %}selected{% endif %}>🎉 Nightlife</option>
+                            <option value="shopping" {% if 'shopping' in form.activities.value %}selected{% endif %}>🛍️ Shopping</option>
+                            <option value="swimming" {% if 'swimming' in form.activities.value %}selected{% endif %}>🏊 Swimming</option>
+                            <option value="snorkeling" {% if 'snorkeling' in form.activities.value %}selected{% endif %}>🤿 Snorkeling</option>
+                            <option value="scuba diving" {% if 'scuba diving' in form.activities.value %}selected{% endif %}>🐠 Scuba Diving</option>
+                            <option value="paragliding" {% if 'paragliding' in form.activities.value %}selected{% endif %}>🪂 Paragliding</option>
+                            <option value="rafting" {% if 'rafting' in form.activities.value %}selected{% endif %}>🛶 Rafting</option>
+                            <option value="camping" {% if 'camping' in form.activities.value %}selected{% endif %}>🏕️ Camping</option>
+                            <option value="photography" {% if 'photography' in form.activities.value %}selected{% endif %}>📸 Photography</option>
+                            <option value="bird watching" {% if 'bird watching' in form.activities.value %}selected{% endif %}>🦜 Bird Watching</option>
+                            <option value="sightseeing" {% if 'sightseeing' in form.activities.value %}selected{% endif %}>🏛️ Sightseeing</option>
+                            <option value="spiritual" {% if 'spiritual' in form.activities.value %}selected{% endif %}>🕉️ Spiritual</option>
+                        </select>
+                        {% if form.activities.errors %}
+                            <ul class="errorlist">{{ form.activities.errors }}</ul>
+                        {% endif %}
+                        <div class="help-text">Hold Ctrl (Windows) or Cmd (Mac) to select multiple activities</div>
+                    </div>
+                    
+                    <!-- Best Time of Day -->
+                    <div class="form-group">
+                        <label><i class="fas fa-sun"></i> Best Time of Day</label>
+                        <select name="best_time_of_day">
+                            <option value="morning" {% if form.best_time_of_day.value == 'morning' %}selected{% endif %}>🌅 Morning (6AM - 12PM)</option>
+                            <option value="afternoon" {% if form.best_time_of_day.value == 'afternoon' %}selected{% endif %}>☀️ Afternoon (12PM - 5PM)</option>
+                            <option value="evening" {% if form.best_time_of_day.value == 'evening' %}selected{% endif %}>🌆 Evening (5PM - 8PM)</option>
+                            <option value="night" {% if form.best_time_of_day.value == 'night' %}selected{% endif %}>🌙 Night (8PM - 12AM)</option>
+                            <option value="any" {% if form.best_time_of_day.value == 'any' or not form.best_time_of_day.value %}selected{% endif %}>🕐 Any Time</option>
+                        </select>
+                        {% if form.best_time_of_day.errors %}
+                            <ul class="errorlist">{{ form.best_time_of_day.errors }}</ul>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Best Months -->
+                    <div class="form-group">
+                        <label><i class="fas fa-calendar-alt"></i> Best Months</label>
+                        <input type="text" name="best_months" 
+                               value="{{ form.best_months.value|default:'' }}"
+                               placeholder="e.g., Oct-Mar, Jun-Sep">
+                        <div class="help-text">Best time to visit this attraction</div>
+                    </div>
+                    
+                    <!-- Suitable For - Multi Select -->
+                    <div class="form-group">
+                        <label><i class="fas fa-users"></i> Suitable For <span class="required">*</span></label>
+                        <select name="suitable_for" multiple class="multi-select" id="suitable-for-select" required>
+                            <option value="family" {% if 'family' in form.suitable_for.value %}selected{% endif %}>👨‍👩‍👧‍👦 Family</option>
+                            <option value="friends" {% if 'friends' in form.suitable_for.value %}selected{% endif %}>👥 Friends</option>
+                            <option value="couples" {% if 'couples' in form.suitable_for.value %}selected{% endif %}>💑 Couples</option>
+                            <option value="solo" {% if 'solo' in form.suitable_for.value %}selected{% endif %}>🧘 Solo Travelers</option>
+                            <option value="seniors" {% if 'seniors' in form.suitable_for.value %}selected{% endif %}>👴 Seniors</option>
+                            <option value="kids" {% if 'kids' in form.suitable_for.value %}selected{% endif %}>🧒 Kids</option>
+                            <option value="students" {% if 'students' in form.suitable_for.value %}selected{% endif %}>🎓 Students</option>
+                        </select>
+                        {% if form.suitable_for.errors %}
+                            <ul class="errorlist">{{ form.suitable_for.errors }}</ul>
+                        {% endif %}
+                        <div class="help-text">Hold Ctrl (Windows) or Cmd (Mac) to select multiple options</div>
+                    </div>
+                    
+                    <!-- Experience Type - Multi Select -->
+                    <div class="form-group">
+                        <label><i class="fas fa-mountain"></i> Experience Type <span class="required">*</span></label>
+                        <select name="experience_type" multiple class="multi-select" id="experience-type-select" required>
+                            <option value="adventure" {% if 'adventure' in form.experience_type.value %}selected{% endif %}>🧗 Adventure</option>
+                            <option value="trekking" {% if 'trekking' in form.experience_type.value %}selected{% endif %}>🥾 Trekking</option>
+                            <option value="relaxed" {% if 'relaxed' in form.experience_type.value %}selected{% endif %}>😌 Relaxed</option>
+                            <option value="spiritual" {% if 'spiritual' in form.experience_type.value %}selected{% endif %}>🕉️ Spiritual</option>
+                            <option value="nightlife" {% if 'nightlife' in form.experience_type.value %}selected{% endif %}>🎉 Nightlife</option>
+                            <option value="cultural" {% if 'cultural' in form.experience_type.value %}selected{% endif %}>🏛️ Cultural</option>
+                            <option value="food" {% if 'food' in form.experience_type.value %}selected{% endif %}>🍜 Food & Dining</option>
+                            <option value="shopping" {% if 'shopping' in form.experience_type.value %}selected{% endif %}>🛍️ Shopping</option>
+                            <option value="historical" {% if 'historical' in form.experience_type.value %}selected{% endif %}>🏰 Historical</option>
+                            <option value="nature" {% if 'nature' in form.experience_type.value %}selected{% endif %}>🌿 Nature</option>
+                            <option value="wildlife" {% if 'wildlife' in form.experience_type.value %}selected{% endif %}>🦁 Wildlife</option>
+                            <option value="beach" {% if 'beach' in form.experience_type.value %}selected{% endif %}>🏖️ Beach</option>
+                        </select>
+                        {% if form.experience_type.errors %}
+                            <ul class="errorlist">{{ form.experience_type.errors }}</ul>
+                        {% endif %}
+                        <div class="help-text">Hold Ctrl (Windows) or Cmd (Mac) to select multiple options</div>
+                    </div>
+                    
+                    <!-- Difficulty Level -->
+                    <div class="form-group">
+                        <label><i class="fas fa-chart-line"></i> Difficulty Level</label>
+                        <select name="difficulty_level">
+                            <option value="">Select difficulty...</option>
+                            <option value="easy" {% if form.difficulty_level.value == 'easy' %}selected{% endif %}>😊 Easy</option>
+                            <option value="moderate" {% if form.difficulty_level.value == 'moderate' %}selected{% endif %}>💪 Moderate</option>
+                            <option value="hard" {% if form.difficulty_level.value == 'hard' %}selected{% endif %}>🔥 Hard</option>
+                        </select>
+                    </div>
+                    
+                    <!-- Opening Hours -->
+                    <div class="form-group">
+                        <label><i class="fas fa-clock"></i> Opening Hours</label>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                            <input type="time" name="opening_time" value="{{ form.opening_time.value|default:'' }}" placeholder="Opening Time">
+                            <input type="time" name="closing_time" value="{{ form.closing_time.value|default:'' }}" placeholder="Closing Time">
+                        </div>
+                        {% if form.opening_time.errors %}
+                            <ul class="errorlist">{{ form.opening_time.errors }}</ul>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Nearest Transport -->
+                    <div class="form-group">
+                        <label><i class="fas fa-bus"></i> Nearest Transport</label>
+                        <input type="text" name="nearest_transport" 
+                               value="{{ form.nearest_transport.value|default:'' }}"
+                               placeholder="Nearest airport/railway/bus station">
+                    </div>
+                    
+                    <!-- Distance from City -->
+                    <div class="form-group">
+                        <label><i class="fas fa-road"></i> Distance from City Center (KM)</label>
+                        <input type="number" name="distance_from_city" step="0.1"
+                               value="{{ form.distance_from_city.value|default:'' }}"
+                               placeholder="e.g., 5.5">
+                    </div>
+                    
+                    <!-- Important Rules -->
+                    <div class="form-group">
+                        <label><i class="fas fa-shield-alt"></i> Important Rules & Safety</label>
+                        <textarea name="important_rules" rows="3" 
+                                  placeholder="Any rules, restrictions, or safety information...">{{ form.important_rules.value|default:'' }}</textarea>
+                    </div>
+                    
+                    <!-- Is Night Activity -->
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" name="is_night_activity" 
+                                   {% if form.is_night_activity.value %}checked{% endif %}
+                                   style="width: auto; margin-right: 10px;">
+                            <i class="fas fa-moon"></i> Is this a night activity?
+                        </label>
+                    </div>
+                    
+                    <!-- Tags -->
+                    <div class="form-group">
+                        <label><i class="fas fa-tags"></i> Tags</label>
+                        <input type="text" name="tags" value="{{ form.tags.value|default:'' }}" 
+                               placeholder="historical, museum, park, temple (comma separated)">
+                        {% if form.tags.errors %}
+                            <ul class="errorlist">{{ form.tags.errors }}</ul>
+                        {% endif %}
+                        <div class="help-text">Add comma-separated tags for better categorization</div>
+                    </div>
+                    
+                    <!-- Image -->
+                    <div class="form-group">
+                        <label><i class="fas fa-image"></i> Attraction Image</label>
+                        <input type="file" name="image" accept="image/*">
+                        {% if form.image.errors %}
+                            <ul class="errorlist">{{ form.image.errors }}</ul>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Costs Section -->
+                    <div class="costs-section">
+                        <h3><i class="fas fa-coins"></i> Additional Costs</h3>
+                        {{ formset.management_form }}
+                        <div id="costs-container">
+                            {% for cost_form in formset %}
+                                <div class="cost-item">
+                                    {{ cost_form.id }}
+                                    <div style="display: grid; grid-template-columns: 1fr 1fr auto; gap: 10px;">
+                                        <div>
+                                            <label>Title</label>
+                                            {{ cost_form.title }}
+                                        </div>
+                                        <div>
+                                            <label>Price (₹)</label>
+                                            {{ cost_form.price }}
+                                        </div>
+                                        <div style="display: flex; align-items: flex-end;">
+                                            <label style="display: flex; align-items: center;">
+                                                {{ cost_form.DELETE }}
+                                                <span style="margin-left: 5px;">Delete</span>
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                        <div class="add-cost-btn" onclick="addCostForm()">
+                            <i class="fas fa-plus"></i> Add Another Cost
+                        </div>
+                    </div>
+                    
+                    <button type="submit">
+                        <i class="fas fa-save"></i> Save Attraction
+                    </button>
+                </form>
+            </div>
+            
+            <!-- Map Section -->
+            <div class="map-container">
+                <h3><i class="fas fa-map"></i> Location Picker</h3>
+                <div class="search-box">
+                    <input type="text" id="search-location" placeholder="Search for location..." class="form-control">
+                </div>
+                <div id="map"></div>
+                <div class="coordinates">
+                    <p><i class="fas fa-map-marker-alt"></i> <strong>Coordinates:</strong></p>
+                    <p><i class="fas fa-arrow-up"></i> Latitude: <span id="latitude-display">{% if form.latitude.value %}{{ form.latitude.value }}{% else %}--{% endif %}</span></p>
+                    <p><i class="fas fa-arrow-right"></i> Longitude: <span id="longitude-display">{% if form.longitude.value %}{{ form.longitude.value }}{% else %}--{% endif %}</span></p>
+                    <div class="help-text">Click on map to set location, or search for a place</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Initialize map
+        var defaultLat = {% if form.latitude.value %}{{ form.latitude.value }}{% elif destination.latitude %}{{ destination.latitude }}{% else %}20.5937{% endif %};
+        var defaultLng = {% if form.longitude.value %}{{ form.longitude.value }}{% elif destination.longitude %}{{ destination.longitude }}{% else %}78.9629{% endif %};
+        
+        var map = L.map('map').setView([defaultLat, defaultLng], 13);
+        
+        // Add tile layer
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors'
+        }).addTo(map);
+        
+        var marker = null;
+        
+        // If there are existing coordinates, add marker
+        if (defaultLat != 20.5937 || defaultLng != 78.9629) {
+            marker = L.marker([defaultLat, defaultLng]).addTo(map);
+        }
+        
+        // Function to update coordinates
+        function updateCoordinates(lat, lng) {
+            document.getElementById('latitude-display').innerText = lat.toFixed(6);
+            document.getElementById('longitude-display').innerText = lng.toFixed(6);
+            document.getElementById('latitude-input').value = lat;
+            document.getElementById('longitude-input').value = lng;
+        }
+        
+        // Add click handler to map
+        map.on('click', function(e) {
+            var lat = e.latlng.lat;
+            var lng = e.latlng.lng;
+            
+            if (marker) {
+                marker.setLatLng(e.latlng);
+            } else {
+                marker = L.marker(e.latlng).addTo(map);
+            }
+            
+            updateCoordinates(lat, lng);
+        });
+        
+        // Search functionality
+        var searchInput = document.getElementById('search-location');
+        var nameInput = document.getElementById('attraction-name');
+        
+        // Auto-search when attraction name is entered (on blur)
+        if (nameInput) {
+            nameInput.addEventListener('blur', function() {
+                if (this.value && this.value.length > 3 && !document.getElementById('latitude-input').value) {
+                    searchLocation(this.value + ' {{ destination.name }}');
+                }
+            });
+        }
+        
+        // Manual search
+        if (searchInput) {
+            searchInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    searchLocation(this.value);
+                }
+            });
+        }
+        
+        function searchLocation(query) {
+            if (!query) return;
+            
+            // Show loading indicator
+            var searchBox = document.getElementById('search-location');
+            var originalPlaceholder = searchBox.placeholder;
+            searchBox.placeholder = 'Searching...';
+            
+            // Using Nominatim API for geocoding
+            fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=1`)
+                .then(response => response.json())
+                .then(data => {
+                    searchBox.placeholder = originalPlaceholder;
+                    if (data && data.length > 0) {
+                        var lat = parseFloat(data[0].lat);
+                        var lng = parseFloat(data[0].lon);
+                        
+                        map.setView([lat, lng], 15);
+                        
+                        if (marker) {
+                            marker.setLatLng([lat, lng]);
+                        } else {
+                            marker = L.marker([lat, lng]).addTo(map);
+                        }
+                        
+                        updateCoordinates(lat, lng);
+                    } else {
+                        alert('Location not found. Please try a different search term or click on the map.');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    searchBox.placeholder = originalPlaceholder;
+                    alert('Error searching for location. Please try clicking on the map instead.');
+                });
+        }
+        
+        // Priority buttons logic
+        const priorityBtns = document.querySelectorAll('.priority-btn');
+        const priorityInput = document.getElementById('priority_score');
+        const currentPriority = priorityInput.value;
+        
+        // Set selected class based on current value
+        priorityBtns.forEach(btn => {
+            if (btn.dataset.priority === currentPriority) {
+                btn.classList.add('selected');
+            }
+            
+            btn.addEventListener('click', function() {
+                const priority = this.dataset.priority;
+                priorityInput.value = priority;
+                
+                // Remove selected class from all
+                priorityBtns.forEach(b => b.classList.remove('selected'));
+                // Add selected class to clicked
+                this.classList.add('selected');
+            });
+        });
+        
+        // If no priority is selected, select default
+        if (!document.querySelector('.priority-btn.selected')) {
+            document.querySelector('.priority-btn[data-priority="1"]').classList.add('selected');
+        }
+        
+        // Dynamic costs form addition
+        let formCount = {{ formset.total_form_count }};
+        
+        function addCostForm() {
+            const container = document.getElementById('costs-container');
+            const newForm = document.createElement('div');
+            newForm.className = 'cost-item';
+            
+            // Get the empty form template
+            const emptyForm = `
+                <div style="display: grid; grid-template-columns: 1fr 1fr auto; gap: 10px;">
+                    <div>
+                        <label>Title</label>
+                        <input type="text" name="costs-${formCount}-title" id="id_costs-${formCount}-title" class="form-control">
+                    </div>
+                    <div>
+                        <label>Price (₹)</label>
+                        <input type="number" name="costs-${formCount}-price" id="id_costs-${formCount}-price" class="form-control">
+                    </div>
+                    <div style="display: flex; align-items: flex-end;">
+                        <label style="display: flex; align-items: center;">
+                            <input type="checkbox" name="costs-${formCount}-DELETE" id="id_costs-${formCount}-DELETE">
+                            <span style="margin-left: 5px;">Delete</span>
+                        </label>
+                    </div>
+                </div>
+            `;
+            
+            newForm.innerHTML = emptyForm;
+            container.appendChild(newForm);
+            formCount++;
+            
+            // Update management form
+            document.getElementById('id_costs-TOTAL_FORMS').value = formCount;
+        }
+        
+        // Initialize Select2 for better multi-select experience
+        $(document).ready(function() {
+            $('.multi-select').select2({
+                placeholder: 'Select options',
+                allowClear: true,
+                width: '100%'
+            });
+        });
+    </script>
+</body>
+</html>

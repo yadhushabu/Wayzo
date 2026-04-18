@@ -1,0 +1,654 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wayzo | Restaurant Registration</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --gray-100:#F8F9FC;--gray-150:#F1F3F8;--gray-200:#E9EDF2;--gray-300:#DCE2EA;
+            --gray-400:#BEC7D1;--gray-500:#9AA3AF;--gray-600:#6E7682;--gray-700:#4A515C;
+            --gray-800:#2E343D;--gray-850:#21262E;--gray-900:#191E24;--gray-950:#0F1217;
+            --accent-muted:#5B6E8C;--accent-deep:#3A4A67;--accent-light:#8A9CBA;
+            --accent-pale:#EFF2F9;--white:#FFFFFF;--text-dark:#1E242C;
+            --text-soft:#3C4350;--text-light:#6F7886;
+        }
+        html { height: 100%; }
+        body {
+            font-family: 'Inter', sans-serif;
+            min-height: 100vh;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            overflow-x: hidden;
+            color: var(--text-dark);
+        }
+
+        /* LEFT PANEL */
+        .left-panel { position: sticky; top: 0; height: 100vh; overflow: hidden; }
+        .left-video { position: absolute; inset: 0; background: linear-gradient(135deg,#1A1F2A 0%,#2D3543 100%); }
+        .left-video video { width:100%;height:100%;object-fit:cover;display:block;filter:brightness(0.62) contrast(1.08) grayscale(0.2); }
+        .left-overlay { position:absolute;inset:0;background:linear-gradient(to bottom,rgba(15,18,23,0.45) 0%,rgba(15,18,23,0.65) 60%,rgba(15,18,23,0.88) 100%); }
+        .left-content { position:relative;z-index:2;height:100%;display:flex;flex-direction:column;justify-content:space-between;padding:2.5rem; }
+        .left-logo { font-family:'Playfair Display',serif;font-size:1.65rem;font-weight:600;letter-spacing:-0.02em;color:white;text-decoration:none; }
+        .phrase-divider { width:40px;height:1.5px;background:rgba(138,156,186,0.55);margin-bottom:1rem;border-radius:2px; }
+        .left-phrase h2 { font-family:'Playfair Display',serif;font-size:clamp(1.8rem,3vw,2.8rem);font-weight:400;color:white;line-height:1.2;letter-spacing:-0.01em;margin-bottom:1rem; }
+        .left-phrase h2 em { font-style:italic;color:rgba(190,199,209,0.8); }
+        .left-phrase p { font-size:0.9rem;color:rgba(255,255,255,0.52);line-height:1.75;max-width:320px;margin-bottom:1.8rem; }
+        .left-stats { display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1.8rem; }
+        .stat-box { background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:1rem 1.1rem; }
+        .stat-box strong { display:block;font-family:'Playfair Display',serif;font-size:1.6rem;font-weight:500;color:white;line-height:1;margin-bottom:0.25rem; }
+        .stat-box span { font-size:0.72rem;color:rgba(255,255,255,0.38);font-weight:400; }
+        .left-perks { display:flex;flex-direction:column;gap:0.7rem; }
+        .perk-item { display:flex;align-items:center;gap:0.7rem;font-size:0.82rem;color:rgba(255,255,255,0.52); }
+        .perk-dot { width:5px;height:5px;border-radius:50%;background:var(--accent-light);flex-shrink:0; }
+        .left-bottom { border-top:1px solid rgba(255,255,255,0.08);padding-top:1.2rem;display:flex;gap:1rem;flex-wrap:wrap;align-items:center; }
+        .left-bottom-label { font-size:0.7rem;color:rgba(255,255,255,0.25);letter-spacing:0.06em;text-transform:uppercase; }
+        .left-reg-link { font-size:0.75rem;color:rgba(255,255,255,0.45);text-decoration:none;transition:color 0.2s; }
+        .left-reg-link:hover { color:rgba(255,255,255,0.82); }
+        .left-reg-sep { color:rgba(255,255,255,0.15);font-size:0.75rem; }
+
+        /* RIGHT PANEL */
+        .right-panel { background:var(--gray-100);display:flex;flex-direction:column;align-items:center;padding:3rem 2rem;min-height:100vh;overflow-y:auto; }
+        .form-wrap { width:100%;max-width:460px;animation:fadeUp 0.7s cubic-bezier(0.2,0.9,0.4,1.1) both; }
+        .form-header { margin-bottom:2rem; }
+        .form-header .eyebrow { font-size:0.7rem;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;color:var(--accent-muted);margin-bottom:0.5rem;display:block; }
+        .form-header h1 { font-family:'Playfair Display',serif;font-size:2rem;font-weight:500;color:var(--gray-900);letter-spacing:-0.01em;line-height:1.15;margin-bottom:0.45rem; }
+        .form-header p { font-size:0.88rem;color:var(--text-light);line-height:1.6; }
+
+        /* Steps */
+        .steps-bar { display:flex;align-items:center;margin-bottom:2rem; }
+        .step-item { display:flex;align-items:center;gap:0.5rem;flex:1; }
+        .step-item:last-child { flex:none; }
+        .step-circle { width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.7rem;font-weight:600;flex-shrink:0;background:var(--gray-200);color:var(--gray-500);border:1.5px solid var(--gray-300);transition:all 0.3s; }
+        .step-circle.active { background:var(--gray-900);color:white;border-color:var(--gray-900); }
+        .step-circle.done { background:var(--accent-deep);color:white;border-color:var(--accent-deep); }
+        .step-label { font-size:0.68rem;font-weight:500;color:var(--gray-500);white-space:nowrap;transition:color 0.3s; }
+        .step-item.active .step-label { color:var(--gray-800); }
+        .step-item.done .step-label { color:var(--accent-deep); }
+        .step-line { flex:1;height:1.5px;background:var(--gray-300);margin:0 0.5rem;transition:background 0.3s; }
+        .step-line.done { background:var(--accent-deep); }
+
+        /* Messages */
+        .message-wrap { margin-bottom:1.5rem; }
+        .message { padding:0.85rem 1rem;border-radius:12px;font-size:0.84rem;font-weight:500;display:flex;align-items:flex-start;gap:0.6rem;animation:slideIn 0.3s ease;margin-bottom:0.6rem; }
+        .message.error { background:#FEF2F2;border:1px solid #FCA5A5;color:#991B1B; }
+        .message.success { background:#F0FDF4;border:1px solid #86EFAC;color:#166534; }
+        .message svg { flex-shrink:0;width:16px;height:16px;margin-top:1px; }
+
+        /* Field section */
+        .field-section { font-size:0.68rem;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--accent-muted);margin:1.6rem 0 1rem;padding-bottom:0.55rem;border-bottom:1px solid var(--gray-200);display:flex;align-items:center;gap:0.5rem; }
+        .field-section:first-child { margin-top:0; }
+        .field-section svg { width:13px;height:13px;stroke:var(--accent-muted);stroke-width:2;fill:none; }
+
+        /* Form fields */
+        .form-group { margin-bottom:1.2rem; }
+        .form-row { display:grid;grid-template-columns:1fr 1fr;gap:1rem; }
+        .form-group label { display:block;font-size:0.72rem;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:var(--gray-700);margin-bottom:0.5rem; }
+        .form-group label .req { color:var(--accent-muted);margin-left:2px; }
+        .input-wrap { position:relative;display:flex;align-items:center; }
+        .input-icon { position:absolute;left:0.9rem;display:flex;align-items:center;pointer-events:none; }
+        .input-icon svg { width:15px;height:15px;stroke:var(--gray-400);stroke-width:1.8;fill:none;transition:stroke 0.2s; }
+        .input-wrap:focus-within .input-icon svg { stroke:var(--accent-muted); }
+        .form-group input,.form-group select,.form-group textarea { width:100%;padding:0.82rem 1rem 0.82rem 2.6rem;font-size:0.9rem;font-family:'Inter',sans-serif;border:1.5px solid var(--gray-200);border-radius:12px;background:var(--white);color:var(--text-dark);transition:all 0.2s;appearance:none; }
+        .form-group textarea { padding-left:1rem;resize:vertical;min-height:88px; }
+        .form-group select { cursor:pointer; }
+        .no-icon input,.no-icon select,.no-icon textarea { padding-left:1rem; }
+        .form-group input:focus,.form-group select:focus,.form-group textarea:focus { outline:none;border-color:var(--accent-muted);box-shadow:0 0 0 3px rgba(91,110,140,0.1); }
+        .form-group input::placeholder,.form-group textarea::placeholder { color:var(--gray-400); }
+
+        /* ── Enhanced Property Type Cards ── */
+        .property-type-label { display:block;font-size:0.72rem;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:var(--gray-700);margin-bottom:0.6rem; }
+        .property-type-label .req { color:var(--accent-muted);margin-left:2px; }
+        .property-type-grid { display:grid;grid-template-columns:1fr 1fr;gap:0.65rem;margin-bottom:1.2rem; }
+        .property-card {
+            position:relative;border:1.5px solid var(--gray-200);border-radius:14px;
+            padding:0.85rem 1rem;cursor:pointer;background:var(--white);
+            transition:all 0.2s;display:flex;align-items:center;gap:0.75rem;user-select:none;
+        }
+        .property-card:hover { border-color:var(--accent-muted);background:var(--accent-pale); }
+        .property-card.selected { border-color:var(--accent-deep);background:var(--accent-pale);box-shadow:0 0 0 3px rgba(91,110,140,0.12); }
+        .property-card input[type="radio"] { position:absolute;opacity:0;pointer-events:none;width:0;height:0; }
+        .pc-icon { width:36px;height:36px;border-radius:10px;background:var(--gray-150);display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background 0.2s; }
+        .pc-icon svg { width:18px;height:18px;stroke:var(--gray-500);fill:none;stroke-width:1.8;transition:stroke 0.2s; }
+        .property-card.selected .pc-icon { background:rgba(58,74,103,0.12); }
+        .property-card.selected .pc-icon svg { stroke:var(--accent-deep); }
+        .pc-text { flex:1;min-width:0; }
+        .pc-label { font-size:0.8rem;font-weight:600;color:var(--gray-700);line-height:1.2;transition:color 0.2s; }
+        .property-card.selected .pc-label { color:var(--accent-deep); }
+        .pc-sub { font-size:0.67rem;color:var(--gray-500);margin-top:2px;line-height:1.3; }
+        .pc-radio { width:17px;height:17px;border-radius:50%;border:1.5px solid var(--gray-300);flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all 0.2s; }
+        .property-card.selected .pc-radio { background:var(--accent-deep);border-color:var(--accent-deep); }
+        .property-card.selected .pc-radio::after { content:'';width:6px;height:6px;border-radius:50%;background:white; }
+
+        /* File upload */
+        .file-group { margin-bottom:1.2rem; }
+        .file-group label { display:block;font-size:0.72rem;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:var(--gray-700);margin-bottom:0.5rem; }
+        .file-drop { border:1.5px dashed var(--gray-300);border-radius:12px;padding:1.4rem 1rem;text-align:center;cursor:pointer;transition:all 0.2s;background:var(--white);position:relative; }
+        .file-drop:hover,.file-drop.drag-over { border-color:var(--accent-muted);background:var(--accent-pale); }
+        .file-drop input[type="file"] { position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%; }
+        .file-drop svg { width:22px;height:22px;stroke:var(--gray-400);stroke-width:1.5;fill:none;margin-bottom:0.5rem; }
+        .file-drop p { font-size:0.8rem;color:var(--gray-500); }
+        .file-drop span { color:var(--accent-muted);font-weight:500; }
+        .file-name { margin-top:0.4rem;font-size:0.75rem;color:var(--accent-deep);display:none; }
+
+        /* Checkbox */
+        .checkbox-group { display:flex;align-items:flex-start;gap:0.6rem;margin-bottom:1.5rem; }
+        .checkbox-group input[type="checkbox"] { width:16px;height:16px;margin-top:2px;flex-shrink:0;accent-color:var(--accent-deep);cursor:pointer; }
+        .checkbox-group label { font-size:0.82rem;color:var(--gray-600);cursor:pointer;line-height:1.5;text-transform:none;letter-spacing:0;font-weight:400; }
+        .checkbox-group label a { color:var(--accent-deep);font-weight:500;text-decoration:none; }
+        .checkbox-group label a:hover { text-decoration:underline; }
+
+        /* Buttons */
+        .btn-row { display:flex;gap:0.75rem; }
+        .submit-btn { flex:1;padding:0.95rem;background:var(--gray-900);color:white;border:none;border-radius:40px;font-size:0.88rem;font-weight:600;font-family:'Inter',sans-serif;letter-spacing:0.02em;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:0.6rem;transition:all 0.25s;box-shadow:0 2px 8px rgba(0,0,0,0.06); }
+        .submit-btn:hover { background:var(--accent-deep);transform:translateY(-1px);box-shadow:0 8px 20px rgba(58,74,103,0.25); }
+        .submit-btn:active { transform:translateY(0); }
+        .submit-btn.back-btn { flex:0 0 auto;width:auto;padding:0.95rem 1.3rem;background:var(--gray-200);color:var(--gray-700);box-shadow:none; }
+        .submit-btn.back-btn:hover { background:var(--gray-300);transform:none;box-shadow:none; }
+        .submit-btn svg { width:17px;height:17px;stroke:currentColor;stroke-width:2;fill:none; }
+        .submit-btn.loading { pointer-events:none;opacity:0.75; }
+        .field-error { font-size:0.72rem;color:#991B1B;margin-top:0.35rem;margin-left:0.4rem;display:flex;align-items:center;gap:0.3rem; }
+        .field-error svg { width:11px;height:11px;flex-shrink:0;stroke:currentColor;stroke-width:2;fill:none; }
+
+        /* Footer */
+        .form-footer { margin-top:1.8rem;padding-top:1.4rem;border-top:1px solid var(--gray-200);display:flex;flex-direction:column;align-items:center;gap:0.8rem; }
+        .form-footer p { font-size:0.84rem;color:var(--gray-600); }
+        .form-footer a { color:var(--accent-deep);font-weight:600;text-decoration:none; }
+        .form-footer a:hover { text-decoration:underline; }
+        .back-home { display:inline-flex;align-items:center;gap:0.4rem;font-size:0.78rem;font-weight:500;color:var(--gray-500);text-decoration:none;padding:0.4rem 0.9rem;border-radius:40px;transition:all 0.2s; }
+        .back-home:hover { color:var(--accent-deep);background:var(--accent-pale); }
+        .back-home svg { width:14px;height:14px;stroke:currentColor;stroke-width:2;fill:none; }
+
+        @keyframes fadeUp  { from{opacity:0;transform:translateY(20px);}to{opacity:1;transform:translateY(0);} }
+        @keyframes slideIn { from{opacity:0;transform:translateX(-8px);}to{opacity:1;transform:translateX(0);} }
+        @keyframes spin    { from{transform:rotate(0deg);}to{transform:rotate(360deg);} }
+
+        @media (max-width:860px) { body{grid-template-columns:1fr;} .left-panel{display:none;} .right-panel{padding:2rem 1.5rem;} }
+        @media (max-width:500px) { .form-row{grid-template-columns:1fr;} .property-type-grid{grid-template-columns:1fr;} }
+    </style>
+</head>
+<body>
+
+<!-- LEFT VIDEO PANEL -->
+<div class="left-panel">
+    <div class="left-video">
+        <video autoplay muted loop playsinline>
+            <source src="{% static 'videos/Restaurant.mp4' %}" type="video/mp4">
+        </video>
+    </div>
+    <div class="left-overlay"></div>
+    <div class="left-content">
+        <a class="left-logo" href="{% url 'index' %}">Wayzo</a>
+        <div class="left-phrase">
+            <div class="phrase-divider"></div>
+            <h2>List your restaurant.<br><em>Serve more guests.</em></h2>
+            <p>Join Wayzo's growing network of verified restaurants. Get discovered by travellers looking for authentic local dining experiences.</p>
+            <div class="left-stats">
+                <div class="stat-box"><strong>12K+</strong><span>Active travellers</span></div>
+                <div class="stat-box"><strong>Free</strong><span>To register</span></div>
+                <div class="stat-box"><strong>340+</strong><span>Destinations</span></div>
+                <div class="stat-box"><strong>98%</strong><span>Satisfaction rate</span></div>
+            </div>
+            <div class="left-perks">
+                <div class="perk-item"><div class="perk-dot"></div>Appear in traveller destination searches</div>
+                <div class="perk-item"><div class="perk-dot"></div>Showcase your menu and cuisine type</div>
+                <div class="perk-item"><div class="perk-dot"></div>Collect verified reviews from guests</div>
+                <div class="perk-item"><div class="perk-dot"></div>Manage your profile from a simple dashboard</div>
+            </div>
+        </div>
+        <div class="left-bottom">
+            <span class="left-bottom-label">Also join as</span>
+            <a href="{% url 'traveller_register' %}" class="left-reg-link">Traveller</a>
+            <span class="left-reg-sep">·</span>
+            <a href="{% url 'agency_register' %}" class="left-reg-link">Agency</a>
+            <span class="left-reg-sep">·</span>
+            <a href="{% url 'login' %}" class="left-reg-link">Sign In</a>
+        </div>
+    </div>
+</div>
+
+<!-- RIGHT FORM PANEL -->
+<div class="right-panel">
+    <div class="form-wrap">
+
+        <div class="form-header">
+            <span class="eyebrow">Partner Registration</span>
+            <h1>Register your Restaurant</h1>
+            <p>Fill in your details to start reaching Wayzo travellers.</p>
+        </div>
+
+        <div class="steps-bar">
+            <div class="step-item active" id="step-ind-1">
+                <div class="step-circle active" id="sc1"><span class="step-num">1</span></div>
+                <span class="step-label">Account</span>
+            </div>
+            <div class="step-line" id="line-1"></div>
+            <div class="step-item" id="step-ind-2">
+                <div class="step-circle" id="sc2"><span class="step-num">2</span></div>
+                <span class="step-label">Restaurant</span>
+            </div>
+            <div class="step-line" id="line-2"></div>
+            <div class="step-item" id="step-ind-3">
+                <div class="step-circle" id="sc3"><span class="step-num">3</span></div>
+                <span class="step-label">Media</span>
+            </div>
+        </div>
+
+        {% if messages %}
+        <div class="message-wrap">
+            {% for message in messages %}
+            <div class="message {{ message.tags }}">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    {% if message.tags == 'error' %}<circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+                    {% else %}<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>{% endif %}
+                </svg>
+                <span>{{ message }}</span>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        {% if form.errors %}
+        <div class="message-wrap">
+            <div class="message error">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                <span>Please correct the errors below and try again.</span>
+            </div>
+        </div>
+        {% endif %}
+
+        <form method="POST" enctype="multipart/form-data" id="restForm" novalidate>
+            {% csrf_token %}
+
+            <!-- STEP 1: Account -->
+            <div class="form-step" id="formStep1">
+                <div class="field-section">
+                    <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                    Account Credentials
+                </div>
+
+                <div class="form-group">
+                    <label>Username <span class="req">*</span></label>
+                    <div class="input-wrap">
+                        <span class="input-icon"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span>
+                        {% if form.username %}{{ form.username }}{% else %}<input type="text" name="username" placeholder="Choose a username" required>{% endif %}
+                    </div>
+                    {% if form.username.errors %}<div class="field-error"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/></svg>{{ form.username.errors|join:", " }}</div>{% endif %}
+                </div>
+
+                <div class="form-group">
+                    <label>Email Address <span class="req">*</span></label>
+                    <div class="input-wrap">
+                        <span class="input-icon"><svg viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg></span>
+                        {% if form.email %}{{ form.email }}{% else %}<input type="email" name="email" placeholder="restaurant@example.com" required>{% endif %}
+                    </div>
+                    {% if form.email.errors %}<div class="field-error"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/></svg>{{ form.email.errors|join:", " }}</div>{% endif %}
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Password <span class="req">*</span></label>
+                        <div class="input-wrap">
+                            <span class="input-icon"><svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></span>
+                            {% if form.password1 %}{{ form.password1 }}{% else %}<input type="password" name="password1" placeholder="Create password" required>{% endif %}
+                        </div>
+                        {% if form.password1.errors %}<div class="field-error"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/></svg>{{ form.password1.errors|join:", " }}</div>{% endif %}
+                    </div>
+                    <div class="form-group">
+                        <label>Confirm Password <span class="req">*</span></label>
+                        <div class="input-wrap">
+                            <span class="input-icon"><svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></span>
+                            {% if form.password2 %}{{ form.password2 }}{% else %}<input type="password" name="password2" placeholder="Confirm password" required>{% endif %}
+                        </div>
+                        {% if form.password2.errors %}<div class="field-error"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/></svg>{{ form.password2.errors|join:", " }}</div>{% endif %}
+                    </div>
+                </div>
+
+                <div class="btn-row">
+                    <button type="button" class="submit-btn" onclick="goToStep(2)">
+                        <span>Continue</span>
+                        <svg viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- STEP 2: Restaurant Details -->
+            <div class="form-step" id="formStep2" style="display:none;">
+
+                <div class="field-section" style="margin-top:0;">
+                    <svg viewBox="0 0 24 24"><path d="M3 2h1v6a2 2 0 0 0 4 0V2h1v6a3 3 0 0 1-2 2.83V22H6v-11.17A3 3 0 0 1 3 8V2z"/></svg>
+                    Restaurant Info
+                </div>
+
+                <div class="form-group">
+                    <label>Name <span class="req">*</span></label>
+                    <div class="input-wrap">
+                        <span class="input-icon"><svg viewBox="0 0 24 24"><path d="M3 2h1v6a2 2 0 0 0 4 0V2h1v6a3 3 0 0 1-2 2.83V22H6v-11.17A3 3 0 0 1 3 8V2z"/></svg></span>
+                        {% if form.restaurant_name %}{{ form.restaurant_name }}{% else %}<input type="text" name="restaurant_name" placeholder="Your restaurant's name" required>{% endif %}
+                    </div>
+                    {% if form.restaurant_name.errors %}<div class="field-error"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/></svg>{{ form.restaurant_name.errors|join:", " }}</div>{% endif %}
+                </div>
+
+                <!-- ══ ENHANCED PROPERTY TYPE CARDS ══ -->
+                <div>
+                    <span class="property-type-label">Property Type <span class="req">*</span></span>
+
+                    <!-- Hidden real field for form submission -->`
+                    {% if form.property_type %}
+                        <div style="display:none;">{{ form.property_type }}</div>
+                    {% else %}
+                        <select name="property_type" style="display:none;">
+                            <option value="restaurant">Restaurant</option>
+                            <option value="Hotel">Hotel</option>
+                            <option value="Resort">Resort</option>
+                            <option value="Homestay">Homestay</option>
+                            <option value="Cafe">Cafe</option>
+                        </select>
+                    {% endif %}
+
+                    <div class="property-type-grid" id="propertyTypeCards">
+
+                        <label class="property-card" data-value="restaurant">
+                            <input type="radio" name="_pt_ui" value="restaurant">
+                            <div class="pc-icon">
+                                <svg viewBox="0 0 24 24"><path d="M3 2h1v6a2 2 0 0 0 4 0V2h1v6a3 3 0 0 1-2 2.83V22H6v-11.17A3 3 0 0 1 3 8V2z"/><path d="M20 2v20M16 2v4a4 4 0 0 0 4 4"/></svg>
+                            </div>
+                            <div class="pc-text">
+                                <div class="pc-label">Restaurant</div>
+                                <div class="pc-sub">Full-service dining</div>
+                            </div>
+                            <div class="pc-radio"></div>
+                        </label>
+
+                        <label class="property-card" data-value="Hotel">
+                            <input type="radio" name="_pt_ui" value="Hotel">
+                            <div class="pc-icon">
+                                <svg viewBox="0 0 24 24"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg>
+                            </div>
+                            <div class="pc-text">
+                                <div class="pc-label">Hotel</div>
+                                <div class="pc-sub">Stay & dining</div>
+                            </div>
+                            <div class="pc-radio"></div>
+                        </label>
+
+                        <label class="property-card" data-value="Resort">
+                            <input type="radio" name="_pt_ui" value="Resort">
+                            <div class="pc-icon">
+                                <svg viewBox="0 0 24 24"><path d="M6 13.87A4 4 0 0 1 7.41 6a5.11 5.11 0 0 1 1.05-1.54 5 5 0 0 1 7.08 0A5.11 5.11 0 0 1 16.59 6 4 4 0 0 1 18 13.87V21H6z"/><line x1="6" y1="17" x2="18" y2="17"/></svg>
+                            </div>
+                            <div class="pc-text">
+                                <div class="pc-label">Resort</div>
+                                <div class="pc-sub">Luxury & relaxation</div>
+                            </div>
+                            <div class="pc-radio"></div>
+                        </label>
+
+                        <label class="property-card" data-value="Homestay">
+                            <input type="radio" name="_pt_ui" value="Homestay">
+                            <div class="pc-icon">
+                                <svg viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 1 7 7c0 5-7 13-7 13S5 14 5 9a7 7 0 0 1 7-7z"/><circle cx="12" cy="9" r="2.5"/></svg>
+                            </div>
+                            <div class="pc-text">
+                                <div class="pc-label">Homestay</div>
+                                <div class="pc-sub">Local experience</div>
+                            </div>
+                            <div class="pc-radio"></div>
+                        </label>
+
+                        <label class="property-card" data-value="Cafe">
+                            <input type="radio" name="_pt_ui" value="Cafe">
+                            <div class="pc-icon">
+                                <svg viewBox="0 0 24 24"><path d="M2 20h20M4 20V10l8-6 8 6v10"/><path d="M10 20v-6h4v6"/></svg>
+                            </div>
+                            <div class="pc-text">
+                                <div class="pc-label">Cafe</div>
+                                <div class="pc-sub">Coffee & snacks</div>
+                            </div>
+                            <div class="pc-radio"></div>
+                        </label>
+
+                    </div>
+                    {% if form.property_type.errors %}<div class="field-error"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/></svg>{{ form.property_type.errors|join:", " }}</div>{% endif %}
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Mobile <span class="req">*</span></label>
+                        <div class="input-wrap">
+                            <span class="input-icon"><svg viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 11.9 19.79 19.79 0 0 1 1.61 3.27 2 2 0 0 1 3.6 1h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.6a16 16 0 0 0 6 6z"/></svg></span>
+                            {% if form.mobile %}{{ form.mobile }}{% else %}<input type="tel" name="phone" placeholder="+91 98765 43210" required>{% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Street Address -->
+                <div class="form-group">
+                    <label>Address <span class="req">*</span></label>
+                    <div class="input-wrap">
+                        <span class="input-icon"><svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg></span>
+                        {% if form.address %}{{ form.address }}{% else %}<input type="text" name="address" placeholder="Street address" required>{% endif %}
+                    </div>
+                </div>
+
+                <!-- City & State side by side -->
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>City <span class="req">*</span></label>
+                        <div class="input-wrap">
+                            <span class="input-icon"><svg viewBox="0 0 24 24"><path d="M3 21h18M3 7h18M5 21V7l7-4 7 4v14M9 21V9h6v12"/></svg></span>
+                            {% if form.city %}{{ form.city }}{% else %}<input type="text" name="city" placeholder="City" required>{% endif %}
+                        </div>
+                        {% if form.city.errors %}<div class="field-error"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/></svg>{{ form.city.errors|join:", " }}</div>{% endif %}
+                    </div>
+                    <div class="form-group">
+                        <label>State <span class="req">*</span></label>
+                        <div class="input-wrap">
+                            <span class="input-icon"><svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg></span>
+                            {% if form.state %}{{ form.state }}{% else %}<input type="text" name="state" placeholder="State" required>{% endif %}
+                        </div>
+                        {% if form.state.errors %}<div class="field-error"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/></svg>{{ form.state.errors|join:", " }}</div>{% endif %}
+                    </div>
+                </div>
+
+                <div class="btn-row">
+                    <button type="button" class="submit-btn back-btn" onclick="goToStep(1)">
+                        <svg viewBox="0 0 24 24"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+                    </button>
+                    <button type="button" class="submit-btn" onclick="goToStep(3)">
+                        <span>Continue</span>
+                        <svg viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- STEP 3: Media & Submit -->
+            <div class="form-step" id="formStep3" style="display:none;">
+                <div class="field-section">
+                    <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                    Photos &amp; Verification
+                </div>
+
+                <div class="file-group">
+                    <label>Profile Photo</label>
+                    <div class="file-drop">
+                        <input type="file" name="profile_picture" accept="image/*" onchange="showFileName(this,'logoName')">
+                        <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                        <p><span>Click to upload</span> or drag &amp; drop</p>
+                        <p style="font-size:0.72rem;margin-top:0.2rem;">PNG, JPG up to 5MB</p>
+                        <p class="file-name" id="logoName"></p>
+                    </div>
+                </div>
+
+                <div class="file-group">
+                    <label>License Document <span style="font-weight:400;color:var(--gray-500);text-transform:none;letter-spacing:0;">(optional)</span></label>
+                    <div class="file-drop">
+                        <input type="file" name="license_document" accept="image/*" onchange="showFileName(this,'licenseName')">
+                        <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                        <p><span>Click to upload</span></p>
+                        <p style="font-size:0.72rem;margin-top:0.2rem;">PNG, JPG up to 5MB</p>
+                        <p class="file-name" id="licenseName"></p>
+                    </div>
+                </div>
+
+                <div class="file-group">
+                    <label>ID Proof <span style="font-weight:400;color:var(--gray-500);text-transform:none;letter-spacing:0;">(optional)</span></label>
+                    <div class="file-drop">
+                        <input type="file" name="id_proof" accept="image/*" onchange="showFileName(this,'idName')">
+                        <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                        <p><span>Click to upload</span></p>
+                        <p style="font-size:0.72rem;margin-top:0.2rem;">PNG, JPG up to 5MB</p>
+                        <p class="file-name" id="idName"></p>
+                    </div>
+                </div>
+
+                {% for field in form %}
+                    {% if field.name not in "first_name,last_name,username,email,password1,password2,restaurant_name,mobile,address,city,state,cuisine_type,description,opening_time,closing_time,seating_capacity,logo,photos,id_proof,license_document,profile_picture,property_type" %}
+                    <div class="form-group no-icon">
+                        <label>{{ field.label }}{% if field.field.required %} <span class="req">*</span>{% endif %}</label>
+                        {{ field }}
+                        {% if field.errors %}<div class="field-error"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/></svg>{{ field.errors|join:", " }}</div>{% endif %}
+                    </div>
+                    {% endif %}
+                {% endfor %}
+
+                <div class="checkbox-group">
+                    <input type="checkbox" id="terms" name="terms" required>
+                    <label for="terms">
+                        I agree to Wayzo's <a href="#">Terms of Service</a> and <a href="#">Restaurant Partner Policy</a>. I confirm all details are accurate.
+                    </label>
+                </div>
+
+                <div class="btn-row">
+                    <button type="button" class="submit-btn back-btn" onclick="goToStep(2)">
+                        <svg viewBox="0 0 24 24"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+                    </button>
+                    <button type="submit" class="submit-btn" id="submitBtn">
+                        <span id="btnText">Register Restaurant</span>
+                        <svg id="btnArrow" viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+                    </button>
+                </div>
+            </div>
+
+        </form>
+
+        <div class="form-footer">
+            <p>Already have an account? <a href="{% url 'login' %}">Sign in</a></p>
+            <a href="{% url 'index' %}" class="back-home">
+                <svg viewBox="0 0 24 24"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+                Back to home
+            </a>
+        </div>
+    </div>
+</div>
+
+<script>
+(function () {
+    let currentStep = 1;
+
+    window.goToStep = function (step) {
+        if (step > currentStep) {
+            const fields = document.querySelectorAll(
+                `#formStep${currentStep} input:not([type=checkbox]):not([type=file]):not([type=hidden]):not([type=radio]),` +
+                `#formStep${currentStep} select:not([style*="display:none"]),` +
+                `#formStep${currentStep} textarea`
+            );
+            let valid = true;
+            fields.forEach(f => { if (f.required && !f.value.trim()) { valid = false; markError(f); } });
+            if (!valid) return;
+        }
+        document.getElementById(`formStep${currentStep}`).style.display = 'none';
+        document.getElementById(`formStep${step}`).style.display = 'block';
+        updateSteps(step);
+        currentStep = step;
+        document.querySelector('.right-panel').scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    function markError(field) {
+        field.style.borderColor = '#FCA5A5';
+        field.style.backgroundColor = '#FEF2F2';
+        let s = 0;
+        const shake = setInterval(() => {
+            field.style.transform = s % 2 === 0 ? 'translateX(4px)' : 'translateX(-4px)';
+            s++; if (s > 5) { clearInterval(shake); field.style.transform = ''; }
+        }, 50);
+        field.addEventListener('input', () => { field.style.borderColor = ''; field.style.backgroundColor = ''; }, { once: true });
+    }
+
+    function updateSteps(active) {
+        for (let i = 1; i <= 3; i++) {
+            const ind = document.getElementById(`step-ind-${i}`);
+            const sc  = document.getElementById(`sc${i}`);
+            const ln  = document.getElementById(`line-${i}`);
+            ind.classList.remove('active','done'); sc.classList.remove('active','done');
+            if (ln) ln.classList.remove('done');
+            if (i < active) { ind.classList.add('done'); sc.classList.add('done'); sc.innerHTML = '✓'; if (ln) ln.classList.add('done'); }
+            else if (i === active) { ind.classList.add('active'); sc.classList.add('active'); sc.innerHTML = `<span class="step-num">${i}</span>`; }
+            else { sc.innerHTML = `<span class="step-num">${i}</span>`; }
+        }
+    }
+
+    /* Property Type Cards */
+    const cards = document.querySelectorAll('.property-card');
+    const realField = document.querySelector('[name="property_type"]');
+    cards.forEach(card => {
+        card.addEventListener('click', () => {
+            cards.forEach(c => c.classList.remove('selected'));
+            card.classList.add('selected');
+            if (realField) realField.value = card.dataset.value;
+        });
+    });
+    // Pre-select on form-error redisplay
+    if (realField && realField.value) {
+        const pre = document.querySelector(`.property-card[data-value="${realField.value}"]`);
+        if (pre) pre.classList.add('selected');
+    }
+
+    /* File name display */
+    window.showFileName = function (input, targetId) {
+        const el = document.getElementById(targetId);
+        if (el && input.files && input.files.length) {
+            el.textContent = `✓ ${input.files[0].name}`;
+            el.style.display = 'block';
+        }
+    };
+
+    /* Drag & drop */
+    document.querySelectorAll('.file-drop').forEach(zone => {
+        zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('drag-over'); });
+        zone.addEventListener('dragleave', () => zone.classList.remove('drag-over'));
+        zone.addEventListener('drop', e => { e.preventDefault(); zone.classList.remove('drag-over'); });
+    });
+
+    /* Submit loading */
+    const form = document.getElementById('restForm');
+    const submitBtn = document.getElementById('submitBtn');
+    const btnText = document.getElementById('btnText');
+    const btnArrow = document.getElementById('btnArrow');
+    if (form) {
+        form.addEventListener('submit', function (e) {
+            const terms = document.getElementById('terms');
+            if (!terms.checked) {
+                e.preventDefault();
+                terms.closest('.checkbox-group').style.outline = '2px solid #FCA5A5';
+                terms.closest('.checkbox-group').style.borderRadius = '8px';
+                setTimeout(() => { terms.closest('.checkbox-group').style.outline = ''; }, 2000);
+                return;
+            }
+            if (submitBtn) {
+                btnText.textContent = 'Registering…';
+                btnArrow.innerHTML = `<circle cx="12" cy="12" r="9" stroke-dasharray="56" style="animation:spin 0.8s linear infinite;transform-origin:center"/>`;
+                submitBtn.classList.add('loading');
+            }
+        });
+    }
+
+    if (document.querySelectorAll('.message.error, .field-error').length > 0) goToStep(1);
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,17 @@
+<h2>Destinations</h2>
+
+<a href="{% url 'create_destination' %}">+ Add Destination</a>
+
+<hr>
+
+{% for d in destinations %}
+    <div style="border:1px solid #ddd; padding:10px; margin:10px;">
+        <h3>{{ d.name }}</h3>
+        <p>{{ d.state }}</p>
+
+        <!-- ✅ FIXED -->
+        <a href="{% url 'destination_detail' d.slug %}">
+            View Details
+        </a>
+    </div>
+{% endfor %}

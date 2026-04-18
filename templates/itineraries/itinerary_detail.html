@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Smart Itinerary - {{ destination.name }}</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* Header Styles */
+        .header {
+            background: white;
+            border-radius: 20px;
+            padding: 25px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+
+        .header h1 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 2em;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .stat-card {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 12px;
+            text-align: center;
+            transition: transform 0.3s;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-3px);
+        }
+
+        .stat-card i {
+            font-size: 24px;
+            color: #667eea;
+            margin-bottom: 8px;
+        }
+
+        .stat-card .label {
+            font-size: 12px;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .stat-card .value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #333;
+            margin-top: 5px;
+        }
+
+        /* Map Styles */
+        #map {
+            height: 450px;
+            border-radius: 20px;
+            margin-bottom: 30px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        }
+
+        /* Day Card Styles */
+        .day-card {
+            background: white;
+            border-radius: 20px;
+            margin-bottom: 30px;
+            overflow: hidden;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            transition: transform 0.3s;
+        }
+
+        .day-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .day-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .day-header h3 {
+            font-size: 1.5em;
+        }
+
+        .day-stats {
+            display: flex;
+            gap: 20px;
+            font-size: 14px;
+        }
+
+        .day-content {
+            padding: 20px;
+            display: none;
+        }
+
+        .day-content.active {
+            display: block;
+        }
+
+        /* Timeline Styles */
+        .timeline {
+            position: relative;
+            padding-left: 30px;
+        }
+
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 10px;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: linear-gradient(to bottom, #667eea, #764ba2);
+        }
+
+        .timeline-item {
+            position: relative;
+            margin-bottom: 30px;
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 20px;
+            transition: all 0.3s;
+        }
+
+        .timeline-item:hover {
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            transform: translateX(5px);
+        }
+
+        .timeline-dot {
+            position: absolute;
+            left: -24px;
+            top: 20px;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #667eea;
+            border: 2px solid white;
+            box-shadow: 0 0 0 2px #667eea;
+        }
+
+        .place-image {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            border-radius: 12px;
+            margin-bottom: 15px;
+        }
+
+        .place-title {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .time-info {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 10px;
+            flex-wrap: wrap;
+        }
+
+        .time-badge {
+            background: #e3f2fd;
+            color: #1976d2;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .time-badge i {
+            margin-right: 5px;
+        }
+
+        .status-badge {
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .status-open {
+            background: #c8e6c9;
+            color: #2e7d32;
+        }
+
+        .status-closed {
+            background: #ffcdd2;
+            color: #c62828;
+        }
+
+        /* Nearby Places Grid */
+        .nearby-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .nearby-card {
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 10px;
+            padding: 12px;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+
+        .nearby-card:hover {
+            border-color: #667eea;
+            transform: translateY(-2px);
+        }
+
+        .nearby-card h4 {
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .nearby-card .rating {
+            color: #ffc107;
+            margin-bottom: 5px;
+        }
+
+        /* Customization Panel */
+        .customization-panel {
+            position: fixed;
+            right: -400px;
+            top: 0;
+            width: 400px;
+            height: 100vh;
+            background: white;
+            box-shadow: -5px 0 20px rgba(0,0,0,0.1);
+            transition: right 0.3s;
+            z-index: 1000;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .customization-panel.open {
+            right: 0;
+        }
+
+        .customize-btn {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 50px;
+            padding: 15px 25px;
+            cursor: pointer;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            transition: all 0.3s;
+            z-index: 999;
+        }
+
+        .customize-btn:hover {
+            background: #764ba2;
+            transform: scale(1.05);
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .timeline {
+                padding-left: 20px;
+            }
+            
+            .customization-panel {
+                width: 100%;
+                right: -100%;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <!-- Header Section -->
+    <div class="header">
+        <h1><i class="fas fa-map-marked-alt"></i> {{ destination.name }} Itinerary</h1>
+        
+        <div class="stats-grid">
+            <div class="stat-card">
+                <i class="fas fa-calendar-alt"></i>
+                <div class="label">Duration</div>
+                <div class="value">{{ total_days }} Days</div>
+            </div>
+            <div class="stat-card">
+                <i class="fas fa-rupee-sign"></i>
+                <div class="label">Total Budget</div>
+                <div class="value">₹{{ budget|floatformat:0 }}</div>
+            </div>
+            <div class="stat-card">
+                <i class="fas fa-users"></i>
+                <div class="label">Travelers</div>
+                <div class="value">{{ people_count }}</div>
+            </div>
+            <div class="stat-card">
+                <i class="fas fa-car"></i>
+                <div class="label">Transport</div>
+                <div class="value">{{ transport_mode|title }}</div>
+            </div>
+            <div class="stat-card">
+                <i class="fas fa-tachometer-alt"></i>
+                <div class="label">Pace</div>
+                <div class="value">{{ travel_plan.pace|title }}</div>
+            </div>
+            <div class="stat-card">
+                <i class="fas fa-star"></i>
+                <div class="label">Destination Score</div>
+                <div class="value">{{ destination_score|floatformat:0 }}%</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Map Section -->
+    <div id="map"></div>
+
+    <!-- Itinerary Days -->
+    {% for day in days %}
+    <div class="day-card">
+        <div class="day-header" onclick="toggleDay({{ forloop.counter }})">
+            <h3><i class="fas fa-sun"></i> Day {{ forloop.counter }}</h3>
+            <div class="day-stats">
+                <span><i class="fas fa-location-dot"></i> {{ day.morning|length|add:day.afternoon|length|add:day.evening|length }} Activities</span>
+                <span><i class="fas fa-clock"></i> {{ day.total_travel_time|default:0 }} mins travel</span>
+                <span><i class="fas fa-chevron-down"></i></span>
+            </div>
+        </div>
+        
+        <div class="day-content" id="day-{{ forloop.counter }}">
+            <div class="timeline">
+                <!-- Morning Activities -->
+                {% for item in day.morning %}
+                <div class="timeline-item">
+                    <div class="timeline-dot"></div>
+                    {% if item.place.image %}
+                        <img src="{{ item.place.image.url }}" class="place-image" alt="{{ item.place.name }}">
+                    {% else %}
+                        <img src="https://picsum.photos/800/400?random={{ forloop.counter }}" class="place-image" alt="{{ item.place.name }}">
+                    {% endif %}
+                    
+                    <div class="place-title">{{ item.place.name }}</div>
+                    
+                    <div class="time-info">
+                        <span class="time-badge"><i class="fas fa-clock"></i> {{ item.arrival_time }} - {{ item.departure_time }}</span>
+                        <span class="time-badge"><i class="fas fa-hourglass-half"></i> {{ item.visit_duration }} mins</span>
+                        <span class="time-badge"><i class="fas fa-road"></i> {{ item.distance_from_prev }} km</span>
+                        <span class="time-badge"><i class="fas fa-car"></i> {{ item.travel_time }} mins travel</span>
+                        {% if item.is_open %}
+                            <span class="status-badge status-open"><i class="fas fa-check-circle"></i> Open</span>
+                        {% else %}
+                            <span class="status-badge status-closed"><i class="fas fa-clock"></i> Check hours</span>
+                        {% endif %}
+                    </div>
+                    
+                    <p>{{ item.place.description|truncatewords:30 }}</p>
+                    
+                    {% if item.nearby_restaurants %}
+                    <div style="margin-top: 15px;">
+                        <strong><i class="fas fa-utensils"></i> Nearby Restaurants:</strong>
+                        <div class="nearby-grid">
+                            {% for restaurant in item.nearby_restaurants|slice:":2" %}
+                            <div class="nearby-card" onclick="selectRestaurant({{ restaurant.id }})">
+                                <h4>{{ restaurant.name }}</h4>
+                                <div class="rating">★ {{ restaurant.rating|default:"4.0" }}/5</div>
+                                <small>{{ restaurant.cuisine_type|default:"Multi-cuisine" }}</small>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+                
+                <!-- Afternoon Activities -->
+                {% for item in day.afternoon %}
+                <div class="timeline-item">
+                    <div class="timeline-dot"></div>
+                    <!-- Similar structure as morning -->
+                </div>
+                {% endfor %}
+                
+                <!-- Evening Activities -->
+                {% for item in day.evening %}
+                <div class="timeline-item">
+                    <div class="timeline-dot"></div>
+                    <!-- Similar structure as morning -->
+                </div>
+                {% endfor %}
+            </div>
+            
+            <!-- Stay Suggestion -->
+            {% if day.stay %}
+            <div style="margin-top: 20px; padding: 15px; background: #e8f5e9; border-radius: 12px;">
+                <strong><i class="fas fa-hotel"></i> Recommended Stay:</strong>
+                <p>{{ day.stay.name }} - {{ day.stay.rating|default:"4.0" }}★</p>
+                <small>{{ day.stay.address|default:"Nearby location" }}</small>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Customization Panel -->
+<div class="customization-panel" id="customizationPanel">
+    <h3><i class="fas fa-sliders-h"></i> Customize Itinerary</h3>
+    <form id="customizeForm">
+        <div class="form-group">
+            <label>Preferred Pace:</label>
+            <select id="pace" class="form-control">
+                <option value="slow">Slow & Relaxed</option>
+                <option value="medium" selected>Balanced</option>
+                <option value="fast">Fast & Aggressive</option>
+            </select>
+        </div>
+        
+        <div class="form-group">
+            <label>Focus On:</label>
+            <select id="focus" class="form-control">
+                <option value="balanced">Balanced</option>
+                <option value="attractions">More Attractions</option>
+                <option value="food">Food & Dining</option>
+                <option value="relaxation">Relaxation</option>
+            </select>
+        </div>
+        
+        <div class="form-group">
+            <label>Budget Adjustment:</label>
+            <input type="range" id="budget" min="50" max="200" value="100" step="10">
+            <span id="budgetValue">100%</span>
+        </div>
+        
+        <div class="form-group">
+            <label>Notes & Preferences:</label>
+            <textarea id="notes" rows="4" placeholder="Any special requests or preferences..."></textarea>
+        </div>
+        
+        <button type="submit" class="btn-submit">Apply Changes</button>
+        <button type="button" onclick="closeCustomization()" class="btn-close">Close</button>
+    </form>
+</div>
+
+<button class="customize-btn" onclick="openCustomization()">
+    <i class="fas fa-edit"></i> Customize Itinerary
+</button>
+
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet-routing-machine/dist/leaflet-routing-machine.js"></script>
+
+<script>
+    // Map initialization with routing
+    var map = L.map('map').setView([{{ destination.latitude }}, {{ destination.longitude }}], 12);
+    
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors'
+    }).addTo(map);
+    
+    var routePoints = [];
+    var markers = [];
+    
+    {% for day in days %}
+        {% for item in day.morning %}
+            routePoints.push(L.latLng({{ item.place.latitude }}, {{ item.place.longitude }}));
+            var marker = L.marker([{{ item.place.latitude }}, {{ item.place.longitude }}])
+                .bindPopup(`
+                    <strong>{{ item.place.name }}</strong><br>
+                    Time: {{ item.arrival_time }}<br>
+                    Duration: {{ item.visit_duration }} mins
+                `)
+                .addTo(map);
+            markers.push(marker);
+        {% endfor %}
+        {% for item in day.afternoon %}
+            routePoints.push(L.latLng({{ item.place.latitude }}, {{ item.place.longitude }}));
+            // Add marker similarly
+        {% endfor %}
+        {% for item in day.evening %}
+            routePoints.push(L.latLng({{ item.place.latitude }}, {{ item.place.longitude }}));
+            // Add marker similarly
+        {% endfor %}
+    {% endfor %}
+    
+    // Add routing control
+    if (routePoints.length > 1) {
+        L.Routing.control({
+            waypoints: routePoints,
+            routeWhileDragging: true,
+            showAlternatives: true,
+            lineOptions: {
+                styles: [{color: '#667eea', weight: 4}]
+            }
+        }).addTo(map);
+        
+        map.fitBounds(L.latLngBounds(routePoints));
+    }
+    
+    // Day toggle function
+    function toggleDay(dayNumber) {
+        var dayContent = document.getElementById('day-' + dayNumber);
+        dayContent.classList.toggle('active');
+    }
+    
+    // Open first day by default
+    document.getElementById('day-1').classList.add('active');
+    
+    // Customization functions
+    function openCustomization() {
+        document.getElementById('customizationPanel').classList.add('open');
+    }
+    
+    function closeCustomization() {
+        document.getElementById('customizationPanel').classList.remove('open');
+    }
+    
+    // Budget slider
+    var budgetSlider = document.getElementById('budget');
+    var budgetValue = document.getElementById('budgetValue');
+    
+    budgetSlider.oninput = function() {
+        budgetValue.innerHTML = this.value + '%';
+    }
+    
+    // Form submission
+    document.getElementById('customizeForm').onsubmit = function(e) {
+        e.preventDefault();
+        
+        var formData = {
+            pace: document.getElementById('pace').value,
+            focus: document.getElementById('focus').value,
+            budget_percentage: document.getElementById('budget').value,
+            notes: document.getElementById('notes').value
+        };
+        
+        fetch('/itineraries/{{ itinerary_id }}/customize/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify({modified_data: formData})
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                alert('Itinerary customized successfully! Refreshing...');
+                location.reload();
+            } else {
+                alert('Error: ' + data.message);
+            }
+        });
+    };
+    
+    // Function to get CSRF token
+    function getCookie(name) {
+        var cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            var cookies = document.cookie.split(';');
+            for (var i = 0; i < cookies.length; i++) {
+                var cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+    
+    // Restaurant selection
+    function selectRestaurant(restaurantId) {
+        // Add to itinerary logic
+        alert('Restaurant selected! We\'ll add this to your itinerary.');
+    }
+</script>
+
+</body>
+</html>

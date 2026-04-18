@@ -1,0 +1,981 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wayzo | Community</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --gray-100:     #F8F9FC;
+            --gray-150:     #F1F3F8;
+            --gray-200:     #E9EDF2;
+            --gray-300:     #DCE2EA;
+            --gray-400:     #BEC7D1;
+            --gray-500:     #9AA3AF;
+            --gray-600:     #6E7682;
+            --gray-700:     #4A515C;
+            --gray-800:     #2E343D;
+            --gray-850:     #21262E;
+            --gray-900:     #191E24;
+            --gray-950:     #0F1217;
+            --accent-muted: #5B6E8C;
+            --accent-deep:  #3A4A67;
+            --accent-light: #8A9CBA;
+            --accent-pale:  #EFF2F9;
+            --white:        #FFFFFF;
+            --text-dark:    #1E242C;
+            --text-soft:    #3C4350;
+            --text-light:   #6F7886;
+            --green:        #22C55E;
+            --amber:        #F59E0B;
+            --rose:         #F43F5E;
+            --sidebar-w:    260px;
+        }
+
+        html { height: 100%; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--gray-100);
+            color: var(--text-dark);
+            display: flex;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* ══ SIDEBAR ══ */
+        .sidebar {
+            width: var(--sidebar-w);
+            background: var(--gray-950);
+            height: 100vh;
+            position: fixed; top: 0; left: 0;
+            display: flex; flex-direction: column;
+            z-index: 300;
+            border-right: 1px solid rgba(255,255,255,0.06);
+            transform: translateX(0);
+            transition: transform 0.32s cubic-bezier(0.4,0,0.2,1), box-shadow 0.32s ease;
+            overflow: hidden;
+        }
+        .sidebar.collapsed { transform: translateX(calc(-1 * var(--sidebar-w))); }
+        .sidebar-overlay {
+            display: none; position: fixed; inset: 0;
+            background: rgba(0,0,0,0.45); z-index: 290; opacity: 0;
+            transition: opacity 0.3s ease; backdrop-filter: blur(2px);
+        }
+        .sidebar-overlay.visible { opacity: 1; }
+
+        .sidebar-brand {
+            padding: 1.8rem 1.6rem 1.4rem;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+        }
+        .sidebar-logo {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.5rem; font-weight: 600; letter-spacing: -0.01em;
+            color: white; text-decoration: none; display: block; margin-bottom: 0.2rem;
+        }
+        .sidebar-sub {
+            font-size: 0.68rem; color: rgba(255,255,255,0.3);
+            letter-spacing: 0.08em; text-transform: uppercase;
+        }
+        .sidebar-profile {
+            padding: 1.2rem 1.6rem;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+            display: flex; align-items: center; gap: 0.85rem;
+        }
+        .sidebar-avatar {
+            width: 38px; height: 38px; border-radius: 50%;
+            background: var(--accent-deep);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 0.85rem; font-weight: 600; color: white;
+            overflow: hidden; flex-shrink: 0;
+            border: 2px solid rgba(255,255,255,0.08);
+        }
+        .sidebar-avatar img { width: 100%; height: 100%; object-fit: cover; }
+        .sidebar-profile-info { overflow: hidden; }
+        .sidebar-profile-name {
+            font-size: 0.82rem; font-weight: 600; color: white;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .sidebar-profile-role { font-size: 0.68rem; color: rgba(255,255,255,0.35); }
+
+        .sidebar-nav { flex: 1; padding: 1rem 0.8rem; overflow-y: auto; }
+        .nav-group-label {
+            font-size: 0.62rem; font-weight: 600; letter-spacing: 0.12em;
+            text-transform: uppercase; color: rgba(255,255,255,0.22);
+            padding: 0.6rem 0.8rem 0.4rem; display: block;
+        }
+        .nav-item {
+            display: flex; align-items: center; gap: 0.75rem;
+            padding: 0.65rem 0.8rem; border-radius: 8px;
+            text-decoration: none; color: rgba(255,255,255,0.5);
+            font-size: 0.82rem; font-weight: 500;
+            transition: all 0.2s; margin-bottom: 2px;
+            cursor: pointer; border: none; background: none; width: 100%; text-align: left;
+        }
+        .nav-item svg { width: 16px; height: 16px; stroke: currentColor; stroke-width: 1.8; fill: none; flex-shrink: 0; }
+        .nav-item:hover { background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.85); }
+        .nav-item.active { background: rgba(138,156,186,0.14); color: var(--accent-light); }
+        .nav-item.active svg { stroke: var(--accent-light); }
+
+        .sidebar-footer { padding: 0.8rem; border-top: 1px solid rgba(255,255,255,0.06); }
+        .logout-btn {
+            display: flex; align-items: center; gap: 0.75rem;
+            padding: 0.65rem 0.8rem; border-radius: 8px;
+            text-decoration: none; color: rgba(255,255,255,0.35);
+            font-size: 0.82rem; font-weight: 500; transition: all 0.2s; width: 100%;
+        }
+        .logout-btn svg { width: 16px; height: 16px; stroke: currentColor; stroke-width: 1.8; fill: none; }
+        .logout-btn:hover { background: rgba(239,68,68,0.1); color: #F87171; }
+
+        /* ══ MAIN ══ */
+        .main {
+            margin-left: var(--sidebar-w); flex: 1; display: flex; flex-direction: column;
+            min-height: 100vh;
+            transition: margin-left 0.32s cubic-bezier(0.4,0,0.2,1);
+        }
+        .main.sidebar-collapsed { margin-left: 0; }
+
+        /* ══ TOPBAR ══ */
+        .topbar {
+            background: var(--white); border-bottom: 1px solid var(--gray-200);
+            padding: 0 2rem; height: 64px;
+            display: flex; align-items: center; justify-content: space-between;
+            position: sticky; top: 0; z-index: 200; gap: 1rem;
+        }
+        .topbar-left { display: flex; align-items: center; gap: 1rem; flex: 1; min-width: 0; }
+        .topbar-left h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.2rem; font-weight: 500; color: var(--gray-900); white-space: nowrap;
+        }
+        .topbar-left p { font-size: 0.75rem; color: var(--text-light); margin-top: 1px; white-space: nowrap; }
+        .topbar-right { display: flex; align-items: center; gap: 0.75rem; flex-shrink: 0; }
+
+        .hamburger {
+            width: 36px; height: 36px; display: flex; flex-direction: column;
+            align-items: center; justify-content: center; gap: 5px;
+            background: transparent; border: none; cursor: pointer; padding: 4px;
+            border-radius: 8px; flex-shrink: 0; transition: background 0.2s;
+        }
+        .hamburger:hover { background: var(--gray-150); }
+        .hamburger span {
+            display: block; width: 20px; height: 2px; background: var(--gray-700);
+            border-radius: 2px; transition: transform 0.3s cubic-bezier(0.4,0,0.2,1), opacity 0.3s ease, width 0.3s ease;
+            transform-origin: center;
+        }
+        .hamburger.is-open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+        .hamburger.is-open span:nth-child(2) { opacity: 0; width: 0; }
+        .hamburger.is-open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
+        .topbar-btn {
+            display: flex; align-items: center; gap: 0.5rem;
+            padding: 0.5rem 1.1rem; border-radius: 40px;
+            font-size: 0.78rem; font-weight: 500; cursor: pointer;
+            text-decoration: none; border: none; font-family: 'Inter', sans-serif; transition: all 0.2s;
+        }
+        .topbar-btn svg { width: 14px; height: 14px; stroke: currentColor; stroke-width: 2; fill: none; }
+        .topbar-btn.outline { border: 1.5px solid var(--gray-300); background: transparent; color: var(--gray-700); }
+        .topbar-btn.outline:hover { border-color: var(--accent-muted); color: var(--accent-deep); }
+        .topbar-btn.solid { background: var(--gray-900); color: white; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+        .topbar-btn.solid:hover { background: var(--accent-deep); }
+
+        /* ── Notification bell ── */
+        .notif-wrap { position: relative; }
+        .notif-btn {
+            width: 36px; height: 36px; border-radius: 10px;
+            border: 1.5px solid var(--gray-200); background: transparent;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; color: var(--gray-600); transition: all 0.2s; position: relative;
+        }
+        .notif-btn svg { width: 16px; height: 16px; stroke: currentColor; stroke-width: 1.8; fill: none; }
+        .notif-btn:hover { border-color: var(--accent-muted); color: var(--accent-deep); background: var(--accent-pale); }
+        .notif-dot {
+            position: absolute; top: -3px; right: -3px;
+            width: 8px; height: 8px; border-radius: 50%;
+            background: var(--rose); border: 2px solid var(--white);
+        }
+        .notif-dropdown {
+            display: none; position: absolute; right: 0; top: calc(100% + 10px);
+            width: 320px; background: var(--white);
+            border: 1px solid var(--gray-200); border-radius: 14px;
+            box-shadow: 0 12px 40px rgba(0,0,0,0.12); z-index: 500; overflow: hidden;
+        }
+        .notif-dropdown.open { display: block; animation: fadeUp 0.2s ease; }
+        .notif-header {
+            padding: 0.9rem 1.2rem; border-bottom: 1px solid var(--gray-200);
+            display: flex; align-items: center; justify-content: space-between;
+        }
+        .notif-header span { font-size: 0.82rem; font-weight: 600; color: var(--gray-900); }
+        .notif-header a { font-size: 0.72rem; color: var(--accent-deep); text-decoration: none; }
+        .notif-header a:hover { text-decoration: underline; }
+        .notif-item {
+            padding: 0.85rem 1.2rem; border-bottom: 1px solid var(--gray-100);
+            font-size: 0.8rem; color: var(--text-soft); line-height: 1.5; transition: background 0.15s;
+        }
+        .notif-item:last-child { border-bottom: none; }
+        .notif-item:hover { background: var(--gray-100); }
+        .notif-empty { padding: 1.5rem 1.2rem; text-align: center; color: var(--text-light); font-size: 0.82rem; }
+
+        /* ══ HERO ══ */
+        .hero {
+            background: var(--gray-900);
+            position: relative; overflow: hidden;
+            min-height: 420px;
+            display: flex; align-items: center;
+        }
+        /* SVG travel illustration bg pattern */
+        .hero-bg-pattern {
+            position: absolute; inset: 0; z-index: 0;
+            background:
+                radial-gradient(ellipse 55% 80% at 80% 50%, rgba(58,74,103,0.35) 0%, transparent 70%),
+                radial-gradient(ellipse 40% 60% at 20% 80%, rgba(91,110,140,0.15) 0%, transparent 65%);
+        }
+        /* Decorative geometric rings */
+        .hero-bg-pattern::before {
+            content: '';
+            position: absolute; right: -60px; top: -60px;
+            width: 380px; height: 380px; border-radius: 50%;
+            border: 1px solid rgba(138,156,186,0.1);
+        }
+        .hero-bg-pattern::after {
+            content: '';
+            position: absolute; right: 40px; top: 40px;
+            width: 220px; height: 220px; border-radius: 50%;
+            border: 1px solid rgba(138,156,186,0.08);
+        }
+
+        /* Inline SVG illustration on the right */
+        .hero-illustration {
+            position: absolute; right: 0; top: 0; bottom: 0;
+            width: 45%; display: flex; align-items: center; justify-content: center;
+            z-index: 1; opacity: 0.18;
+        }
+        .hero-illustration svg { width: 100%; height: 100%; }
+
+        .hero-content {
+            position: relative; z-index: 2;
+            padding: 3.5rem 2.5rem 5rem;
+            max-width: 580px;
+        }
+        .hero-eyebrow {
+            font-size: 0.68rem; font-weight: 700; letter-spacing: 0.15em;
+            text-transform: uppercase; color: var(--accent-light);
+            margin-bottom: 1rem; display: flex; align-items: center; gap: 0.6rem;
+        }
+        .hero-eyebrow::before {
+            content: ''; width: 28px; height: 1.5px; background: var(--accent-light); flex-shrink: 0;
+        }
+        .hero-content h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: clamp(2rem, 3.5vw, 2.8rem);
+            font-weight: 600; color: white; line-height: 1.2;
+            margin-bottom: 1.2rem;
+        }
+        .hero-content h1 em { font-style: italic; color: var(--accent-light); }
+        .hero-divider {
+            width: 48px; height: 2px;
+            background: linear-gradient(90deg, var(--accent-light), transparent);
+            margin-bottom: 1.2rem;
+        }
+        .hero-content p {
+            font-size: 0.9rem; color: rgba(255,255,255,0.55);
+            line-height: 1.7; margin-bottom: 1.8rem; max-width: 440px;
+        }
+        .hero-actions { display: flex; gap: 0.85rem; flex-wrap: wrap; }
+        .hero-btn {
+            display: inline-flex; align-items: center; gap: 0.5rem;
+            padding: 0.7rem 1.5rem; border-radius: 40px;
+            font-size: 0.82rem; font-weight: 600; cursor: pointer;
+            text-decoration: none; border: none; font-family: 'Inter', sans-serif;
+            transition: all 0.22s; letter-spacing: 0.01em;
+        }
+        .hero-btn svg { width: 15px; height: 15px; stroke: currentColor; stroke-width: 2; fill: none; flex-shrink: 0; }
+        .hero-btn.primary { background: white; color: var(--gray-900); box-shadow: 0 4px 16px rgba(0,0,0,0.15); }
+        .hero-btn.primary:hover { background: var(--accent-pale); box-shadow: 0 6px 24px rgba(0,0,0,0.18); }
+        .hero-btn.secondary {
+            background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.85);
+            border: 1.5px solid rgba(255,255,255,0.18);
+        }
+        .hero-btn.secondary:hover { background: rgba(255,255,255,0.14); border-color: rgba(255,255,255,0.3); }
+
+        /* Hero stats strip */
+        .hero-stats {
+            position: absolute; bottom: 0; left: 0; right: 0; z-index: 2;
+            display: flex; gap: 0;
+        }
+        .hero-stat {
+            flex: 1; padding: 0.9rem 1.4rem;
+            background: rgba(255,255,255,0.04);
+            border-top: 1px solid rgba(255,255,255,0.07);
+            border-right: 1px solid rgba(255,255,255,0.07);
+            display: flex; align-items: center; gap: 0.75rem;
+        }
+        .hero-stat:last-child { border-right: none; }
+        .hero-stat-icon {
+            width: 32px; height: 32px; border-radius: 8px;
+            background: rgba(138,156,186,0.12);
+            display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+        }
+        .hero-stat-icon svg { width: 15px; height: 15px; stroke: var(--accent-light); stroke-width: 1.8; fill: none; }
+        .hero-stat-num { font-size: 1.1rem; font-weight: 700; color: white; line-height: 1; }
+        .hero-stat-label { font-size: 0.68rem; color: rgba(255,255,255,0.4); margin-top: 2px; }
+
+        /* ══ CONTENT ══ */
+        .content { padding: 0 2.5rem 3rem; }
+
+        /* ── Feature cards (overlap hero) ── */
+        .feature-cards {
+            display: grid; grid-template-columns: repeat(3, 1fr);
+            gap: 1.4rem;
+            margin-top: -2.5rem;
+            margin-bottom: 2.8rem;
+            position: relative; z-index: 10;
+        }
+        .feature-card {
+            background: var(--white);
+            border: 1px solid var(--gray-200); border-radius: 16px;
+            overflow: hidden; text-align: center;
+            transition: all 0.25s;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.07);
+        }
+        .feature-card:hover { transform: translateY(-4px); box-shadow: 0 16px 40px rgba(0,0,0,0.1); }
+        .feature-thumb {
+            height: 140px; overflow: hidden; position: relative;
+        }
+        .feature-thumb img { width: 100%; height: 100%; object-fit: cover; }
+        /* Gradient overlay on thumb */
+        .feature-thumb::after {
+            content: ''; position: absolute; inset: 0;
+            background: linear-gradient(to bottom, transparent 40%, rgba(15,18,23,0.35));
+        }
+        /* Icon badge overlapping thumb/body */
+        .feature-icon-wrap {
+            position: relative; display: flex; justify-content: center;
+            margin-top: -20px; z-index: 2;
+        }
+        .feature-icon {
+            width: 42px; height: 42px; border-radius: 50%;
+            background: var(--gray-900);
+            border: 3px solid var(--white);
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        .feature-icon svg { width: 18px; height: 18px; stroke: var(--accent-light); stroke-width: 1.8; fill: none; }
+        .feature-body { padding: 0.75rem 1.3rem 1.4rem; }
+        .feature-tag {
+            font-size: 0.6rem; font-weight: 700; letter-spacing: 0.12em;
+            text-transform: uppercase; color: var(--accent-muted); margin-bottom: 0.4rem;
+        }
+        .feature-body h3 {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.05rem; font-weight: 500; color: var(--gray-900); margin-bottom: 0.5rem;
+        }
+        .feature-body p { font-size: 0.78rem; color: var(--text-light); line-height: 1.6; }
+
+        /* ── Section header ── */
+        .section-head {
+            display: flex; align-items: center; justify-content: space-between;
+            margin-bottom: 1.2rem;
+        }
+        .section-head h3 {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.2rem; font-weight: 500; color: var(--gray-900);
+        }
+        .section-head p { font-size: 0.78rem; color: var(--text-light); margin-top: 2px; }
+
+        /* ── Community cards ── */
+        .community-grid {
+            display: grid; grid-template-columns: repeat(3, 1fr);
+            gap: 1.4rem; margin-bottom: 2.5rem;
+        }
+        .community-card {
+            background: var(--white);
+            border: 1px solid var(--gray-200); border-radius: 16px;
+            overflow: hidden; transition: all 0.25s; text-decoration: none; display: block;
+        }
+        .community-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 16px 36px rgba(0,0,0,0.08);
+            border-color: var(--gray-300);
+        }
+        .community-thumb {
+            height: 130px; background: var(--gray-150);
+            position: relative; overflow: hidden;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .community-thumb img { width: 100%; height: 100%; object-fit: cover; }
+        .community-thumb-placeholder {
+            display: flex; flex-direction: column; align-items: center; gap: 0.4rem;
+            color: var(--gray-400);
+        }
+        .community-thumb-placeholder svg { width: 28px; height: 28px; stroke: currentColor; stroke-width: 1.5; fill: none; }
+        /* Gradient overlay on cover */
+        .community-thumb::after {
+            content: ''; position: absolute; inset: 0;
+            background: linear-gradient(to bottom, transparent 40%, rgba(15,18,23,0.5));
+        }
+        .community-owner-badge {
+            position: absolute; top: 0.65rem; left: 0.65rem; z-index: 2;
+            background: var(--gray-900); color: white;
+            font-size: 0.62rem; font-weight: 600; letter-spacing: 0.05em;
+            padding: 0.22rem 0.6rem; border-radius: 40px; text-transform: uppercase;
+        }
+        .community-body { padding: 1.1rem 1.2rem 0.9rem; }
+        .community-body h4 {
+            font-size: 0.92rem; font-weight: 600; color: var(--gray-900);
+            margin-bottom: 0.3rem; line-height: 1.3;
+        }
+        .community-desc {
+            font-size: 0.76rem; color: var(--text-light); line-height: 1.55;
+            margin-bottom: 0.75rem;
+            display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+        }
+        .community-meta {
+            display: flex; gap: 0.8rem; font-size: 0.73rem; color: var(--text-light);
+        }
+        .community-meta span { display: flex; align-items: center; gap: 0.3rem; }
+        .community-meta svg { width: 12px; height: 12px; stroke: currentColor; stroke-width: 2; fill: none; }
+        .community-footer {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 0.75rem 1.2rem;
+            border-top: 1px solid var(--gray-200);
+        }
+        .community-tag {
+            display: inline-flex; align-items: center; gap: 0.35rem;
+            background: var(--accent-pale); color: var(--accent-deep);
+            padding: 0.25rem 0.7rem; border-radius: 40px;
+            font-size: 0.68rem; font-weight: 600;
+        }
+        .community-arrow {
+            width: 28px; height: 28px; border-radius: 8px;
+            border: 1.5px solid var(--gray-200); background: transparent;
+            display: flex; align-items: center; justify-content: center;
+            color: var(--gray-500); transition: all 0.2s;
+        }
+        .community-arrow svg { width: 12px; height: 12px; stroke: currentColor; stroke-width: 2.5; fill: none; }
+        .community-card:hover .community-arrow {
+            border-color: var(--accent-muted); color: var(--accent-deep); background: var(--accent-pale);
+        }
+
+        /* Empty state */
+        .empty-state {
+            background: var(--white); border: 1.5px dashed var(--gray-300);
+            border-radius: 16px; padding: 3rem; text-align: center; grid-column: 1 / -1;
+        }
+        .empty-state svg { width: 40px; height: 40px; stroke: var(--gray-300); stroke-width: 1.5; fill: none; margin-bottom: 1rem; }
+        .empty-state h4 { font-size: 0.95rem; font-weight: 600; color: var(--gray-700); margin-bottom: 0.4rem; }
+        .empty-state p { font-size: 0.83rem; color: var(--text-light); margin-bottom: 1.4rem; }
+
+        /* ══ FOOTER ══ */
+        .site-footer {
+            background: var(--gray-950); color: rgba(255,255,255,0.6);
+            padding: 4rem 5% 2rem;
+        }
+        .footer-grid {
+            display: grid; grid-template-columns: 2fr 1fr 1fr 1fr;
+            gap: 2.5rem; margin-bottom: 2.8rem;
+        }
+        .footer-logo {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.55rem; font-weight: 600; letter-spacing: -0.01em;
+            color: white; display: block; margin-bottom: 1rem; text-decoration: none;
+        }
+        .footer-logo:hover { color: rgba(255,255,255,0.75); }
+        .footer-desc { font-size: 0.85rem; color: rgba(255,255,255,0.45); line-height: 1.7; max-width: 240px; }
+        .footer-col h5 {
+            font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase;
+            font-weight: 600; color: var(--gray-300); margin-bottom: 1.2rem;
+        }
+        .footer-col ul { list-style: none; display: flex; flex-direction: column; gap: 0.7rem; }
+        .footer-col ul a { font-size: 0.85rem; color: rgba(255,255,255,0.5); text-decoration: none; transition: color 0.2s; }
+        .footer-col ul a:hover { color: white; }
+        .footer-bottom {
+            border-top: 1px solid rgba(255,255,255,0.08); padding-top: 2rem;
+            display: flex; justify-content: space-between; align-items: center;
+            font-size: 0.75rem; color: rgba(255,255,255,0.3);
+        }
+
+        /* ══ RESPONSIVE ══ */
+        @media (max-width: 1200px) {
+            .community-grid, .feature-cards { grid-template-columns: repeat(2,1fr); }
+        }
+        @media (max-width: 860px) {
+            .sidebar-overlay { display: block; }
+            .sidebar { transform: translateX(calc(-1 * var(--sidebar-w))); }
+            .sidebar.open { transform: translateX(0); box-shadow: 8px 0 40px rgba(0,0,0,0.35); }
+            .main { margin-left: 0 !important; }
+            .hero-stats { flex-wrap: wrap; }
+            .hero-stat { min-width: 50%; }
+            .hero-illustration { display: none; }
+        }
+        @media (max-width: 640px) {
+            .community-grid, .feature-cards { grid-template-columns: 1fr; }
+            .content { padding: 0 1rem 2rem; }
+            .topbar { padding: 0 1rem; }
+            .hero-content { padding: 2.5rem 1.2rem 5rem; }
+            .hero-actions { flex-direction: column; }
+            .hero-btn { justify-content: center; }
+            .footer-grid { grid-template-columns: 1fr; }
+            .footer-bottom { flex-direction: column; gap: 0.6rem; text-align: center; }
+        }
+        @media (max-width: 1000px) { .footer-grid { grid-template-columns: 1fr 1fr; gap: 2rem; } }
+
+        @keyframes fadeUp { from { opacity:0; transform:translateY(14px); } to { opacity:1; transform:translateY(0); } }
+        .feature-cards { animation: fadeUp 0.5s 0.1s ease both; }
+        .section-head   { animation: fadeUp 0.5s 0.15s ease both; }
+        .community-grid { animation: fadeUp 0.5s 0.2s ease both; }
+    </style>
+</head>
+<body>
+
+<div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+
+<!-- ══ SIDEBAR ══ -->
+<aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+        <a class="sidebar-logo" href="{% url 'index' %}">Wayzo</a>
+        <span class="sidebar-sub">Traveller Portal</span>
+    </div>
+    <div class="sidebar-profile">
+        <div class="sidebar-avatar">
+            {% if profile.profile_picture %}
+                <img src="{{ profile.profile_picture.url }}" alt="{{ profile.first_name }}">
+            {% else %}
+                {{ profile.first_name|first|upper }}{{ profile.last_name|first|upper }}
+            {% endif %}
+        </div>
+        <div class="sidebar-profile-info">
+            <div class="sidebar-profile-name">{{ profile.first_name }} {{ profile.last_name }}</div>
+            <div class="sidebar-profile-role">Explorer</div>
+        </div>
+    </div>
+    <nav class="sidebar-nav">
+        <span class="nav-group-label">Main</span>
+        <a href="{% url 'travellers:user_profile' request.user.id %}" class="nav-item">
+            <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+            Home
+        </a>
+        <a href="{% url 'travellers:all_packages' %}" class="nav-item">
+            <svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+            Tour Packages
+        </a>
+        <a href="{% url 'travellers:all_restaurants' %}" class="nav-item">
+            <svg viewBox="0 0 24 24"><line x1="12" y1="2" x2="12" y2="6"/><line x1="12" y1="18" x2="12" y2="22"/><path d="M4.93 4.93l2.83 2.83"/><path d="M16.24 16.24l2.83 2.83"/><line x1="2" y1="12" x2="6" y2="12"/><line x1="18" y1="12" x2="22" y2="12"/></svg>
+            Restaurants
+        </a>
+        <a href="{% url 'travellers:my_bookings' %}" class="nav-item">
+            <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+            My Bookings
+        </a>
+        <a href="{% url 'travellers:wishlist' %}" class="nav-item">
+            <svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+            Wishlist
+        </a>
+        <span class="nav-group-label" style="margin-top:0.6rem;">Account</span>
+        <a href="{% url 'travellers:edit_profile' %}" class="nav-item">
+            <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            Edit Profile
+        </a>
+        <a href="{% url 'community_home' %}" class="nav-item active">
+            <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            Community
+        </a>
+    </nav>
+    <div class="sidebar-footer">
+        <a href="{% url 'logout' %}" class="logout-btn">
+            <svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+            Sign Out
+        </a>
+    </div>
+</aside>
+
+<!-- ══ MAIN ══ -->
+<div class="main">
+
+    <!-- Topbar -->
+    <div class="topbar">
+        <div class="topbar-left">
+            <button class="hamburger is-open" id="hamburgerBtn" onclick="toggleSidebar()" aria-label="Toggle navigation">
+                <span></span><span></span><span></span>
+            </button>
+            <div>
+                <h1>Community</h1>
+                <p>Connect, explore and share with fellow travellers</p>
+            </div>
+        </div>
+        <div class="topbar-right">
+            <!-- Notification bell -->
+            <div class="notif-wrap">
+                <button class="notif-btn" id="notifBtn" onclick="toggleNotif()" aria-label="Notifications">
+                    <svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+                    {% if notifications %}<span class="notif-dot"></span>{% endif %}
+                </button>
+                <div class="notif-dropdown" id="notifDropdown">
+                    <div class="notif-header">
+                        <span>Notifications</span>
+                        <a href="{% url 'notifications' %}">View all</a>
+                    </div>
+                    {% for n in notifications %}
+                        <div class="notif-item">{{ n.message }}</div>
+                    {% empty %}
+                        <div class="notif-empty">You're all caught up!</div>
+                    {% endfor %}
+                </div>
+            </div>
+            <a href="{% url 'community_list' %}" class="topbar-btn outline">
+                <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                Browse
+            </a>
+            <a href="{% url 'create_community' %}" class="topbar-btn solid">
+                <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                Create Community
+            </a>
+        </div>
+    </div>
+
+    <!-- ══ HERO ══ -->
+    <div class="hero">
+        <div class="hero-bg-pattern"></div>
+
+        <!-- Right-side SVG illustration (world/travel themed) -->
+        <div class="hero-illustration">
+            <svg viewBox="0 0 500 400" xmlns="http://www.w3.org/2000/svg" fill="none">
+                <!-- Globe -->
+                <circle cx="340" cy="180" r="140" stroke="white" stroke-width="1.5"/>
+                <ellipse cx="340" cy="180" rx="60" ry="140" stroke="white" stroke-width="1.2"/>
+                <ellipse cx="340" cy="180" rx="140" ry="50" stroke="white" stroke-width="1.2"/>
+                <line x1="200" y1="180" x2="480" y2="180" stroke="white" stroke-width="1"/>
+                <line x1="340" y1="40" x2="340" y2="320" stroke="white" stroke-width="1"/>
+                <!-- Plane path -->
+                <path d="M160 100 Q 260 60 340 180 Q 400 260 460 200" stroke="white" stroke-width="1.5" stroke-dasharray="6 4"/>
+                <!-- Pin -->
+                <circle cx="340" cy="180" r="7" fill="white" opacity="0.6"/>
+                <circle cx="220" cy="140" r="5" fill="white" opacity="0.5"/>
+                <circle cx="440" cy="200" r="5" fill="white" opacity="0.5"/>
+                <!-- People silhouettes -->
+                <circle cx="80" cy="280" r="18" stroke="white" stroke-width="1.2"/>
+                <path d="M62 320 Q80 300 98 320" stroke="white" stroke-width="1.2"/>
+                <circle cx="130" cy="270" r="14" stroke="white" stroke-width="1.2"/>
+                <path d="M116 306 Q130 290 144 306" stroke="white" stroke-width="1.2"/>
+                <circle cx="55" cy="270" r="14" stroke="white" stroke-width="1.2"/>
+                <path d="M41 306 Q55 290 69 306" stroke="white" stroke-width="1.2"/>
+            </svg>
+        </div>
+
+        <div class="hero-content">
+            <div class="hero-eyebrow">Connect &amp; Explore</div>
+            <h1>Discover communities<br>that share <em>your passion.</em></h1>
+            <div class="hero-divider"></div>
+            <p>Join fellow travellers, share experiences, get local tips and build friendships that last beyond the journey.</p>
+            <div class="hero-actions">
+                <a href="{% url 'create_community' %}" class="hero-btn primary">
+                    <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                    Create a Community
+                </a>
+                <a href="{% url 'community_list' %}" class="hero-btn secondary">
+                    <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                    Browse &amp; Join
+                </a>
+            </div>
+        </div>
+
+        <!-- Stats strip at bottom of hero -->
+        <div class="hero-stats">
+            <div class="hero-stat">
+                <div class="hero-stat-icon">
+                    <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                </div>
+                <div>
+                    <div class="hero-stat-num">{{ total_members|default:"2,400+" }}</div>
+                    <div class="hero-stat-label">Active Members</div>
+                </div>
+            </div>
+            <div class="hero-stat">
+                <div class="hero-stat-icon">
+                    <svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                </div>
+                <div>
+                    <div class="hero-stat-num">{{ total_communities|default:"180+" }}</div>
+                    <div class="hero-stat-label">Communities</div>
+                </div>
+            </div>
+            <div class="hero-stat">
+                <div class="hero-stat-icon">
+                    <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                </div>
+                <div>
+                    <div class="hero-stat-num">{{ total_posts|default:"12K+" }}</div>
+                    <div class="hero-stat-label">Stories Shared</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ══ PAGE CONTENT ══ -->
+    <div class="content">
+
+        <!-- ── Feature cards (Cholot-style, overlapping hero) ── -->
+        <div class="feature-cards">
+            <div class="feature-card">
+                <div class="feature-thumb">
+                    <img src="https://images.unsplash.com/photo-1527529482837-4698179dc6ce?w=600&q=80" alt="Connect">
+                </div>
+                <div class="feature-icon-wrap">
+                    <div class="feature-icon">
+                        <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+                    </div>
+                </div>
+                <div class="feature-body">
+                    <div class="feature-tag">Connect</div>
+                    <h3>Find your tribe</h3>
+                    <p>Meet travellers who share your interests — from backpackers to luxury explorers.</p>
+                </div>
+            </div>
+            <div class="feature-card">
+                <div class="feature-thumb">
+                    <img src="https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=600&q=80" alt="Explore">
+                </div>
+                <div class="feature-icon-wrap">
+                    <div class="feature-icon">
+                        <svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                    </div>
+                </div>
+                <div class="feature-body">
+                    <div class="feature-tag">Explore</div>
+                    <h3>Share experiences</h3>
+                    <p>Post your travel stories, photos and local tips with your community.</p>
+                </div>
+            </div>
+            <div class="feature-card">
+                <div class="feature-thumb">
+                    <img src="https://images.unsplash.com/photo-1523906834658-6e24ef2386f9?w=600&q=80" alt="Grow">
+                </div>
+                <div class="feature-icon-wrap">
+                    <div class="feature-icon">
+                        <svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                    </div>
+                </div>
+                <div class="feature-body">
+                    <div class="feature-tag">Grow</div>
+                    <h3>Build relationships</h3>
+                    <p>Friendships forged on the road last a lifetime. Start yours here.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── My Communities ── -->
+        {% if created_communities or joined_communities %}
+        <div class="section-head">
+            <div>
+                <h3>My Communities</h3>
+                <p>Communities you created or joined</p>
+            </div>
+            <a href="{% url 'community_list' %}" class="topbar-btn solid">
+                Browse All
+                <svg viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+            </a>
+        </div>
+
+        <div class="community-grid">
+            {% for c in created_communities %}
+            <a href="{% url 'community_detail' c.id %}" class="community-card">
+                <div class="community-thumb">
+                    {% if c.cover_image %}
+                        <img src="{{ c.cover_image.url }}" alt="{{ c.name }}">
+                    {% else %}
+                        <div class="community-thumb-placeholder">
+                            <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/></svg>
+                        </div>
+                    {% endif %}
+                    <span class="community-owner-badge">Owner</span>
+                </div>
+                <div class="community-body">
+                    <h4>{{ c.name }}</h4>
+                    <p class="community-desc">{{ c.description|default:"No description provided."|truncatewords:20 }}</p>
+                    <div class="community-meta">
+                        <span>
+                            <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+                            {{ c.members.count }} member{{ c.members.count|pluralize }}
+                        </span>
+                        <span>
+                            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                            {{ c.created_at|date:"M Y" }}
+                        </span>
+                    </div>
+                </div>
+                <div class="community-footer">
+                    <span class="community-tag">Created by you</span>
+                    <div class="community-arrow">
+                        <svg viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                    </div>
+                </div>
+            </a>
+            {% endfor %}
+
+            {% for c in joined_communities %}
+            <a href="{% url 'community_detail' c.id %}" class="community-card">
+                <div class="community-thumb">
+                    {% if c.cover_image %}
+                        <img src="{{ c.cover_image.url }}" alt="{{ c.name }}">
+                    {% else %}
+                        <div class="community-thumb-placeholder">
+                            <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/></svg>
+                        </div>
+                    {% endif %}
+                </div>
+                <div class="community-body">
+                    <h4>{{ c.name }}</h4>
+                    <p class="community-desc">{{ c.description|default:"No description provided."|truncatewords:20 }}</p>
+                    <div class="community-meta">
+                        <span>
+                            <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+                            {{ c.members.count }} member{{ c.members.count|pluralize }}
+                        </span>
+                        <span>
+                            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                            {{ c.created_at|date:"M Y" }}
+                        </span>
+                    </div>
+                </div>
+                <div class="community-footer">
+                    <span class="community-tag">Member</span>
+                    <div class="community-arrow">
+                        <svg viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                    </div>
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+
+        {% else %}
+        <!-- Empty state when no communities -->
+        <div class="section-head">
+            <div>
+                <h3>My Communities</h3>
+                <p>Get started by creating or joining one</p>
+            </div>
+        </div>
+        <div class="community-grid">
+            <div class="empty-state">
+                <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                <h4>No communities yet</h4>
+                <p>Create your own community or browse and join one that matches your travel style.</p>
+                <div style="display:flex;gap:0.75rem;justify-content:center;flex-wrap:wrap;">
+                    <a href="{% url 'create_community' %}" class="topbar-btn solid" style="display:inline-flex;">
+                        <svg viewBox="0 0 24 24" style="width:14px;height:14px;stroke:currentColor;stroke-width:2;fill:none;"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                        Create Community
+                    </a>
+                    <a href="{% url 'community_list' %}" class="topbar-btn outline" style="display:inline-flex;">
+                        <svg viewBox="0 0 24 24" style="width:14px;height:14px;stroke:currentColor;stroke-width:2;fill:none;"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                        Browse Communities
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+    </div><!-- /content -->
+
+    <!-- ══ FOOTER ══ -->
+    <footer class="site-footer">
+        <div class="footer-grid">
+            <div>
+                <a class="footer-logo" href="{% url 'index' %}">Wayzo</a>
+                <p class="footer-desc">Your smart travel companion. Discover, plan, and experience the world beautifully.</p>
+            </div>
+            <div class="footer-col">
+                <h5>Explore</h5>
+                <ul>
+                    <li><a href="{% url 'travellers:all_packages' %}">Destinations</a></li>
+                    <li><a href="{% url 'travellers:all_restaurants' %}">Restaurants</a></li>
+                    <li><a href="#">Hotels</a></li>
+                    <li><a href="{% url 'travellers:all_packages' %}">Packages</a></li>
+                </ul>
+            </div>
+            <div class="footer-col">
+                <h5>My Account</h5>
+                <ul>
+                    <li><a href="{% url 'travellers:my_bookings' %}">My Bookings</a></li>
+                    <li><a href="{% url 'travellers:wishlist' %}">Wishlist</a></li>
+                    <li><a href="{% url 'travellers:edit_profile' %}">Profile Settings</a></li>
+                    <li><a href="{% url 'community_home' %}">Community</a></li>
+                </ul>
+            </div>
+            <div class="footer-col">
+                <h5>Support</h5>
+                <ul>
+                    <li><a href="#">Help Center</a></li>
+                    <li><a href="#">FAQs</a></li>
+                    <li><a href="#">Contact Us</a></li>
+                    <li><a href="#">Terms &amp; Privacy</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <span>© 2025 Wayzo. All rights reserved.</span>
+            <span>Made for explorers everywhere</span>
+        </div>
+    </footer>
+
+</div><!-- /main -->
+
+<script>
+    /* ── Sidebar ── */
+    const sidebar      = document.getElementById('sidebar');
+    const hamburgerBtn = document.getElementById('hamburgerBtn');
+    const mainEl       = document.querySelector('.main');
+    const overlay      = document.getElementById('sidebarOverlay');
+    const MOBILE_BP    = 860;
+
+    function isMobile() { return window.innerWidth <= MOBILE_BP; }
+    function setSidebarOpen(open) {
+        if (isMobile()) {
+            sidebar.classList.toggle('open', open);
+            overlay.classList.toggle('visible', open);
+            hamburgerBtn.classList.toggle('is-open', open);
+        } else {
+            open ? (sidebar.classList.remove('collapsed'), mainEl.classList.remove('sidebar-collapsed'))
+                 : (sidebar.classList.add('collapsed'), mainEl.classList.add('sidebar-collapsed'));
+            overlay.classList.remove('visible');
+            hamburgerBtn.classList.toggle('is-open', open);
+        }
+    }
+    function toggleSidebar() {
+        isMobile() ? setSidebarOpen(!sidebar.classList.contains('open'))
+                   : setSidebarOpen(sidebar.classList.contains('collapsed'));
+    }
+    function closeSidebar() { setSidebarOpen(false); }
+
+    if (isMobile()) {
+        sidebar.classList.remove('open'); sidebar.classList.add('collapsed');
+        overlay.classList.remove('visible'); hamburgerBtn.classList.remove('is-open');
+    } else {
+        sidebar.classList.add('collapsed'); mainEl.classList.add('sidebar-collapsed');
+        hamburgerBtn.classList.remove('is-open');
+    }
+    window.addEventListener('resize', () => {
+        if (!isMobile()) {
+            sidebar.classList.remove('open'); overlay.classList.remove('visible');
+            sidebar.classList.add('collapsed'); mainEl.classList.add('sidebar-collapsed');
+            hamburgerBtn.classList.remove('is-open');
+        }
+    });
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') { closeSidebar(); closeNotif(); } });
+
+    /* ── Notifications dropdown ── */
+    function toggleNotif() {
+        document.getElementById('notifDropdown').classList.toggle('open');
+    }
+    function closeNotif() {
+        document.getElementById('notifDropdown').classList.remove('open');
+    }
+    document.addEventListener('click', function(e) {
+        const wrap = document.querySelector('.notif-wrap');
+        if (wrap && !wrap.contains(e.target)) closeNotif();
+    });
+</script>
+</body>
+</html>

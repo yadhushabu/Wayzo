@@ -1,0 +1,33 @@
+<form method="POST" enctype="multipart/form-data">
+    {% csrf_token %}
+
+    {{ form.as_p }}
+
+    <h3>Images</h3>
+    {{ image_formset.management_form }}
+
+    <div id="image-container">
+        {% for form in image_formset %}
+            {{ form.image }}
+        {% endfor %}
+    </div>
+
+    <button type="button" onclick="addImage()">+ Add Image</button>
+
+    <button type="submit">Post</button>
+</form>
+
+<script>
+function addImage() {
+    let totalForms = document.getElementById("id_form-TOTAL_FORMS");
+    let count = parseInt(totalForms.value);
+
+    let container = document.getElementById("image-container");
+
+    container.innerHTML += `
+        <input type="file" name="form-${count}-image">
+    `;
+
+    totalForms.value = count + 1;
+}
+</script>

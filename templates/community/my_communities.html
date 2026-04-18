@@ -1,0 +1,23 @@
+<h2>👥 My Communities</h2>
+
+<h3>Created by You</h3>
+{% for c in created_communities %}
+    <div>
+        <a href="{% url 'community_detail' c.id %}">{{ c.name }}</a>
+    </div>
+{% empty %}
+    <p>No communities created</p>
+{% endfor %}
+
+<hr>
+
+<h3>Joined Communities</h3>
+{% for c in joined_communities %}
+    <div>
+        <a href="{% url 'community_detail' c.id %}">{{ c.name }}</a>
+    </div>
+{% empty %}
+    <p>No communities joined</p>
+{% endfor %}
+
+<a href="{% url 'user_profile' %}">Back to Dashboard</a>

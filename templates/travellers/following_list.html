@@ -1,0 +1,11 @@
+<h2>Following</h2>
+
+{% for f in following %}
+    <div>
+        <a href="{% url 'travellers:user_profile' f.following.id %}">
+            {{ f.following.username }}
+        </a>
+    </div>
+{% empty %}
+    <p>Not following anyone</p>
+{% endfor %}

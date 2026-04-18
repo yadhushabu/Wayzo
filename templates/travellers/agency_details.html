@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{{ agency.agency_name }}</title>
+</head>
+<body>
+
+<h2>{{ agency.agency_name }}</h2>
+
+<p><strong>Location:</strong> {{ agency.city }}, {{ agency.state }}</p>
+<p><strong>Mobile:</strong> {{ agency.mobile }}</p>
+<p><strong>Experience:</strong> {{ agency.experience_years }} years</p>
+
+{% if agency.description %}
+<p>{{ agency.description }}</p>
+{% endif %}
+
+<hr>
+
+<h3>Tour Packages</h3>
+
+{% for package in packages %}
+    <div style="border:1px solid #ccc; padding:10px; margin:10px;">
+        <h4>{{ package.title }}</h4>
+{{ package.images.first.image.url }}
+        <p>{{ package.description|truncatewords:20 }}</p>
+
+        <p>
+            {{ package.duration_days }}D /
+            {{ package.duration_nights }}N
+        </p>
+
+        <p>₹{{ package.price }}</p>
+    </div>
+{% empty %}
+    <p>No packages available</p>
+{% endfor %}
+
+</body>
+</html>

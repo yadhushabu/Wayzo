@@ -1,0 +1,50 @@
+<form method="POST" enctype="multipart/form-data">
+    {% csrf_token %}
+
+    {{ form.as_p }}
+
+    <!-- Images -->
+    <h3>Trip Images</h3>
+    {{ image_formset.management_form }}
+
+    <div id="image-container">
+        {% for form in image_formset %}
+            {{ form.image }}
+        {% endfor %}
+    </div>
+
+    <button type="button" onclick="addImage()">+ Add Image</button>
+
+    <!-- Itinerary -->
+    <h3>Itinerary</h3>
+    {{ itinerary_formset.management_form }}
+
+    <div id="itinerary-container"></div>
+
+    <button type="submit">Create Trip</button>
+</form>
+
+<script>
+const durationField = document.getElementById("id_duration_days");
+const container = document.getElementById("itinerary-container");
+const totalForms = document.getElementById("id_form-TOTAL_FORMS");
+
+durationField.addEventListener("input", function () {
+
+    let days = parseInt(this.value) || 0;
+
+    container.innerHTML = "";
+    totalForms.value = days;
+
+    for (let i = 0; i < days; i++) {
+        container.innerHTML += `
+            <div>
+                <h4>Day ${i+1}</h4>
+                <input type="hidden" name="form-${i}-day_number" value="${i+1}">
+                <input type="text" name="form-${i}-title" placeholder="Title" required>
+                <textarea name="form-${i}-description" placeholder="Description" required></textarea>
+            </div>
+        `;
+    }
+});
+</script>

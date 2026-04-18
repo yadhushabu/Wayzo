@@ -1,0 +1,538 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wayzo | Travel Made Easy</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --gray-100:      #F8F9FC;
+            --gray-150:      #F1F3F8;
+            --gray-200:      #E9EDF2;
+            --gray-300:      #DCE2EA;
+            --gray-400:      #BEC7D1;
+            --gray-500:      #9AA3AF;
+            --gray-600:      #6E7682;
+            --gray-700:      #4A515C;
+            --gray-800:      #2E343D;
+            --gray-850:      #21262E;
+            --gray-900:      #191E24;
+            --gray-950:      #0F1217;
+            --accent-muted:  #5B6E8C;
+            --accent-deep:   #3A4A67;
+            --accent-light:  #8A9CBA;
+            --accent-pale:   #EFF2F9;
+            --white:         #FFFFFF;
+            --text-dark:     #1E242C;
+            --text-soft:     #3C4350;
+            --text-light:    #6F7886;
+            --text-on-dark:  #F0F3FA;
+        }
+
+        html { scroll-behavior: smooth; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--gray-100);
+            color: var(--text-dark);
+            overflow-x: hidden;
+            line-height: 1.5;
+        }
+
+        h1, h2, h3, .serif {
+            font-family: 'Playfair Display', serif;
+            font-weight: 500;
+            letter-spacing: -0.01em;
+        }
+
+        /* ── NAV ── */
+        nav {
+            position: fixed; top: 0; left: 0; right: 0; z-index: 200;
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 1.4rem 5%;
+            transition: all 0.35s cubic-bezier(0.2, 0.9, 0.4, 1.1);
+            backdrop-filter: blur(0px);
+            background: transparent;
+        }
+        nav.scrolled {
+            background: rgba(255,255,255,0.92);
+            backdrop-filter: blur(14px);
+            box-shadow: 0 2px 20px rgba(0,0,0,0.02), 0 1px 0 rgba(0,0,0,0.03);
+            padding: 0.9rem 5%;
+            border-bottom: 1px solid rgba(0,0,0,0.04);
+        }
+        .nav-logo {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.65rem; font-weight: 600; letter-spacing: -0.02em;
+            color: var(--white); text-decoration: none;
+            transition: color 0.25s;
+        }
+        nav.scrolled .nav-logo { color: var(--gray-900); }
+
+        .nav-links { display: flex; align-items: center; gap: 2rem; list-style: none; }
+        .nav-links a {
+            font-size: 0.75rem; font-weight: 500; letter-spacing: 0.04em;
+            text-transform: uppercase; color: rgba(255,255,255,0.85);
+            text-decoration: none; transition: all 0.2s;
+        }
+        nav.scrolled .nav-links a { color: var(--gray-700); }
+        .nav-links a:hover { color: var(--white); opacity: 0.9; }
+        nav.scrolled .nav-links a:hover { color: var(--accent-deep); }
+
+        .nav-divider {
+            width: 1px; height: 1.2rem;
+            background: rgba(255,255,255,0.3);
+        }
+        nav.scrolled .nav-divider { background: var(--gray-400); }
+
+        .nav-login {
+            border: 1px solid rgba(255,255,255,0.45) !important;
+            padding: 0.45rem 1.2rem; border-radius: 40px;
+            font-weight: 500 !important;
+        }
+        nav.scrolled .nav-login {
+            border-color: var(--gray-400) !important;
+            color: var(--gray-700) !important;
+        }
+        .nav-join {
+            background: var(--gray-900) !important;
+            color: white !important;
+            padding: 0.55rem 1.5rem; border-radius: 40px;
+            font-weight: 500 !important;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+        }
+        nav.scrolled .nav-join {
+            background: var(--accent-deep) !important;
+            box-shadow: 0 4px 10px rgba(58,74,103,0.2);
+        }
+        .nav-join:hover {
+            transform: translateY(-1px);
+            background: var(--accent-muted) !important;
+        }
+
+        /* ── HERO ── */
+        #hero {
+            position: relative; width: 100%; height: 100vh; min-height: 640px;
+            overflow: hidden;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .hero-media {
+            position: absolute; inset: 0; z-index: 0;
+            background: linear-gradient(135deg, #1A1F2A 0%, #2D3543 100%);
+        }
+        .hero-media video {
+            width: 100%; height: 100%; object-fit: cover; display: block;
+            filter: brightness(0.72) contrast(1.08) grayscale(0.2);
+        }
+        .hero-overlay {
+            position: absolute; inset: 0; z-index: 1;
+            background: linear-gradient(to bottom, rgba(15,18,23,0.4) 0%, rgba(15,18,23,0.65) 100%);
+        }
+        .hero-content {
+            position: relative; z-index: 2;
+            text-align: center; color: white;
+            animation: fadeUp 0.9s cubic-bezier(0.2, 0.9, 0.4, 1.1) both;
+            max-width: 85%;
+        }
+        .hero-phrase {
+            font-family: 'Playfair Display', serif;
+            font-size: clamp(2.8rem, 7vw, 5.8rem);
+            font-weight: 500; letter-spacing: -0.01em; line-height: 1.1;
+            text-shadow: 0 4px 20px rgba(0,0,0,0.25);
+        }
+        .sep {
+            display: inline-block; margin: 0 0.45rem;
+            font-size: 0.45em; vertical-align: middle;
+            color: var(--gray-400); font-weight: 300;
+        }
+
+        /* ── COMMUNITY ── */
+        #community {
+            background: var(--white);
+            text-align: center; padding: 6rem 5% 5rem;
+            border-bottom: 1px solid var(--gray-200);
+        }
+        .comm-title {
+            font-family: 'Playfair Display', serif;
+            font-size: clamp(2rem, 4vw, 3rem);
+            font-weight: 500; color: var(--gray-800); margin-bottom: 1.2rem;
+        }
+        .comm-sub {
+            font-size: 1.05rem; font-weight: 400; color: var(--text-soft);
+            max-width: 620px; margin: 0 auto 2.5rem; line-height: 1.7;
+        }
+        .btn-pill {
+            display: inline-flex; align-items: center; gap: 0.65rem;
+            background: var(--gray-900); color: white;
+            padding: 0.9rem 2.4rem; border-radius: 48px;
+            font-size: 0.8rem; font-weight: 500; letter-spacing: 0.02em;
+            text-decoration: none;
+            transition: all 0.25s ease;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        }
+        .btn-pill:hover {
+            background: var(--accent-deep);
+            transform: translateY(-2px);
+            box-shadow: 0 12px 22px rgba(58,74,103,0.2);
+        }
+
+        /* ── FEATURES ── */
+        #features { background: var(--gray-150); padding: 5rem 5%; }
+        .section-header { text-align: center; margin-bottom: 3.5rem; }
+        .section-title {
+            font-family: 'Playfair Display', serif;
+            font-size: clamp(1.9rem, 3.2vw, 2.7rem);
+            font-weight: 500; color: var(--gray-800); letter-spacing: -0.2px;
+        }
+        .section-rule {
+            width: 56px; height: 2px;
+            background: var(--accent-light);
+            margin: 1rem auto 0; border-radius: 4px;
+        }
+        .features-grid {
+            display: grid; grid-template-columns: repeat(3, 1fr); gap: 2rem;
+        }
+        .feat-card {
+            background: var(--white);
+            border-radius: 20px;
+            padding: 2.5rem 1.8rem; text-align: left;
+            transition: all 0.3s ease;
+            border: 1px solid var(--gray-200);
+            box-shadow: 0 2px 6px rgba(0,0,0,0.02);
+        }
+        .feat-card:hover {
+            transform: translateY(-6px);
+            box-shadow: 0 20px 35px -12px rgba(0,0,0,0.08);
+            border-color: var(--gray-300);
+        }
+        .feat-icon { font-size: 2rem; margin-bottom: 1.2rem; display: block; }
+        .feat-card h3 {
+            font-size: 0.85rem; font-weight: 600; letter-spacing: 0.03em;
+            text-transform: uppercase; color: var(--accent-deep); margin-bottom: 0.8rem;
+        }
+        .feat-card p {
+            font-size: 0.95rem; font-weight: 400;
+            color: var(--text-soft); line-height: 1.65;
+        }
+
+        /* ── HOW IT WORKS ── */
+        #how-it-works { background: var(--white); padding: 5rem 5%; }
+        .hiw-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 5rem; align-items: start; }
+        .hiw-section-header { margin-bottom: 2.5rem; }
+        .hiw-section-header .section-rule { margin-left: 0; margin-right: auto; }
+        .hiw-steps { display: flex; flex-direction: column; gap: 2rem; }
+        .hiw-step { display: flex; gap: 1.2rem; }
+        .step-num {
+            flex-shrink: 0; font-family: 'Playfair Display', serif;
+            font-size: 1.9rem; font-weight: 500; color: var(--accent-muted);
+            line-height: 1; min-width: 2.5rem;
+        }
+        .step-vline {
+            flex-shrink: 0; width: 1px;
+            background: var(--gray-300); margin: 0.5rem 0;
+        }
+        .step-body h4 {
+            font-size: 0.8rem; letter-spacing: 0.05em; text-transform: uppercase;
+            font-weight: 600; color: var(--gray-800); margin-bottom: 0.4rem;
+        }
+        .step-body p {
+            font-size: 0.95rem; font-weight: 400;
+            color: var(--text-soft); line-height: 1.7;
+        }
+
+        /* ── REGISTER PANEL ── */
+        .register-panel {
+            background: var(--gray-900);
+            border-radius: 28px; padding: 2.6rem;
+            box-shadow: 0 20px 35px -12px rgba(0,0,0,0.2);
+        }
+        .register-panel h3 {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.75rem; font-weight: 500;
+            color: white; margin-bottom: 0.5rem;
+        }
+        .panel-sub {
+            font-size: 0.88rem; font-weight: 400;
+            color: rgba(255,255,255,0.6); margin-bottom: 2rem; line-height: 1.6;
+        }
+        .panel-group-label {
+            font-size: 0.65rem; letter-spacing: 0.12em; text-transform: uppercase;
+            color: var(--gray-400); opacity: 0.8;
+            margin: 1.4rem 0 0.8rem; display: block;
+        }
+        .panel-group-label:first-of-type { margin-top: 0; }
+        .reg-links { display: flex; flex-direction: column; gap: 0.8rem; }
+        .reg-link {
+            display: flex; align-items: center; justify-content: space-between;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 18px; padding: 0.9rem 1.2rem;
+            text-decoration: none; color: white;
+            transition: all 0.2s;
+        }
+        .reg-link:hover {
+            background: rgba(138,156,186,0.12);
+            border-color: rgba(138,156,186,0.4);
+            transform: translateX(4px);
+        }
+        .reg-link-left { display: flex; align-items: center; gap: 0.9rem; }
+        .reg-ico {
+            width: 2.2rem; height: 2.2rem; border-radius: 12px;
+            background: rgba(255,255,255,0.07);
+            display: flex; align-items: center; justify-content: center; font-size: 1rem;
+        }
+        .reg-info strong { display: block; font-size: 0.88rem; font-weight: 500; }
+        .reg-info span { font-size: 0.7rem; opacity: 0.55; }
+        .reg-arrow { font-size: 1rem; opacity: 0.5; transition: opacity 0.2s; }
+        .reg-link:hover .reg-arrow { opacity: 1; }
+
+        .panel-login-btn {
+            display: flex; align-items: center; justify-content: center;
+            margin-top: 1.8rem;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.12);
+            border-radius: 40px; padding: 0.8rem;
+            text-decoration: none; color: rgba(255,255,255,0.7);
+            font-size: 0.78rem; font-weight: 500;
+            transition: all 0.2s;
+        }
+        .panel-login-btn:hover {
+            background: rgba(138,156,186,0.15);
+            border-color: rgba(138,156,186,0.4);
+            color: white;
+        }
+        .panel-login-btn svg {
+            width: 14px; margin-right: 0.5rem;
+            stroke: currentColor; stroke-width: 1.8; fill: none;
+        }
+
+        /* ── TESTIMONIALS ── */
+        #feedback { background: var(--gray-150); padding: 5rem 5%; }
+        .testimonials-grid {
+            display: grid; grid-template-columns: repeat(3, 1fr); gap: 2rem;
+        }
+        .testi-card {
+            background: var(--white);
+            border-radius: 24px; padding: 2rem;
+            transition: all 0.25s;
+            border: 1px solid var(--gray-200);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+        }
+        .testi-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 30px -15px rgba(0,0,0,0.05);
+            border-color: var(--gray-300);
+        }
+        .testi-stars {
+            font-size: 0.85rem; color: var(--accent-light);
+            letter-spacing: 2px; margin-bottom: 1rem;
+        }
+        .testi-quote {
+            font-family: 'Playfair Display', serif;
+            font-size: 1rem; font-style: italic; font-weight: 400;
+            color: var(--gray-800); line-height: 1.6; margin-bottom: 1.5rem;
+        }
+        .testi-author { display: flex; align-items: center; gap: 0.9rem; }
+        .testi-avatar {
+            width: 2.5rem; height: 2.5rem; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 0.8rem; font-weight: 600; color: white;
+            background: var(--accent-muted);
+        }
+        .av-2 { background: var(--gray-700); }
+        .av-3 { background: var(--accent-deep); }
+        .testi-name strong { display: block; font-size: 0.9rem; color: var(--gray-800); font-weight: 600; }
+        .testi-name span { font-size: 0.75rem; color: var(--gray-500); }
+
+        /* ── FOOTER ── */
+        footer {
+            background: var(--gray-950);
+            color: rgba(255,255,255,0.6);
+            padding: 4rem 5% 2rem;
+        }
+        .footer-grid {
+            display: grid; grid-template-columns: 2fr 1fr 1fr 1fr;
+            gap: 2.5rem; margin-bottom: 2.8rem;
+        }
+        .footer-logo {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.55rem; font-weight: 600; letter-spacing: -0.01em;
+            color: white; display: block; margin-bottom: 1rem; text-decoration: none;
+        }
+        .footer-desc {
+            font-size: 0.85rem; font-weight: 400;
+            color: rgba(255,255,255,0.45); line-height: 1.7; max-width: 240px;
+        }
+        .footer-col h5 {
+            font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase;
+            font-weight: 600; color: var(--gray-300); margin-bottom: 1.2rem;
+        }
+        .footer-col ul { list-style: none; display: flex; flex-direction: column; gap: 0.7rem; }
+        .footer-col ul a {
+            font-size: 0.85rem; font-weight: 400;
+            color: rgba(255,255,255,0.5);
+            text-decoration: none; transition: color 0.2s;
+        }
+        .footer-col ul a:hover { color: white; }
+        .footer-bottom {
+            border-top: 1px solid rgba(255,255,255,0.08); padding-top: 2rem;
+            display: flex; justify-content: space-between; align-items: center;
+            font-size: 0.75rem; color: rgba(255,255,255,0.3);
+        }
+
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        @media (max-width: 1024px) {
+            .features-grid, .testimonials-grid { grid-template-columns: repeat(2, 1fr); gap: 1.5rem; }
+            .hiw-grid { gap: 3rem; }
+        }
+        @media (max-width: 800px) {
+            .nav-links { gap: 1rem; }
+            .features-grid { grid-template-columns: 1fr; }
+            .testimonials-grid { grid-template-columns: 1fr; }
+            .hiw-grid { grid-template-columns: 1fr; }
+            .footer-grid { grid-template-columns: 1fr 1fr; gap: 2rem; }
+        }
+        @media (max-width: 600px) {
+            .nav-links { display: none; }
+            .footer-grid { grid-template-columns: 1fr; }
+            .footer-bottom { flex-direction: column; gap: 0.6rem; text-align: center; }
+            .register-panel { padding: 1.8rem; }
+        }
+    </style>
+</head>
+<body>
+
+<nav id="main-nav">
+    <a class="nav-logo" href="#">Wayzo</a>
+    <ul class="nav-links">
+        <li><a href="#features">Features</a></li>
+        <li><a href="#how-it-works">How It Works</a></li>
+        <li><a href="#feedback">Reviews</a></li>
+        <li><span class="nav-divider"></span></li>
+        <li><a href="{% url 'login' %}" class="nav-login">Login</a></li>
+        <li><a href="{% url 'traveller_register' %}" class="nav-join">Join Free</a></li>
+    </ul>
+</nav>
+
+<section id="hero">
+    <div class="hero-media">
+        <video autoplay muted loop playsinline>
+            <source src="{% static 'videos/hero.mp4' %}" type="video/mp4">
+        </video>
+    </div>
+    <div class="hero-overlay"></div>
+    <div class="hero-content">
+        <h1 class="hero-phrase">
+            Travel <span class="sep">✦</span> Discover <span class="sep">✦</span> Belong
+        </h1>
+    </div>
+</section>
+
+<section id="community">
+    <h2 class="comm-title">A smarter way to travel</h2>
+    <p class="comm-sub">
+        Wayzo is your all-in-one travel companion. Find destinations, restaurants, and hotels
+        curated to your interests and budget — and get guided every step of the way.
+    </p>
+    <a href="{% url 'traveller_register' %}" class="btn-pill">Create Free Account &nbsp;→</a>
+</section>
+
+<section id="features">
+    <div class="section-header">
+        <h2 class="section-title">Everything you need</h2>
+        <div class="section-rule"></div>
+    </div>
+    <div class="features-grid">
+        <div class="feat-card"><span class="feat-icon">🗺️</span><h3>Smart Destinations</h3><p>Discover places matched to your interests, travel style, and budget — curated just for you.</p></div>
+        <div class="feat-card"><span class="feat-icon">🍽️</span><h3>Restaurant Discovery</h3><p>Browse verified local restaurants wherever you are. Real recommendations from real travellers.</p></div>
+        <div class="feat-card"><span class="feat-icon">🏨</span><h3>Hotel & Stay Finder</h3><p>Find the perfect accommodation — budget stays to boutique hotels — filtered by your needs.</p></div>
+        <div class="feat-card"><span class="feat-icon">🧳</span><h3>Travel Packages</h3><p>Connect with verified agencies offering curated packages, group tours, and custom getaways.</p></div>
+        <div class="feat-card"><span class="feat-icon">✨</span><h3>Personalised Plans</h3><p>AI-powered itineraries built around you. No two journeys on Wayzo are ever the same.</p></div>
+        <div class="feat-card"><span class="feat-icon">🧭</span><h3>In-Journey Assist</h3><p>Real-time guidance and local tips throughout your trip. Wayzo travels with you.</p></div>
+    </div>
+</section>
+
+<section id="how-it-works">
+    <div class="hiw-grid">
+        <div>
+            <div class="hiw-section-header">
+                <h2 class="section-title">How it works</h2>
+                <div class="section-rule" style="margin-left:0;"></div>
+            </div>
+            <div class="hiw-steps">
+                <div class="hiw-step"><span class="step-num">01</span><div class="step-vline"></div><div class="step-body"><h4>Create Your Account</h4><p>Sign up as a traveller, agency, or restaurant — free, fast, and easy.</p></div></div>
+                <div class="hiw-step"><span class="step-num">02</span><div class="step-vline"></div><div class="step-body"><h4>Set Your Preferences</h4><p>Tell Wayzo your interests, dietary preferences, and budget for a fully tailored experience.</p></div></div>
+                <div class="hiw-step"><span class="step-num">03</span><div class="step-vline"></div><div class="step-body"><h4>Discover & Book</h4><p>Explore destinations, restaurants, hotels and packages. Book directly through Wayzo.</p></div></div>
+                <div class="hiw-step"><span class="step-num">04</span><div class="step-vline"></div><div class="step-body"><h4>Travel with Confidence</h4><p>Receive real-time assistance and local tips throughout your entire journey.</p></div></div>
+            </div>
+        </div>
+        <div class="register-panel">
+            <h3>Get started today</h3>
+            <p class="panel-sub">Choose how you'd like to join the Wayzo community.</p>
+            <span class="panel-group-label">Travellers</span>
+            <div class="reg-links">
+                <a href="{% url 'traveller_register' %}" class="reg-link">
+                    <div class="reg-link-left"><div class="reg-ico">🧳</div><div class="reg-info"><strong>Traveller Registration</strong><span>Plan & explore your trips</span></div></div>
+                    <span class="reg-arrow">→</span>
+                </a>
+            </div>
+            <span class="panel-group-label">Businesses</span>
+            <div class="reg-links">
+                <a href="{% url 'agency_register' %}" class="reg-link">
+                    <div class="reg-link-left"><div class="reg-ico">🏢</div><div class="reg-info"><strong>Agency Registration</strong><span>List packages & manage bookings</span></div></div>
+                    <span class="reg-arrow">→</span>
+                </a>
+                <a href="{% url 'restaurant_register' %}" class="reg-link">
+                    <div class="reg-link-left"><div class="reg-ico">🍽️</div><div class="reg-info"><strong>Restaurant Registration</strong><span>Reach travellers near you</span></div></div>
+                    <span class="reg-arrow">→</span>
+                </a>
+            </div>
+            <a href="{% url 'login' %}" class="panel-login-btn">
+                <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
+                Already have an account? Sign in
+            </a>
+        </div>
+    </div>
+</section>
+
+<section id="feedback">
+    <div class="section-header">
+        <h2 class="section-title">Traveller stories</h2>
+        <div class="section-rule"></div>
+    </div>
+    <div class="testimonials-grid">
+        <div class="testi-card"><div class="testi-stars">★★★★★</div><p class="testi-quote">"Wayzo found us the most charming little restaurant in Ooty we never would have discovered on our own. The whole trip felt effortless."</p><div class="testi-author"><div class="testi-avatar">RK</div><div class="testi-name"><strong>Riya Krishnan</strong><span>Solo Traveller, Chennai</span></div></div></div>
+        <div class="testi-card"><div class="testi-stars">★★★★★</div><p class="testi-quote">"As a travel agency, the package management dashboard is a game changer. We've seen so many more booking inquiries since joining Wayzo."</p><div class="testi-author"><div class="testi-avatar av-2">SP</div><div class="testi-name"><strong>Suresh Patel</strong><span>SunPath Travel Agency</span></div></div></div>
+        <div class="testi-card"><div class="testi-stars">★★★★★</div><p class="testi-quote">"The budget filter is brilliant — planned a full Rajasthan trip within ₹15,000 and every recommendation was spot-on. Absolutely love this."</p><div class="testi-author"><div class="testi-avatar av-3">AM</div><div class="testi-name"><strong>Arjun Menon</strong><span>Family Traveller, Kochi</span></div></div></div>
+    </div>
+</section>
+
+<footer>
+    <div class="footer-grid">
+        <div><a class="footer-logo" href="#">Wayzo</a><p class="footer-desc">Your smart travel companion. Discover, plan, and experience the world beautifully.</p></div>
+        <div class="footer-col"><h5>Explore</h5><ul><li><a href="#">Destinations</a></li><li><a href="#">Restaurants</a></li><li><a href="#">Hotels</a></li><li><a href="#">Packages</a></li></ul></div>
+        <div class="footer-col"><h5>Travellers</h5><ul><li><a href="{% url 'traveller_register' %}">Join as Traveller</a></li><li><a href="{% url 'login' %}">Login</a></li><li><a href="#">How it Works</a></li><li><a href="#">FAQs</a></li></ul></div>
+        <div class="footer-col"><h5>Partners</h5><ul><li><a href="{% url 'agency_register' %}">Register Agency</a></li><li><a href="{% url 'restaurant_register' %}">Register Restaurant</a></li><li><a href="#">Partner Benefits</a></li><li><a href="#">Contact Us</a></li></ul></div>
+    </div>
+    <div class="footer-bottom">
+        <span>© 2025 Wayzo. All rights reserved.</span>
+        <span>Made for explorers everywhere</span>
+    </div>
+</footer>
+
+<script>
+    const nav = document.getElementById('main-nav');
+    window.addEventListener('scroll', () => {
+        nav.classList.toggle('scrolled', window.scrollY > 30);
+    });
+</script>
+</body>
+</html>

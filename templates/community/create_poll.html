@@ -1,0 +1,40 @@
+<h2>Create Poll</h2>
+
+<form method="POST" enctype="multipart/form-data">
+    {% csrf_token %}
+
+    <label>Question</label>
+    <input type="text" name="question" required>
+
+    <h4>Options</h4>
+
+    <div id="options-box">
+        <div>
+            <input type="text" name="options" placeholder="Option 1">
+            <input type="file" name="option_images">
+        </div>
+        <div>
+            <input type="text" name="options" placeholder="Option 2">
+            <input type="file" name="option_images">
+        </div>
+    </div>
+
+    <button type="button" onclick="addOption()">+ Add Option</button>
+
+    <br><br>
+    <button type="submit">Create Poll</button>
+</form>
+
+<script>
+function addOption() {
+    let div = document.getElementById("options-box");
+
+    let newOption = document.createElement("div");
+    newOption.innerHTML = `
+        <input type="text" name="options" placeholder="Another option">
+        <input type="file" name="option_images">
+    `;
+
+    div.appendChild(newOption);
+}
+</script>

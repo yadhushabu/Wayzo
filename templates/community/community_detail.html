@@ -1,0 +1,204 @@
+{% load static %}
+{% if community.cover_image %}
+    <img src="{{ community.cover_image.url}" width="100%" height="200">
+{% endif %}
+
+<h2>{{ community.name }}</h2>
+<p>{{ community.description }}</p>
+
+<!-- ACTION BUTTONS -->
+<a href="{% url 'create_post' community.id %}">➕ Create Post</a>
+<a href="{% url 'create_trip' community.id %}">✈️ Create Trip</a>
+<a href="{% url 'create_poll' community.id %}">📊 Create Poll</a>
+
+
+
+{% if request.user == community.creator %}
+    <a href="{% url 'edit_community' community.id %}">Edit Community</a>
+{% endif %}
+<hr>
+
+{% for post in posts %}
+    <div style="border:1px solid #ddd; padding:15px; border-radius:10px; margin-bottom:20px;">
+
+    <!-- USER -->
+     
+    <div style="display:flex; align-items:center; gap:10px;">
+        <a href="{% url 'travellers:user_profile' post.user.id %}">
+        {% if post.user.travellerprofile.profile_picture %}
+    <img src="{{ post.user.travellerprofile.profile_picture.url }}"
+         width="40" height="40" style="border-radius:50%;">
+{% else %}
+    <img src="/static/default-user.png"
+         width="40" height="40" style="border-radius:50%;">
+{% endif %}
+        <b>{{ post.user.travellerprofile.first_name }}</b>
+        </a>
+    </div>
+
+    <!-- CONTENT -->
+    <h3>{{ post.title }}</h3>
+    <p>{{ post.content }}</p>
+
+    <!-- IMAGES -->
+    {% for img in post.images.all %}
+        <img src="{{ img.image.url }}" width="100%" style="border-radius:10px;">
+    {% endfor %}
+
+
+  <!-- ACTION BAR -->
+<div style="display:flex; gap:15px; align-items:center;">
+
+    <!-- LIKE -->
+    <form method="POST" action="{% url 'like_post' post.id %}">
+        {% csrf_token %}
+        <button style="border:none; background:none; cursor:pointer;">
+            ❤️ {{ post.likes.count }}
+        </button>
+    </form>
+
+    <!-- COMMENT TOGGLE -->
+    <button onclick="toggleComments({{ post.id }})"
+            style="border:none; background:none; cursor:pointer;">
+        💬 {{ post.comments.count }}
+    </button>
+
+</div>
+
+<!-- COMMENTS (HIDDEN) -->
+<div id="comments-{{ post.id }}" style="display:none; margin-top:10px;">
+
+    {% for comment in post.comments.all %}
+        <div>
+            <a href="{% url 'travellers:user_profile' post.user.id %}"><b>{{ comment.user.username }}</b></a>: {{ comment.text }}
+        </div>
+    {% endfor %}
+
+    <form method="POST" action="{% url 'add_comment' post.id %}">
+        {% csrf_token %}
+        <input type="text" name="text" placeholder="Add comment">
+        <button type="submit">Post</button>
+    </form>
+</div>
+{% if request.user == post.user or request.user == community.creator %}
+<form method="POST" action="{% url 'delete_item' 'post' post.id %}">
+    {% csrf_token %}
+    <button type="submit">🗑 Delete</button>
+</form>
+{% endif %}
+{% endfor %}
+
+
+<h3>Polls</h3>
+
+{% for poll in polls %}
+<div style="border:1px solid #ccc; padding:10px; border-radius:10px; margin-bottom:15px;">
+
+    <!-- ✅ USER INFO -->
+     
+    <div style="display:flex; align-items:center; gap:10px;">
+        <a href="{% url 'travellers:user_profile' poll.user.id %}">
+        {% if poll.user.travellerprofile.profile_picture %}
+            <img src="{{ poll.user.travellerprofile.profile_picture.url }}"
+                 width="40" height="40" style="border-radius:50%;">
+        {% else %}
+            <img src="/static/default-user.png"
+                 width="40" height="40" style="border-radius:50%;">
+        {% endif %}
+
+        <b>
+            {{ poll.user.travellerprofile.first_name|default:poll.user.username }}
+        </b>
+        </a>
+    </div>
+
+    <small style="color:gray;">
+        {{ poll.created_at|timesince }} ago
+    </small>
+
+    <p><b>{{ poll.question }}</b></p>
+
+    {% for option in poll.options.all %}
+        <form method="POST" action="{% url 'vote_poll' option.id %}">
+            {% csrf_token %}
+            <button type="submit" style="width:100%; margin-bottom:5px;">
+                {{ option.option_text }} ({{ option.pollvote_set.count }})
+            </button>
+
+            {% if option.image %}
+                <img src="{{ option.image.url }}" width="20%">
+            {% endif %}
+        </form>
+    {% endfor %}
+
+    <!-- ✅ DELETE BUTTON -->
+    {% if request.user == poll.user or request.user == community.creator %}
+<form method="POST" action="{% url 'delete_item' 'poll' poll.id %}">
+    {% csrf_token %}
+    <button type="submit">🗑 Delete</button>
+</form>
+{% endif %}
+
+</div>
+{% empty %}
+<p>No polls available</p>
+{% endfor %}
+
+<h3>Trips</h3>
+
+<div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(300px,1fr)); gap:20px; justify-items:center;">
+
+    {% for trip in trips %}
+    <div style="width:100%; max-width:320px; cursor:pointer;"
+         onclick="window.location.href='{% url 'trip_detail' trip.id %}'">
+
+        <div style="border:1px solid #ddd; border-radius:12px; padding:15px; transition:0.3s; background:#fff;">
+
+            <!-- USER -->
+            <div style="display:flex; align-items:center; gap:10px; margin-bottom:10px;">
+                <a href="{% url 'travellers:user_profile' trip.creator.id %}" style="display:flex; align-items:center; gap:10px; text-decoration:none; color:black;">
+                    {% if trip.creator.travellerprofile.profile_picture %}
+                        <img src="{{ trip.creator.travellerprofile.profile_picture.url }}" width="35" height="35" style="border-radius:50%;">
+                    {% else %}
+                        <img src="{% static 'default-user.png' %}" width="35" height="35" style="border-radius:50%;">
+                    {% endif %}
+                    <b>{{ trip.creator.travellerprofile.first_name }}</b>
+                </a>
+            </div>
+
+            <!-- IMAGE (FIRST IMAGE) -->
+            {% with trip.images.first as first_image %}
+                {% if first_image %}
+                    <img src="{{ first_image.image.url }}" style="width:100%; height:180px; object-fit:cover; border-radius:10px; margin-bottom:10px;">
+                {% endif %}
+            {% endwith %}
+
+            <h4>{{ trip.title }}</h4>
+            <p>{{ trip.places_covered }}</p>
+
+            <p>💰 ₹{{ trip.budget }}</p>
+            <p>📅 {{ trip.start_date }} → {{ trip.end_date }}</p>
+            <p>👥 Max: {{ trip.max_members }}</p>
+
+        </div>
+    </div>
+
+    {% empty %}
+    <p>No trips available</p>
+    {% endfor %}
+
+</div>
+<p>Total polls: {{ polls|length }}</p>
+<p>Total trips: {{ trips|length }}</p>  
+<hr>
+<a href="{% url 'community_home' %}">Back to Community</a>
+<a href="{% url 'travellers:user_profile' request.user.id %}">Back to Dashboard</a>
+
+<script>
+function toggleComments(postId) {
+    let el = document.getElementById("comments-" + postId);
+    el.style.display = (el.style.display === "none") ? "block" : "none";
+}
+</script>
+
+

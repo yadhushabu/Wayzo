@@ -1,0 +1,778 @@
+<style>
+    .destination-form-container {
+        max-width: 900px;
+        margin: 2rem auto;
+        padding: 2rem;
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+    
+    .form-header {
+        text-align: center;
+        margin-bottom: 2rem;
+        padding-bottom: 1rem;
+        border-bottom: 2px solid #f0f0f0;
+    }
+    
+    .form-header h2 {
+        color: #2c3e50;
+        margin-bottom: 0.5rem;
+    }
+    
+    .form-header p {
+        color: #7f8c8d;
+    }
+    
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+    
+    .form-group label {
+        display: block;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+        color: #34495e;
+    }
+    
+    .form-group label .required {
+        color: #e74c3c;
+    }
+    
+    .form-group label .help-icon {
+        cursor: help;
+        color: #3498db;
+        margin-left: 0.5rem;
+        font-size: 0.85rem;
+    }
+    
+    .form-control {
+        width: 100%;
+        padding: 0.75rem;
+        border: 1px solid #ddd;
+        border-radius: 6px;
+        font-size: 1rem;
+        transition: border-color 0.3s;
+    }
+    
+    .form-control:focus {
+        outline: none;
+        border-color: #3498db;
+        box-shadow: 0 0 0 3px rgba(52,152,219,0.1);
+    }
+    
+    .form-control[readonly] {
+        background-color: #f8f9fa;
+        cursor: not-allowed;
+    }
+    
+    textarea.form-control {
+        resize: vertical;
+        min-height: 100px;
+    }
+    
+    .help-text {
+        display: block;
+        font-size: 0.85rem;
+        color: #7f8c8d;
+        margin-top: 0.25rem;
+    }
+    
+    .errorlist {
+        color: #e74c3c;
+        font-size: 0.85rem;
+        margin-top: 0.25rem;
+        padding-left: 0;
+        list-style: none;
+    }
+    
+    .form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+    }
+    
+    .form-row-3 {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 1rem;
+    }
+    
+    .map-container {
+        margin-top: 0.5rem;
+        border-radius: 6px;
+        overflow: hidden;
+        border: 1px solid #ddd;
+        position: relative;
+    }
+    
+    #locationMap {
+        height: 400px;
+        width: 100%;
+        background: #f0f0f0;
+    }
+    
+    .map-controls {
+        margin-top: 0.5rem;
+        display: flex;
+        gap: 0.5rem;
+        align-items: center;
+        flex-wrap: wrap;
+    }
+    
+    .btn-map {
+        background: #3498db;
+        color: white;
+        border: none;
+        padding: 0.5rem 1rem;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 0.85rem;
+        transition: background 0.2s;
+    }
+    
+    .btn-map:hover {
+        background: #2980b9;
+    }
+    
+    .coordinates-info {
+        font-size: 0.85rem;
+        color: #7f8c8d;
+        background: #f8f9fa;
+        padding: 0.5rem;
+        border-radius: 4px;
+        flex: 1;
+        min-width: 200px;
+    }
+    
+    .geocoding-status {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        background: rgba(0,0,0,0.8);
+        color: white;
+        padding: 5px 10px;
+        border-radius: 4px;
+        font-size: 0.85rem;
+        z-index: 1000;
+        display: none;
+    }
+    
+    .button-group {
+        display: flex;
+        gap: 1rem;
+        margin-top: 2rem;
+    }
+    
+    .btn {
+        flex: 1;
+        padding: 0.75rem;
+        border: none;
+        border-radius: 6px;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+    
+    .btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    
+    .btn-primary {
+        background: #3498db;
+        color: white;
+    }
+    
+    .btn-secondary {
+        background: #95a5a6;
+        color: white;
+    }
+    
+    .btn-success {
+        background: #27ae60;
+        color: white;
+    }
+    
+    .alert {
+        padding: 1rem;
+        border-radius: 6px;
+        margin-bottom: 1rem;
+    }
+    
+    .alert-success {
+        background: #d4edda;
+        color: #155724;
+        border: 1px solid #c3e6cb;
+    }
+    
+    .alert-error {
+        background: #f8d7da;
+        color: #721c24;
+        border: 1px solid #f5c6cb;
+    }
+    
+    .alert-info {
+        background: #d1ecf1;
+        color: #0c5460;
+        border: 1px solid #bee5eb;
+    }
+    
+    .spinner {
+        display: inline-block;
+        width: 20px;
+        height: 20px;
+        border: 3px solid rgba(0,0,0,.1);
+        border-radius: 50%;
+        border-top-color: #3498db;
+        animation: spin 1s ease-in-out infinite;
+    }
+    
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+    
+    @media (max-width: 768px) {
+        .destination-form-container {
+            margin: 1rem;
+            padding: 1rem;
+        }
+        
+        .form-row, .form-row-3 {
+            grid-template-columns: 1fr;
+        }
+        
+        #locationMap {
+            height: 300px;
+        }
+    }
+</style>
+
+<!-- Leaflet CSS and JS -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<div class="destination-form-container">
+    <div class="form-header">
+        <h2>✨ Create New Destination</h2>
+        <p>Add a beautiful destination to our travel guide</p>
+    </div>
+    
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }}">
+                {{ message }}
+            </div>
+        {% endfor %}
+    {% endif %}
+    
+    <form method="post" enctype="multipart/form-data" id="destinationForm">
+        {% csrf_token %}
+        
+        <!-- Basic Information -->
+        <div class="form-row">
+            <div class="form-group">
+                <label for="{{ form.name.id_for_label }}">
+                    Destination Name <span class="required">*</span>
+                    <span class="help-icon" title="Enter destination name to auto-detect location">📍</span>
+                </label>
+                {{ form.name }}
+                <span class="help-text">Enter destination name to automatically detect coordinates</span>
+                {{ form.name.errors }}
+            </div>
+            
+            <div class="form-group">
+                <label for="{{ form.slug.id_for_label }}">
+                    Slug <span class="required">*</span>
+                    <span class="help-icon" title="URL-friendly name, auto-generated from destination name">ℹ️</span>
+                </label>
+                {{ form.slug }}
+                <span class="help-text">Leave blank to auto-generate from name</span>
+                {{ form.slug.errors }}
+            </div>
+        </div>
+        
+        <div class="form-group">
+            <label for="{{ form.description.id_for_label }}">Description <span class="required">*</span></label>
+            {{ form.description }}
+            <span class="help-text">Write a compelling description of the destination (min 100 characters)</span>
+            {{ form.description.errors }}
+        </div>
+        
+        <!-- Location Information -->
+        <div class="form-row">
+            <div class="form-group">
+                <label for="{{ form.state.id_for_label }}">State <span class="required">*</span></label>
+                {{ form.state }}
+                {{ form.state.errors }}
+            </div>
+            
+            <div class="form-group">
+                <label for="{{ form.country.id_for_label }}">Country <span class="required">*</span></label>
+                {{ form.country }}
+                {{ form.country.errors }}
+            </div>
+        </div>
+        
+        <!-- Geo Coordinates with Leaflet Map -->
+        <div class="form-group">
+            <label>Location on Map <span class="required">*</span></label>
+            <div class="map-container">
+                <div id="locationMap"></div>
+                <div id="geocodingStatus" class="geocoding-status"></div>
+            </div>
+            <div class="map-controls">
+                <button type="button" class="btn-map" id="searchLocationBtn">
+                    🔍 Search Location
+                </button>
+                <button type="button" class="btn-map" id="getCurrentLocationBtn">
+                    📍 Use My Location
+                </button>
+                <div class="coordinates-info" id="coordinatesInfo">
+                    Click on map to set location
+                </div>
+            </div>
+        </div>
+        
+        <div class="form-row">
+            <div class="form-group">
+                <label for="{{ form.latitude.id_for_label }}">
+                    Latitude <span class="required">*</span>
+                </label>
+                {{ form.latitude }}
+                <span class="help-text">Auto-detected from destination name</span>
+                {{ form.latitude.errors }}
+            </div>
+            
+            <div class="form-group">
+                <label for="{{ form.longitude.id_for_label }}">
+                    Longitude <span class="required">*</span>
+                </label>
+                {{ form.longitude }}
+                <span class="help-text">Auto-detected from destination name</span>
+                {{ form.longitude.errors }}
+            </div>
+        </div>
+        
+        <!-- Best Time to Visit -->
+        <div class="form-row">
+            <div class="form-group">
+                <label for="{{ form.best_season.id_for_label }}">Best Season</label>
+                {{ form.best_season }}
+                <span class="help-text">e.g., Summer, Winter, Monsoon</span>
+                {{ form.best_season.errors }}
+            </div>
+            
+            <div class="form-group">
+                <label for="{{ form.best_months.id_for_label }}">Best Months</label>
+                {{ form.best_months }}
+                <span class="help-text">e.g., October to March</span>
+                {{ form.best_months.errors }}
+            </div>
+        </div>
+        
+        <!-- Travel Information -->
+        <div class="form-row">
+            <div class="form-group">
+                <label for="{{ form.tags.id_for_label }}">Travel Tags</label>
+                {{ form.tags }}
+                <span class="help-text">Valid tags: beach, hill-station, adventure, honeymoon, pilgrimage, heritage, wildlife, trekking, backwaters, desert, cultural</span>
+                {{ form.tags.errors }}
+            </div>
+            
+            <div class="form-group">
+                <label for="{{ form.avg_budget_per_day.id_for_label }}">Avg Budget Per Day (₹)</label>
+                {{ form.avg_budget_per_day }}
+                <span class="help-text">In Indian Rupees</span>
+                {{ form.avg_budget_per_day.errors }}
+            </div>
+        </div>
+        
+        <div class="form-group">
+            <label for="{{ form.how_to_reach.id_for_label }}">How to Reach</label>
+            {{ form.how_to_reach }}
+            <span class="help-text">Describe transportation options (air, rail, road)</span>
+            {{ form.how_to_reach.errors }}
+        </div>
+        
+        <div class="form-row">
+            <div class="form-group">
+                <label for="{{ form.image.id_for_label }}">Destination Image</label>
+                {{ form.image }}
+                <span class="help-text">Upload a beautiful image of the destination</span>
+                {{ form.image.errors }}
+            </div>
+            
+            <div class="form-group">
+                <label>
+                    {{ form.is_popular }}
+                    Mark as Popular Destination
+                </label>
+                <span class="help-text">Popular destinations get featured on homepage</span>
+            </div>
+        </div>
+        
+        <!-- Form Actions -->
+        <div class="button-group">
+            <button type="submit" class="btn btn-primary">
+                💾 Save Destination
+            </button>
+            <button type="button" class="btn btn-secondary" onclick="window.location.href='{% url 'destination_list' %}'">
+                ❌ Cancel
+            </button>
+        </div>
+    </form>
+</div>
+
+<script>
+// Initialize map
+let map;
+let marker;
+let currentTileLayer;
+let isGeocoding = false;
+
+// Get form fields
+const nameField = document.getElementById('{{ form.name.id_for_label }}');
+const slugField = document.getElementById('{{ form.slug.id_for_label }}');
+const latField = document.getElementById('{{ form.latitude.id_for_label }}');
+const lngField = document.getElementById('{{ form.longitude.id_for_label }}');
+const stateField = document.getElementById('{{ form.state.id_for_label }}');
+const countryField = document.getElementById('{{ form.country.id_for_label }}');
+
+// Default center (India)
+const defaultLat = 20.5937;
+const defaultLng = 78.9629;
+
+// Tile providers with proper attribution
+const tileProviders = {
+    openstreetmap: {
+        url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+        maxZoom: 19
+    },
+    cartodb: {
+        url: 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
+        maxZoom: 19
+    }
+};
+
+// Add tile layer with error handling
+function addTileLayer(providerName) {
+    if (currentTileLayer) {
+        map.removeLayer(currentTileLayer);
+    }
+    
+    const provider = tileProviders[providerName];
+    currentTileLayer = L.tileLayer(provider.url, {
+        attribution: provider.attribution,
+        maxZoom: provider.maxZoom,
+        crossOrigin: true
+    }).addTo(map);
+}
+
+// Initialize map
+function initMap(lat, lng) {
+    const mapContainer = document.getElementById('locationMap');
+    
+    if (map) {
+        map.remove();
+    }
+    
+    try {
+        map = L.map('locationMap').setView([lat, lng], 13);
+        addTileLayer('openstreetmap');
+        L.control.scale().addTo(map);
+        
+        marker = L.marker([lat, lng], { draggable: true }).addTo(map);
+        
+        marker.on('dragend', function(e) {
+            const position = marker.getLatLng();
+            updateCoordinates(position.lat, position.lng);
+        });
+        
+        map.on('click', function(e) {
+            const latlng = e.latlng;
+            marker.setLatLng(latlng);
+            updateCoordinates(latlng.lat, latlng.lng);
+        });
+        
+    } catch (error) {
+        console.error('Map initialization error:', error);
+    }
+}
+
+// Update coordinate fields
+function updateCoordinates(lat, lng) {
+    latField.value = lat.toFixed(6);
+    lngField.value = lng.toFixed(6);
+    
+    const infoDiv = document.getElementById('coordinatesInfo');
+    infoDiv.innerHTML = `📍 Selected Location: ${lat.toFixed(6)}°, ${lng.toFixed(6)}°`;
+    
+    // Reverse geocode to get state and country
+    reverseGeocode(lat, lng);
+}
+
+// Reverse geocoding to get address details
+function reverseGeocode(lat, lng) {
+    const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`;
+    
+    fetch(url, {
+        headers: {
+            'Accept': 'application/json',
+            'User-Agent': 'TravelGuideApp/1.0'
+        }
+    })
+        .then(response => response.json())
+        .then(data => {
+            if (data && data.address) {
+                // Auto-fill state if empty
+                if (!stateField.value && data.address.state) {
+                    stateField.value = data.address.state;
+                }
+                // Auto-fill country if empty
+                if (!countryField.value && data.address.country) {
+                    countryField.value = data.address.country;
+                }
+                
+                const infoDiv = document.getElementById('coordinatesInfo');
+                const locationName = data.display_name.split(',')[0];
+                infoDiv.innerHTML = `📍 ${locationName}<br>Lat: ${lat.toFixed(6)}°, Lng: ${lng.toFixed(6)}°`;
+            }
+        })
+        .catch(error => console.log('Reverse geocoding error:', error));
+}
+
+// Geocode destination name to get coordinates
+async function geocodeDestination(destinationName) {
+    if (!destinationName || destinationName.length < 3 || isGeocoding) {
+        return;
+    }
+    
+    isGeocoding = true;
+    const statusDiv = document.getElementById('geocodingStatus');
+    statusDiv.style.display = 'block';
+    statusDiv.innerHTML = '<div class="spinner"></div> Searching for location...';
+    
+    const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(destinationName)}&limit=1&addressdetails=1`;
+    
+    try {
+        const response = await fetch(url, {
+            headers: {
+                'Accept': 'application/json',
+                'User-Agent': 'TravelGuideApp/1.0'
+            }
+        });
+        
+        const data = await response.json();
+        
+        if (data && data.length > 0) {
+            const lat = parseFloat(data[0].lat);
+            const lng = parseFloat(data[0].lon);
+            const address = data[0].address || {};
+            
+            // Update coordinates
+            updateCoordinates(lat, lng);
+            
+            // Update map
+            if (map && marker) {
+                marker.setLatLng([lat, lng]);
+                map.setView([lat, lng], 13);
+            } else {
+                initMap(lat, lng);
+            }
+            
+            // Auto-fill state if empty
+            if (!stateField.value && (address.state || address.region)) {
+                stateField.value = address.state || address.region;
+            }
+            
+            // Auto-fill country if empty
+            if (!countryField.value && address.country) {
+                countryField.value = address.country;
+            }
+            
+            statusDiv.innerHTML = '✅ Location found!';
+            setTimeout(() => {
+                statusDiv.style.display = 'none';
+            }, 3000);
+            
+        } else {
+            statusDiv.innerHTML = '❌ Location not found. Please enter coordinates manually.';
+            setTimeout(() => {
+                statusDiv.style.display = 'none';
+            }, 3000);
+        }
+    } catch (error) {
+        console.error('Geocoding error:', error);
+        statusDiv.innerHTML = '❌ Error finding location. Please try again.';
+        setTimeout(() => {
+            statusDiv.style.display = 'none';
+        }, 3000);
+    } finally {
+        isGeocoding = false;
+    }
+}
+
+// Debounced geocoding
+let geocodingTimeout;
+function handleNameChange() {
+    clearTimeout(geocodingTimeout);
+    const name = nameField.value;
+    
+    if (name && name.length >= 3) {
+        geocodingTimeout = setTimeout(() => {
+            geocodeDestination(name);
+        }, 1000); // Wait 1 second after user stops typing
+    }
+}
+
+// Auto-generate slug from name
+function generateSlug() {
+    if (!slugField.value || slugField.value === '') {
+        const name = nameField.value;
+        if (name) {
+            const slug = name.toLowerCase()
+                .replace(/[^\w\s-]/g, '')
+                .replace(/\s+/g, '-')
+                .replace(/--+/g, '-')
+                .trim();
+            slugField.value = slug;
+        }
+    }
+}
+
+// Event listeners
+nameField.addEventListener('input', handleNameChange);
+nameField.addEventListener('blur', generateSlug);
+
+// Character counter for description
+const descriptionField = document.getElementById('{{ form.description.id_for_label }}');
+if (descriptionField) {
+    descriptionField.addEventListener('input', function() {
+        const count = this.value.length;
+        let helpText = this.nextElementSibling;
+        if (count < 100 && count > 0) {
+            helpText.innerHTML = `<span style="color: #e74c3c;">⚠️ Need ${100 - count} more characters (min 100)</span>`;
+        } else if (count >= 100) {
+            helpText.innerHTML = `<span style="color: #27ae60;">✓ Great! ${count} characters</span>`;
+        }
+    });
+}
+
+// Search location button
+document.getElementById('searchLocationBtn').addEventListener('click', function() {
+    const searchQuery = prompt('Enter location name:');
+    if (searchQuery) {
+        nameField.value = searchQuery;
+        geocodeDestination(searchQuery);
+    }
+});
+
+// Get current location button
+document.getElementById('getCurrentLocationBtn').addEventListener('click', function() {
+    if (!navigator.geolocation) {
+        alert('Geolocation is not supported by your browser');
+        return;
+    }
+    
+    const statusDiv = document.getElementById('geocodingStatus');
+    statusDiv.style.display = 'block';
+    statusDiv.innerHTML = '<div class="spinner"></div> Getting your location...';
+    
+    navigator.geolocation.getCurrentPosition(
+        function(position) {
+            const lat = position.coords.latitude;
+            const lng = position.coords.longitude;
+            
+            if (map && marker) {
+                marker.setLatLng([lat, lng]);
+                map.setView([lat, lng], 15);
+            } else {
+                initMap(lat, lng);
+            }
+            
+            updateCoordinates(lat, lng);
+            statusDiv.innerHTML = '✅ Location updated!';
+            setTimeout(() => {
+                statusDiv.style.display = 'none';
+            }, 2000);
+        },
+        function(error) {
+            let errorMessage = 'Error getting location: ';
+            switch(error.code) {
+                case error.PERMISSION_DENIED:
+                    errorMessage += 'Please allow location access.';
+                    break;
+                case error.POSITION_UNAVAILABLE:
+                    errorMessage += 'Location information unavailable.';
+                    break;
+                case error.TIMEOUT:
+                    errorMessage += 'Request timeout.';
+                    break;
+                default:
+                    errorMessage += 'Unknown error.';
+            }
+            alert(errorMessage);
+            statusDiv.style.display = 'none';
+        },
+        {
+            enableHighAccuracy: true,
+            timeout: 10000,
+            maximumAge: 0
+        }
+    );
+});
+
+// Check if editing existing destination
+function checkExistingCoordinates() {
+    const lat = parseFloat(latField.value);
+    const lng = parseFloat(lngField.value);
+    
+    if (!isNaN(lat) && !isNaN(lng) && lat !== 0 && lng !== 0) {
+        initMap(lat, lng);
+        updateCoordinates(lat, lng);
+    } else {
+        initMap(defaultLat, defaultLng);
+    }
+}
+
+// Form validation
+document.getElementById('destinationForm').addEventListener('submit', function(e) {
+    const description = descriptionField.value;
+    if (description.length < 100) {
+        e.preventDefault();
+        alert('Please write at least 100 characters in the description');
+        descriptionField.focus();
+        return;
+    }
+    
+    const lat = parseFloat(latField.value);
+    const lng = parseFloat(lngField.value);
+    
+    if (isNaN(lat) || isNaN(lng)) {
+        e.preventDefault();
+        alert('Please select a location on the map');
+        return;
+    }
+    
+    if (lat < -90 || lat > 90) {
+        e.preventDefault();
+        alert('Latitude must be between -90 and 90');
+        return;
+    }
+    
+    if (lng < -180 || lng > 180) {
+        e.preventDefault();
+        alert('Longitude must be between -180 and 180');
+        return;
+    }
+});
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', function() {
+    checkExistingCoordinates();
+});
+</script>

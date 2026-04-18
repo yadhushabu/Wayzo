@@ -1,0 +1,6 @@
+<h2>Members</h2>
+
+{% for m in members %}
+<a href="{% url 'user_profile' post.user.id %}">
+    <p>{{ m.user.travellerprofile.first_name }}</p></a>
+{% endfor %}

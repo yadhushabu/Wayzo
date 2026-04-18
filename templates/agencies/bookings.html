@@ -1,0 +1,40 @@
+<h2>📦 Package Bookings</h2>
+
+{% for booking in bookings %}
+<div style="border:1px solid #ddd; padding:15px; margin-bottom:15px; border-radius:10px;">
+
+    <h3>{{ booking.package.title }}</h3>
+    <p><strong>User:</strong> {{ booking.traveller.username }}</p>
+    <p><strong>Travellers:</strong> {{ booking.travellers_count }}</p>
+    <p><strong>Date:</strong> {{ booking.travel_date }}</p>
+
+    <p>
+        <strong>Status:</strong>
+        {% if booking.status == "pending" %}
+            🟡 Pending
+        {% elif booking.status == "confirmed" %}
+            🟢 Confirmed
+        {% elif booking.status == "rejected" %}
+            🔴 Rejected
+        {% elif booking.status == "cancelled" %}
+            ❌ Cancelled
+        {% endif %}
+    </p>
+
+    <p><strong>Payment:</strong> {{ booking.payment_status }}</p>
+
+    <!-- ACTIONS -->
+    {% if booking.status == "pending" %}
+        <a href="{% url 'agency:approve_booking' booking.id %}">✅ Approve</a>
+        <a href="{% url 'agency:reject_booking' booking.id %}">❌ Reject</a>
+    {% endif %}
+
+    {% if booking.status == "confirmed" %}
+        <a href="{% url 'agency:cancel_booking_by_agency' booking.id %}"
+           onclick="return confirm('Cancel this booking? Full refund will be issued.')">
+           ⚠️ Cancel Booking
+        </a>
+    {% endif %}
+
+</div>
+{% endfor %}

@@ -1,0 +1,162 @@
+<h2>{{ trip.title }}</h2>
+
+<!-- USER -->
+<div style="display:flex; align-items:center; gap:10px;">
+    <a href="{% url 'travellers:user_profile' trip.creator.id %}">
+    {% if trip.creator.travellerprofile.profile_picture %}
+        <img src="{{ trip.creator.travellerprofile.profile_picture.url }}" width="40" height="40" style="border-radius:50%;">
+    {% endif %}
+    <b>{{ trip.creator.travellerprofile.first_name }}</b></a>
+</div>
+{% if is_owner %}
+    <a href="{% url 'edit_trip' trip.id %}">Edit Trip ✏️</a>
+    <form method="POST" action="{% url 'delete_item' 'trip' trip.id %}"> {% csrf_token %} <button style="background:red;color:white;">🗑 Cancel Trip</button> </form>
+{% endif %}
+<!-- IMAGES -->
+<div style="display:flex; gap:10px; overflow-x:auto; margin:15px 0;">
+    {% for img in trip.images.all %}
+        <img src="{{ img.image.url }}" width="250" style="border-radius:10px;">
+    {% endfor %}
+</div>
+
+<p>{{ trip.description }}</p>
+
+<hr>
+
+<h3>Trip Info</h3>
+<p>📍 {{ trip.places_covered }}</p>
+<p>📅 {{ trip.start_date }} → {{ trip.end_date }}</p>
+<p>⏳ {{ trip.duration_days }} Days / {{ trip.duration_nights }} Nights</p>
+<p>💰 Budget: ₹{{ trip.budget }}</p>
+<p>👥 Max Members: {{ trip.max_members }}</p>
+<p>🏕 Type: {{ trip.trip_type }}</p>
+
+<hr>
+
+<h3>Itinerary</h3>
+{% for day in trip.itineraries.all %}
+    <div style="border-left:3px solid #333; padding-left:10px; margin-bottom:10px;">
+        <b>Day {{ day.day_number }} - {{ day.title }}</b>
+        <p>{{ day.description }}</p>
+    </div>
+{% endfor %}
+
+<hr>
+
+<h3>Rules</h3>
+<p>{{ trip.rules }}</p>
+
+<hr>
+
+<!-- 🔥 EXTRA FEATURES -->
+<h3>Inclusions</h3>
+<p>{{ trip.inclusions }}</p>
+
+<h3>Exclusions</h3>
+<p>{{ trip.exclusions }}</p>
+
+<h3>Things to Pack</h3>
+<p>{{ trip.things_to_pack }}</p>
+
+<h3>Cancellation Policy</h3>
+<p>{{ trip.cancellation_policy }}</p>
+
+<hr>
+<p>Seats left: {{ seats_left }}</p>
+<!-- ✅ BOOK NOW BUTTON -->
+{% if is_owner %}
+    <p><b>You created this trip</b></p>
+{% elif is_joined %}
+    <button disabled>Already Joined</button>
+{% else %}
+    <form method="POST" action="{% url 'join_trip' trip.id %}">
+        {% csrf_token %}
+        <button type="submit">Book Now 🚀</button>
+    </form>
+{% endif %}
+
+{% if is_joined and not is_owner %}
+    <form method="POST" action="{% url 'cancel_trip' trip.id %}">
+        {% csrf_token %}
+        <button type="submit" style="background:red;color:white;">
+            Cancel Booking ❌
+        </button>
+    </form>
+{% endif %}
+
+{% if messages %}
+    {% for message in messages %}
+        <div style="padding:10px; margin:10px 0; border-radius:8px; background:#eee;">
+            {{ message }}
+        </div>
+    {% endfor %}
+{% endif %}
+{% if is_owner %}
+<hr>
+
+<hr>
+<h3>Members</h3>
+
+{% for p in participants %}
+    <div style="margin-bottom:12px; padding:10px; border:1px solid #ddd; border-radius:8px;">
+        
+        <a href="{% url 'travellers:user_profile' p.user.id %}">
+            <b>{{ p.user.username }}</b>
+        </a>
+
+        <span style="margin-left:10px;">
+            Status: 
+            <b style="
+                color:
+                {% if p.status == 'approved' %}green
+                {% elif p.status == 'pending' %}orange
+                {% else %}red
+                {% endif %}
+            ">
+                {{ p.status }}
+            </b>
+        </span>
+
+        <div style="margin-top:8px;">
+
+            <!-- APPROVE / REJECT -->
+            {% if p.status == "pending" %}
+                <form method="POST" action="{% url 'approve_participant' p.id %}" style="display:inline;">
+                    {% csrf_token %}
+                    <button style="background:green;color:white;">Approve ✔</button>
+                </form>
+
+                <form method="POST" action="{% url 'reject_participant' p.id %}" style="display:inline;">
+                    {% csrf_token %}
+                    <button style="background:orange;color:white;">Reject ❌</button>
+                </form>
+            {% endif %}
+
+            <!-- REMOVE -->
+            {% if p.status == "approved" %}
+                <form method="POST" action="{% url 'remove_participant' p.id %}" style="display:inline;">
+                    {% csrf_token %}
+                    <button style="background:red;color:white;">Remove 🚫</button>
+                </form>
+
+                <!-- CHAT (ONLY AFTER APPROVED) -->
+                <a href="{% url 'travellers:inbox' %}?room={{ p.chat_room.id }}" 
+                   style="margin-left:10px; background:#0095f6; color:white; padding:5px 10px; border-radius:5px; text-decoration:none;">
+                    Chat 💬
+                </a>
+            {% endif %}
+
+        </div>
+    </div>
+
+{% empty %}
+    <p>No members yet</p>
+{% endfor %}
+
+{% endif %}
+
+{% if p.status == "approved" or is_owner %}
+<a href="{% url 'travellers:inbox' %}?type=trips&trip_id={{ trip.id }}&user_id={{ p.user.id }}">
+    Chat 💬
+</a>
+{% endif %}

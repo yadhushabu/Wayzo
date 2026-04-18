@@ -1,0 +1,1577 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Wayzo | {{ agency.agency_name }} — Add Tour Package</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+    <style>
+        /* All your existing styles remain the same - keeping only essential styles for brevity */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --gray-100: #F8F9FC;
+            --gray-150: #F1F3F8;
+            --gray-200: #E9EDF2;
+            --gray-300: #DCE2EA;
+            --gray-400: #BEC7D1;
+            --gray-500: #9AA3AF;
+            --gray-600: #6E7682;
+            --gray-700: #4A515C;
+            --gray-800: #2E343D;
+            --gray-850: #21262E;
+            --gray-900: #191E24;
+            --gray-950: #0F1217;
+            --accent-muted: #5B6E8C;
+            --accent-deep: #3A4A67;
+            --accent-light: #8A9CBA;
+            --accent-pale: #EFF2F9;
+            --white: #FFFFFF;
+            --text-dark: #1E242C;
+            --text-soft: #3C4350;
+            --text-light: #6F7886;
+            --green: #22C55E;
+            --amber: #F59E0B;
+            --red: #EF4444;
+            --blue-start: #3B82F6;
+            --blue-mid: #2563EB;
+            --blue-deep: #1E3A8A;
+            --sidebar-w: 270px;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--gray-100);
+            color: var(--text-dark);
+            display: flex;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .sidebar {
+            width: var(--sidebar-w);
+            background: var(--gray-950);
+            height: 100vh;
+            position: fixed;
+            top: 0;
+            left: 0;
+            display: flex;
+            flex-direction: column;
+            z-index: 300;
+            border-right: 1px solid rgba(255,255,255,0.06);
+            transform: translateX(0);
+            transition: transform 0.3s cubic-bezier(0.4,0,0.2,1);
+            overflow-y: auto;
+        }
+        .sidebar.collapsed {
+            transform: translateX(calc(-1 * var(--sidebar-w)));
+        }
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.45);
+            z-index: 290;
+            backdrop-filter: blur(2px);
+            transition: opacity 0.3s;
+        }
+        .sidebar-overlay.visible {
+            display: block;
+            opacity: 1;
+        }
+        .sidebar-brand {
+            padding: 1.6rem 1.6rem 1rem;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+        }
+        .sidebar-logo {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: white;
+            text-decoration: none;
+            display: block;
+        }
+        .sidebar-sub {
+            font-size: 0.65rem;
+            color: rgba(255,255,255,0.35);
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+        .sidebar-profile {
+            padding: 1.2rem 1.6rem;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+            display: flex;
+            align-items: center;
+            gap: 0.85rem;
+        }
+        .sidebar-avatar {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            background: var(--accent-deep);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            color: white;
+            font-size: 0.9rem;
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+        .sidebar-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .sidebar-profile-info {
+            flex: 1;
+            overflow: hidden;
+        }
+        .sidebar-profile-name {
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: white;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .sidebar-profile-role {
+            font-size: 0.68rem;
+            color: rgba(255,255,255,0.35);
+        }
+        .sidebar-nav {
+            flex: 1;
+            padding: 1.2rem 0.8rem;
+        }
+        .nav-group-label {
+            font-size: 0.6rem;
+            font-weight: 600;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: rgba(255,255,255,0.25);
+            padding: 0.5rem 0.8rem;
+            margin-top: 0.4rem;
+        }
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.65rem 0.8rem;
+            border-radius: 10px;
+            text-decoration: none;
+            color: rgba(255,255,255,0.55);
+            font-size: 0.82rem;
+            font-weight: 500;
+            transition: all 0.2s;
+            margin-bottom: 2px;
+        }
+        .nav-item svg {
+            width: 18px;
+            height: 18px;
+            stroke: currentColor;
+            stroke-width: 1.7;
+            fill: none;
+        }
+        .nav-item:hover {
+            background: rgba(255,255,255,0.07);
+            color: rgba(255,255,255,0.9);
+        }
+        .nav-item.active {
+            background: rgba(138,156,186,0.18);
+            color: var(--accent-light);
+        }
+        .logout-sidebar {
+            margin-top: auto;
+            border-top: 1px solid rgba(255,255,255,0.06);
+            padding: 0.8rem;
+        }
+        .logout-sidebar a {
+            display: flex;
+            align-items: center;
+            gap: 0.65rem;
+            color: rgba(255,255,255,0.45);
+            text-decoration: none;
+            padding: 0.5rem 0.7rem;
+            border-radius: 8px;
+            font-size: 0.78rem;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+        .logout-sidebar a svg {
+            width: 16px;
+            height: 16px;
+        }
+        .logout-sidebar a:hover {
+            background: rgba(239,68,68,0.1);
+            color: #F87171;
+        }
+
+        .main-wrapper {
+            margin-left: var(--sidebar-w);
+            flex: 1;
+            transition: margin-left 0.3s;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        .main-wrapper.sidebar-collapsed {
+            margin-left: 0;
+        }
+
+        .topbar {
+            background: var(--white);
+            border-bottom: 1px solid var(--gray-200);
+            padding: 0 1.8rem;
+            height: 70px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 200;
+        }
+        .topbar-left {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        .hamburger {
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            padding: 6px;
+        }
+        .hamburger span {
+            width: 20px;
+            height: 2px;
+            background: var(--gray-700);
+            border-radius: 2px;
+            transition: 0.2s;
+        }
+        .topbar-right {
+            display: flex;
+            align-items: center;
+            gap: 1.2rem;
+        }
+        .notification-btn {
+            background: var(--gray-150);
+            border: none;
+            border-radius: 40px;
+            width: 38px;
+            height: 38px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: 0.2s;
+            position: relative;
+        }
+        .notification-btn:hover {
+            background: var(--gray-200);
+        }
+        .notification-btn svg {
+            width: 18px;
+            stroke: var(--gray-700);
+        }
+        .notification-badge {
+            position: absolute;
+            top: -2px;
+            right: -2px;
+            background: #EF4444;
+            color: white;
+            font-size: 0.6rem;
+            font-weight: bold;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .avatar-menu {
+            position: relative;
+            cursor: pointer;
+        }
+        .avatar-trigger {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: var(--gray-150);
+            padding: 0.3rem 0.8rem 0.3rem 0.4rem;
+            border-radius: 40px;
+            transition: 0.2s;
+        }
+        .avatar-trigger:hover {
+            background: var(--gray-200);
+        }
+        .avatar-img {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            color: white;
+            font-size: 0.9rem;
+            background: var(--accent-deep);
+            overflow: hidden;
+        }
+        .avatar-img img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .avatar-name {
+            font-size: 0.8rem;
+            font-weight: 500;
+            color: var(--gray-800);
+        }
+        .dropdown-popup {
+            position: absolute;
+            top: 50px;
+            right: 0;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 35px -12px rgba(0,0,0,0.15);
+            width: 240px;
+            padding: 0.8rem 0;
+            z-index: 400;
+            border: 1px solid var(--gray-200);
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-6px);
+            transition: all 0.2s;
+        }
+        .dropdown-popup.show {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+        .dropdown-info {
+            padding: 0.5rem 1rem;
+            border-bottom: 1px solid var(--gray-200);
+            margin-bottom: 0.4rem;
+        }
+        .dropdown-info p {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--gray-900);
+        }
+        .dropdown-info span {
+            font-size: 0.7rem;
+            color: var(--text-light);
+            display: block;
+            margin-top: 2px;
+        }
+        .dropdown-item {
+            display: flex;
+            align-items: center;
+            gap: 0.7rem;
+            padding: 0.6rem 1rem;
+            color: var(--gray-700);
+            text-decoration: none;
+            font-size: 0.8rem;
+            transition: background 0.1s;
+        }
+        .dropdown-item:hover {
+            background: var(--gray-150);
+        }
+
+        .content {
+            padding: 1.8rem 2rem 2rem;
+            flex: 1;
+        }
+
+        .breadcrumb {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.78rem;
+            color: var(--text-light);
+            margin-bottom: 1.6rem;
+        }
+        .breadcrumb a {
+            color: var(--text-light);
+            text-decoration: none;
+        }
+        .breadcrumb a:hover {
+            color: var(--accent-deep);
+        }
+        .breadcrumb svg {
+            width: 12px;
+            height: 12px;
+            stroke: currentColor;
+        }
+        .breadcrumb .current {
+            color: var(--text-dark);
+            font-weight: 500;
+        }
+
+        .form-card {
+            background: var(--white);
+            border: 1px solid var(--gray-200);
+            border-radius: 20px;
+            overflow: hidden;
+            margin-bottom: 1.8rem;
+            transition: box-shadow 0.2s;
+        }
+        .form-card:hover {
+            box-shadow: 0 8px 24px rgba(0,0,0,0.04);
+        }
+        .form-card-header {
+            padding: 1.2rem 1.8rem;
+            border-bottom: 1px solid var(--gray-200);
+            background: var(--gray-100);
+        }
+        .form-card-header h2 {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.1rem;
+            font-weight: 500;
+            color: var(--gray-900);
+        }
+        .form-card-header p {
+            font-size: 0.75rem;
+            color: var(--text-light);
+            margin-top: 0.2rem;
+        }
+        .form-card-body {
+            padding: 1.8rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.2rem;
+        }
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.2rem;
+            margin-bottom: 0.2rem;
+        }
+        .form-row-3 {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 1.2rem;
+            margin-bottom: 0.2rem;
+        }
+        label {
+            display: block;
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--gray-700);
+            margin-bottom: 0.4rem;
+        }
+        label .required {
+            color: var(--red);
+        }
+        input, select, textarea {
+            width: 100%;
+            padding: 0.7rem 1rem;
+            font-size: 0.85rem;
+            font-family: 'Inter', sans-serif;
+            border: 1.5px solid var(--gray-200);
+            border-radius: 12px;
+            background: var(--white);
+            color: var(--text-dark);
+            transition: all 0.2s;
+        }
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: var(--accent-muted);
+            box-shadow: 0 0 0 3px rgba(91,110,140,0.1);
+        }
+        textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            padding: 0.4rem 0;
+        }
+        .checkbox-group input {
+            width: 18px;
+            height: 18px;
+            margin: 0;
+        }
+        .checkbox-group label {
+            margin: 0;
+            text-transform: none;
+            font-weight: 500;
+            font-size: 0.85rem;
+            color: var(--text-dark);
+        }
+        .help-text {
+            font-size: 0.65rem;
+            color: var(--text-light);
+            margin-top: 0.25rem;
+        }
+
+        .image-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 0.8rem;
+            padding: 0.8rem;
+            background: var(--gray-100);
+            border: 1px solid var(--gray-200);
+            border-radius: 12px;
+            flex-wrap: wrap;
+        }
+        .image-item input {
+            flex: 1;
+            margin: 0;
+        }
+        .remove-image-btn {
+            background: transparent;
+            border: 1px solid var(--gray-300);
+            border-radius: 8px;
+            padding: 0.4rem 0.8rem;
+            color: var(--red);
+            cursor: pointer;
+            font-size: 0.7rem;
+            transition: all 0.2s;
+        }
+        .remove-image-btn:hover {
+            background: var(--red);
+            color: white;
+            border-color: var(--red);
+        }
+        .add-image-btn {
+            background: transparent;
+            border: 2px dashed var(--gray-300);
+            border-radius: 12px;
+            padding: 0.8rem;
+            width: 100%;
+            color: var(--accent-muted);
+            font-size: 0.8rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+        .add-image-btn:hover {
+            border-color: var(--accent-muted);
+            background: var(--accent-pale);
+        }
+
+        .itinerary-item {
+            background: var(--white);
+            border: 1px solid var(--gray-200);
+            border-radius: 14px;
+            padding: 1rem 1.2rem;
+            margin-bottom: 1rem;
+        }
+        .itinerary-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            cursor: pointer;
+        }
+        .itinerary-header h4 {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--accent-deep);
+        }
+        .itinerary-header span {
+            font-size: 0.65rem;
+            color: var(--text-light);
+        }
+        .itinerary-content {
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--gray-200);
+        }
+        .itinerary-content.hidden {
+            display: none;
+        }
+
+        .policy-item {
+            background: var(--white);
+            border: 1px solid var(--gray-200);
+            border-radius: 14px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            display: flex;
+            gap: 1rem;
+            align-items: flex-end;
+            flex-wrap: wrap;
+        }
+        .policy-item .form-group {
+            flex: 1;
+            margin-bottom: 0;
+        }
+        .remove-policy-btn {
+            background: transparent;
+            border: 1px solid var(--gray-300);
+            border-radius: 8px;
+            padding: 0.5rem 1rem;
+            color: var(--red);
+            cursor: pointer;
+            font-size: 0.7rem;
+            transition: all 0.2s;
+            margin-bottom: 0.2rem;
+        }
+        .remove-policy-btn:hover {
+            background: var(--red);
+            color: white;
+            border-color: var(--red);
+        }
+        .add-policy-btn {
+            background: transparent;
+            border: 2px dashed var(--gray-300);
+            border-radius: 12px;
+            padding: 0.8rem;
+            width: 100%;
+            color: var(--accent-muted);
+            font-size: 0.8rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+        }
+        .add-policy-btn:hover {
+            border-color: var(--accent-muted);
+            background: var(--accent-pale);
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 1rem;
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--gray-200);
+        }
+        .btn-primary {
+            background: var(--gray-900);
+            color: white;
+            padding: 0.8rem 2rem;
+            border: none;
+            border-radius: 40px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .btn-primary:hover {
+            background: var(--accent-deep);
+            transform: translateY(-1px);
+            box-shadow: 0 8px 20px rgba(58,74,103,0.2);
+        }
+        .btn-secondary {
+            background: transparent;
+            border: 1.5px solid var(--gray-300);
+            color: var(--gray-700);
+            padding: 0.8rem 2rem;
+            border-radius: 40px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .btn-secondary:hover {
+            border-color: var(--accent-muted);
+            color: var(--accent-deep);
+        }
+
+        .footer-site {
+            background: var(--gray-950);
+            color: rgba(255,255,255,0.6);
+            padding: 2.5rem 2rem 1.5rem;
+            margin-top: 2rem;
+        }
+        .footer-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 1fr;
+            gap: 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .footer-logo {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.4rem;
+            font-weight: 600;
+            color: white;
+            text-decoration: none;
+            display: inline-block;
+            margin-bottom: 0.6rem;
+        }
+        .footer-desc {
+            font-size: 0.8rem;
+            line-height: 1.5;
+            color: rgba(255,255,255,0.5);
+        }
+        .footer-col h5 {
+            font-size: 0.7rem;
+            font-weight: 600;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            margin-bottom: 1rem;
+            color: rgba(255,255,255,0.7);
+        }
+        .footer-col ul {
+            list-style: none;
+        }
+        .footer-col li {
+            margin-bottom: 0.5rem;
+        }
+        .footer-col a {
+            color: rgba(255,255,255,0.5);
+            font-size: 0.75rem;
+            text-decoration: none;
+        }
+        .footer-col a:hover {
+            color: white;
+        }
+        .footer-bottom {
+            text-align: center;
+            border-top: 1px solid rgba(255,255,255,0.08);
+            padding-top: 1.2rem;
+            margin-top: 1.5rem;
+            font-size: 0.7rem;
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 1rem;
+            max-width: 1200px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        @media (max-width: 860px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+            .sidebar.open {
+                transform: translateX(0);
+            }
+            .main-wrapper {
+                margin-left: 0 !important;
+            }
+            .form-row, .form-row-3 {
+                grid-template-columns: 1fr;
+            }
+            .footer-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+        @media (max-width: 600px) {
+            .content {
+                padding: 1rem;
+            }
+            .topbar {
+                padding: 0 1rem;
+            }
+            .form-card-header, .form-card-body {
+                padding: 1rem;
+            }
+            .footer-grid {
+                grid-template-columns: 1fr;
+                text-align: center;
+            }
+            .footer-bottom {
+                flex-direction: column;
+                text-align: center;
+            }
+            .policy-item {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .remove-policy-btn {
+                align-self: flex-start;
+            }
+        }
+        
+        .notification-dropdown {
+            position: absolute;
+            top: 55px;
+            right: 0;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 35px -12px rgba(0,0,0,0.15);
+            width: 320px;
+            z-index: 400;
+            border: 1px solid var(--gray-200);
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-6px);
+            transition: all 0.2s;
+        }
+        .notification-dropdown.show {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+        .notification-item {
+            padding: 0.8rem 1rem;
+            border-bottom: 1px solid var(--gray-200);
+            font-size: 0.8rem;
+            color: var(--text-dark);
+        }
+        .notification-item.unread {
+            background: var(--accent-pale);
+            font-weight: 500;
+        }
+        .view-all {
+            display: block;
+            padding: 0.8rem;
+            text-align: center;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--accent-muted);
+            text-decoration: none;
+            border-top: 1px solid var(--gray-200);
+        }
+        .view-all:hover {
+            background: var(--gray-100);
+        }
+        .notification-container {
+            position: relative;
+        }
+        .errorlist {
+            list-style: none;
+            color: var(--red);
+            font-size: 0.7rem;
+            margin-top: 0.25rem;
+        }
+        
+        /* Success/Error message styles */
+        .messages {
+            margin-bottom: 1.5rem;
+        }
+        .alert {
+            padding: 1rem 1.2rem;
+            border-radius: 12px;
+            font-size: 0.85rem;
+            margin-bottom: 1rem;
+        }
+        .alert-success {
+            background: #dcfce7;
+            color: #166534;
+            border: 1px solid #bbf7d0;
+        }
+        .alert-error {
+            background: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #fecaca;
+        }
+    </style>
+</head>
+<body>
+
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+<aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+        <a class="sidebar-logo" href="{% url 'index' %}">Wayzo</a>
+        <div class="sidebar-sub">Agency Portal</div>
+    </div>
+    <div class="sidebar-profile">
+        <div class="sidebar-avatar">
+            {% if user.profile_picture %}
+                <img src="{{ user.profile_picture.url }}" alt="{{ user.username }}">
+            {% else %}
+                {{ agency.agency_name|first|upper }}
+            {% endif %}
+        </div>
+        <div class="sidebar-profile-info">
+            <div class="sidebar-profile-name">{{ agency.agency_name|truncatechars:20 }}</div>
+            <div class="sidebar-profile-role">Travel Agency</div>
+        </div>
+    </div>
+    <nav class="sidebar-nav">
+        <span class="nav-group-label">Main</span>
+        <a href="{% url 'agency:agency_dashboard' %}" class="nav-item">
+            <svg viewBox="0 0 24 24"><path d="M3 9L12 3L21 9L12 15L3 9Z" stroke="currentColor" fill="none"/><path d="M9 21V15H15V21" stroke="currentColor" fill="none"/></svg>Home
+        </a>
+        <a href="{% url 'agency:agency_packages' %}" class="nav-item">
+            <svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>Tour Packages
+        </a>
+        <a href="{% url 'agency:agency_bookings' %}" class="nav-item">
+            <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>Bookings
+        </a>
+        <a href="{% url 'agency:add_package' %}" class="nav-item active">
+            <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Add New Package
+        </a>
+        <span class="nav-group-label">Insights</span>
+        <a href="#" class="nav-item" id="nav-analytics">
+            <svg viewBox="0 0 24 24"><path d="M18 20V10M12 20V4M6 20v-6"/><line x1="2" y1="20" x2="22" y2="20"/></svg>Analytics
+        </a>
+        <a href="#" class="nav-item" id="nav-reviews">
+            <svg viewBox="0 0 24 24"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>Reviews
+        </a>
+        <a href="#" class="nav-item" id="nav-reports">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H5.78a1.65 1.65 0 0 0-1.51 1 1.65 1.65 0 0 0 .33 1.82l.04.04A10 10 0 0 0 12 17.66a10 10 0 0 0 6.36-2.62l.04-.04z"/></svg>Reports
+        </a>
+        <a href="{% url 'agency:edit_agencyprofile' %}" class="nav-item">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 1v6m0 6v6M1 12h6m6 0h6"/></svg>Settings
+        </a>
+    </nav>
+    <div class="logout-sidebar">
+        <a href="{% url 'logout' %}">
+            <svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+            Sign Out
+        </a>
+    </div>
+</aside>
+
+<div class="main-wrapper" id="mainWrapper">
+    <div class="topbar">
+        <div class="topbar-left">
+            <button class="hamburger" id="hamburgerBtn"><span></span><span></span><span></span></button>
+            <div><h1 style="font-size:1.1rem;font-family:'Playfair Display';">Add Tour Package</h1><p style="font-size:0.7rem;">Create a new package for travellers</p></div>
+        </div>
+        <div class="topbar-right">
+            <div class="notification-container">
+                <button class="notification-btn" id="notificationBtn">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+                        <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+                    </svg>
+                    {% if unread_count > 0 %}
+                        <span class="notification-badge">{{ unread_count }}</span>
+                    {% endif %}
+                </button>
+                <div class="notification-dropdown" id="notificationDropdown">
+                    {% for note in notifications %}
+                        <div class="notification-item {% if not note.is_read %}unread{% endif %}">
+                            {{ note.message }}
+                        </div>
+                    {% empty %}
+                        <div class="notification-item">No notifications</div>
+                    {% endfor %}
+                    <a href="{% url 'agency:all_notifications' %}" class="view-all">View All</a>
+                </div>
+            </div>
+            <div class="avatar-menu" id="avatarMenu">
+                <div class="avatar-trigger" id="avatarTrigger">
+                    <div class="avatar-img">
+                        {% if user.profile_picture %}
+                            <img src="{{ user.profile_picture.url }}" alt="{{ user.username }}">
+                        {% else %}
+                            {{ agency.agency_name|first|upper }}
+                        {% endif %}
+                    </div>
+                    <span class="avatar-name">{{ agency.agency_name|truncatechars:12 }}</span>
+                </div>
+                <div class="dropdown-popup" id="dropdownPopup">
+                    <div class="dropdown-info">
+                        <p>{{ agency.agency_name }}</p>
+                        <span>{{ agency.city }}{% if agency.city and agency.state %}, {% endif %}{{ agency.state|default:"Location not set" }}</span>
+                    </div>
+                    <a href="{% url 'agency:edit_agencyprofile' %}" class="dropdown-item"><svg width="14" height="14" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>Profile Settings</a>
+                    <a href="{% url 'logout' %}" class="dropdown-item"><svg width="14" height="14" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>Sign Out</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="content">
+        <div class="breadcrumb">
+            <a href="{% url 'agency:agency_dashboard' %}">Dashboard</a>
+            <svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
+            <a href="{% url 'agency:agency_packages' %}">Tour Packages</a>
+            <svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
+            <span class="current">Add New Package</span>
+        </div>
+
+        {% if messages %}
+            <div class="messages">
+                {% for message in messages %}
+                    <div class="alert alert-{% if message.tags == 'error' %}error{% else %}{{ message.tags }}{% endif %}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        <form method="POST" enctype="multipart/form-data" id="packageForm">
+            {% csrf_token %}
+
+            <!-- Package Details Section -->
+            <div class="form-card">
+                <div class="form-card-header">
+                    <h2>Package Details</h2>
+                    <p>Core information about your tour package</p>
+                </div>
+                <div class="form-card-body">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Package Title <span class="required">*</span></label>
+                            {{ package_form.title }}
+                            {% if package_form.title.errors %}
+                                <div class="help-text" style="color: var(--red);">{{ package_form.title.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="form-group">
+                            <label>Places Covered <span class="required">*</span></label>
+                            {{ package_form.places_covered }}
+                            {% if package_form.places_covered.errors %}
+                                <div class="help-text" style="color: var(--red);">{{ package_form.places_covered.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="form-row-3">
+                        <div class="form-group">
+                            <label>Duration (Days) <span class="required">*</span></label>
+                            {{ package_form.duration_days }}
+                        </div>
+                        <div class="form-group">
+                            <label>Duration (Nights) <span class="required">*</span></label>
+                            {{ package_form.duration_nights }}
+                        </div>
+                        <div class="form-group">
+                            <label>Guide Language</label>
+                            {{ package_form.guide_language }}
+                        </div>
+                    </div>
+
+                    <div class="form-row-3">
+                        <div class="form-group">
+                            <label>Price (₹) <span class="required">*</span></label>
+                            {{ package_form.price }}
+                        </div>
+                        <div class="form-group">
+                            <label>Discounted Price (₹)</label>
+                            {{ package_form.discounted_price }}
+                            <div class="help-text">Leave blank if no discount</div>
+                        </div>
+                        <div class="form-group">
+                            <label>Min Group Size</label>
+                            {{ package_form.min_group_size }}
+                        </div>
+                    </div>
+
+                    <div class="form-row-3">
+                        <div class="form-group">
+                            <label>Max Group Size</label>
+                            {{ package_form.max_group_size }}
+                        </div>
+                        <div class="form-group">
+                            <label>Pickup Points</label>
+                            {{ package_form.pickup_points }}
+                            <div class="help-text">Comma-separated list of pickup locations</div>
+                        </div>
+                        <div class="form-group">
+                            <label>Drop Points</label>
+                            {{ package_form.drop_points }}
+                            <div class="help-text">Comma-separated list of drop locations</div>
+                        </div>
+                    </div>
+
+                    <!-- Replace the existing difficulty level and best season section with this -->
+<div class="form-row-3">
+    <div class="form-group">
+        <label>Difficulty Level</label>
+        {{ package_form.difficulty_level }}
+        <div class="help-text">Select the difficulty level of the tour</div>
+    </div>
+    <div class="form-group">
+        <label>Best Season</label>
+        {{ package_form.best_season }}
+        <div class="help-text">When is the best time to take this tour?</div>
+    </div>
+    <div class="form-group">
+        <label>Suitable For</label>
+        {{ package_form.suitable_for }}
+        <div class="help-text">e.g., Couples, Friends, Family, Solo</div>
+    </div>
+</div>
+
+<!-- Add new section for booking advance restrictions -->
+<div class="form-row-3">
+    <div class="form-group">
+        <label>Minimum Booking Days (Advance)</label>
+        {{ package_form.min_booking_days }}
+        <div class="help-text">Minimum days before travel to book (e.g., 7 = book at least 7 days before)</div>
+    </div>
+    <div class="form-group">
+        <label>Maximum Booking Days (Advance)</label>
+        {{ package_form.max_booking_days }}
+        <div class="help-text">Maximum days before travel to book (e.g., 90 = book up to 90 days in advance)</div>
+    </div>
+</div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Accommodation Type</label>
+                            {{ package_form.accommodation_type }}
+                        </div>
+                        <div class="form-group">
+                            <label>Transport Type</label>
+                            {{ package_form.transport_type }}
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Meals</label>
+                            {{ package_form.meals }}
+                        </div>
+                        <div class="form-group">
+                            <label>Things To Carry</label>
+                            {{ package_form.things_to_carry }}
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <div class="checkbox-group">
+                                {{ package_form.is_featured }}
+                                <label for="{{ package_form.is_featured.id_for_label }}">⭐ Feature this package</label>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="checkbox-group">
+                                {{ package_form.is_active }}
+                                <label for="{{ package_form.is_active.id_for_label }}">✅ Active (Visible to Customers)</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Description <span class="required">*</span></label>
+                        {{ package_form.description }}
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Inclusions</label>
+                            {{ package_form.inclusions }}
+                        </div>
+                        <div class="form-group">
+                            <label>Exclusions</label>
+                            {{ package_form.exclusions }}
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Terms & Conditions</label>
+                        {{ package_form.terms_conditions }}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Cancellation Policy Section -->
+            <div class="form-card">
+                <div class="form-card-header">
+                    <h2>Cancellation & Refund Policy</h2>
+                    <p>Define refund percentages based on days before travel. Travellers will get refunds according to these policies.</p>
+                </div>
+                <div class="form-card-body">
+                    {{ policy_formset.management_form }}
+                    <div id="policy-container">
+                        {% for policy_form in policy_formset %}
+                            <div class="policy-item" id="policy-{{ forloop.counter0 }}">
+                                <div class="form-group">
+                                    <label>Days Before Travel</label>
+                                    {{ policy_form.days_before }}
+                                    <div class="help-text">Number of days before departure</div>
+                                </div>
+                                <div class="form-group">
+                                    <label>Refund Percentage (%)</label>
+                                    {{ policy_form.refund_percentage }}
+                                    <div class="help-text">0-100% of total amount</div>
+                                </div>
+                                {% if policy_form.instance.pk %}
+                                    <div class="checkbox-group" style="align-self: center;">
+                                        {{ policy_form.DELETE }}
+                                        <label>Delete this policy</label>
+                                    </div>
+                                {% else %}
+                                    <button type="button" class="remove-policy-btn" onclick="removePolicy(this)">Remove</button>
+                                {% endif %}
+                            </div>
+                        {% endfor %}
+                    </div>
+                    <button type="button" class="add-policy-btn" id="addPolicyBtn">
+                        <svg viewBox="0 0 24 24" width="16" height="16"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                        Add Refund Rule
+                    </button>
+                    <div class="help-text" style="margin-top: 0.8rem;">
+                        <strong>Note:</strong> Policies are applied based on days before travel. 
+                        Higher days_before values override lower ones. Example: 30 days → 100% refund, 15 days → 50% refund.
+                        If no policy matches, 0% refund applies.
+                    </div>
+                </div>
+            </div>
+
+            <!-- Gallery Images Section -->
+            <div class="form-card">
+                <div class="form-card-header">
+                    <h2>Package Images</h2>
+                    <p>Upload high-quality images for your package</p>
+                </div>
+                <div class="form-card-body">
+                    {{ image_formset.management_form }}
+                    <div id="image-container">
+                        {% for img_form in image_formset %}
+                            <div class="image-item">
+                                {{ img_form.image }}
+                                {% if img_form.instance.pk %}
+                                    <div class="checkbox-group">
+                                        {{ img_form.DELETE }}
+                                        <label>Delete this image</label>
+                                    </div>
+                                {% else %}
+                                    {% if not forloop.first %}
+                                        <button type="button" class="remove-image-btn" onclick="removeImage(this)">Remove</button>
+                                    {% endif %}
+                                {% endif %}
+                            </div>
+                        {% endfor %}
+                    </div>
+                    <button type="button" class="add-image-btn" onclick="addImage()">
+                        <svg viewBox="0 0 24 24" width="16" height="16"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                        Add Another Image
+                    </button>
+                </div>
+            </div>
+
+            <!-- Itinerary Section -->
+            <div class="form-card">
+                <div class="form-card-header">
+                    <h2>Day-by-Day Itinerary</h2>
+                    <p>Create a detailed plan for each day</p>
+                </div>
+                <div class="form-card-body">
+                    {{ itinerary_formset.management_form }}
+                    <div id="itinerary-container">
+                        {% for itin_form in itinerary_formset %}
+                            <div class="itinerary-item" data-day="{{ itin_form.day_number.value|default:forloop.counter }}">
+                                <div class="itinerary-header">
+                                    <h4>Day {{ itin_form.day_number.value|default:forloop.counter }}</h4>
+                                    <span>▼ Expand</span>
+                                </div>
+                                <div class="itinerary-content hidden">
+                                    {{ itin_form.id }}
+                                    {{ itin_form.day_number }}
+                                    <div class="form-group">
+                                        <label>Day Title</label>
+                                        {{ itin_form.title }}
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Description</label>
+                                        {{ itin_form.description }}
+                                    </div>
+                                    {% if itin_form.instance.pk %}
+                                        <div class="checkbox-group">
+                                            {{ itin_form.DELETE }}
+                                            <label>Delete this day</label>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="btn-primary">
+                    <svg viewBox="0 0 24 24" width="16" height="16"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/></svg>
+                    Save Package
+                </button>
+                <a href="{% url 'agency:agency_packages' %}" class="btn-secondary">
+                    <svg viewBox="0 0 24 24" width="16" height="16"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                    Cancel
+                </a>
+            </div>
+        </form>
+    </div>
+
+    <footer class="footer-site">
+        <div class="footer-grid">
+            <div><a class="footer-logo" href="{% url 'index' %}">Wayzo</a><p class="footer-desc">Your smart travel companion.<br>Discover, plan, and experience the world beautifully.</p></div>
+            <div class="footer-col"><h5>EXPLORE</h5><ul><li><a href="#">Destinations</a></li><li><a href="#">Restaurants</a></li><li><a href="#">Hotels</a></li><li><a href="#">Packages</a></li></ul></div>
+            <div class="footer-col"><h5>TRAVELLERS</h5><ul><li><a href="{% url 'traveller_register' %}">Join as Traveller</a></li><li><a href="{% url 'login' %}">Login</a></li><li><a href="#">How it Works</a></li><li><a href="#">FAQs</a></li></ul></div>
+            <div class="footer-col"><h5>PARTNERS</h5><ul><li><a href="{% url 'agency_register' %}">Register Agency</a></li><li><a href="{% url 'restaurant_register' %}">Register Restaurant</a></li><li><a href="#">Partner Benefits</a></li><li><a href="#">Contact Us</a></li></ul></div>
+        </div>
+        <div class="footer-bottom"><span>© 2025 Wayzo. All rights reserved.</span><span>Made for explorers everywhere</span></div>
+    </footer>
+</div>
+
+<script>
+    // Sidebar functionality
+    const sidebar = document.getElementById('sidebar');
+    const hamburgerBtn = document.getElementById('hamburgerBtn');
+    const mainWrapper = document.getElementById('mainWrapper');
+    const overlay = document.getElementById('sidebarOverlay');
+    const MOBILE_BP = 860;
+
+    function isMobile() { return window.innerWidth <= MOBILE_BP; }
+    function setSidebarOpen(open) {
+        if(isMobile()) {
+            sidebar.classList.toggle('open', open);
+            overlay.classList.toggle('visible', open);
+        } else {
+            if(open) {
+                sidebar.classList.remove('collapsed');
+                mainWrapper.classList.remove('sidebar-collapsed');
+            } else {
+                sidebar.classList.add('collapsed');
+                mainWrapper.classList.add('sidebar-collapsed');
+            }
+        }
+    }
+    function toggleSidebar() {
+        if(isMobile()) setSidebarOpen(!sidebar.classList.contains('open'));
+        else setSidebarOpen(sidebar.classList.contains('collapsed'));
+    }
+    function closeSidebar() { if(isMobile()) setSidebarOpen(false); }
+    
+    hamburgerBtn.addEventListener('click', toggleSidebar);
+    overlay.addEventListener('click', closeSidebar);
+    
+    if(!isMobile()) {
+        sidebar.classList.add('collapsed');
+        mainWrapper.classList.add('sidebar-collapsed');
+    }
+    window.addEventListener('resize', () => {
+        if(!isMobile()) {
+            sidebar.classList.add('collapsed');
+            mainWrapper.classList.add('sidebar-collapsed');
+            sidebar.classList.remove('open');
+            overlay.classList.remove('visible');
+        }
+    });
+
+    // Avatar dropdown
+    const avatarTrigger = document.getElementById('avatarTrigger');
+    const dropdown = document.getElementById('dropdownPopup');
+    if(avatarTrigger && dropdown) {
+        avatarTrigger.addEventListener('click', (e) => { e.stopPropagation(); dropdown.classList.toggle('show'); });
+        document.addEventListener('click', (e) => { if(!avatarTrigger.contains(e.target) && !dropdown.contains(e.target)) dropdown.classList.remove('show'); });
+    }
+
+    // Notification dropdown
+    const notificationBtn = document.getElementById('notificationBtn');
+    const notificationDropdown = document.getElementById('notificationDropdown');
+    if(notificationBtn && notificationDropdown) {
+        notificationBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            notificationDropdown.classList.toggle('show');
+        });
+        document.addEventListener('click', (e) => {
+            if(!notificationBtn.contains(e.target) && !notificationDropdown.contains(e.target)) {
+                notificationDropdown.classList.remove('show');
+            }
+        });
+    }
+
+    // Analytics, Reviews, Reports placeholder navigation
+    const analyticsNav = document.getElementById('nav-analytics');
+    const reviewsNav = document.getElementById('nav-reviews');
+    const reportsNav = document.getElementById('nav-reports');
+    if(analyticsNav) analyticsNav.addEventListener('click', (e) => { e.preventDefault(); alert('📊 Analytics dashboard coming soon.'); });
+    if(reviewsNav) reviewsNav.addEventListener('click', (e) => { e.preventDefault(); alert('⭐ Reviews management will be available soon.'); });
+    if(reportsNav) reportsNav.addEventListener('click', (e) => { e.preventDefault(); alert('📈 Detailed reports coming in the next update.'); });
+
+    // Auto-calculate nights
+    const daysField = document.getElementById('id_duration_days');
+    const nightsField = document.getElementById('id_duration_nights');
+    if(daysField && nightsField) {
+        daysField.addEventListener('input', function() { 
+            let days = parseInt(this.value) || 0;
+            nightsField.value = days > 0 ? days - 1 : 0;
+            generateItinerary();
+        });
+    }
+
+    // Image uploader
+    function addImage() {
+        let totalForms = document.getElementById("id_images-TOTAL_FORMS");
+        let currentCount = parseInt(totalForms.value);
+        let container = document.getElementById("image-container");
+        let newDiv = document.createElement('div');
+        newDiv.className = 'image-item';
+        newDiv.innerHTML = `<input type="file" name="images-${currentCount}-image" accept="image/*"><button type="button" class="remove-image-btn" onclick="removeImage(this)">Remove</button>`;
+        container.appendChild(newDiv);
+        totalForms.value = currentCount + 1;
+    }
+    
+    function removeImage(btn) {
+        btn.closest('.image-item').remove();
+        let container = document.getElementById("image-container");
+        let inputs = container.querySelectorAll('input[type="file"]');
+        inputs.forEach((input, idx) => input.name = `images-${idx}-image`);
+        let totalForms = document.getElementById("id_images-TOTAL_FORMS");
+        if(totalForms) totalForms.value = inputs.length;
+    }
+
+    // Cancellation Policy dynamic formset
+    function addPolicy() {
+        let totalForms = document.getElementById("id_cancellation_policies-TOTAL_FORMS");
+        if (!totalForms) {
+            console.error("Policy management form not found!");
+            alert("Error: Policy form not found. Please refresh the page.");
+            return;
+        }
+        let currentCount = parseInt(totalForms.value);
+        let container = document.getElementById("policy-container");
+        let newDiv = document.createElement('div');
+        newDiv.className = 'policy-item';
+        newDiv.innerHTML = `
+            <div class="form-group">
+                <label>Days Before Travel</label>
+                <input type="number" name="cancellation_policies-${currentCount}-days_before" id="id_cancellation_policies-${currentCount}-days_before" min="0" step="1" value="0">
+                <div class="help-text">Number of days before departure</div>
+            </div>
+            <div class="form-group">
+                <label>Refund Percentage (%)</label>
+                <input type="number" name="cancellation_policies-${currentCount}-refund_percentage" id="id_cancellation_policies-${currentCount}-refund_percentage" min="0" max="100" step="1" value="0">
+                <div class="help-text">0-100% of total amount</div>
+            </div>
+            <button type="button" class="remove-policy-btn" onclick="removePolicy(this)">Remove</button>
+        `;
+        container.appendChild(newDiv);
+        totalForms.value = currentCount + 1;
+    }
+    
+    function removePolicy(btn) {
+        let policyItem = btn.closest('.policy-item');
+        let deleteCheckbox = policyItem.querySelector('input[type="checkbox"][name*="DELETE"]');
+        
+        if (deleteCheckbox) {
+            // This is an existing policy from database, mark for deletion
+            deleteCheckbox.checked = true;
+            policyItem.style.display = 'none';
+        } else {
+            // This is a new unsaved policy, remove it completely
+            policyItem.remove();
+        }
+        
+        // Renumber remaining policy inputs
+        let container = document.getElementById("policy-container");
+        let policyDivs = container.querySelectorAll('.policy-item:not([style*="display: none"])');
+        let totalForms = document.getElementById("id_cancellation_policies-TOTAL_FORMS");
+        
+        policyDivs.forEach((div, idx) => {
+            let daysInput = div.querySelector('input[name*="days_before"]');
+            let refundInput = div.querySelector('input[name*="refund_percentage"]');
+            if(daysInput && !daysInput.name.includes('DELETE')) {
+                daysInput.name = `cancellation_policies-${idx}-days_before`;
+                daysInput.id = `id_cancellation_policies-${idx}-days_before`;
+            }
+            if(refundInput && !refundInput.name.includes('DELETE')) {
+                refundInput.name = `cancellation_policies-${idx}-refund_percentage`;
+                refundInput.id = `id_cancellation_policies-${idx}-refund_percentage`;
+            }
+        });
+        
+        if(totalForms) totalForms.value = policyDivs.length;
+    }
+
+    // Itinerary generator with formset support
+    const itineraryContainer = document.getElementById("itinerary-container");
+    const itinTotalForms = document.getElementById("id_itineraries-TOTAL_FORMS");
+    let existingItineraryCount = parseInt(itinTotalForms?.value || 0);
+
+    function generateItinerary() {
+        let days = parseInt(daysField?.value) || 0;
+        let currentItineraries = itineraryContainer.querySelectorAll('.itinerary-item');
+        let currentCount = currentItineraries.length;
+        
+        if(days > currentCount) {
+            // Add new itineraries
+            for(let i = currentCount; i < days; i++) {
+                let div = document.createElement('div');
+                div.className = 'itinerary-item';
+                div.setAttribute('data-day', i + 1);
+                div.innerHTML = `
+                    <div class="itinerary-header">
+                        <h4>Day ${i + 1}</h4>
+                        <span>▼ Expand</span>
+                    </div>
+                    <div class="itinerary-content hidden">
+                        <input type="hidden" name="itineraries-${i}-day_number" value="${i + 1}">
+                        <div class="form-group">
+                            <label>Day Title</label>
+                            <input type="text" name="itineraries-${i}-title" placeholder="e.g., Arrival and City Tour">
+                        </div>
+                        <div class="form-group">
+                            <label>Description</label>
+                            <textarea name="itineraries-${i}-description" rows="3" placeholder="Describe activities for this day..."></textarea>
+                        </div>
+                    </div>
+                `;
+                itineraryContainer.appendChild(div);
+            }
+        } else if(days < currentCount) {
+            // Remove extra itineraries
+            for(let i = currentCount - 1; i >= days; i--) {
+                let itemToRemove = currentItineraries[i];
+                if(itemToRemove) itemToRemove.remove();
+            }
+        }
+        
+        // Update total forms count
+        if(itinTotalForms) {
+            itinTotalForms.value = days;
+        }
+        
+        // Reattach click handlers to all itinerary headers
+        attachItineraryHandlers();
+    }
+    
+    function attachItineraryHandlers() {
+        document.querySelectorAll('.itinerary-item').forEach(item => {
+            const header = item.querySelector('.itinerary-header');
+            const content = item.querySelector('.itinerary-content');
+            const span = header?.querySelector('span');
+            if(header && content && span && !header.hasAttribute('data-handler-attached')) {
+                header.addEventListener('click', () => {
+                    content.classList.toggle('hidden');
+                    span.innerHTML = content.classList.contains('hidden') ? '▼ Expand' : '▲ Collapse';
+                });
+                header.setAttribute('data-handler-attached', 'true');
+            }
+        });
+    }
+    
+    // Initialize itinerary handlers on page load
+    if(daysField?.value && parseInt(daysField.value) > 0) {
+        generateItinerary();
+    } else {
+        attachItineraryHandlers();
+    }
+    
+    // Make functions globally available for onclick handlers
+    window.addImage = addImage;
+    window.removeImage = removeImage;
+    window.addPolicy = addPolicy;
+    window.removePolicy = removePolicy;
+    
+    // Add event listener for the Add Policy button
+    const addPolicyBtn = document.getElementById('addPolicyBtn');
+    if(addPolicyBtn) {
+        addPolicyBtn.addEventListener('click', addPolicy);
+    }
+</script>
+</body>
+</html>
