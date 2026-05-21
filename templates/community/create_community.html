@@ -18,4 +18,4 @@ document.getElementById("id_is_private").addEventListener("change", function(){
 </form>
 <hr>
 <a href="{% url 'community_home' %}">Back to Community</a>
-<a href="{% url 'user_profile' %}">Back to Dashboard</a>
+<a href="{% url 'travellers:user_profile' request.user.id %}">Back to Dashboard</a>

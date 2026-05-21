@@ -33,7 +33,6 @@ urlpatterns = [
     path("wishlist/remove/<int:package_id>/", views.wishlist_remove, name="wishlist_remove"),
     path('pay-advance/<int:id>/', views.pay_advance, name='pay_advance'),
     path('pay-remaining/<int:id>/', views.pay_remaining, name='pay_remaining'),
-    # path("plan-trip/", views.generate_trip_plan, name="plan_trip"),
 
     # Restaurant Booking
     path("book-property/<int:pk>/", views.book_property, name="book_property"),
@@ -57,6 +56,8 @@ urlpatterns = [
     path("inbox/", views.inbox, name="inbox"),
 
     path('invoice/<int:id>/', views.download_invoice, name='download_invoice'),
-    path("plan/create/", views.create_travel_plan, name="create_travel_plan"),
-    path("plans/", views.my_travel_plans, name="my_travel_plans"),
+
+
+
+
 ]

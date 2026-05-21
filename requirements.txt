@@ -1,0 +1,27 @@
+Django>=5.0
+
+# API & HTTP
+requests>=2.31.0
+
+# SerpAPI
+google-search-results>=2.4.2
+
+# Groq (LLM)
+groq>=0.5.0
+
+# AI / Embeddings
+sentence-transformers>=2.6.1
+transformers>=4.40.0
+torch>=2.2.0
+
+# Vector DB
+faiss-cpu>=1.7.4
+
+# OSM Data
+overpy>=0.6
+
+# Utilities
+numpy>=1.26.0
+
+# Optional (better performance/logging)
+python-dotenv>=1.0.0

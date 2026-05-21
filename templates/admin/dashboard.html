@@ -54,18 +54,16 @@
 
 <a href="{% url 'logout' %}">Logout</a>
 
-<h1>Destination Admin Dashboard</h1>
-
-<a href="{% url 'destination_list' %}">
-    ➕ Destinations
+<a href="{% url 'destinations:destination_list' %}" style="text-decoration:none;">
+    <button style="
+        padding: 10px 16px;
+        background-color: #ff5a5f;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+    ">
+        Destination List
+    </button>
 </a>
-
-<hr>
-
-{% for d in destinations %}
-    <div style="border:1px solid #ccc; padding:10px; margin:10px;">
-        <h3>{{ d.name }}</h3>
-        <p>{{ d.state }}</p>
-        <p>{{ d.best_season }}</p>
-    </div>
-{% endfor %}

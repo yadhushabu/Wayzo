@@ -580,8 +580,8 @@
     </div>
     <div class="sidebar-profile">
         <div class="sidebar-avatar">
-            {% if profile.profile_picture %}
-                <img src="{{ profile.profile_picture.url }}" alt="{{ profile.first_name }}">
+            {% if profile.user.profile_picture %}
+                <img src="{{ profile.user.profile_picture.url }}" alt="{{ profile.first_name }}">
             {% else %}
                 {{ profile.first_name|first|upper }}{{ profile.last_name|first|upper }}
             {% endif %}
@@ -667,8 +667,8 @@
             <div class="avatar-menu" id="avatarMenu">
                 <div class="avatar-trigger" id="avatarTrigger">
                     <div class="avatar-img">
-                        {% if profile.profile_picture %}
-                            <img src="{{ profile.profile_picture.url }}" alt="{{ profile.first_name }}">
+                        {% if profile.user.profile_picture %}
+                            <img src="{{ profile.user.profile_picture.url }}" alt="{{ profile.first_name }}">
                         {% else %}
                             {{ profile.first_name|first|upper }}{{ profile.last_name|first|upper }}
                         {% endif %}

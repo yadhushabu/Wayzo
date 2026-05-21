@@ -76,6 +76,8 @@ def restaurant_register(request):
         form = RestaurantSignUpForm(request.POST, request.FILES)
         if form.is_valid():
             form.save()
+            messages.success(request, "Registration successful. Please login.")
+            return redirect('login')   # ✅ ADD THIS
     else:
         form = RestaurantSignUpForm()
 

@@ -1,14 +1,83 @@
 from django.urls import path
 from . import views
 
+app_name = "destinations"
+
 urlpatterns = [
-    path("create/", views.create_destination, name="create_destination"),
-    path("", views.destination_list, name="destination_list"),
-    path("<slug:slug>/", views.destination_detail, name="destination_detail"),
-    path("<slug:slug>/add-attraction/", views.add_attraction, name="add_attraction"),
-    path("attraction/delete/<int:id>/", views.delete_attraction, name="delete_attraction"),
-    path('api/destinations/', views.api_destinations, name='api_destinations'),
-    path('api/destination-coords/<int:dest_id>/', views.destination_coords, name='destination_coords'),
-    path("attraction/<int:id>/", views.attraction_detail, name="attraction_detail"),
-    path("attraction/<int:id>/edit/", views.edit_attraction, name="edit_attraction"),
+
+    # =====================================================
+    # DESTINATION LIST (Explore page)
+    # =====================================================
+    path(
+        "",
+        views.destination_list,
+        name="destination_list"
+    ),
+
+    # =====================================================
+    # DESTINATION DETAIL
+    # =====================================================
+    path(
+        "destination/<int:destination_id>/",
+        views.destination_detail,
+        name="destination_detail"
+    ),
+
+    # =====================================================
+    # PLACE DETAIL
+    # =====================================================
+    path(
+        "place/<int:place_id>/",
+        views.place_detail,
+        name="place_detail"
+    ),
+
+    # =====================================================
+    # ADD DESTINATION
+    # =====================================================
+    path(
+        "add/",
+        views.add_destination,
+        name="add_destination"
+    ),
+
+    path('api/get-coordinates/', views.get_coordinates_api, name='get_coordinates_api'),
+
+    # =====================================================
+    # ADD PLACE (inside destination)
+    # =====================================================
+    path(
+        "destination/<int:destination_id>/add-place/",
+        views.add_place,
+        name="add_place"
+    ),
+
+    # =====================================================
+    # ADD REVIEW
+    # =====================================================
+    path(
+        "place/<int:place_id>/add-review/",
+        views.add_review,
+        name="add_review"
+    ),
+
+    path(
+        "destination/edit/<int:destination_id>/",
+        views.edit_destination,
+        name="edit_destination"
+),
+
+    path(
+        "place/edit/<int:place_id>/",
+        views.edit_place,
+        name="edit_place"
+),
+    path(
+    "destination/delete/<int:destination_id>/",
+    views.delete_destination,
+    name="delete_destination"
+),
+
+    path('review/<int:review_id>/edit/', views.edit_review, name='edit_review'),
+    path('review/<int:review_id>/delete/', views.delete_review, name='delete_review'),
 ]

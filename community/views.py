@@ -661,3 +661,5 @@ def get_or_create_trip_room(trip):
         room.participants.add(trip.creator)
 
     return room
+
+

@@ -48,9 +48,8 @@ INSTALLED_APPS = [
      'admin_app',
      'multiselectfield',
      'community',
+     'planner',
      'destinations',
-     'itineraries',
-     'ai_engine'
 
 ]
 
@@ -142,6 +141,67 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 LOGIN_URL = 'login'
 LOGIN_REDIRECT_URL = 'index'
 
+import os
+from dotenv import load_dotenv
+from groq import Groq
 
-OPENTRIPMAP_API_KEY = "5ae2e3f221c38a28845f05b6a29b965f010549710afa154c2ff609b8"
-GENAI_API_KEY = "AIzaSyCZzLymgTfHUYqs8lkmoZjg-ubw0kj2mQ0" 
+load_dotenv()
+
+# ================= API KEYS =================
+GROQ_API_KEY = os.getenv("GROQ_API_KEY")
+GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
+SERPAPI_KEY = os.getenv("SERPAPI_KEY")
+GEONAMES_USERNAME = os.getenv("GEONAMES_USERNAME")
+OPENTRIPMAP_KEY = os.getenv("OPENTRIPMAP_KEY")
+OPENWEATHER_API_KEY = os.getenv("OPENWEATHER_API_KEY")
+
+# 🔒 Validate keys properly
+if not GROQ_API_KEY:
+    raise ValueError("❌ GROQ_API_KEY not set in environment")
+
+if not GOOGLE_API_KEY:
+    print("⚠️ WARNING: GOOGLE_API_KEY not set (Places/Maps may fail)")
+
+# =====================================================
+# GROQ CLIENT (AI)
+# =====================================================
+
+client = Groq(api_key=GROQ_API_KEY)
+
+# Default model (centralized)
+GROQ_MODEL = "llama3-70b-8192"
+
+
+# =====================================================
+# CACHE CONFIG (DJANGO)
+# =====================================================
+
+# NOTE:
+# This should ideally be in settings.py,
+# but keeping here if you're using it as a shared config module.
+
+try:
+    CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+    }
+}
+except Exception:
+    print("⚠️ Redis not available → using local memory cache")
+    CACHES = {
+        "default": {
+            "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+            "LOCATION": "wayzo-cache",
+        }
+    }
+
+
+# =====================================================
+# CACHE DURATIONS (seconds)
+# =====================================================
+
+CACHE_DURATIONS = {
+    "attractions": 60 * 60 * 24 * 7,   # 7 days
+    "weather": 60 * 60 * 6,            # 6 hours
+    "itinerary": 60 * 60 * 24,         # 24 hours
+}

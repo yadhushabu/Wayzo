@@ -622,14 +622,14 @@
             background-repeat: no-repeat;
             z-index: 0;
         }
-        .itinerary-fade-top {
-            position: absolute;
-            top: 0; left: 0; right: 0;
-            height: 280px;
-            background: linear-gradient(to bottom, #F8F9FC 0%, rgba(247,248,250,0) 100%);
-            z-index: 2;
-            pointer-events: none;
-        }
+.itinerary-fade-top {
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 380px;
+    background: linear-gradient(to bottom, #F8F9FC 0%, rgba(248,249,252,0) 100%);
+    z-index: 2;
+    pointer-events: none;
+}
         .itinerary-fade-bottom {
             position: absolute;
             bottom: 0; left: 0; right: 0;
@@ -816,8 +816,8 @@
     </div>
     <div class="sidebar-profile">
         <div class="sidebar-avatar">
-            {% if profile.profile_picture %}
-                <img src="{{ profile.profile_picture.url }}" alt="{{ profile.first_name }}">
+            {% if profile.user.profile_picture %}
+                <img src="{{ profile.user.profile_picture.url }}" alt="{{ profile.first_name }}">
             {% else %}
                 {{ profile.first_name|first|upper }}{{ profile.last_name|first|upper }}
             {% endif %}
@@ -903,8 +903,8 @@
             <div class="avatar-menu" id="avatarMenu">
                 <div class="avatar-trigger" id="avatarTrigger">
                     <div class="avatar-img">
-                        {% if profile.profile_picture %}
-                            <img src="{{ profile.profile_picture.url }}" alt="{{ profile.first_name }}">
+                        {% if profile.user.profile_picture %}
+                            <img src="{{ profile.user.profile_picture.url }}" alt="{{ profile.first_name }}">
                         {% else %}
                             {{ profile.first_name|first|upper }}{{ profile.last_name|first|upper }}
                         {% endif %}
@@ -914,7 +914,7 @@
                 <div class="dropdown-popup" id="dropdownPopup">
                     <div class="dropdown-info">
                         <p>{{ profile.first_name }} {{ profile.last_name }}</p>
-                        <span>{{ profile.email|default:"traveller@wayzo.com" }}</span>
+                        <span>{{ profile.user.email|default:"traveller@wayzo.com" }}</span>
                     </div>
                     <a href="{% url 'travellers:edit_profile' %}" class="dropdown-item">Profile Settings</a>
                     <a href="{% url 'logout' %}" class="dropdown-item">Sign Out</a>
@@ -1123,22 +1123,7 @@
                 {% endfor %}
             </div>
 
-<div style="background:#f5f7fb; padding:20px; border-radius:10px; margin-bottom:20px;">
-    <h2>Plan Your Next Trip</h2>
-    <p>Create a personalized AI-powered itinerary based on your mood, budget, and preferences.</p>
 
-    <a href="{% url 'travellers:create_travel_plan' %}"
-       style="
-          display:inline-block;
-          padding:12px 18px;
-          background:green;
-          color:white;
-          text-decoration:none;
-          border-radius:6px;
-       ">
-       ➕ Create Travel Plan
-    </a>
-</div>
             <!-- PAGINATION -->
             {% if packages.has_other_pages %}
             <div class="pagination">
@@ -1210,6 +1195,78 @@
         </div>
     </div>
 
+
+<section style="
+  background: var(--gray-100);
+  padding: 3rem 2.5rem 0rem;
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+  margin-bottom: 0;
+">
+
+  <!-- LEFT: Floating image — no box, no border, pure transparent -->
+  <div style="flex:0 0 50%;max-width:50%;display:flex;align-items:flex-end;justify-content:center;">
+    <img src="{% static 'images/it_new.png' %}" alt="Family floating on clouds"
+      style="
+        width:100%;
+        max-width:480px;
+        display:block;
+        animation: floatAnim 5s ease-in-out infinite;
+        margin-bottom: -4px;
+      ">
+  </div>
+
+  <!-- RIGHT: Text + CTA -->
+  <div style="flex:1;display:flex;flex-direction:column;gap:1.1rem;padding-bottom:3rem;">
+
+    <span style="
+      display:inline-flex;align-items:center;gap:0.45rem;
+      background:rgba(14,138,138,0.08);
+      border:1px solid rgba(14,138,138,0.18);
+      color:#0A6B6B;font-size:11px;font-weight:500;
+      letter-spacing:0.12em;text-transform:uppercase;
+      padding:0.32rem 0.9rem;border-radius:40px;width:fit-content;
+    ">
+      <span style="width:6px;height:6px;border-radius:50%;background:#0E8A8A;flex-shrink:0;display:inline-block;"></span>
+      AI-powered planning
+    </span>
+
+    <h2 style="
+      font-family:'Playfair Display',serif;
+      font-size:2.6rem;
+      font-weight:600;line-height:1.08;
+      color:#1E242C;
+      letter-spacing:-0.02em;margin:0;
+    ">
+      Plan your next<br>
+      <em style="font-style:italic;color:#0E8A8A;">perfect itinerary</em>
+    </h2>
+
+    <p style="font-size:0.88rem;color:#6F7886;line-height:1.72;max-width:360px;margin:0;">
+      Create a personalized travel plan based on your mood, budget, and preferences — powered by AI, tailored just for you.
+    </p>
+
+    <div style="display:flex;flex-wrap:wrap;gap:0.5rem;">
+      <span style="display:inline-flex;align-items:center;gap:0.35rem;background:white;border:1px solid rgba(14,138,138,0.18);color:#4A515C;font-size:11.5px;font-weight:500;padding:0.36rem 0.9rem;border-radius:40px;">✦ AI-generated</span>
+      <span style="display:inline-flex;align-items:center;gap:0.35rem;background:white;border:1px solid rgba(14,138,138,0.18);color:#4A515C;font-size:11.5px;font-weight:500;padding:0.36rem 0.9rem;border-radius:40px;">₹ Budget-aware</span>
+      <span style="display:inline-flex;align-items:center;gap:0.35rem;background:white;border:1px solid rgba(14,138,138,0.18);color:#4A515C;font-size:11.5px;font-weight:500;padding:0.36rem 0.9rem;border-radius:40px;">📅 Day-by-day plan</span>
+    </div>
+
+    <a href="{% url 'planner' %}" style="
+      display:inline-flex;align-items:center;gap:0.6rem;
+      background:#0E8A8A;color:white;
+      font-size:0.86rem;font-weight:600;
+      padding:0.9rem 2.2rem;border-radius:50px;
+      text-decoration:none;width:fit-content;
+      box-shadow:0 8px 28px rgba(14,138,138,0.32);
+    ">
+      ➕ Create Travel Plan
+    </a>
+  </div>
+
+</section>
     <!-- MOUNTAIN ITINERARY SECTION --> 
     <section class="itinerary-section">
         <div class="itinerary-bg"></div>

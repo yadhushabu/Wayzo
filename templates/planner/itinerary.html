@@ -1,0 +1,1107 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Travel Planner - AI Itinerary Generator</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; padding: 40px 20px; }
+        .container { max-width: 1200px; margin: 0 auto; }
+        .card { background: white; border-radius: 20px; padding: 40px; margin-bottom: 30px; box-shadow: 0 10px 40px rgba(0,0,0,0.1); }
+        h1 { font-size: 48px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 10px; text-align: center; }
+        .subtitle { text-align: center; color: #666; margin-bottom: 30px; }
+        
+        .trip-summary { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 25px; border-radius: 16px; margin-bottom: 25px; }
+        .summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-top: 15px; padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.2); }
+        .route-summary { display: flex; justify-content: space-between; margin-top: 15px; padding: 12px; background: rgba(255,255,255,0.15); border-radius: 12px; flex-wrap: wrap; gap: 15px; }
+        
+        .day-card { background: #f8f9fa; border-radius: 16px; padding: 25px; margin-bottom: 25px; border-left: 5px solid #667eea; }
+        .day-title { font-size: 28px; font-weight: bold; color: #667eea; margin-bottom: 5px; }
+        .day-date { font-size: 14px; color: #888; margin-bottom: 15px; }
+        .day-meta { display: flex; gap: 20px; margin: 10px 0 20px 0; padding: 10px; background: white; border-radius: 12px; flex-wrap: wrap; }
+        
+        /* Activity Number - D#-# Style */
+        .activity-number { 
+            display: inline-block; 
+            background: #667eea; 
+            color: white; 
+            width: 60px; 
+            height: 36px; 
+            border-radius: 18px; 
+            text-align: center; 
+            line-height: 36px; 
+            font-size: 12px; 
+            font-weight: bold; 
+            margin-right: 10px; 
+        }
+        
+        /* Travel Block - No Numbering */
+        .travel-number {
+            display: inline-block;
+            width: 60px;
+            height: 36px;
+            margin-right: 10px;
+        }
+        
+        .time-display { font-size: 12px; color: #666; margin-top: 5px; }
+        
+        .meal-section { margin-bottom: 20px; border-radius: 12px; overflow: hidden; }
+        .meal-header { padding: 12px 20px; font-weight: bold; font-size: 18px; display: flex; align-items: center; gap: 10px; }
+        .meal-breakfast { background: linear-gradient(135deg, #FFD93D 0%, #F9A826 100%); color: #333; }
+        .meal-lunch { background: linear-gradient(135deg, #6BCB77 0%, #4CAF50 100%); color: white; }
+        .meal-dinner { background: linear-gradient(135deg, #FF6B6B 0%, #E63946 100%); color: white; }
+        .meal-activity { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
+        .meal-travel { background: linear-gradient(135deg, #607d8b 0%, #455a64 100%); color: white; }
+        .meal-content { background: white; padding: 15px 20px; border: 1px solid #e0e0e0; border-top: none; border-radius: 0 0 12px 12px; }
+        
+        .activity { background: white; border-radius: 12px; padding: 20px; margin-bottom: 15px; display: flex; gap: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+        .activity-time { min-width: 160px; }
+        .activity-content { flex: 1; }
+        .activity-name { font-size: 18px; font-weight: 600; margin-bottom: 8px; color: #333; }
+        .activity-description { color: #666; line-height: 1.5; font-size: 14px; margin-bottom: 8px; }
+        .activity-tags { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+        .tag { background: #e0e7ff; color: #667eea; padding: 4px 10px; border-radius: 20px; font-size: 11px; }
+        .price-level { display: inline-block; background: #28a74520; color: #28a745; padding: 2px 8px; border-radius: 12px; font-size: 11px; }
+        .activity-rating { display: inline-block; background: #ffc107; color: #333; padding: 2px 8px; border-radius: 12px; font-size: 12px; font-weight: bold; margin-right: 8px; cursor: pointer; }
+        .activity-image { width: 120px; height: 120px; object-fit: cover; border-radius: 10px; cursor: pointer; }
+        
+        /* Travel Activity Specific */
+        .travel-activity { background: #f5f5f5; border-left: 3px solid #607d8b; }
+        .travel-icon { font-size: 20px; margin-right: 8px; }
+        .travel-badge { background: #607d8b; color: white; padding: 2px 8px; border-radius: 12px; font-size: 10px; margin-left: 8px; }
+        .travel-duration { margin-top: 5px; font-size: 11px; color: #888; }
+        
+        .button-group { margin-top: 10px; display: flex; gap: 8px; flex-wrap: wrap; }
+        .map-btn, .directions-btn, .change-btn, .change-hotel-btn { background: #4caf50; color: white; border: none; border-radius: 8px; padding: 5px 12px; font-size: 11px; cursor: pointer; }
+        .directions-btn { background: #2196f3; }
+        .change-btn { background: #667eea; }
+        .change-hotel-btn { background: #ff9800; }
+        .map-btn:hover, .directions-btn:hover, .change-btn:hover, .change-hotel-btn:hover { opacity: 0.9; transform: translateY(-1px); }
+        
+        .stay-section { background: linear-gradient(135deg, #667eea10 0%, #764ba210 100%); border-radius: 12px; padding: 20px; margin-top: 15px; border: 1px solid #667eea30; }
+        .hotel-name { font-size: 18px; font-weight: 600; color: #333; margin-bottom: 8px; }
+        .hotel-rating { display: inline-block; background: #ffc107; padding: 2px 8px; border-radius: 12px; font-size: 12px; font-weight: bold; cursor: pointer; }
+        
+        .hotel-section { margin-top: 30px; padding: 20px; background: #e8f5e9; border-radius: 16px; }
+        .hotels-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; margin-top: 15px; }
+        .hotel-card { background: white; border-radius: 12px; padding: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        .hotel-card img { width: 100%; height: 180px; object-fit: cover; border-radius: 10px; margin-bottom: 10px; }
+        
+        .map-legend { display: flex; flex-wrap: wrap; gap: 15px; justify-content: center; margin-top: 15px; padding-top: 15px; border-top: 1px solid #e0e0e0; }
+        .legend-item { display: flex; align-items: center; gap: 5px; font-size: 11px; color: #666; }
+        .legend-color { width: 12px; height: 12px; border-radius: 50%; }
+        
+        .ai-insights { background: linear-gradient(135deg, #667eea08 0%, #764ba208 100%); border: 2px solid #667eea30; border-radius: 16px; padding: 25px; margin-bottom: 25px; }
+        
+        /* Right Side Slide Modal */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 2000;
+        }
+        
+        .side-modal {
+            position: fixed;
+            top: 0;
+            right: -100%;
+            width: 100%;
+            max-width: 500px;
+            height: 100%;
+            background: white;
+            box-shadow: -5px 0 30px rgba(0, 0, 0, 0.3);
+            transition: right 0.3s ease-in-out;
+            z-index: 2001;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        
+        .side-modal.open { right: 0; }
+        
+        .side-modal-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .side-modal-header h3 { margin: 0; font-size: 20px; }
+        .close-side-modal { background: none; border: none; color: white; font-size: 28px; cursor: pointer; padding: 0; width: auto; }
+        .side-modal-body { flex: 1; overflow-y: auto; padding: 20px; }
+        
+        .alternative-item {
+            padding: 15px;
+            border-bottom: 1px solid #eee;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .alternative-item:hover { background: #f5f5f5; }
+        .alternative-item strong { display: block; margin-bottom: 5px; }
+        .alternative-rating { display: inline-block; background: #ffc107; padding: 2px 6px; border-radius: 8px; font-size: 11px; margin-left: 8px; }
+        .alternative-price { display: inline-block; background: #28a74520; color: #28a745; padding: 2px 6px; border-radius: 8px; font-size: 11px; margin-left: 8px; }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-content {
+            background: white;
+            width: 90%;
+            max-width: 500px;
+            max-height: 80vh;
+            overflow-y: auto;
+            border-radius: 20px;
+            padding: 20px;
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #ddd;
+        }
+        .close-modal { background: none; border: none; font-size: 24px; cursor: pointer; }
+        
+        .loading { text-align: center; padding: 40px; }
+        .spinner { border: 3px solid #f3f3f3; border-top: 3px solid #667eea; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 0 auto 15px; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        
+        .interest-badge { display: inline-block; background: #e0e7ff; color: #667eea; padding: 5px 12px; border-radius: 20px; font-size: 14px; margin: 0 5px 5px 0; }
+        .footer-note { margin-top: 20px; text-align: center; color: #666; font-size: 12px; }
+        .address-container { display: flex; flex-wrap: wrap; align-items: center; gap: 5px; margin-top: 6px; }
+        
+        @media (max-width: 768px) {
+            .card { padding: 20px; }
+            .activity { flex-direction: column; }
+            .activity-image { width: 100%; height: 200px; }
+            .activity-time { margin-bottom: 10px; }
+            .side-modal { max-width: 100%; }
+            .activity-number { width: 50px; font-size: 10px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        {% if itinerary and itinerary.days %}
+        <div class="card">
+            <h1>✈ Travel Planner AI</h1>
+            <p class="subtitle">Your personalized itinerary is ready</p>
+            
+            <div class="trip-summary">
+                <h2>{{ itinerary.destination }}</h2>
+                <p>{{ trip.days }} Days Adventure</p>
+                <div class="summary-grid">
+                    <div><strong>👤 Traveler:</strong> {{ trip.traveler_name|default:"Traveler" }}</div>
+                    <div><strong>👥 Type:</strong> {{ trip.get_traveler_type_display }}</div>
+                    <div><strong>💰 Budget:</strong> {{ trip.get_budget_display }}</div>
+                    <div><strong>🍽️ Food:</strong> {{ trip.get_food_preference_display }}</div>
+                    <div><strong>🚗 Transport:</strong> {{ trip.get_transport_mode_display }}</div>
+                    <div><strong>🏨 Stay:</strong> {{ trip.get_hotel_type_display|default:"Any" }} ({{ trip.hotel_stars }}⭐)</div>
+                </div>
+                <div class="route-summary">
+                    {% if trip.starting_place %}<div>🚩 <strong>Start:</strong> {{ trip.starting_place }}</div>{% endif %}
+                    {% if trip.ending_place %}<div>🏁 <strong>End:</strong> {{ trip.ending_place }}</div>{% endif %}
+                    <div>🎯 Interests: {% for interest in trip.interests.split|slice:":3" %}<span class="interest-badge">{{ interest }}</span>{% endfor %}</div>
+                </div>
+            </div>
+            
+            <div style="padding: 20px; background: #f8f9fa; border-radius: 16px; margin-bottom: 25px;">
+                <h3 style="margin-bottom: 15px; color: #667eea;">🗺️ Itinerary Map</h3>
+                <div id="map" style="height: 500px; width: 100%; border-radius: 12px;"></div>
+                <div class="map-legend">
+                    <div class="legend-item"><span class="legend-color" style="background: #4caf50;"></span> Start</div>
+                    <div class="legend-item"><span class="legend-color" style="background: #2196f3;"></span> Route</div>
+                    <div class="legend-item"><span class="legend-color" style="background: #9c27b0;"></span> Hotel</div>
+                    <div class="legend-item"><span class="legend-color" style="background: #f44336;"></span> End</div>
+                </div>
+            </div>
+            
+            {% if itinerary.ai_insights %}
+            <div class="ai-insights">
+                <h2>🤖 AI Travel Insights</h2>
+                <p>{{ itinerary.ai_insights|linebreaks }}</p>
+            </div>
+            {% endif %}
+            
+            <!-- DAY CARDS -->
+            {% for day in itinerary.days %}
+            <div class="day-card" data-day-index="{{ forloop.counter0 }}">
+                <div class="day-title">Day {{ day.day }}</div>
+                {% if trip.start_date %}
+                <div class="day-date">📅 {{ trip.start_date|date:"F j, Y" }}</div>
+                {% endif %}
+                <div class="day-meta">
+                    <span>💰 ₹{{ day.estimated_budget|default:3000 }}</span>
+                    <span>🚗 {{ day.estimated_distance_km|default:15 }} km</span>
+                    <span>⏱️ {{ day.estimated_travel_time|default:"45 mins" }}</span>
+                </div>
+                
+                {% with activity_counter=0 %}
+                {% for activity in day.activities %}
+                
+                <!-- TRAVEL BLOCK - No numbering -->
+                {% if activity.type == 'travel' %}
+                <div class="meal-section" data-travel-block="true">
+                    <div class="meal-header meal-travel">
+                        <span>🚗</span> Travel Time
+                    </div>
+                    <div class="meal-content">
+                        <div class="activity travel-activity" data-travel-id="{{ forloop.counter0 }}">
+                            <div class="activity-time">
+                                <div class="travel-number"></div>
+                                <div class="time-display travel-time-display-{{ forloop.parentloop.counter0 }}-{{ forloop.counter0 }}">
+                                    ⏰ {{ activity.start_time }} - {{ activity.end_time }}
+                                </div>
+                            </div>
+                            <div class="activity-content">
+                                <div class="activity-name">
+                                    <span class="travel-name">{{ activity.name }}</span>
+                                    <span class="travel-badge">Travel</span>
+                                </div>
+                                <div class="activity-description travel-description">
+                                    🚗 {{ activity.description }}
+                                </div>
+                                {% if activity.duration_minutes %}
+                                <div class="travel-duration">
+                                    📍 Travel time: {% if activity.duration_minutes >= 60 %}
+                                        {% widthratio activity.duration_minutes 60 1 %} hour{% if activity.duration_minutes|divisibleby:60 %}{% else %} {{ activity.duration_minutes|add:"-60" }} mins{% endif %}
+                                    {% else %}
+                                        {{ activity.duration_minutes }} minutes
+                                    {% endif %}
+                                </div>
+                                {% endif %}
+                                <div class="travel-from-to" style="font-size: 12px; color: #666; margin-top: 8px;">
+                                    🚉 From: <span class="travel-from">{{ activity.from_place|default:"Previous location" }}</span> → To: <span class="travel-to">{{ activity.to_place|default:"Next destination" }}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- REGULAR ACTIVITY - D#-# numbering (skip travel blocks) -->
+                {% else %}
+                {% with counter=forloop.counter0|add:0 %}
+                <div class="meal-section">
+                    <div class="meal-header 
+                        {% if 'Breakfast' in activity.time %}meal-breakfast
+                        {% elif 'Lunch' in activity.time %}meal-lunch
+                        {% elif 'Dinner' in activity.time %}meal-dinner
+                        {% else %}meal-activity{% endif %}">
+                        <span>{% if 'Breakfast' in activity.time %}🍳{% elif 'Lunch' in activity.time %}🍽️{% elif 'Dinner' in activity.time %}🍷{% else %}📍{% endif %}</span>
+                        {% if 'Breakfast' in activity.time %}Breakfast{% elif 'Lunch' in activity.time %}Lunch{% elif 'Dinner' in activity.time %}Dinner{% else %}Activity{% endif %}
+                    </div>
+                    <div class="meal-content">
+                        <div class="activity"
+                             data-activity-id="{{ forloop.counter0 }}"
+                             data-day-index="{{ forloop.parentloop.counter0 }}"
+                             data-activity-index="{{ forloop.counter0 }}"
+                             data-activity-name="{{ activity.name }}"
+                             data-activity-lat="{{ activity.lat }}"
+                             data-activity-lon="{{ activity.lon }}">
+                            <div class="activity-time">
+                                <div class="activity-number">D{{ day.day }}-{{ forloop.counter0|add:1|add:activity_counter }}</div>
+                                <div class="time-display time-display-{{ forloop.parentloop.counter0 }}-{{ forloop.counter0 }}">
+                                    ⏰ {{ activity.start_time }}{% if activity.end_time %} - {{ activity.end_time }}{% endif %}
+                                </div>
+                            </div>
+                            <div class="activity-content">
+                                <div class="activity-name">{{ activity.name }}</div>
+                                <div class="activity-description">{{ activity.description|default:"A must-visit attraction" }}</div>
+                                <div class="activity-tags">
+                                    {% if activity.rating %}<span class="activity-rating" data-place="{{ activity.name }}" data-dest="{{ itinerary.destination }}" data-lat="{{ activity.lat }}" data-lon="{{ activity.lon }}">⭐ {{ activity.rating }}</span>{% endif %}
+                                    {% if activity.price_level %}<span class="price-level">💰 {{ activity.price_level }}</span>{% endif %}
+                                </div>
+                                {% if activity.address %}
+                                <div class="address-container">
+                                    <span>📍 {{ activity.address|truncatewords:15 }}</span>
+                                </div>
+                                {% endif %}
+                                <div class="button-group">
+                                    {% if activity.lat and activity.lon %}
+                                    <button class="map-btn" data-lat="{{ activity.lat }}" data-lon="{{ activity.lon }}" data-name="{{ activity.name }}">🗺️ View on Map</button>
+                                    <button class="directions-btn" data-lat="{{ activity.lat }}" data-lon="{{ activity.lon }}" data-name="{{ activity.name }}">🧭 Directions</button>
+                                    {% endif %}
+                                    <button class="change-btn" 
+                                        data-day-index="{{ forloop.parentloop.counter0 }}"
+                                        data-activity-index="{{ forloop.counter0 }}"
+                                        data-name="{{ activity.name }}"
+                                        data-lat="{{ activity.lat }}"
+                                        data-lon="{{ activity.lon }}">
+                                        🔄 Change
+                                    </button>
+                                </div>
+                            </div>
+                            {% if activity.image_url %}
+                            <img class="activity-image" src="{{ activity.image_url }}" alt="{{ activity.name }}" loading="lazy" onerror="this.src='https://source.unsplash.com/120x120/?travel'">
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% endwith %}
+                {% endif %}
+                {% endfor %}
+                {% endwith %}
+                
+                {% if day.stay %}
+                <div class="stay-section" data-day-stay="{{ forloop.counter0 }}">
+                    <div class="hotel-name">🏨 <span class="hotel-name-text">{{ day.stay.name }}</span></div>
+                    <div class="hotel-description">{{ day.stay.description|default:"Comfortable accommodation" }}</div>
+                    {% if day.stay.rating %}<span class="hotel-rating" data-place="{{ day.stay.name }}" data-dest="{{ itinerary.destination }}" data-lat="{{ day.stay.lat }}" data-lon="{{ day.stay.lon }}">⭐ {{ day.stay.rating }}</span>{% endif %}
+                    {% if day.stay.address %}<div class="hotel-address">📍 <span class="hotel-address-text">{{ day.stay.address|truncatewords:15 }}</span></div>{% endif %}
+                    {% if day.stay.lat and day.stay.lon %}
+                    <div class="hotel-coords" style="display: none;" data-lat="{{ day.stay.lat }}" data-lon="{{ day.stay.lon }}"></div>
+                    {% endif %}
+                    <div class="button-group" style="margin-top: 10px;">
+                        {% if day.stay.lat and day.stay.lon %}
+                        <button class="map-btn" data-lat="{{ day.stay.lat }}" data-lon="{{ day.stay.lon }}" data-name="{{ day.stay.name }}">🗺️ View on Map</button>
+                        <button class="directions-btn" data-lat="{{ day.stay.lat }}" data-lon="{{ day.stay.lon }}" data-name="{{ day.stay.name }}">🧭 Directions</button>
+                        {% endif %}
+                        <button class="change-hotel-btn" 
+                            data-day-index="{{ forloop.counter0 }}"
+                            data-hotel-name="{{ day.stay.name }}"
+                            data-hotel-lat="{{ day.stay.lat }}"
+                            data-hotel-lon="{{ day.stay.lon }}">
+                            🏨 Change Hotel
+                        </button>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+            {% endfor %}
+            
+            {% if itinerary.hotel_recommendations %}
+            <div class="hotel-section">
+                <h2>🏨 Recommended Hotels</h2>
+                <div class="hotels-grid">
+                    {% for hotel in itinerary.hotel_recommendations %}
+                    <div class="hotel-card">
+                        <img src="{{ hotel.thumbnail }}" alt="{{ hotel.name }}" onerror="this.src='https://via.placeholder.com/300x200?text=Hotel'">
+                        <h3>{{ hotel.name }}</h3>
+                        <p>⭐ {{ hotel.rating|default:"4.0" }}</p>
+                        <p>{{ hotel.price_level|default:"₹₹" }}</p>
+                        <p><small>📍 {{ hotel.address|truncatewords:10 }}</small></p>
+                        <div class="button-group">
+                            {% if hotel.lat and hotel.lon %}
+                            <button class="map-btn" data-lat="{{ hotel.lat }}" data-lon="{{ hotel.lon }}" data-name="{{ hotel.name }}">🗺️ Map</button>
+                            <button class="directions-btn" data-lat="{{ hotel.lat }}" data-lon="{{ hotel.lon }}" data-name="{{ hotel.name }}">🧭 Directions</button>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+            
+            <div class="footer-note">
+                <p>📍 AI-powered itinerary with real-time travel times | <a href="#" onclick="window.print();return false;">📄 Print</a> | <a href="{% url 'planner' %}">🔄 New Trip</a></p>
+            </div>
+        </div>
+        {% else %}
+        <div class="card">
+            <p style="text-align: center;">No itinerary found. <a href="{% url 'planner' %}">Generate one</a></p>
+        </div>
+        {% endif %}
+    </div>
+    
+    <!-- Review Modal -->
+    <div id="reviewModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="reviewTitle">Reviews</h3>
+                <button class="close-modal" onclick="document.getElementById('reviewModal').style.display='none'">&times;</button>
+            </div>
+            <div id="reviewBody" class="loading"><div class="spinner"></div><p>Loading reviews...</p></div>
+        </div>
+    </div>
+    
+    <!-- Right Side Slide Modal -->
+    <div id="changeModalOverlay" class="modal-overlay"></div>
+    <div id="changeSideModal" class="side-modal">
+        <div class="side-modal-header">
+            <h3 id="changeModalTitle">🔄 Choose Alternative</h3>
+            <button class="close-side-modal" id="closeChangeModalBtn">&times;</button>
+        </div>
+        <div class="side-modal-body" id="alternativeActivities">
+            <div class="loading"><div class="spinner"></div><p>Loading alternatives...</p></div>
+        </div>
+    </div>
+    
+    <script>
+        // Get CSRF token
+        function getCookie(name) {
+            let value = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let cookie of cookies) {
+                    cookie = cookie.trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        value = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return value;
+        }
+        const csrftoken = getCookie('csrftoken');
+        
+        // Map variables
+        let map = null;
+        let markers = [];
+        let polylines = [];
+        
+        // Right Side Modal
+        const changeOverlay = document.getElementById('changeModalOverlay');
+        const changeSideModal = document.getElementById('changeSideModal');
+        const closeChangeModalBtn = document.getElementById('closeChangeModalBtn');
+        const changeModalTitle = document.getElementById('changeModalTitle');
+        
+        function openSideModal(title = '🔄 Choose Alternative') { 
+            changeModalTitle.textContent = title;
+            changeSideModal.classList.add('open'); 
+            changeOverlay.style.display = 'block'; 
+            document.body.style.overflow = 'hidden'; 
+        }
+        
+        function closeSideModal() { 
+            changeSideModal.classList.remove('open'); 
+            changeOverlay.style.display = 'none'; 
+            document.body.style.overflow = ''; 
+        }
+        
+        if (closeChangeModalBtn) closeChangeModalBtn.onclick = closeSideModal;
+        changeOverlay.onclick = (e) => { if (e.target === changeOverlay) closeSideModal(); };
+        
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        
+        function openGoogleMaps(lat, lon, name) {
+            window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(name)}&center=${lat},${lon}`, '_blank');
+        }
+        
+        function getDirections(lat, lon, name, btn) {
+            if (navigator.geolocation) {
+                btn.textContent = '📍 Getting location...';
+                navigator.geolocation.getCurrentPosition(
+                    (pos) => {
+                        window.open(`https://www.google.com/maps/dir/${pos.coords.latitude},${pos.coords.longitude}/${lat},${lon}/`, '_blank');
+                        btn.textContent = '🧭 Directions';
+                    },
+                    () => { openGoogleMaps(lat, lon, name); btn.textContent = '🧭 Directions'; }
+                );
+            } else {
+                openGoogleMaps(lat, lon, name);
+            }
+        }
+        
+        async function fetchReviews(placeName, destination, lat, lon) {
+            const modal = document.getElementById('reviewModal');
+            const title = document.getElementById('reviewTitle');
+            const body = document.getElementById('reviewBody');
+            
+            modal.style.display = 'flex';
+            title.textContent = `📝 Reviews for ${placeName}`;
+            body.innerHTML = '<div class="loading"><div class="spinner"></div><p>Loading reviews...</p></div>';
+            
+            try {
+                let url = `/planner/get-reviews/?place=${encodeURIComponent(placeName)}&dest=${encodeURIComponent(destination)}`;
+                if (lat && lon) url += `&lat=${lat}&lon=${lon}`;
+                
+                const response = await fetch(url, {
+                    headers: { 'X-CSRFToken': csrftoken },
+                    credentials: 'same-origin'
+                });
+                const data = await response.json();
+                
+                if (data.success && data.reviews && data.reviews.length > 0) {
+                    let html = '';
+                    data.reviews.forEach(review => {
+                        html += `
+                            <div style="padding: 12px; border-bottom: 1px solid #eee;">
+                                <strong>👤 ${escapeHtml(review.author)}</strong>
+                                ${review.rating ? `<span style="background:#ffc107; padding:2px 6px; border-radius:8px; margin-left:8px;">⭐ ${review.rating}</span>` : ''}
+                                <span style="color:#999; font-size:11px; margin-left:8px;">📅 ${escapeHtml(review.date)}</span>
+                                <p style="margin-top: 8px;">"${escapeHtml(review.text)}"</p>
+                            </div>
+                        `;
+                    });
+                    body.innerHTML = html;
+                } else {
+                    body.innerHTML = '<p style="text-align:center; padding:40px;">😕 No reviews found</p>';
+                }
+            } catch (error) {
+                body.innerHTML = `<p style="text-align:center; padding:40px;">⚠️ Error: ${error.message}</p>`;
+            }
+        }
+        
+        let currentChangeTarget = null;
+        let currentDayIndex = null;
+        let currentActivityIndex = null;
+        let isHotelChange = false;
+        
+        async function fetchAlternatives(activityElement, type, lat, lon, destination, currentName, dayIndex, activityIndex) {
+            const body = document.getElementById('alternativeActivities');
+            body.innerHTML = '<div class="loading"><div class="spinner"></div><p>Loading alternatives...</p></div>';
+            openSideModal('🔄 Choose Alternative Activity');
+            
+            currentChangeTarget = activityElement;
+            currentDayIndex = dayIndex;
+            currentActivityIndex = activityIndex;
+            isHotelChange = false;
+            
+            try {
+                let url = `/planner/api/alternatives/?lat=${lat}&lon=${lon}&type=${type}&destination=${encodeURIComponent(destination)}&exclude=${encodeURIComponent(currentName)}`;
+                
+                const response = await fetch(url, {
+                    headers: { 'X-CSRFToken': csrftoken },
+                    credentials: 'same-origin'
+                });
+                const data = await response.json();
+                
+                if (data.alternatives && data.alternatives.length > 0) {
+                    let html = '';
+                    data.alternatives.forEach(place => {
+                        const rating = place.rating || 'N/A';
+                        const price = place.price_level || '₹₹';
+                        const address = place.address || '';
+                        html += `
+                            <div class="alternative-item" onclick="selectAlternative(
+                                '${escapeHtml(place.name)}',
+                                ${place.lat || 0},
+                                ${place.lon || 0},
+                                '${escapeHtml(address)}',
+                                '${rating}',
+                                '${place.thumbnail || ''}',
+                                '${place.price_level || ''}'
+                            )">
+                                <strong>${escapeHtml(place.name)}</strong>
+                                <span class="alternative-rating">⭐ ${rating}</span>
+                                <span class="alternative-price">💰 ${price}</span>
+                                <p style="font-size: 12px; color: #666; margin-top: 8px;">${escapeHtml(address.substring(0, 100))}</p>
+                            </div>
+                        `;
+                    });
+                    body.innerHTML = html;
+                } else {
+                    body.innerHTML = '<p style="text-align:center; padding:40px;">😕 No alternatives found nearby</p>';
+                }
+            } catch (error) {
+                body.innerHTML = `<p style="text-align:center; padding:40px;">⚠️ Error: ${error.message}</p>`;
+            }
+        }
+        
+        async function fetchHotelAlternatives(hotelElement, lat, lon, destination, currentName, dayIndex) {
+            const body = document.getElementById('alternativeActivities');
+            body.innerHTML = '<div class="loading"><div class="spinner"></div><p>Loading hotel alternatives...</p></div>';
+            openSideModal('🏨 Choose Alternative Hotel');
+            
+            currentChangeTarget = hotelElement;
+            currentDayIndex = dayIndex;
+            isHotelChange = true;
+            
+            try {
+                let url = `/planner/api/hotel-alternatives/?lat=${lat}&lon=${lon}&destination=${encodeURIComponent(destination)}&exclude=${encodeURIComponent(currentName)}`;
+                
+                const response = await fetch(url, {
+                    headers: { 'X-CSRFToken': csrftoken },
+                    credentials: 'same-origin'
+                });
+                const data = await response.json();
+                
+                if (data.alternatives && data.alternatives.length > 0) {
+                    let html = '';
+                    data.alternatives.forEach(hotel => {
+                        const rating = hotel.rating || 'N/A';
+                        const price = hotel.price_level || '₹₹';
+                        const address = hotel.address || '';
+                        html += `
+                            <div class="alternative-item" onclick="selectHotelAlternative(
+                                '${escapeHtml(hotel.name)}',
+                                ${hotel.lat || 0},
+                                ${hotel.lon || 0},
+                                '${escapeHtml(address)}',
+                                '${rating}',
+                                '${hotel.thumbnail || ''}',
+                                '${hotel.price_level || ''}',
+                                '${escapeHtml(hotel.description || 'Comfortable accommodation')}'
+                            )">
+                                <strong>${escapeHtml(hotel.name)}</strong>
+                                <span class="alternative-rating">⭐ ${rating}</span>
+                                <span class="alternative-price">💰 ${price}</span>
+                                <p style="font-size: 12px; color: #666; margin-top: 8px;">${escapeHtml(address.substring(0, 100))}</p>
+                            </div>
+                        `;
+                    });
+                    body.innerHTML = html;
+                } else {
+                    body.innerHTML = '<p style="text-align:center; padding:40px;">😕 No hotel alternatives found nearby</p>';
+                }
+            } catch (error) {
+                body.innerHTML = `<p style="text-align:center; padding:40px;">⚠️ Error: ${error.message}</p>`;
+            }
+        }
+        
+        async function selectAlternative(newName, newLat, newLon, newAddress, newRating, newImage, newPrice) {
+            if (!currentChangeTarget || isHotelChange) return;
+            
+            const target = currentChangeTarget;
+            const dayIndex = currentDayIndex;
+            const activityIndex = currentActivityIndex;
+            
+            // Show loading state
+            const changeBtn = target.querySelector('.change-btn');
+            if (changeBtn) {
+                changeBtn.textContent = '⏳ Updating...';
+                changeBtn.disabled = true;
+            }
+            
+            try {
+                // Send update to backend
+                const response = await fetch('/planner/replace-activity/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrftoken
+                    },
+                    body: JSON.stringify({
+                        trip_id: {{ trip.id }},
+                        day_index: dayIndex,
+                        activity_index: activityIndex,
+                        new_activity: {
+                            name: newName,
+                            lat: newLat,
+                            lon: newLon,
+                            address: newAddress,
+                            rating: newRating,
+                            image_url: newImage,
+                            price_level: newPrice,
+                            description: `Visit ${newName} - A wonderful place to explore`
+                        }
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success && data.updated_activities) {
+                    // Update name
+                    const nameDiv = target.querySelector('.activity-name');
+                    if (nameDiv) nameDiv.textContent = newName;
+                    
+                    // 🔥 IMPORTANT: update timing from backend response
+                    const updatedActivity = data.updated_activities[activityIndex];
+                    if (updatedActivity && updatedActivity.start_time) {
+                        const timeEl = target.querySelector('.time-display');
+                        if (timeEl) {
+                            timeEl.textContent = `⏰ ${updatedActivity.start_time}`;
+                        }
+                    }
+                    
+                    // Update dataset
+                    target.setAttribute('data-activity-name', newName);
+                    target.setAttribute('data-activity-lat', newLat);
+                    target.setAttribute('data-activity-lon', newLon);
+                    
+                    // Update rating
+                    const ratingSpan = target.querySelector('.activity-rating');
+                    if (ratingSpan && newRating) {
+                        ratingSpan.innerHTML = `⭐ ${newRating}`;
+                        ratingSpan.setAttribute('data-place', newName);
+                        ratingSpan.setAttribute('data-lat', newLat);
+                        ratingSpan.setAttribute('data-lon', newLon);
+                    }
+                    
+                    // Update address
+                    const addressContainer = target.querySelector('.address-container');
+                    if (addressContainer && newAddress) {
+                        const addressSpan = addressContainer.querySelector('span');
+                        if (addressSpan) addressSpan.textContent = `📍 ${newAddress.substring(0, 80)}`;
+                    }
+                    
+                    // Update image
+                    const image = target.querySelector('.activity-image');
+                    if (image && newImage) image.src = newImage;
+                    
+                    // Update price
+                    const priceSpan = target.querySelector('.price-level');
+                    if (priceSpan && newPrice) priceSpan.textContent = `💰 ${newPrice}`;
+                    
+                    // Update buttons
+                    const mapBtn = target.querySelector('.map-btn');
+                    if (mapBtn) {
+                        mapBtn.setAttribute('data-lat', newLat);
+                        mapBtn.setAttribute('data-lon', newLon);
+                        mapBtn.setAttribute('data-name', newName);
+                    }
+                    
+                    const dirBtn = target.querySelector('.directions-btn');
+                    if (dirBtn) {
+                        dirBtn.setAttribute('data-lat', newLat);
+                        dirBtn.setAttribute('data-lon', newLon);
+                        dirBtn.setAttribute('data-name', newName);
+                    }
+                    
+                    // Update change button attributes
+                    if (changeBtn) {
+                        changeBtn.setAttribute('data-name', newName);
+                        changeBtn.setAttribute('data-lat', newLat);
+                        changeBtn.setAttribute('data-lon', newLon);
+                    }
+                    
+                    // Update description
+                    const descDiv = target.querySelector('.activity-description');
+                    if (descDiv) descDiv.textContent = `Visit ${newName} - A wonderful place to explore`;
+                    
+                    // 🔥 FIX: Update nearby travel blocks if they reference this activity
+                    updateTravelBlocksForDay(dayIndex);
+                    
+                    // Refresh map
+                    refreshMap();
+                    
+                    closeSideModal();
+                } else {
+                    throw new Error('Failed to update activity');
+                }
+            } catch (error) {
+                console.error('Error updating activity:', error);
+                alert('Failed to update activity. Please try again.');
+            } finally {
+                if (changeBtn) {
+                    changeBtn.textContent = '🔄 Change';
+                    changeBtn.disabled = false;
+                }
+            }
+        }
+        
+        async function selectHotelAlternative(newName, newLat, newLon, newAddress, newRating, newImage, newPrice, newDescription) {
+            if (!currentChangeTarget || !isHotelChange) return;
+            
+            const staySection = currentChangeTarget;
+            const dayIndex = currentDayIndex;
+            
+            // Show loading state
+            const changeBtn = staySection.querySelector('.change-hotel-btn');
+            if (changeBtn) {
+                changeBtn.textContent = '⏳ Updating...';
+                changeBtn.disabled = true;
+            }
+            
+            try {
+                // Send update to backend
+                const response = await fetch('/planner/replace-hotel/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrftoken
+                    },
+                    body: JSON.stringify({
+                        trip_id: {{ trip.id }},
+                        day_index: dayIndex,
+                        new_hotel: {
+                            name: newName,
+                            lat: newLat,
+                            lon: newLon,
+                            address: newAddress,
+                            rating: newRating,
+                            image_url: newImage,
+                            price_level: newPrice,
+                            description: newDescription
+                        }
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    // Update hotel name
+                    const nameSpan = staySection.querySelector('.hotel-name-text');
+                    if (nameSpan) nameSpan.textContent = newName;
+                    
+                    // Update description
+                    const descDiv = staySection.querySelector('.hotel-description');
+                    if (descDiv) descDiv.textContent = newDescription;
+                    
+                    // Update rating
+                    const ratingSpan = staySection.querySelector('.hotel-rating');
+                    if (ratingSpan && newRating) {
+                        ratingSpan.innerHTML = `⭐ ${newRating}`;
+                        ratingSpan.setAttribute('data-place', newName);
+                        ratingSpan.setAttribute('data-lat', newLat);
+                        ratingSpan.setAttribute('data-lon', newLon);
+                    } else if (newRating && !ratingSpan) {
+                        const newRatingSpan = document.createElement('span');
+                        newRatingSpan.className = 'hotel-rating';
+                        newRatingSpan.innerHTML = `⭐ ${newRating}`;
+                        newRatingSpan.setAttribute('data-place', newName);
+                        newRatingSpan.setAttribute('data-lat', newLat);
+                        newRatingSpan.setAttribute('data-lon', newLon);
+                        staySection.insertBefore(newRatingSpan, staySection.querySelector('.hotel-address'));
+                    }
+                    
+                    // Update address
+                    const addressSpan = staySection.querySelector('.hotel-address-text');
+                    if (addressSpan && newAddress) addressSpan.textContent = newAddress.substring(0, 80);
+                    
+                    // Update coordinates div
+                    const coordsDiv = staySection.querySelector('.hotel-coords');
+                    if (coordsDiv) {
+                        coordsDiv.setAttribute('data-lat', newLat);
+                        coordsDiv.setAttribute('data-lon', newLon);
+                    }
+                    
+                    // Update buttons
+                    const mapBtn = staySection.querySelector('.map-btn');
+                    if (mapBtn) {
+                        mapBtn.setAttribute('data-lat', newLat);
+                        mapBtn.setAttribute('data-lon', newLon);
+                        mapBtn.setAttribute('data-name', newName);
+                    }
+                    
+                    const dirBtn = staySection.querySelector('.directions-btn');
+                    if (dirBtn) {
+                        dirBtn.setAttribute('data-lat', newLat);
+                        dirBtn.setAttribute('data-lon', newLon);
+                        dirBtn.setAttribute('data-name', newName);
+                    }
+                    
+                    // Update change button attributes
+                    if (changeBtn) {
+                        changeBtn.setAttribute('data-hotel-name', newName);
+                        changeBtn.setAttribute('data-hotel-lat', newLat);
+                        changeBtn.setAttribute('data-hotel-lon', newLon);
+                    }
+                    
+                    // Refresh map
+                    refreshMap();
+                    
+                    closeSideModal();
+                } else {
+                    throw new Error('Failed to update hotel');
+                }
+            } catch (error) {
+                console.error('Error updating hotel:', error);
+                alert('Failed to update hotel. Please try again.');
+            } finally {
+                if (changeBtn) {
+                    changeBtn.textContent = '🏨 Change Hotel';
+                    changeBtn.disabled = false;
+                }
+            }
+        }
+        
+        function updateTravelBlocksForDay(dayIndex) {
+            const dayCard = document.querySelector(`.day-card[data-day-index="${dayIndex}"]`);
+            if (!dayCard) return;
+            
+            // Find all travel blocks in this day
+            const travelBlocks = dayCard.querySelectorAll('[data-travel-block="true"]');
+            
+            travelBlocks.forEach((travelBlock, idx) => {
+                const travelDiv = travelBlock.querySelector('.travel-activity');
+                if (travelDiv) {
+                    const travelNameSpan = travelDiv.querySelector('.travel-name');
+                    const travelDescSpan = travelDiv.querySelector('.travel-description');
+                    const travelFromSpan = travelDiv.querySelector('.travel-from');
+                    const travelToSpan = travelDiv.querySelector('.travel-to');
+                    const timeDisplay = travelDiv.querySelector('.time-display');
+                    
+                    // Update the travel text to reflect new locations
+                    if (travelNameSpan && travelNameSpan.textContent.includes('Travel to')) {
+                        // Parse and update based on nearby activities
+                        const activities = dayCard.querySelectorAll('.activity:not(.travel-activity)');
+                        const travelIndex = Array.from(travelBlocks).indexOf(travelBlock);
+                        
+                        if (travelIndex < activities.length) {
+                            const prevActivity = travelIndex > 0 ? activities[travelIndex - 1] : null;
+                            const nextActivity = activities[travelIndex];
+                            
+                            if (prevActivity && nextActivity) {
+                                const prevName = prevActivity.querySelector('.activity-name')?.textContent || 'Previous location';
+                                const nextName = nextActivity.querySelector('.activity-name')?.textContent || 'Next destination';
+                                
+                                if (travelNameSpan) travelNameSpan.textContent = `Travel from ${prevName} to ${nextName}`;
+                                if (travelFromSpan) travelFromSpan.textContent = prevName;
+                                if (travelToSpan) travelToSpan.textContent = nextName;
+                                if (travelDescSpan) travelDescSpan.textContent = `🚗 Traveling from ${prevName} to ${nextName}`;
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        function refreshMap() {
+            if (!map) return;
+            
+            markers.forEach(m => m.setMap(null));
+            polylines.forEach(p => p.setMap(null));
+            markers = [];
+            polylines = [];
+            
+            const points = [];
+            
+            document.querySelectorAll('.activity').forEach(activity => {
+                const lat = activity.getAttribute('data-activity-lat');
+                const lon = activity.getAttribute('data-activity-lon');
+                const name = activity.getAttribute('data-activity-name');
+                if (lat && lon && lat !== 'None' && lon !== 'None' && lat !== '0' && lon !== '0') {
+                    points.push({ lat: parseFloat(lat), lng: parseFloat(lon), name: name });
+                }
+            });
+            
+            document.querySelectorAll('.stay-section .map-btn').forEach(btn => {
+                const lat = btn.getAttribute('data-lat');
+                const lon = btn.getAttribute('data-lon');
+                const name = btn.getAttribute('data-name');
+                if (lat && lon) {
+                    points.push({ lat: parseFloat(lat), lng: parseFloat(lon), name: name, isHotel: true });
+                }
+            });
+            
+            if (points.length === 0) return;
+            
+            const bounds = new google.maps.LatLngBounds();
+            points.forEach(p => bounds.extend({ lat: p.lat, lng: p.lng }));
+            map.fitBounds(bounds);
+            
+            if (points.length > 1) {
+                const path = points.map(p => ({ lat: p.lat, lng: p.lng }));
+                const route = new google.maps.Polyline({
+                    path: path,
+                    geodesic: true,
+                    strokeColor: "#667eea",
+                    strokeOpacity: 0.8,
+                    strokeWeight: 4,
+                    map: map
+                });
+                polylines.push(route);
+            }
+            
+            points.forEach((point, idx) => {
+                let color = '#2196f3';
+                let label = (idx + 1).toString();
+                if (idx === 0) { color = '#4caf50'; label = 'S'; }
+                else if (idx === points.length - 1) { color = '#f44336'; label = 'E'; }
+                else if (point.isHotel) { color = '#9c27b0'; label = 'H'; }
+                
+                const marker = new google.maps.Marker({
+                    position: { lat: point.lat, lng: point.lng },
+                    map: map,
+                    label: { text: label, color: '#fff', fontSize: '10px', fontWeight: 'bold' },
+                    title: point.name
+                });
+                markers.push(marker);
+            });
+        }
+        
+        function initMap() {
+            const mapDiv = document.getElementById('map');
+            if (!mapDiv) return;
+            
+            map = new google.maps.Map(mapDiv, {
+                center: { lat: 10.0889, lng: 77.0595 },
+                zoom: 10,
+                mapTypeId: google.maps.MapTypeId.ROADMAP
+            });
+            
+            refreshMap();
+        }
+        
+        // Event delegation
+        document.body.addEventListener('click', function(e) {
+            if (e.target.classList.contains('map-btn')) {
+                const lat = e.target.getAttribute('data-lat');
+                const lon = e.target.getAttribute('data-lon');
+                const name = e.target.getAttribute('data-name');
+                if (lat && lon) openGoogleMaps(lat, lon, name);
+            }
+            
+            if (e.target.classList.contains('directions-btn')) {
+                const lat = e.target.getAttribute('data-lat');
+                const lon = e.target.getAttribute('data-lon');
+                const name = e.target.getAttribute('data-name');
+                if (lat && lon) getDirections(lat, lon, name, e.target);
+            }
+            
+            if (e.target.classList.contains('activity-rating') || e.target.classList.contains('hotel-rating')) {
+                const place = e.target.getAttribute('data-place');
+                const dest = e.target.getAttribute('data-dest');
+                const lat = e.target.getAttribute('data-lat');
+                const lon = e.target.getAttribute('data-lon');
+                fetchReviews(place, dest, lat, lon);
+            }
+            
+            if (e.target.classList.contains('change-btn')) {
+                const activityDiv = e.target.closest('.activity');
+                if (!activityDiv) return;
+                
+                const lat = e.target.getAttribute('data-lat');
+                const lon = e.target.getAttribute('data-lon');
+                const name = e.target.getAttribute('data-name');
+                const dayIndex = e.target.getAttribute('data-day-index');
+                const activityIndex = e.target.getAttribute('data-activity-index');
+                const destination = '{{ itinerary.destination|escapejs }}';
+                
+                let type = 'activity';
+                const mealHeader = activityDiv.closest('.meal-section')?.querySelector('.meal-header');
+                if (mealHeader) {
+                    const headerText = mealHeader.innerText;
+                    if (headerText.includes('Breakfast')) type = 'breakfast';
+                    else if (headerText.includes('Lunch')) type = 'lunch';
+                    else if (headerText.includes('Dinner')) type = 'dinner';
+                }
+                
+                fetchAlternatives(activityDiv, type, lat, lon, destination, name, dayIndex, activityIndex);
+            }
+            
+            if (e.target.classList.contains('change-hotel-btn')) {
+                const staySection = e.target.closest('.stay-section');
+                if (!staySection) return;
+                
+                const lat = e.target.getAttribute('data-hotel-lat');
+                const lon = e.target.getAttribute('data-hotel-lon');
+                const name = e.target.getAttribute('data-hotel-name');
+                const dayIndex = e.target.getAttribute('data-day-index');
+                const destination = '{{ itinerary.destination|escapejs }}';
+                
+                if (lat && lon && name) {
+                    fetchHotelAlternatives(staySection, lat, lon, destination, name, dayIndex);
+                }
+            }
+        });
+        
+        const apiKey = '{{ GOOGLE_API_KEY }}';
+        if (!apiKey) {
+            document.getElementById('map').innerHTML = '<div style="display:flex; align-items:center; justify-content:center; height:100%;">⚠️ Google Maps API key missing</div>';
+        } else {
+            const script = document.createElement('script');
+            script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&callback=initMap&libraries=geometry`;
+            script.async = true;
+            script.defer = true;
+            document.head.appendChild(script);
+        }
+        
+        window.initMap = initMap;
+        window.selectAlternative = selectAlternative;
+        window.selectHotelAlternative = selectHotelAlternative;
+    </script>
+</body>
+</html>

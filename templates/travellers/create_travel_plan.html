@@ -1,704 +1,618 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
     <title>Create Travel Plan - Wayzo</title>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    
-    <!-- Font Awesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    
-    <!-- Google Fonts -->
+
+    <!-- Google Maps API (Replace YOUR_GOOGLE_API_KEY with a valid API key) -->
+   <script async defer
+src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCOL-TReJiQLsUyk7SjpgIoE_WbEivEBaw&libraries=places&callback=initMaps">
+</script>
+
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    
-    <!-- Leaflet CSS & JS -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    
+
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
-        
+
         body {
             font-family: 'Poppins', sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            padding: 40px 20px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            padding: 30px 20px;
         }
-        
+
         .container {
-            max-width: 1000px;
-            margin: 0 auto;
-        }
-        
-        .form-card {
+            max-width: 1200px;
+            margin: auto;
             background: white;
-            border-radius: 20px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-            overflow: hidden;
+            border-radius: 25px;
+            padding: 30px 35px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
         }
-        
-        .form-header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 30px;
+
+        h2 {
             text-align: center;
-        }
-        
-        .form-header h2 {
+            margin-bottom: 20px;
+            font-weight: 700;
+            color: #333;
             font-size: 28px;
-            margin-bottom: 10px;
         }
-        
-        .form-header p {
-            opacity: 0.9;
-            font-size: 14px;
-        }
-        
-        .form-body {
-            padding: 30px;
-        }
-        
+
         .form-section {
-            margin-top: 30px;
-            padding-top: 20px;
-            border-top: 2px solid #f0f0f0;
+            background: #f8f9fc;
+            padding: 20px 25px;
+            border-radius: 18px;
+            margin-bottom: 25px;
+            border: 1px solid #e9ecef;
+            transition: all 0.2s;
         }
-        
-        .form-section:first-of-type {
-            margin-top: 0;
-            padding-top: 0;
-            border-top: none;
-        }
-        
+
         .form-section h3 {
-            font-size: 18px;
-            color: #333;
-            margin-bottom: 20px;
+            font-size: 1.4rem;
+            font-weight: 600;
+            margin-bottom: 18px;
+            color: #4a5568;
+            border-left: 5px solid #667eea;
+            padding-left: 15px;
         }
-        
-        .form-section h3 i {
-            color: #667eea;
-            margin-right: 10px;
-        }
-        
+
         .form-group {
-            margin-bottom: 20px;
+            margin-bottom: 18px;
         }
-        
+
         label {
+            font-weight: 600;
             display: block;
-            margin-bottom: 8px;
-            font-weight: 500;
-            color: #333;
-            font-size: 14px;
+            margin-bottom: 6px;
+            color: #2d3748;
+            font-size: 0.9rem;
         }
-        
-        label i {
-            margin-right: 8px;
-            color: #667eea;
+
+        .help-text {
+            font-size: 0.75rem;
+            color: #6c757d;
+            margin-top: 4px;
         }
-        
-        .required:after {
-            content: '*';
-            color: #e74c3c;
-            margin-left: 4px;
-        }
-        
-        .form-control, select.form-control {
+
+        input, select, textarea {
             width: 100%;
-            padding: 12px 15px;
-            border: 2px solid #e0e0e0;
-            border-radius: 10px;
-            font-size: 14px;
-            transition: all 0.3s;
+            padding: 10px 14px;
+            border-radius: 12px;
+            border: 1px solid #ced4da;
             font-family: 'Poppins', sans-serif;
+            font-size: 0.9rem;
+            transition: 0.2s;
             background: white;
         }
-        
-        textarea.form-control {
-            resize: vertical;
-            min-height: 80px;
-        }
-        
-        .form-control:focus, select.form-control:focus {
+
+        input:focus, select:focus, textarea:focus {
             outline: none;
             border-color: #667eea;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+            box-shadow: 0 0 0 3px rgba(102,126,234,0.2);
         }
-        
-        select.form-control {
-            cursor: pointer;
-            appearance: none;
-            background: white url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="%23333" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>') no-repeat right 15px center;
-            background-size: 16px;
+
+        .map {
+            height: 260px;
+            margin-top: 12px;
+            border-radius: 16px;
+            border: 1px solid #ddd;
+            background: #e9ecef;
         }
-        
-        .row {
+
+        .row-2col {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 20px;
         }
-        
-        .row-3 {
+
+        .row-3col {
             display: grid;
             grid-template-columns: 1fr 1fr 1fr;
-            gap: 15px;
+            gap: 20px;
         }
-        
-        .row-4 {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 15px;
-        }
-        
-        .btn-submit {
-            width: 100%;
-            padding: 14px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border: none;
-            border-radius: 10px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: transform 0.3s, box-shadow 0.3s;
-            margin-top: 20px;
-        }
-        
-        .btn-submit:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
-        }
-        
-        .map-container {
-            margin-top: 15px;
-            border-radius: 10px;
-            overflow: hidden;
-            border: 2px solid #e0e0e0;
-        }
-        
-        .location-map {
-            height: 250px;
-            width: 100%;
-        }
-        
-        .location-info {
-            background: #f8f9fa;
-            padding: 10px;
-            border-radius: 8px;
-            margin-top: 10px;
-            font-size: 12px;
-            color: #666;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 10px;
-        }
-        
-        .coord-badge {
-            background: #667eea;
-            color: white;
-            padding: 4px 10px;
-            border-radius: 20px;
-            font-family: monospace;
-            font-size: 11px;
-        }
-        
+
         .checkbox-group {
             display: flex;
-            gap: 20px;
-            flex-wrap: wrap;
-            margin-top: 8px;
-        }
-        
-        .checkbox-label {
-            display: flex;
             align-items: center;
-            gap: 8px;
-            cursor: pointer;
-            font-weight: normal;
+            gap: 12px;
+            flex-wrap: wrap;
         }
-        
-        .checkbox-label input {
+
+        .checkbox-group label {
+            margin-bottom: 0;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-weight: 500;
+            cursor: pointer;
+        }
+
+        .checkbox-group input {
             width: auto;
+            transform: scale(1.1);
+            margin-right: 5px;
+        }
+
+        hr {
+            margin: 10px 0 20px;
+            border: 0;
+            height: 1px;
+            background: #dee2e6;
+        }
+
+        button {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 40px;
+            font-size: 18px;
+            font-weight: 600;
             cursor: pointer;
+            transition: 0.3s;
+            margin-top: 10px;
+            letter-spacing: 1px;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+        }
+
+        @media (max-width: 800px) {
+            .row-2col, .row-3col {
+                grid-template-columns: 1fr;
+                gap: 12px;
+            }
+            .container {
+                padding: 20px;
+            }
+        }
+
+        .errorlist {
+            color: #e53e3e;
+            font-size: 0.8rem;
+            list-style: none;
+            margin-top: 4px;
         }
         
-        .loading {
-            display: none;
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: white;
-            padding: 30px;
-            border-radius: 15px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-            z-index: 1000;
+        .map-note {
+            font-size: 0.7rem;
+            color: #6c757d;
+            margin-top: 5px;
             text-align: center;
         }
         
-        .loading.active {
-            display: block;
-        }
-        
-        .spinner {
-            border: 3px solid #f3f3f3;
-            border-top: 3px solid #667eea;
-            border-radius: 50%;
-            width: 50px;
-            height: 50px;
-            animation: spin 1s linear infinite;
-            margin: 0 auto 15px;
-        }
-        
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        
-        .helper-text {
-            font-size: 11px;
-            color: #999;
-            margin-top: 5px;
-        }
-        
-        .errorlist {
-            color: #e74c3c;
-            font-size: 12px;
-            list-style: none;
-            margin-top: 5px;
-        }
-        
-        @media (max-width: 768px) {
-            .row, .row-3, .row-4 {
-                grid-template-columns: 1fr;
-                gap: 15px;
-            }
-            
-            .form-body {
-                padding: 20px;
-            }
+        /* Ensure autocomplete dropdown appears above other elements */
+        .pac-container {
+            z-index: 2000 !important;
         }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <div class="form-card">
-        <div class="form-header">
-            <h2><i class="fas fa-map-marked-alt"></i> Create Travel Plan</h2>
-            <p>Tell us about your trip preferences and we'll create a personalized itinerary</p>
-        </div>
-        
-        <div class="form-body">
-            <form method="post" id="travelPlanForm">
-                {% csrf_token %}
-                
-                <!-- Display form errors -->
-                {% if form.errors %}
-                <div class="alert alert-danger">
-                    <strong>Please correct the following errors:</strong>
-                    <ul>
-                        {% for field, errors in form.errors.items %}
-                            {% for error in errors %}
-                                <li>{{ field }}: {{ error }}</li>
-                            {% endfor %}
-                        {% endfor %}
-                    </ul>
-                </div>
-                {% endif %}
-                
-                <!-- Destination Selection -->
-                <div class="form-section">
-                    <h3><i class="fas fa-search-location"></i> Select Destination</h3>
-                    <div class="form-group">
-                        <label class="required"><i class="fas fa-map-marker-alt"></i> Where are you going?</label>
-                        {{ form.destination }}
-                        {% if form.destination.errors %}
-                            <div class="errorlist">{{ form.destination.errors }}</div>
-                        {% endif %}
-                    </div>
-                    
-                    <!-- Destination Map Preview -->
-                    <div id="destMapContainer" class="map-container" style="display: none;">
-                        <div id="destinationMap" class="location-map"></div>
-                        <div class="location-info">
-                            <span><i class="fas fa-map-marker-alt"></i> <span id="destName"></span></span>
-                            <span class="coord-badge" id="destCoords"></span>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Trip Details -->
-                <div class="form-section">
-                    <h3><i class="fas fa-info-circle"></i> Trip Details</h3>
-                    <div class="row">
-                        <div class="form-group">
-                            <label><i class="fas fa-users"></i> Travel Type</label>
-                            {{ form.travel_type }}
-                        </div>
-                        <div class="form-group">
-                            <label><i class="fas fa-smile"></i> Mood / Theme</label>
-                            {{ form.mood }}
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Traveler Details -->
-                <div class="form-section">
-                    <h3><i class="fas fa-user-friends"></i> Traveler Details</h3>
-                    <div class="row-4">
-                        <div class="form-group">
-                            <label><i class="fas fa-user"></i> Adults</label>
-                            {{ form.adults }}
-                        </div>
-                        <div class="form-group">
-                            <label><i class="fas fa-child"></i> Children</label>
-                            {{ form.children }}
-                        </div>
-                        <div class="form-group">
-                            <label><i class="fas fa-user-plus"></i> Has Elderly?</label>
-                            {{ form.has_elderly }}
-                        </div>
-                        <div class="form-group">
-                            <label><i class="fas fa-wheelchair"></i> Accessibility Needed?</label>
-                            {{ form.needs_accessibility }}
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Budget & Duration -->
-                <div class="form-section">
-                    <h3><i class="fas fa-rupee-sign"></i> Budget & Duration</h3>
-                    <div class="row">
-                        <div class="form-group">
-                            <label><i class="fas fa-chart-line"></i> Budget Range</label>
-                            {{ form.budget_range }}
-                        </div>
-                        <div class="form-group">
-                            <label><i class="fas fa-coins"></i> Daily Budget (₹)</label>
-                            {{ form.daily_budget }}
-                            <div class="helper-text">Optional: Your expected spend per day</div>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="form-group">
-                            <label><i class="fas fa-calendar-week"></i> Number of Days</label>
-                            {{ form.number_of_days }}
-                        </div>
-                        <div class="form-group">
-                            <label><i class="fas fa-calendar-alt"></i> Start Date</label>
-                            {{ form.start_date }}
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="form-group">
-                            <label><i class="fas fa-sun"></i> Daily Start Time</label>
-                            {{ form.start_time }}
-                        </div>
-                        <div class="form-group">
-                            <label><i class="fas fa-moon"></i> Daily End Time</label>
-                            {{ form.end_time }}
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Accommodation Preferences -->
-                <div class="form-section">
-                    <h3><i class="fas fa-hotel"></i> Accommodation Preferences</h3>
-                    <div class="row">
-                        <div class="form-group">
-                            <label><i class="fas fa-building"></i> Stay Type</label>
-                            {{ form.stay_type }}
-                        </div>
-                        <div class="form-group">
-                            <label><i class="fas fa-bed"></i> Room Type</label>
-                            {{ form.room_type }}
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Food Preferences -->
-                <div class="form-section">
-                    <h3><i class="fas fa-utensils"></i> Food Preferences</h3>
-                    <div class="row">
-                        <div class="form-group">
-                            <label><i class="fas fa-apple-alt"></i> Food Preference</label>
-                            {{ form.food_preference }}
-                        </div>
-                        <div class="form-group">
-                            <label><i class="fas fa-globe"></i> Cuisine Preference</label>
-                            {{ form.cuisine_preference }}
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label><i class="fas fa-chart-line"></i> Meal Budget</label>
-                        {{ form.meal_budget }}
-                    </div>
-                </div>
-                
-                <!-- Activities -->
-                <div class="form-section">
-                    <h3><i class="fas fa-hiking"></i> Activities & Interests</h3>
-                    <div class="form-group">
-                        <label><i class="fas fa-tasks"></i> Activity Types</label>
-                        {{ form.activity_types }}
-                        <div class="helper-text">e.g., sightseeing, trekking, beach, shopping</div>
-                    </div>
-                    <div class="form-group">
-                        <label><i class="fas fa-star"></i> Must Visit Places</label>
-                        {{ form.must_visit_places }}
-                        <div class="helper-text">List any specific places you don't want to miss</div>
-                    </div>
-                    <div class="row">
-                        <div class="form-group">
-                            <label><i class="fas fa-moon"></i> Nightlife Preference?</label>
-                            {{ form.nightlife_preference }}
-                        </div>
-                        <div class="form-group">
-                            <label><i class="fas fa-users"></i> Crowd Preference</label>
-                            {{ form.crowd_preference }}
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Transport -->
-                <div class="form-section">
-                    <h3><i class="fas fa-car"></i> Transport & Pace</h3>
-                    <div class="row">
-                        <div class="form-group">
-                            <label><i class="fas fa-bus"></i> Transport Mode</label>
-                            {{ form.transport_mode }}
-                        </div>
-                        <div class="form-group">
-                            <label><i class="fas fa-tachometer-alt"></i> Travel Pace</label>
-                            {{ form.pace }}
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="form-group">
-                            <label><i class="fas fa-road"></i> Max Travel Distance (KM/day)</label>
-                            {{ form.max_travel_distance_per_day }}
-                        </div>
-                        <div class="form-group">
-                            <label><i class="fas fa-clock"></i> Avoid Long Travel?</label>
-                            {{ form.avoid_long_travel }}
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Weather Flexibility -->
-                <div class="form-section">
-                    <h3><i class="fas fa-cloud-sun"></i> Weather Flexibility</h3>
-                    <div class="row">
-                        <div class="form-group">
-                            <label><i class="fas fa-building"></i> Prefer Indoor Activities?</label>
-                            {{ form.prefer_indoor }}
-                        </div>
-                        <div class="form-group">
-                            <label><i class="fas fa-umbrella"></i> Flexible with Rain?</label>
-                            {{ form.rain_flexible }}
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Start Location with Map -->
-                <div class="form-section">
-                    <h3><i class="fas fa-map-pin"></i> Starting Point (Where will you stay?)</h3>
-                    <div class="form-group">
-                        <label><i class="fas fa-search"></i> Search or click on map</label>
-                        {{ form.start_location_name }}
-                        {{ form.start_latitude }}
-                        {{ form.start_longitude }}
-                    </div>
-                    <div id="startMapContainer" class="map-container">
-                        <div id="startLocationMap" class="location-map"></div>
-                        <div class="location-info">
-                            <span><i class="fas fa-map-marker-alt"></i> <span id="startLocationLabel">Click on map to set starting point</span></span>
-                            <span class="coord-badge" id="startCoords">Not set</span>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- End Location with Map -->
-                <div class="form-section">
-                    <h3><i class="fas fa-flag-checkered"></i> Ending Point (Optional)</h3>
-                    <div class="form-group">
-                        <label><i class="fas fa-search"></i> Search or click on map</label>
-                        {{ form.end_location_name }}
-                        {{ form.end_latitude }}
-                        {{ form.end_longitude }}
-                    </div>
-                    <div id="endMapContainer" class="map-container">
-                        <div id="endLocationMap" class="location-map"></div>
-                        <div class="location-info">
-                            <span><i class="fas fa-map-marker-alt"></i> <span id="endLocationLabel">Click on map to set ending point (optional)</span></span>
-                            <span class="coord-badge" id="endCoords">Not set</span>
-                        </div>
-                    </div>
-                </div>
-                
-                <button type="submit" class="btn-submit">
-                    <i class="fas fa-magic"></i> Generate Smart Itinerary
-                </button>
-            </form>
-        </div>
-    </div>
-</div>
+    <h2>✈️ Plan Your Perfect Journey — Wayzo</h2>
+    <form method="post" novalidate>
+        {% csrf_token %}
 
-<!-- Loading Spinner -->
-<div class="loading" id="loading">
-    <div class="spinner"></div>
-    <p><i class="fas fa-brain"></i> AI is creating your personalized itinerary...</p>
+        <!-- ==================== DESTINATION SECTION ==================== -->
+        <div class="form-section">
+            <h3>📍 Destination & Dates</h3>
+            <div class="form-group">
+                <label>{{ form.destination_query.label }}</label>
+                {{ form.destination_query }}
+                {% if form.destination_query.help_text %}
+                    <div class="help-text">{{ form.destination_query.help_text }}</div>
+                {% endif %}
+                <!-- hidden fields for dest coordinates -->
+                <input type="hidden" id="id_destination_latitude" name="destination_latitude" value="">
+                <input type="hidden" id="id_destination_longitude" name="destination_longitude" value="">
+                <div id="destinationMap" class="map"></div>
+                <div class="map-note">💡 Type a city name (e.g., "Paris", "Tokyo", "New York") - suggestions will appear. Select one to see it on the map instantly!</div>
+            </div>
+
+            <div class="row-2col">
+                <div class="form-group">
+                    <label>{{ form.number_of_days.label }}</label>
+                    {{ form.number_of_days }}
+                    {% if form.number_of_days.help_text %}
+                        <div class="help-text">{{ form.number_of_days.help_text }}</div>
+                    {% endif %}
+                </div>
+                <div class="form-group">
+                    <label>{{ form.start_date.label }}</label>
+                    {{ form.start_date }}
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== JOURNEY TIMING & LOCATIONS ==================== -->
+        <div class="form-section">
+            <h3>⏰ Journey Time Frame & Waypoints</h3>
+            <div class="row-2col">
+                <div class="form-group">
+                    <label>{{ form.journey_start_time.label }}</label>
+                    {{ form.journey_start_time }}
+                    <div class="help-text">Time when your itinerary starts each day</div>
+                </div>
+                <div class="form-group">
+                    <label>{{ form.journey_end_time.label }}</label>
+                    {{ form.journey_end_time }}
+                    <div class="help-text">Time when your itinerary ends each day</div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>{{ form.starting_point_name.label }}</label>
+                {{ form.starting_point_name }}
+                <div class="help-text">{{ form.starting_point_name.help_text|default:"Your hotel, railway station, or arrival point" }}</div>
+                {{ form.starting_point_latitude }}
+                {{ form.starting_point_longitude }}
+                <div id="startMap" class="map"></div>
+                <div class="map-note">💡 Type any location - suggestions will appear. Select one to see it on the map!</div>
+            </div>
+
+            <div class="form-group">
+                <label>{{ form.ending_point_name.label }}</label>
+                {{ form.ending_point_name }}
+                <div class="help-text">{{ form.ending_point_name.help_text|default:"Where you want to end your trip (optional)" }}</div>
+                {{ form.ending_point_latitude }}
+                {{ form.ending_point_longitude }}
+                <div id="endMap" class="map"></div>
+                <div class="map-note">💡 Type any location - suggestions will appear. Select one to see it on the map!</div>
+            </div>
+        </div>
+
+        <!-- ==================== TRAVELER INFO ==================== -->
+        <div class="form-section">
+            <h3>👥 Travelers Composition</h3>
+            <div class="row-3col">
+                <div class="form-group">
+                    <label>{{ form.travel_type.label }}</label>
+                    {{ form.travel_type }}
+                </div>
+                <div class="form-group">
+                    <label>{{ form.adults.label }}</label>
+                    {{ form.adults }}
+                </div>
+                <div class="form-group">
+                    <label>{{ form.children.label }}</label>
+                    {{ form.children }}
+                </div>
+                <div class="form-group">
+                    <label>{{ form.seniors.label }}</label>
+                    {{ form.seniors }}
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== BUDGET & PACE ==================== -->
+        <div class="form-section">
+            <h3>💰 Budget & Travel Style</h3>
+            <div class="row-2col">
+                <div class="form-group">
+                    <label>{{ form.budget_level.label }}</label>
+                    {{ form.budget_level }}
+                </div>
+                <div class="form-group">
+                    <label>{{ form.total_budget.label }}</label>
+                    {{ form.total_budget }}
+                    <div class="help-text">Optional, in your local currency</div>
+                </div>
+            </div>
+            <div class="row-2col">
+                <div class="form-group">
+                    <label>{{ form.pace.label }}</label>
+                    {{ form.pace }}
+                </div>
+                <div class="form-group">
+                    <label>{{ form.mood.label }}</label>
+                    {{ form.mood }}
+                    <div class="help-text">e.g., Relaxed, adventurous, romantic...</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== INTERESTS & MUST-VISIT / AVOID ==================== -->
+        <div class="form-section">
+            <h3>🎯 Preferences & Must-haves</h3>
+            <div class="form-group">
+                <label>{{ form.interests.label }}</label>
+                {{ form.interests }}
+                <div class="help-text">History, Food, Nature, Shopping, Photography, Adventure...</div>
+            </div>
+            <div class="row-2col">
+                <div class="form-group">
+                    <label>{{ form.must_visit.label }}</label>
+                    {{ form.must_visit }}
+                </div>
+                <div class="form-group">
+                    <label>{{ form.avoid.label }}</label>
+                    {{ form.avoid }}
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== ACCOMMODATION / FOOD / TRANSPORT ==================== -->
+        <div class="form-section">
+            <h3>🏨 Dining, Stay & Transit</h3>
+            <div class="row-3col">
+                <div class="form-group">
+                    <label>{{ form.food_preference.label }}</label>
+                    {{ form.food_preference }}
+                </div>
+                <div class="form-group">
+                    <label>{{ form.accommodation_type.label }}</label>
+                    {{ form.accommodation_type }}
+                </div>
+                <div class="form-group">
+                    <label>{{ form.transport_mode.label }}</label>
+                    {{ form.transport_mode }}
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== SPECIAL REQUIREMENTS & ACCESSIBILITY ==================== -->
+        <div class="form-section">
+            <h3>♿ Special Assistance & Requirements</h3>
+            <div class="form-group">
+                <label>{{ form.special_requirements.label }}</label>
+                {{ form.special_requirements }}
+            </div>
+            <div class="row-2col">
+                <div class="checkbox-group">
+                    <label>{{ form.has_elderly }} {{ form.has_elderly.label }}</label>
+                    <label>{{ form.needs_accessibility }} {{ form.needs_accessibility.label }}</label>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== WEATHER / FLEXIBILITY / NIGHTLIFE / CROWD ==================== -->
+        <div class="form-section">
+            <h3>🌦️ Activity Flexibility & Atmosphere</h3>
+            <div class="row-2col">
+                <div class="checkbox-group">
+                    <label>{{ form.prefer_indoor }} {{ form.prefer_indoor.label }}</label>
+                    <label>{{ form.weather_flexible }} {{ form.weather_flexible.label }}</label>
+                    <label>{{ form.nightlife_interest }} {{ form.nightlife_interest.label }}</label>
+                </div>
+            </div>
+            <div class="form-group">
+                <label>{{ form.crowd_preference.label }}</label>
+                {{ form.crowd_preference }}
+            </div>
+        </div>
+
+        <!-- ==================== ADVANCED OPTIONS ==================== -->
+        <div class="form-section">
+            <h3>⚙️ Advanced Options</h3>
+            <div class="row-3col">
+                <div class="form-group">
+                    <label>{{ form.search_radius_km.label }}</label>
+                    {{ form.search_radius_km }}
+                    <div class="help-text">{{ form.search_radius_km.help_text|default:"Radius around destination" }}</div>
+                </div>
+                <div class="form-group">
+                    <label>{{ form.max_attractions_per_day.label }}</label>
+                    {{ form.max_attractions_per_day }}
+                    <div class="help-text">{{ form.max_attractions_per_day.help_text|default:"Max places per day" }}</div>
+                </div>
+            </div>
+            <div class="checkbox-group">
+                <label>{{ form.include_restaurants }} {{ form.include_restaurants.label }}</label>
+                <label>{{ form.include_hotels }} {{ form.include_hotels.label }}</label>
+            </div>
+        </div>
+
+        <button type="submit">✨ Generate Smart Itinerary ✨</button>
+    </form>
 </div>
 
 <script>
-    let destinationMap, startMap, endMap;
-    let startMarker, endMarker;
-    
-    document.addEventListener('DOMContentLoaded', function() {
-        initDestinationSelect();
-        initStartMap();
-        initEndMap();
+let destinationMap, startMap, endMap;
+let destinationMarker, startMarker, endMarker;
+let destAutocomplete, startAutocomplete, endAutocomplete;
+
+// ================= INIT =================
+function initMaps() {
+    const defaultCenter = { lat: 20.5937, lng: 78.9629 };
+
+    destinationMap = new google.maps.Map(document.getElementById("destinationMap"), {
+        center: defaultCenter,
+        zoom: 3,
     });
-    
-    function initDestinationSelect() {
-        const destSelect = document.querySelector('select[name="destination"]');
-        const mapContainer = document.getElementById('destMapContainer');
-        
-        if (!destSelect) {
-            console.error('Destination select not found!');
+
+    startMap = new google.maps.Map(document.getElementById("startMap"), {
+        center: defaultCenter,
+        zoom: 3,
+    });
+
+    endMap = new google.maps.Map(document.getElementById("endMap"), {
+        center: defaultCenter,
+        zoom: 3,
+    });
+
+    initAutocomplete();
+    enableMapClick();
+
+    geocodeManualInput("id_destination_query", destinationMap, "destination");
+    geocodeManualInput("id_starting_point_name", startMap, "start");
+    geocodeManualInput("id_ending_point_name", endMap, "end");
+}
+
+// ================= AUTOCOMPLETE =================
+function initAutocomplete() {
+    const destInput = document.getElementById("id_destination_query");
+    const startInput = document.getElementById("id_starting_point_name");
+    const endInput = document.getElementById("id_ending_point_name");
+
+    // DESTINATION
+    destAutocomplete = new google.maps.places.Autocomplete(destInput, {
+        fields: ["geometry", "formatted_address", "name"],
+    });
+    destAutocomplete.bindTo("bounds", destinationMap);
+
+    destAutocomplete.addListener("place_changed", () => {
+        const place = destAutocomplete.getPlace();
+
+        if (!place.geometry) {
+            alert("⚠️ Select a location from dropdown");
             return;
         }
-        
-        destSelect.addEventListener('change', function() {
-            const selectedOption = this.options[this.selectedIndex];
-            const destId = this.value;
-            
-            if (destId) {
-                // Get coordinates from data attributes or fetch from server
-                const lat = parseFloat(selectedOption.getAttribute('data-lat') || 0);
-                const lng = parseFloat(selectedOption.getAttribute('data-lng') || 0);
-                const name = selectedOption.text;
-                
-                if (lat && lng) {
-                    mapContainer.style.display = 'block';
-                    document.getElementById('destName').innerHTML = name;
-                    document.getElementById('destCoords').innerHTML = `${lat.toFixed(4)}°, ${lng.toFixed(4)}°`;
-                    
-                    if (destinationMap) {
-                        destinationMap.remove();
-                    }
-                    
-                    destinationMap = L.map('destinationMap').setView([lat, lng], 12);
-                    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                        attribution: '© OpenStreetMap contributors'
-                    }).addTo(destinationMap);
-                    
-                    L.marker([lat, lng]).addTo(destinationMap)
-                        .bindPopup(`<b>${name}</b>`)
-                        .openPopup();
-                } else {
-                    // Fetch coordinates from server
-                    fetch(`/api/destination-coords/${destId}/`)
-                        .then(response => response.json())
-                        .then(data => {
-                            if (data.lat && data.lng) {
-                                mapContainer.style.display = 'block';
-                                document.getElementById('destName').innerHTML = name;
-                                document.getElementById('destCoords').innerHTML = `${data.lat.toFixed(4)}°, ${data.lng.toFixed(4)}°`;
-                                
-                                if (destinationMap) destinationMap.remove();
-                                destinationMap = L.map('destinationMap').setView([data.lat, data.lng], 12);
-                                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(destinationMap);
-                                L.marker([data.lat, data.lng]).addTo(destinationMap).bindPopup(`<b>${name}</b>`).openPopup();
-                            }
-                        });
-                }
-            } else {
-                mapContainer.style.display = 'none';
-            }
-        });
-    }
-    
-    function initStartMap() {
-        startMap = L.map('startLocationMap').setView([20.5937, 78.9629], 5);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '© OpenStreetMap contributors'
-        }).addTo(startMap);
-        
-        startMap.on('click', function(e) {
-            const lat = e.latlng.lat;
-            const lng = e.latlng.lng;
-            
-            fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18`)
-                .then(response => response.json())
-                .then(data => {
-                    const name = data.display_name || `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
-                    setStartLocation(lat, lng, name);
-                })
-                .catch(() => {
-                    setStartLocation(lat, lng, `${lat.toFixed(4)}, ${lng.toFixed(4)}`);
-                });
-        });
-    }
-    
-    function setStartLocation(lat, lng, name) {
-        if (startMarker) {
-            startMarker.setLatLng([lat, lng]);
-        } else {
-            startMarker = L.marker([lat, lng]).addTo(startMap);
-        }
-        startMarker.bindPopup(`Starting Point: ${name}`).openPopup();
-        
-        document.getElementById('id_start_location_name').value = name;
-        document.getElementById('id_start_latitude').value = lat;
-        document.getElementById('id_start_longitude').value = lng;
-        document.getElementById('startLocationLabel').innerHTML = name.substring(0, 100);
-        document.getElementById('startCoords').innerHTML = `${lat.toFixed(4)}°, ${lng.toFixed(4)}°`;
-    }
-    
-    function initEndMap() {
-        endMap = L.map('endLocationMap').setView([20.5937, 78.9629], 5);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(endMap);
-        
-        endMap.on('click', function(e) {
-            const lat = e.latlng.lat;
-            const lng = e.latlng.lng;
-            
-            fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18`)
-                .then(response => response.json())
-                .then(data => {
-                    const name = data.display_name || `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
-                    setEndLocation(lat, lng, name);
-                });
-        });
-    }
-    
-    function setEndLocation(lat, lng, name) {
-        if (endMarker) {
-            endMarker.setLatLng([lat, lng]);
-        } else {
-            endMarker = L.marker([lat, lng]).addTo(endMap);
-        }
-        
-        document.getElementById('id_end_location_name').value = name;
-        document.getElementById('id_end_latitude').value = lat;
-        document.getElementById('id_end_longitude').value = lng;
-        document.getElementById('endLocationLabel').innerHTML = name.substring(0, 100);
-        document.getElementById('endCoords').innerHTML = `${lat.toFixed(4)}°, ${lng.toFixed(4)}°`;
-    }
-    
-    document.getElementById('travelPlanForm').addEventListener('submit', function() {
-        document.getElementById('loading').classList.add('active');
-    });
-</script>
 
-</body>
-</html>
+        const loc = place.geometry.location;
+        updateMap(destinationMap, "destination", loc.lat(), loc.lng(), place.formatted_address);
+    });
+
+    // START
+    startAutocomplete = new google.maps.places.Autocomplete(startInput, {
+        fields: ["geometry", "formatted_address", "name"],
+    });
+    startAutocomplete.bindTo("bounds", startMap);
+
+    startAutocomplete.addListener("place_changed", () => {
+        const place = startAutocomplete.getPlace();
+
+        if (!place.geometry) {
+            alert("⚠️ Select a location from dropdown");
+            return;
+        }
+
+        const loc = place.geometry.location;
+        updateMap(startMap, "start", loc.lat(), loc.lng(), place.formatted_address);
+    });
+
+    // END
+    endAutocomplete = new google.maps.places.Autocomplete(endInput, {
+        fields: ["geometry", "formatted_address", "name"],
+    });
+    endAutocomplete.bindTo("bounds", endMap);
+
+    endAutocomplete.addListener("place_changed", () => {
+        const place = endAutocomplete.getPlace();
+
+        if (!place.geometry) {
+            alert("⚠️ Select a location from dropdown");
+            return;
+        }
+
+        const loc = place.geometry.location;
+        updateMap(endMap, "end", loc.lat(), loc.lng(), place.formatted_address);
+    });
+}
+
+// ================= UPDATE MAP =================
+function updateMap(map, type, lat, lng, address = "") {
+    const position = { lat, lng };
+
+    map.setCenter(position);
+    map.setZoom(13);
+
+    if (type === "destination") {
+        if (destinationMarker) destinationMarker.setMap(null);
+        destinationMarker = new google.maps.Marker({ position, map });
+
+        document.getElementById("id_destination_latitude").value = lat;
+        document.getElementById("id_destination_longitude").value = lng;
+
+        if (address) {
+            document.getElementById("id_destination_query").value = address;
+        }
+    }
+
+    if (type === "start") {
+        if (startMarker) startMarker.setMap(null);
+        startMarker = new google.maps.Marker({ position, map });
+
+        document.getElementById("id_starting_point_latitude").value = lat;
+        document.getElementById("id_starting_point_longitude").value = lng;
+
+        if (address) {
+            document.getElementById("id_starting_point_name").value = address;
+        }
+    }
+
+    if (type === "end") {
+        if (endMarker) endMarker.setMap(null);
+        endMarker = new google.maps.Marker({ position, map });
+
+        document.getElementById("id_ending_point_latitude").value = lat;
+        document.getElementById("id_ending_point_longitude").value = lng;
+
+        if (address) {
+            document.getElementById("id_ending_point_name").value = address;
+        }
+    }
+}
+
+// ================= MAP CLICK =================
+function enableMapClick() {
+    const geocoder = new google.maps.Geocoder();
+
+    destinationMap.addListener("click", (e) => {
+        handleMapClick(e, destinationMap, "destination", geocoder);
+    });
+
+    startMap.addListener("click", (e) => {
+        handleMapClick(e, startMap, "start", geocoder);
+    });
+
+    endMap.addListener("click", (e) => {
+        handleMapClick(e, endMap, "end", geocoder);
+    });
+}
+
+function handleMapClick(event, map, type, geocoder) {
+    const lat = event.latLng.lat();
+    const lng = event.latLng.lng();
+
+    geocoder.geocode({ location: { lat, lng } }, (res, status) => {
+        let address = "";
+        if (status === "OK" && res[0]) {
+            address = res[0].formatted_address;
+        }
+
+        updateMap(map, type, lat, lng, address);
+    });
+}
+
+// ================= MANUAL INPUT FIX =================
+function geocodeManualInput(inputId, map, type) {
+    const input = document.getElementById(inputId);
+    const geocoder = new google.maps.Geocoder();
+
+    input.addEventListener("keydown", function (e) {
+        if (e.key === "Enter") {
+            e.preventDefault();
+
+            const value = input.value;
+            if (!value) return;
+
+            geocoder.geocode({ address: value }, (results, status) => {
+                if (status === "OK" && results[0]) {
+                    const loc = results[0].geometry.location;
+
+                    updateMap(
+                        map,
+                        type,
+                        loc.lat(),
+                        loc.lng(),
+                        results[0].formatted_address
+                    );
+                } else {
+                    alert("Location not found. Try dropdown.");
+                }
+            });
+        }
+    });
+}
+
+// ================= LOAD MAP =================
+window.initMaps = initMaps;
+</script>

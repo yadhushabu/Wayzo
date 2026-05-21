@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+    <title>Share Travel Story</title>
+
+    <style>
+
+        body{
+            font-family: Arial;
+            background:#f5f5f5;
+            padding:40px;
+        }
+
+        .container{
+            max-width:800px;
+            margin:auto;
+            background:white;
+            padding:30px;
+            border-radius:12px;
+        }
+
+        h1{
+            margin-bottom:25px;
+        }
+
+        form{
+            display:flex;
+            flex-direction:column;
+            gap:20px;
+        }
+
+        input,
+        textarea{
+            padding:12px;
+            border:1px solid #ddd;
+            border-radius:8px;
+            width:100%;
+        }
+
+        textarea{
+            min-height:200px;
+        }
+
+        button{
+            padding:14px;
+            border:none;
+            border-radius:8px;
+            background:black;
+            color:white;
+            cursor:pointer;
+            font-size:16px;
+        }
+
+        button:hover{
+            opacity:0.9;
+        }
+
+    </style>
+
+</head>
+
+<body>
+
+<div class="container">
+
+    <h1>🌍 Share Your Travel Story</h1>
+
+    <form method="POST" enctype="multipart/form-data">
+
+        {% csrf_token %}
+
+        {{ form.as_p }}
+
+        <button type="submit">
+            Publish Story
+        </button>
+
+    </form>
+
+</div>
+
+</body>
+</html>

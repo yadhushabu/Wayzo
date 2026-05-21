@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Add Review - {{ place.name }}</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 32px;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            opacity: 0.9;
+        }
+
+        .content {
+            padding: 30px;
+        }
+
+        .place-info {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 25px;
+            display: flex;
+            gap: 20px;
+            align-items: center;
+        }
+
+        .place-image {
+            width: 80px;
+            height: 80px;
+            border-radius: 12px;
+            object-fit: cover;
+        }
+
+        .place-image-placeholder {
+            width: 80px;
+            height: 80px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 40px;
+        }
+
+        .place-info h3 {
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .place-info p {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #555;
+            font-size: 14px;
+        }
+
+        .required-star {
+            color: #dc3545;
+        }
+
+        /* Rating Stars */
+        .rating-container {
+            margin-bottom: 10px;
+        }
+
+        .rating-stars {
+            display: flex;
+            flex-direction: row-reverse;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+
+        .rating-stars input {
+            display: none;
+        }
+
+        .rating-stars label {
+            font-size: 40px;
+            color: #ddd;
+            cursor: pointer;
+            transition: color 0.2s;
+            margin: 0;
+            padding: 0;
+        }
+
+        .rating-stars label:hover,
+        .rating-stars label:hover ~ label,
+        .rating-stars input:checked ~ label {
+            color: #ffc107;
+        }
+
+        .rating-text {
+            margin-left: 10px;
+            font-size: 14px;
+            color: #666;
+        }
+
+        /* Review Text */
+        .review-text {
+            width: 100%;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 12px;
+            font-size: 14px;
+            font-family: inherit;
+            resize: vertical;
+            transition: all 0.3s;
+        }
+
+        .review-text:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 5px rgba(102, 126, 234, 0.3);
+        }
+
+        .char-count {
+            text-align: right;
+            font-size: 12px;
+            color: #999;
+            margin-top: 5px;
+        }
+
+        /* Tips Section */
+        .tips-section {
+            background: #e8f4f8;
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 25px;
+        }
+
+        .tips-section p {
+            margin: 5px 0;
+            font-size: 13px;
+            color: #666;
+        }
+
+        .btn-submit {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.3s;
+        }
+
+        .btn-submit:hover {
+            transform: translateY(-2px);
+        }
+
+        .btn-submit:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
+
+        .errorlist {
+            color: #dc3545;
+            font-size: 12px;
+            margin-top: 5px;
+            list-style: none;
+        }
+
+        .rating-value {
+            font-size: 14px;
+            color: #666;
+            margin-top: 5px;
+        }
+
+        @media (max-width: 768px) {
+            .content {
+                padding: 20px;
+            }
+            .place-info {
+                flex-direction: column;
+                text-align: center;
+            }
+            .rating-stars label {
+                font-size: 30px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header">
+        <h1>✍️ Write a Review</h1>
+        <p>Share your experience at {{ place.name }}</p>
+    </div>
+
+    <div class="content">
+        <!-- Place Information -->
+        <div class="place-info">
+            {% if place.images.first %}
+                <img class="place-image" src="{{ place.images.first.image.url }}" alt="{{ place.name }}">
+            {% else %}
+                <div class="place-image-placeholder">📍</div>
+            {% endif %}
+            <div>
+                <h3>{{ place.name }}</h3>
+                <p>{{ place.destination.name }}{% if place.destination.country %}, {{ place.destination.country }}{% endif %}</p>
+                <p>⭐ {{ place.average_rating|floatformat:1|default:"0" }} ({{ place.total_reviews }} reviews)</p>
+            </div>
+        </div>
+
+        <form method="POST" id="reviewForm">
+            {% csrf_token %}
+
+            <!-- Rating Stars -->
+            <div class="form-group">
+                <label>Your Rating <span class="required-star">*</span></label>
+                <div class="rating-container">
+                    <div class="rating-stars">
+                        <input type="radio" name="rating" value="5" id="star5" required>
+                        <label for="star5">★</label>
+                        <input type="radio" name="rating" value="4" id="star4">
+                        <label for="star4">★</label>
+                        <input type="radio" name="rating" value="3" id="star3">
+                        <label for="star3">★</label>
+                        <input type="radio" name="rating" value="2" id="star2">
+                        <label for="star2">★</label>
+                        <input type="radio" name="rating" value="1" id="star1">
+                        <label for="star1">★</label>
+                    </div>
+                    <div class="rating-value" id="ratingValue">Select a rating</div>
+                </div>
+                {% if form.rating.errors %}
+                    <div class="errorlist">{{ form.rating.errors }}</div>
+                {% endif %}
+            </div>
+
+            <!-- Review Text -->
+            <div class="form-group">
+                <label for="review">Your Review <span class="required-star">*</span></label>
+                <textarea name="review" id="review" class="review-text" rows="6" 
+                          placeholder="Share your experience... What did you like? What could be improved?" 
+                          required></textarea>
+                <div class="char-count"><span id="charCount">0</span> characters</div>
+                {% if form.review.errors %}
+                    <div class="errorlist">{{ form.review.errors }}</div>
+                {% endif %}
+            </div>
+
+            <!-- Review Tips -->
+            <div class="tips-section">
+                <p>💡 <strong>Writing Tips:</strong></p>
+                <p>• Be specific about your experience</p>
+                <p>• Mention what you enjoyed most</p>
+                <p>• Share practical tips for future visitors</p>
+                <p>• Be honest and constructive</p>
+            </div>
+
+            <button type="submit" class="btn-submit" id="submitBtn">
+                📝 Submit Review
+            </button>
+        </form>
+    </div>
+</div>
+
+<script>
+    // Character counter
+    const reviewTextarea = document.getElementById('review');
+    const charCountSpan = document.getElementById('charCount');
+    
+    if (reviewTextarea) {
+        reviewTextarea.addEventListener('input', function() {
+            charCountSpan.textContent = this.value.length;
+        });
+    }
+
+    // Rating display text
+    const ratingInputs = document.querySelectorAll('input[name="rating"]');
+    const ratingValueSpan = document.getElementById('ratingValue');
+    
+    const ratingMessages = {
+        1: '⭐ Very Poor - Needs significant improvement',
+        2: '⭐⭐ Poor - Below expectations',
+        3: '⭐⭐⭐ Average - Decent experience',
+        4: '⭐⭐⭐⭐ Good - Enjoyable experience',
+        5: '⭐⭐⭐⭐⭐ Excellent - Amazing experience!'
+    };
+    
+    ratingInputs.forEach(input => {
+        input.addEventListener('change', function() {
+            if (ratingValueSpan) {
+                ratingValueSpan.textContent = ratingMessages[this.value] || 'Select a rating';
+                ratingValueSpan.style.color = '#4caf50';
+                ratingValueSpan.style.fontWeight = 'bold';
+            }
+        });
+    });
+
+    // Form validation
+    document.getElementById('reviewForm').addEventListener('submit', function(e) {
+        const rating = document.querySelector('input[name="rating"]:checked');
+        const review = document.getElementById('review').value.trim();
+        
+        if (!rating) {
+            e.preventDefault();
+            alert('❌ Please select a rating (1-5 stars)');
+            return false;
+        }
+        
+        if (!review) {
+            e.preventDefault();
+            alert('❌ Please write your review');
+            return false;
+        }
+        
+        if (review.length < 10) {
+            e.preventDefault();
+            alert('❌ Please write at least 10 characters for your review');
+            return false;
+        }
+        
+        const submitBtn = document.getElementById('submitBtn');
+        submitBtn.disabled = true;
+        submitBtn.textContent = '📤 Submitting...';
+    });
+
+    // Initialize character count on page load
+    if (reviewTextarea && reviewTextarea.value) {
+        charCountSpan.textContent = reviewTextarea.value.length;
+    }
+</script>
+
+</body>
+</html>

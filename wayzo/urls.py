@@ -27,7 +27,7 @@ urlpatterns = [
     path('restaurant/', include('restaurants.urls')),
     path('admin-panel/', include('admin_app.urls')), 
     path('community/', include('community.urls')),
-    path("destinations/", include("destinations.urls")),
-    path("itineraries/", include("itineraries.urls")),
+    path('planner/', include('planner.urls')),
+    path('destinations/', include('destinations.urls')),
     
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

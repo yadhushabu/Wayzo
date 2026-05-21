@@ -8,11 +8,10 @@ from django.utils import timezone
 from datetime import datetime, timedelta
 from decimal import Decimal
 
-from travellers.utils import get_places_from_opentripmap
-from destinations.models import Destination
+from planner.services.itinerary_generator import generator
 
-from .models import CompletedTrip, ProfileComment, ProfilePost, ProfilePostLike, PropertyBooking, TravelPlan, TravellerProfile, Wishlist, Follow
-from .forms import NewPostForm, TravelPlanForm, TravellerProfileEditForm, PropertyBookingForm
+from .models import CompletedTrip, ProfileComment, ProfilePost, ProfilePostLike, PropertyBooking,  TravellerProfile, Wishlist, Follow
+from .forms import NewPostForm, TravellerProfileEditForm, PropertyBookingForm
 
 from restaurants.models import RestaurantProfile
 from agencies.models import TourPackage, PackageBooking, CancellationPolicy
@@ -23,35 +22,46 @@ User = get_user_model()
 # ==================== DASHBOARD VIEW ====================
 @login_required
 def dashboard(request):
-    """Main dashboard for logged-in users showing packages, restaurants, and bookings"""
-    
+    """Main dashboard for logged-in users showing packages, restaurants, bookings + explore module"""
+
     profile = get_object_or_404(TravellerProfile, user=request.user)
-    
+
     # Get data for dashboard
     packages = TourPackage.objects.filter(
         is_active=True,
         agency__is_approved=True
     ).select_related('agency__user')[:6]
-    
+
     restaurants = RestaurantProfile.objects.filter(is_approved=True)[:6]
-    
-    bookings = PackageBooking.objects.filter(traveller=request.user).order_by('-booked_at')[:5]
-    
+
+    bookings = PackageBooking.objects.filter(
+        traveller=request.user
+    ).order_by('-booked_at')[:5]
+
     # Stats
     wishlist_count = Wishlist.objects.filter(user=request.user).count()
     bookings_count = PackageBooking.objects.filter(traveller=request.user).count()
     posts_count = ProfilePost.objects.filter(user=request.user).count()
-    
+
+
+
     context = {
         'profile': profile,
+
+        # existing
         'packages': packages,
         'restaurants': restaurants,
         'bookings': bookings,
+
+        # stats
         'wishlist_count': wishlist_count,
         'bookings_count': bookings_count,
         'posts_count': posts_count,
+
+
+
     }
-    
+
     return render(request, "travellers/dashboard.html", context)
 
 
@@ -970,249 +980,4 @@ def public_profile(request, user_id):
     return render(request, "travellers/public_profile.html", context)
 
 
-# from .forms import TripPlanForm  # ✅ ADD THIS LINE
-# from .models import TripPlan  
-# import google.generativeai as genai
-# from geopy.geocoders import Nominatim
-# from django.conf import settings
-# from datetime import timedelta
-# import json
 
-# # Add to your settings.py
-# # GENAI_API_KEY = "your-free-key-from-ai.google.dev"
-
-# genai.configure(api_key=settings.GENAI_API_KEY)
-# model = genai.GenerativeModel('gemini-1.5-flash')
-
-# # Geocoding function
-# geolocator = Nominatim(user_agent="trip-planner")
-
-# def get_lat_lon(city):
-#     try:
-#         location = geolocator.geocode(city)
-#         return location.latitude, location.longitude if location else (0, 0)
-#     except:
-#         return 0, 0
-
-# @login_required
-# def generate_trip_plan(request):
-#     form = TripPlanForm()
-    
-#     if request.method == "POST":
-#         form = TripPlanForm(request.POST)
-#         if form.is_valid():
-#             data = form.cleaned_data
-            
-#             # ========== STEP 1: COLLECT ALL DATA ==========
-#             destination = data["destination"]
-#             start_date = data["start_date"]
-#             end_date = data["end_date"]
-#             days = (end_date - start_date).days + 1
-#             adults = data["adults"]
-#             children = data["children"]
-#             budget = data["budget"]
-#             interests = data.get("interests", [])
-#             stay_type = data.get("stay_type", "")
-#             food_type = data.get("food_type", "")
-#             travel_style = data.get("travel_style", "")
-#             transport = data.get("transport", "")
-#             special_requests = data.get("special_requests", "")
-            
-#             # Get real coordinates
-#             dest_lat, dest_lon = get_lat_lon(destination)
-            
-#             # ========== STEP 2: FETCH PLACES ==========
-#             places = get_places_from_opentripmap(destination)
-#             places = clean_places(places)
-            
-#             # Local data
-#             stay = RestaurantProfile.objects.filter(
-#                 city__icontains=destination, category="stay", is_approved=True
-#             ).order_by("-rating").first()
-            
-#             foods = list(RestaurantProfile.objects.filter(
-#                 city__icontains=destination,
-#                 category__in=["restaurant", "cafe"],
-#                 is_approved=True
-#             ).order_by("-rating")[:8])
-            
-#             shops = list(RestaurantProfile.objects.filter(
-#                 city__icontains=destination,
-#                 category__in=["shop", "market", "experience"],
-#                 is_approved=True
-#             ).order_by("-rating")[:6])
-            
-#             # ========== STEP 3: CLUSTER PLACES ==========
-#             clusters = clustered_places(places, days)
-#             clustered_places = []
-#             for day_num, cluster in enumerate(sorted(clusters.values())):
-#                 sorted_cluster = sort_by_distance(cluster)
-#                 day_places = [p["name"] for p in sorted_cluster[:3]]
-#                 clustered_places.append({
-#                     "day": day_num + 1,
-#                     "places": day_places
-#                 })
-            
-#             # ========== STEP 4: AI-GENERATED ITINERARY ==========
-#             context_data = {
-#                 "destination": destination,
-#                 "coordinates": {"lat": dest_lat, "lon": dest_lon},
-#                 "dates": {
-#                     "start": start_date.strftime("%Y-%m-%d"),
-#                     "end": end_date.strftime("%Y-%m-%d"),
-#                     "days": days
-#                 },
-#                 "travelers": {
-#                     "adults": adults,
-#                     "children": children
-#                 },
-#                 "preferences": {
-#                     "budget": budget,
-#                     "interests": interests,
-#                     "stay_type": stay_type,
-#                     "food_type": food_type,
-#                     "travel_style": travel_style,
-#                     "transport": transport,
-#                     "special_requests": special_requests
-#                 },
-#                 "daily_clusters": clustered_places,
-#                 "local_recommendations": {
-#                     "stay": stay.restaurant_name if stay else "Hotel in city center",
-#                     "foods": [f.restaurant_name for f in foods],
-#                     "shops": [s.restaurant_name for s in shops]
-#                 }
-#             }
-            
-#             # ========== GEMINI PROMPT ==========
-#             prompt = f"""
-# You are a professional travel planner. Create a DETAILED, PROFESSIONAL 7-day itinerary for {destination}.
-
-# TRAVELER PROFILE:
-# - {adults} adults, {children} children
-# - Budget: {budget}
-# - Interests: {', '.join(interests)}
-# - Stay: {stay_type}, Food: {food_type}
-# - Style: {travel_style}, Transport: {transport}
-# - Special: {special_requests}
-
-# CLUSTERED ATTRACTIONS BY DAY (optimized route):
-# {json.dumps(clustered_places, indent=2)}
-
-# LOCAL RECOMMENDATIONS:
-# - Stay: {context_data['local_recommendations']['stay']}
-# - Food: {context_data['local_recommendations']['foods']}
-# - Shops: {context_data['local_recommendations']['shops']}
-
-# FORMAT REQUIREMENTS:
-# 1. Rich HTML with emojis, bold headers, tables for daily schedule
-# 2. Realistic timing (8AM-10PM, breaks included)
-# 3. Travel times between locations (estimate 15-45min)
-# 4. Budget breakdown per day
-# 5. Local tips, safety, best photo spots
-# 6. Family-friendly adjustments if children present
-# 7. Weather/transport considerations
-
-# Make it feel like a $500 premium travel agency plan!
-# """
-            
-#             # Generate with Gemini
-#             response = model.generate_content(prompt)
-#             ai_plan = response.text
-            
-#             # ========== SAVE ==========
-#             # Save - FIX JSON FIELDS
-#             trip = TripPlan.objects.create(
-#                 user=request.user,
-#                 destination=data["destination"],
-#                 start_date=data["start_date"],
-#                 end_date=data["end_date"],
-#                 adults=data["adults"],
-#                 children=data["children"],
-#                 budget=data["budget"],
-#                 interests=json.dumps(data.get("interests", [])),  # ✅ FIX: Convert list → JSON
-#                 stay_type=data.get("stay_type", ""),
-#                 room_type=data.get("room_type", ""),
-#                 amenities=json.dumps(data.get("amenities", [])),  # ✅ FIX
-#                 food_type=data.get("food_type", ""),
-#                 cuisines=json.dumps(data.get("cuisines", [])),    # ✅ FIX
-#                 travel_style=data.get("travel_style", ""),
-#                 transport=data.get("transport", ""),
-#                 trip_type=data.get("trip_type", ""),
-#                 special_requests=data.get("special_requests", ""),
-#                 generated_plan=ai_plan,
-#                 ai_model_used="gemini-1.5-flash"
-#     )
-            
-#             return render(request, "travellers/trip_result.html", {
-#                 "trip": trip,
-#                 "context_data": context_data  # For debugging
-#             })
-    
-#     return render(request, "travellers/trip_form.html", {"form": form})
-
-# travellers/views.py
-from django.shortcuts import render, redirect
-from django.contrib.auth.decorators import login_required
-from django.contrib import messages
-from .forms import TravelPlanForm
-from destinations.models import Destination
-
-@login_required
-def create_travel_plan(request):
-    if request.method == "POST":
-        form = TravelPlanForm(request.POST)
-        if form.is_valid():
-            travel_plan = form.save(commit=False)
-            travel_plan.user = request.user
-            travel_plan.save()
-            messages.success(request, "Travel plan created successfully!")
-            return redirect("generate_itinerary", destination_id=travel_plan.destination.id)
-        else:
-            messages.error(request, "Please correct the errors below.")
-    else:
-        form = TravelPlanForm()
-    
-    # Get all destinations for the dropdown
-    destinations = Destination.objects.all().order_by('name')
-    
-    # Debug: Print to console
-    print(f"Found {destinations.count()} destinations")
-    for dest in destinations:
-        print(f"  - {dest.name}")
-    
-    return render(request, "travellers/create_travel_plan.html", {
-        "form": form,
-        "destinations": destinations
-    })
-@login_required
-def my_travel_plans(request):
-
-    plans = TravelPlan.objects.filter(user=request.user).order_by("-created_at")
-
-    return render(request, "travellers/my_travel_plans.html", {
-        "plans": plans
-    })
-
-from ai_engine.services import generate_smart_itinerary
-
-@login_required
-def generate_itinerary(request, destination_id):
-
-    destination = get_object_or_404(Destination, id=destination_id)
-
-    travel_plan = TravelPlan.objects.filter(
-        user=request.user,
-        destination=destination
-    ).last()
-
-    if not travel_plan:
-        return redirect("create_travel_plan")
-
-    data = generate_smart_itinerary(destination, travel_plan)
-
-    return render(request, "itineraries/itinerary_detail.html", {
-        "destination": destination,
-        "itinerary": data["days"],
-        "budget": data["budget"],
-        "plan": travel_plan
-    })

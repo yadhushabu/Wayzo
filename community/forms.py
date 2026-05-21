@@ -59,3 +59,5 @@ TripItineraryFormSet = modelformset_factory(
     fields=("day_number", "title", "description"),
     extra=3  # user can add days
 )
+
+

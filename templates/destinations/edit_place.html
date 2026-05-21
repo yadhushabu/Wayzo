@@ -1,0 +1,876 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Edit {{ place.name }} - {{ place.destination.name }}</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 32px;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            opacity: 0.9;
+        }
+
+        .content {
+            padding: 30px;
+        }
+
+        .section {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 25px;
+            transition: all 0.3s;
+        }
+
+        .section:hover {
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .section h2 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 24px;
+            border-left: 4px solid #667eea;
+            padding-left: 15px;
+        }
+
+        .section h3 {
+            margin: 15px 0 10px;
+            color: #555;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 8px;
+            color: #555;
+        }
+
+        input, textarea, select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+
+        input:focus, textarea:focus, select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 5px rgba(102, 126, 234, 0.3);
+        }
+
+        .coordinates-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .fetch-status {
+            margin-top: 5px;
+            font-size: 12px;
+        }
+
+        .fetch-status.loading {
+            color: #667eea;
+        }
+
+        .fetch-status.success {
+            color: #28a745;
+        }
+
+        .fetch-status.error {
+            color: #dc3545;
+        }
+
+        #map {
+            height: 300px;
+            margin-top: 10px;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+        }
+
+        .map-container {
+            margin-top: 15px;
+        }
+
+        .note {
+            font-size: 12px;
+            color: #666;
+            margin-top: 5px;
+        }
+
+        .existing-images {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-top: 15px;
+            margin-bottom: 20px;
+        }
+
+        .existing-image {
+            position: relative;
+            width: 120px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            overflow: hidden;
+            background: #f8f9fa;
+            transition: all 0.3s;
+        }
+
+        .existing-image:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .existing-image img {
+            width: 100%;
+            height: 100px;
+            object-fit: cover;
+        }
+
+        .existing-image .image-info {
+            padding: 8px;
+            font-size: 11px;
+            text-align: center;
+            background: #f8f9fa;
+        }
+
+        .delete-checkbox {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background: rgba(220,53,69,0.9);
+            padding: 5px;
+            border-radius: 5px;
+        }
+
+        .delete-checkbox input {
+            width: auto;
+            margin: 0;
+            cursor: pointer;
+        }
+
+        .image-preview {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .image-preview-item {
+            position: relative;
+            width: 100px;
+            height: 100px;
+            border-radius: 8px;
+            overflow: hidden;
+            border: 2px solid #ddd;
+        }
+
+        .image-preview-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .remove-image {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background: rgba(220,53,69,0.9);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+        }
+
+        .activity-block {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            border: 1px solid #e0e0e0;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: transform 0.3s;
+            width: 100%;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin-top: 10px;
+            transition: all 0.3s;
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+            transform: translateY(-1px);
+        }
+
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-danger:hover {
+            background: #c82333;
+            transform: translateY(-1px);
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .full-width {
+            grid-column: span 2;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .action-buttons .btn-primary,
+        .action-buttons .btn-danger {
+            flex: 1;
+        }
+
+        .char-counter {
+            font-size: 11px;
+            color: #999;
+            text-align: right;
+            margin-top: 5px;
+        }
+
+        .weather-suggestion {
+            background: linear-gradient(135deg, #667eea10, #764ba210);
+            padding: 10px;
+            border-radius: 8px;
+            margin-top: 10px;
+            font-size: 13px;
+        }
+
+        @media (max-width: 768px) {
+            .content {
+                padding: 20px;
+            }
+            
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .full-width {
+                grid-column: span 1;
+            }
+            
+            .coordinates-row {
+                grid-template-columns: 1fr;
+            }
+            
+            #map {
+                height: 250px;
+            }
+        }
+    </style>
+    
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    
+    <!-- Google Places API -->
+    <script src="https://maps.googleapis.com/maps/api/js?key={{ google_api_key }}&libraries=places"></script>
+</head>
+
+<body>
+
+<div class="container">
+    <div class="header">
+        <h1>✏️ Edit Place: {{ place.name }}</h1>
+        <p>Update information for this attraction or landmark</p>
+    </div>
+
+    <div class="content">
+        <form method="POST" enctype="multipart/form-data" id="placeForm">
+            {% csrf_token %}
+
+            <!-- Basic Place Details -->
+            <div class="section">
+                <h2>🏷️ Place Details</h2>
+                
+                <div class="form-group">
+                    <label for="id_name">Place Name *</label>
+                    <input type="text" name="name" id="id_name" required 
+                           placeholder="e.g., Eiffel Tower, Colva Beach" 
+                           value="{{ form.name.value|default:place.name }}" autocomplete="off">
+                    <div id="fetch-status" class="fetch-status"></div>
+                </div>
+
+                <div class="coordinates-row">
+                    <div class="form-group">
+                        <label for="id_latitude">Latitude</label>
+                        <input type="number" step="any" name="latitude" id="id_latitude" 
+                               value="{{ form.latitude.value|default:place.latitude }}" placeholder="Auto-fetched">
+                    </div>
+                    <div class="form-group">
+                        <label for="id_longitude">Longitude</label>
+                        <input type="number" step="any" name="longitude" id="id_longitude" 
+                               value="{{ form.longitude.value|default:place.longitude }}" placeholder="Auto-fetched">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="id_description">Description</label>
+                    <textarea name="description" id="id_description" rows="4" 
+                              placeholder="Describe this place...">{{ form.description.value|default:place.description }}</textarea>
+                    <div class="char-counter"><span id="descCount">0</span> characters</div>
+                </div>
+
+                <div class="form-group">
+                    <label for="id_category">Category</label>
+                    <select name="category" id="id_category">
+                        <option value="">Select Category</option>
+                        <option value="Beach" {% if form.category.value|default:place.category == 'Beach' %}selected{% endif %}>🏖️ Beach</option>
+                        <option value="Historical" {% if form.category.value|default:place.category == 'Historical' %}selected{% endif %}>🏛️ Historical</option>
+                        <option value="Nature" {% if form.category.value|default:place.category == 'Nature' %}selected{% endif %}>🌲 Nature</option>
+                        <option value="Temple" {% if form.category.value|default:place.category == 'Temple' %}selected{% endif %}>🛕 Temple</option>
+                        <option value="Church" {% if form.category.value|default:place.category == 'Church' %}selected{% endif %}>⛪ Church</option>
+                        <option value="Museum" {% if form.category.value|default:place.category == 'Museum' %}selected{% endif %}>🏛️ Museum</option>
+                        <option value="Adventure" {% if form.category.value|default:place.category == 'Adventure' %}selected{% endif %}>🧗 Adventure</option>
+                        <option value="Shopping" {% if form.category.value|default:place.category == 'Shopping' %}selected{% endif %}>🛍️ Shopping</option>
+                        <option value="Restaurant" {% if form.category.value|default:place.category == 'Restaurant' %}selected{% endif %}>🍽️ Restaurant</option>
+                        <option value="Other" {% if form.category.value|default:place.category == 'Other' %}selected{% endif %}>📍 Other</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" name="is_hidden_gem" value="true" 
+                               {% if form.is_hidden_gem.value|default:place.is_hidden_gem %}checked{% endif %}>
+                        💎 This is a Hidden Gem (offbeat location)
+                    </label>
+                </div>
+            </div>
+
+            <!-- Location Map -->
+            <div class="section">
+                <h2>🗺️ Location Map</h2>
+                <div id="map"></div>
+                <div class="note">Click on the map to update location coordinates</div>
+            </div>
+
+            <!-- Timing & Fees -->
+            <div class="section">
+                <h2>⏰ Timing & Fees</h2>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="id_opening_time">Opening Time</label>
+                        <input type="time" name="opening_time" id="id_opening_time" 
+                               value="{{ form.opening_time.value|default:place.opening_time|time:'H:i' }}">
+                    </div>
+                    <div class="form-group">
+                        <label for="id_closing_time">Closing Time</label>
+                        <input type="time" name="closing_time" id="id_closing_time" 
+                               value="{{ form.closing_time.value|default:place.closing_time|time:'H:i' }}">
+                    </div>
+                    <div class="form-group">
+                        <label for="id_entry_fee">Entry Fee (₹)</label>
+                        <input type="number" step="0.01" name="entry_fee" id="id_entry_fee" 
+                               placeholder="0 for free" value="{{ form.entry_fee.value|default:place.entry_fee }}">
+                    </div>
+                    <div class="form-group">
+                        <label for="id_parking_fee">Parking Fee (₹)</label>
+                        <input type="number" step="0.01" name="parking_fee" id="id_parking_fee" 
+                               placeholder="0" value="{{ form.parking_fee.value|default:place.parking_fee }}">
+                    </div>
+                    <div class="form-group">
+                        <label for="id_avg_visit_duration">Avg Visit Duration (minutes)</label>
+                        <input type="number" name="avg_visit_duration" id="id_avg_visit_duration" 
+                               placeholder="e.g., 120" value="{{ form.avg_visit_duration.value|default:place.avg_visit_duration }}">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Best Time to Visit -->
+            <div class="section">
+                <h2>📅 Best Time to Visit</h2>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="id_best_time_of_day">Best Time of Day</label>
+                        <select name="best_time_of_day" id="id_best_time_of_day">
+                            <option value="">Select</option>
+                            <option value="Morning" {% if form.best_time_of_day.value|default:place.best_time_of_day == 'Morning' %}selected{% endif %}>🌅 Morning</option>
+                            <option value="Afternoon" {% if form.best_time_of_day.value|default:place.best_time_of_day == 'Afternoon' %}selected{% endif %}>☀️ Afternoon</option>
+                            <option value="Evening" {% if form.best_time_of_day.value|default:place.best_time_of_day == 'Evening' %}selected{% endif %}>🌇 Evening</option>
+                            <option value="Sunset" {% if form.best_time_of_day.value|default:place.best_time_of_day == 'Sunset' %}selected{% endif %}>🌅 Sunset</option>
+                            <option value="Sunrise" {% if form.best_time_of_day.value|default:place.best_time_of_day == 'Sunrise' %}selected{% endif %}>🌄 Sunrise</option>
+                            <option value="Night" {% if form.best_time_of_day.value|default:place.best_time_of_day == 'Night' %}selected{% endif %}>🌙 Night</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="id_best_months_to_visit">Best Months to Visit</label>
+                        <input type="text" name="best_months_to_visit" id="id_best_months_to_visit" 
+                               placeholder="e.g., November to February" 
+                               value="{{ form.best_months_to_visit.value|default:place.best_months_to_visit }}">
+                    </div>
+                    <div class="form-group">
+                        <label for="id_difficulty_level">Difficulty Level</label>
+                        <select name="difficulty_level" id="id_difficulty_level">
+                            <option value="easy" {% if form.difficulty_level.value|default:place.difficulty_level == 'easy' %}selected{% endif %}>Easy</option>
+                            <option value="moderate" {% if form.difficulty_level.value|default:place.difficulty_level == 'moderate' %}selected{% endif %}>Moderate</option>
+                            <option value="hard" {% if form.difficulty_level.value|default:place.difficulty_level == 'hard' %}selected{% endif %}>Hard</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="id_suitable_for">Suitable For</label>
+                        <select name="suitable_for" id="id_suitable_for">
+                            <option value="all" {% if form.suitable_for.value|default:place.suitable_for == 'all' %}selected{% endif %}>Everyone</option>
+                            <option value="family" {% if form.suitable_for.value|default:place.suitable_for == 'family' %}selected{% endif %}>Families</option>
+                            <option value="couples" {% if form.suitable_for.value|default:place.suitable_for == 'couples' %}selected{% endif %}>Couples</option>
+                            <option value="solo" {% if form.suitable_for.value|default:place.suitable_for == 'solo' %}selected{% endif %}>Solo Travelers</option>
+                            <option value="friends" {% if form.suitable_for.value|default:place.suitable_for == 'friends' %}selected{% endif %}>Groups of Friends</option>
+                            <option value="adventure" {% if form.suitable_for.value|default:place.suitable_for == 'adventure' %}selected{% endif %}>Adventure Lovers</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Best For Features -->
+            <div class="section">
+                <h2>📸 Features</h2>
+                <div class="form-grid">
+                    <label>
+                        <input type="checkbox" name="best_for_photography" value="true" 
+                               {% if form.best_for_photography.value|default:place.best_for_photography %}checked{% endif %}>
+                        📷 Best for Photography
+                    </label>
+                    <label>
+                        <input type="checkbox" name="best_for_sunset" value="true" 
+                               {% if form.best_for_sunset.value|default:place.best_for_sunset %}checked{% endif %}>
+                        🌅 Best for Sunset
+                    </label>
+                    <label>
+                        <input type="checkbox" name="best_for_sunrise" value="true" 
+                               {% if form.best_for_sunrise.value|default:place.best_for_sunrise %}checked{% endif %}>
+                        🌄 Best for Sunrise
+                    </label>
+                </div>
+            </div>
+
+            <!-- Additional Info -->
+            <div class="section">
+                <h2>ℹ️ Additional Information</h2>
+                <div class="form-group">
+                    <label for="id_how_to_reach">How to Reach</label>
+                    <textarea name="how_to_reach" id="id_how_to_reach" rows="2" 
+                              placeholder="By road, train, or air...">{{ form.how_to_reach.value|default:place.how_to_reach }}</textarea>
+                </div>
+            
+                <div class="form-group">
+                    <label for="id_things_to_do">Things to Do</label>
+                    <textarea name="things_to_do" id="id_things_to_do" rows="2" 
+                              placeholder="List activities and experiences...">{{ form.things_to_do.value|default:place.things_to_do }}</textarea>
+                </div>
+                <div class="form-group">
+                    <label for="id_travel_tips">Travel Tips</label>
+                    <textarea name="travel_tips" id="id_travel_tips" rows="2" 
+                              placeholder="Helpful tips for visitors...">{{ form.travel_tips.value|default:place.travel_tips }}</textarea>
+                </div>
+                <div class="form-group">
+                    <label for="id_safety_tips">Safety Tips</label>
+                    <textarea name="safety_tips" id="id_safety_tips" rows="2" 
+                              placeholder="Safety precautions...">{{ form.safety_tips.value|default:place.safety_tips }}</textarea>
+                </div>
+                <div class="form-group">
+                    <label for="id_things_to_carry">Things to Carry</label>
+                    <textarea name="things_to_carry" id="id_things_to_carry" rows="2" 
+                              placeholder="Suggested items to bring...">{{ form.things_to_carry.value|default:place.things_to_carry }}</textarea>
+                </div>
+            </div>
+
+            <!-- Existing Images -->
+            {% if existing_images %}
+            <div class="section">
+                <h2>📸 Existing Images</h2>
+                <div class="existing-images">
+                    {% for img in existing_images %}
+                        <div class="existing-image">
+                            <img src="{{ img.image.url }}" alt="Place image">
+                            <div class="image-info">
+                                <label class="delete-checkbox">
+                                    <input type="checkbox" name="delete_images" value="{{ img.id }}">
+                                    Delete
+                                </label>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+                <div class="note">Check the box to delete unwanted images</div>
+            </div>
+            {% endif %}
+
+            <!-- Add New Images -->
+            <div class="section">
+                <h2>➕ Add New Images</h2>
+                <div class="form-group">
+                    <input type="file" name="images" id="imageInput" multiple accept="image/*">
+                    <div class="note">You can upload multiple images (Max: 10MB each, recommended: 1200x800px)</div>
+                    <div id="imagePreview" class="image-preview"></div>
+                </div>
+            </div>
+
+            <!-- Weather Preference -->
+            <div class="section">
+                <h2>🌤️ Weather Preference</h2>
+                <div class="form-group">
+                    <label for="id_preferred_weather">Preferred Weather for Best Experience</label>
+                    <select name="preferred_weather" id="id_preferred_weather">
+                        <option value="">Select Preferred Weather</option>
+                        <option value="sunny" {% if form.preferred_weather.value|default:place.preferred_weather == 'sunny' %}selected{% endif %}>☀️ Sunny - Best for beaches, outdoor activities</option>
+                        <option value="cloudy" {% if form.preferred_weather.value|default:place.preferred_weather == 'cloudy' %}selected{% endif %}>☁️ Cloudy - Good for sightseeing, photography</option>
+                        <option value="rainy" {% if form.preferred_weather.value|default:place.preferred_weather == 'rainy' %}selected{% endif %}>🌧️ Rainy - Waterfalls, lush greenery</option>
+                        <option value="cold" {% if form.preferred_weather.value|default:place.preferred_weather == 'cold' %}selected{% endif %}>❄️ Cold - Hill stations, snow activities</option>
+                        <option value="snow" {% if form.preferred_weather.value|default:place.preferred_weather == 'snow' %}selected{% endif %}>⛄ Snow - Winter sports, scenic views</option>
+                    </select>
+                    <div class="weather-suggestion" id="weatherSuggestion">
+                        <i>💡 Tip:</i> Select preferred weather to help travelers plan better!
+                    </div>
+                </div>
+            </div>
+
+            <!-- Priority Score (Admin Only) -->
+            {% if request.user.is_staff %}
+            <div class="section">
+                <h2>⭐ Priority Score (Admin Only)</h2>
+                <div class="form-group">
+                    <label for="id_priority_score">Priority Score (0-100)</label>
+                    <input type="number" name="priority_score" id="id_priority_score" 
+                           min="0" max="100" value="{{ form.priority_score.value|default:place.priority_score }}">
+                    <div class="note">Higher score = appears higher in listings</div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Action Buttons -->
+            <div class="action-buttons">
+                <button type="submit" class="btn-primary" id="submitBtn">
+                    💾 Update Place
+                </button>
+                <a href="{% url 'destinations:place_detail' place.id %}" class="btn-secondary" style="text-align: center; text-decoration: none; display: flex; align-items: center; justify-content: center;">
+                    ❌ Cancel
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+// Initialize variables
+let map;
+let marker;
+let debounceTimer;
+const API_KEYS = {
+    google: '{{ google_api_key }}',
+    openweather: '{{ openweather_api_key }}'
+};
+
+// Get form elements
+const placeNameInput = document.getElementById('id_name');
+const latitudeInput = document.getElementById('id_latitude');
+const longitudeInput = document.getElementById('id_longitude');
+const fetchStatus = document.getElementById('fetch-status');
+const imageInput = document.getElementById('imageInput');
+const imagePreview = document.getElementById('imagePreview');
+const descriptionTextarea = document.getElementById('id_description');
+
+// Set initial map location
+let initialLat = {{ place.latitude|default:"20" }};
+let initialLng = {{ place.longitude|default:"0" }};
+
+// Character counter for description
+if (descriptionTextarea) {
+    document.getElementById('descCount').textContent = descriptionTextarea.value.length;
+    descriptionTextarea.addEventListener('input', function() {
+        document.getElementById('descCount').textContent = this.value.length;
+    });
+}
+
+// Initialize Google Places Autocomplete
+function initAutocomplete() {
+    if (placeNameInput && window.google) {
+        const autocomplete = new google.maps.places.Autocomplete(placeNameInput, {
+            types: ['geocode', 'establishment'],
+            componentRestrictions: { country: [] }
+        });
+        
+        autocomplete.addListener('place_changed', function() {
+            const place = autocomplete.getPlace();
+            if (place.geometry) {
+                updateCoordinates(place.geometry.location.lat(), place.geometry.location.lng());
+                updateMapLocation(place.geometry.location.lat(), place.geometry.location.lng());
+                showFetchStatus('success', '✓ Location updated successfully!');
+            }
+        });
+    }
+}
+
+// Fetch coordinates using Google Geocoding API
+async function fetchCoordinatesFromGoogle(placeName) {
+    if (!API_KEYS.google) {
+        showFetchStatus('error', 'Google API key not configured');
+        return null;
+    }
+    
+    const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(placeName)}&key=${API_KEYS.google}`;
+    
+    try {
+        const response = await fetch(url);
+        const data = await response.json();
+        
+        if (data.status === 'OK' && data.results.length > 0) {
+            const location = data.results[0].geometry.location;
+            return { lat: location.lat, lng: location.lng };
+        } else {
+            console.error('Geocoding error:', data.status);
+            return null;
+        }
+    } catch (error) {
+        console.error('Error fetching coordinates:', error);
+        return null;
+    }
+}
+
+// Update coordinate inputs
+function updateCoordinates(lat, lng) {
+    latitudeInput.value = lat;
+    longitudeInput.value = lng;
+}
+
+// Show fetch status message
+function showFetchStatus(type, message) {
+    fetchStatus.textContent = message;
+    fetchStatus.className = `fetch-status ${type}`;
+    
+    setTimeout(() => {
+        if (fetchStatus.className === `fetch-status ${type}`) {
+            fetchStatus.textContent = '';
+            fetchStatus.className = 'fetch-status';
+        }
+    }, 3000);
+}
+
+// Update map location
+function updateMapLocation(lat, lng) {
+    if (map) {
+        const newLocation = [lat, lng];
+        map.setView(newLocation, 15);
+        if (marker) {
+            marker.setLatLng(newLocation);
+        } else {
+            marker = L.marker(newLocation).addTo(map);
+        }
+    }
+}
+
+// Initialize Leaflet map
+function initMap() {
+    const defaultLocation = [initialLat, initialLng];
+    const zoom = (initialLat !== 20 || initialLng !== 0) ? 15 : 10;
+    
+    map = L.map('map').setView(defaultLocation, zoom);
+    
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> contributors',
+        subdomains: 'abcd',
+        maxZoom: 19
+    }).addTo(map);
+    
+    // Add marker if coordinates exist
+    if (initialLat !== 20 || initialLng !== 0) {
+        marker = L.marker([initialLat, initialLng]).addTo(map);
+    }
+    
+    map.on('click', function(e) {
+        const lat = e.latlng.lat;
+        const lng = e.latlng.lng;
+        updateCoordinates(lat, lng);
+        
+        if (marker) {
+            marker.setLatLng([lat, lng]);
+        } else {
+            marker = L.marker([lat, lng]).addTo(map);
+        }
+        showFetchStatus('success', '✓ Location set from map click');
+    });
+}
+
+// Handle place name input with debouncing
+if (placeNameInput) {
+    placeNameInput.addEventListener('input', function(e) {
+        const placeName = e.target.value.trim();
+        
+        if (debounceTimer) {
+            clearTimeout(debounceTimer);
+        }
+        
+        if (placeName === '') {
+            return;
+        }
+        
+        showFetchStatus('loading', '🔍 Fetching location coordinates...');
+        
+        debounceTimer = setTimeout(async () => {
+            let coordinates = await fetchCoordinatesFromGoogle(placeName);
+            
+            if (coordinates) {
+                updateCoordinates(coordinates.lat, coordinates.lng);
+                updateMapLocation(coordinates.lat, coordinates.lng);
+                showFetchStatus('success', `✓ Location updated! (${coordinates.lat.toFixed(4)}, ${coordinates.lng.toFixed(4)})`);
+            } else {
+                showFetchStatus('error', '⚠ Could not fetch coordinates. Please enter manually or click on map.');
+            }
+        }, 800);
+    });
+}
+
+// Image preview functionality
+if (imageInput) {
+    imageInput.addEventListener('change', function(e) {
+        imagePreview.innerHTML = '';
+        const files = Array.from(e.target.files);
+        
+        files.forEach((file, index) => {
+            if (file.type.startsWith('image/')) {
+                const reader = new FileReader();
+                const previewItem = document.createElement('div');
+                previewItem.className = 'image-preview-item';
+                
+                reader.onload = function(e) {
+                    const img = document.createElement('img');
+                    img.src = e.target.result;
+                    const removeBtn = document.createElement('button');
+                    removeBtn.innerHTML = '×';
+                    removeBtn.className = 'remove-image';
+                    removeBtn.onclick = function() {
+                        previewItem.remove();
+                        const dt = new DataTransfer();
+                        const remainingFiles = files.filter((_, i) => i !== index);
+                        remainingFiles.forEach(f => dt.items.add(f));
+                        imageInput.files = dt.files;
+                    };
+                    
+                    previewItem.appendChild(img);
+                    previewItem.appendChild(removeBtn);
+                    imagePreview.appendChild(previewItem);
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+    });
+}
+
+// Form validation
+document.getElementById('placeForm').addEventListener('submit', function(e) {
+    const name = placeNameInput.value.trim();
+    if (!name) {
+        e.preventDefault();
+        alert('❌ Please enter place name');
+        return false;
+    }
+    
+    const submitBtn = document.getElementById('submitBtn');
+    submitBtn.disabled = true;
+    submitBtn.textContent = '💾 Updating...';
+});
+
+// Initialize everything
+document.addEventListener('DOMContentLoaded', function() {
+    initMap();
+    
+    setTimeout(() => {
+        if (window.google && window.google.maps) {
+            initAutocomplete();
+        }
+    }, 500);
+    
+    const helpText = document.createElement('div');
+    helpText.className = 'note';
+    helpText.style.marginTop = '20px';
+    helpText.style.padding = '10px';
+    helpText.style.background = '#e8f4f8';
+    helpText.style.borderRadius = '8px';
+    helpText.style.textAlign = 'center';
+    helpText.innerHTML = '💡 <strong>Pro Tips:</strong> Start typing to update coordinates automatically! You can also click on the map to set exact location.';
+    document.querySelector('.content').appendChild(helpText);
+});
+</script>
+
+</body>
+</html>

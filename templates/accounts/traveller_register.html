@@ -631,38 +631,20 @@
                     {% if form.profile_picture.errors %}<div class="field-error"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/></svg>{{ form.profile_picture.errors|join:", " }}</div>{% endif %}
                 </div>
 
-                <div class="form-group">
-                    <label>Date of Birth</label>
-                    <div class="input-wrap">
-                        <span class="input-icon"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></span>
-                        <input type="date" name="date_of_birth" id="id_date_of_birth" value="{{ form.date_of_birth.value|default:'' }}">
-                    </div>
-                    {% if form.date_of_birth.errors %}<div class="field-error"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/></svg>{{ form.date_of_birth.errors|join:", " }}</div>{% endif %}
-                </div>
+            
 
                 <div class="form-group">
                     <label>Phone Number</label>
                     <div class="input-wrap">
                         <span class="input-icon"><svg viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 11.9 19.79 19.79 0 0 1 1.61 3.27 2 2 0 0 1 3.6 1h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.6a16 16 0 0 0 6 6z"/></svg></span>
-                        <input type="tel" name="phone" id="id_phone" placeholder="+91 98765 43210" value="{{ form.phone.value|default:'' }}">
+                        <input type="tel" name="mobile" id="id_phone" placeholder="+91 98765 43210" value="{{ form.mobile.value|default:'' }}">
                     </div>
-                    {% if form.phone.errors %}<div class="field-error"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/></svg>{{ form.phone.errors|join:", " }}</div>{% endif %}
+                    {% if form.mobile.errors %}<div class="field-error"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/></svg>{{ form.mobile.errors|join:", " }}</div>{% endif %}
                 </div>
 
-                <div class="form-group">
-                    <label>Home City / Location</label>
-                    <div class="input-wrap">
-                        <span class="input-icon"><svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg></span>
-                        <input type="text" name="location" id="id_location" placeholder="City, Country" value="{{ form.location.value|default:'' }}">
-                    </div>
-                    {% if form.location.errors %}<div class="field-error"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/></svg>{{ form.location.errors|join:", " }}</div>{% endif %}
-                </div>
+                
 
-                <div class="form-group no-icon">
-                    <label>Bio / About Me</label>
-                    <textarea name="bio" id="id_bio" placeholder="Tell us a little about yourself, your travel style, and what you're looking for...">{{ form.bio.value|default:'' }}</textarea>
-                    {% if form.bio.errors %}<div class="field-error"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/></svg>{{ form.bio.errors|join:", " }}</div>{% endif %}
-                </div>
+                
 
                 <div class="btn-row">
                     <button type="button" class="submit-btn back-btn" onclick="goToStep(1)">
@@ -678,74 +660,15 @@
             <!-- ── STEP 3: Travel Preferences ── -->
             <div class="form-step" id="formStep3" style="display:none;">
 
-                <div class="field-section">
-                    <svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
-                    Travel Preferences
-                </div>
+                
 
-                <div class="form-group no-icon">
-                    <label>Travel Interests <span class="req">*</span></label>
-                    <div class="preferences-chips" id="interestsChips">
-                        <div class="chip" data-val="Adventure">🏔️ Adventure</div>
-                        <div class="chip" data-val="Beach">🏖️ Beach</div>
-                        <div class="chip" data-val="Cultural">🏛️ Cultural</div>
-                        <div class="chip" data-val="Food">🍜 Food & Dining</div>
-                        <div class="chip" data-val="Nature">🌿 Nature</div>
-                        <div class="chip" data-val="Luxury">✨ Luxury</div>
-                        <div class="chip" data-val="Budget">💰 Budget</div>
-                        <div class="chip" data-val="Family">👨‍👩‍👧 Family</div>
-                        <div class="chip" data-val="Solo">🧘 Solo</div>
-                        <div class="chip" data-val="Nightlife">🌙 Nightlife</div>
-                    </div>
-                    <input type="hidden" name="travel_interests" id="id_travel_interests">
-                    <p class="chip-hint">Select your travel interests (you can choose multiple)</p>
-                    {% if form.travel_interests.errors %}<div class="field-error"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/></svg>{{ form.travel_interests.errors|join:", " }}</div>{% endif %}
-                </div>
+                
 
-                <div class="form-group no-icon">
-                    <label>Preferred Budget Range (per day)</label>
-                    <div class="budget-slider">
-                        <input type="range" name="budget_min" id="id_budget_min" min="0" max="50000" step="1000" value="{{ form.budget_min.value|default:'5000' }}">
-                        <div class="budget-value" id="budgetDisplay">₹0 - ₹50,000+</div>
-                    </div>
-                    <input type="hidden" name="budget_max" id="id_budget_max">
-                    {% if form.budget_min.errors %}<div class="field-error"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/></svg>{{ form.budget_min.errors|join:", " }}</div>{% endif %}
-                </div>
-
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>Preferred Travel Season</label>
-                        <div class="input-wrap">
-                            <span class="input-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></span>
-                            <select name="preferred_season" id="id_preferred_season">
-                                <option value="">Any season</option>
-                                <option value="spring" {% if form.preferred_season.value == 'spring' %}selected{% endif %}>🌸 Spring (Mar-May)</option>
-                                <option value="summer" {% if form.preferred_season.value == 'summer' %}selected{% endif %}>☀️ Summer (Jun-Aug)</option>
-                                <option value="autumn" {% if form.preferred_season.value == 'autumn' %}selected{% endif %}>🍂 Autumn (Sep-Nov)</option>
-                                <option value="winter" {% if form.preferred_season.value == 'winter' %}selected{% endif %}>❄️ Winter (Dec-Feb)</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label>Travel Style</label>
-                        <div class="input-wrap">
-                            <span class="input-icon"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span>
-                            <select name="travel_style" id="id_travel_style">
-                                <option value="">Select style</option>
-                                <option value="luxury" {% if form.travel_style.value == 'luxury' %}selected{% endif %}>💎 Luxury</option>
-                                <option value="mid_range" {% if form.travel_style.value == 'mid_range' %}selected{% endif %}>🏨 Mid-range</option>
-                                <option value="backpacker" {% if form.travel_style.value == 'backpacker' %}selected{% endif %}>🎒 Backpacker</option>
-                                <option value="family" {% if form.travel_style.value == 'family' %}selected{% endif %}>👨‍👩‍👧 Family-friendly</option>
-                                <option value="solo" {% if form.travel_style.value == 'solo' %}selected{% endif %}>🧘 Solo traveller</option>
-                                <option value="group" {% if form.travel_style.value == 'group' %}selected{% endif %}>👥 Group tours</option>
-                            </select>
-                        </div>
-                    </div>
-                </div>
+                
 
                 <!-- Catch any additional Django form fields -->
                 {% for field in form %}
-                    {% if field.name not in "first_name,last_name,username,email,password1,password2,profile_picture,date_of_birth,phone,location,bio,travel_interests,budget_min,budget_max,preferred_season,travel_style" %}
+                    {% if field.name not in "first_name,last_name,username,email,password1,password2,profile_picture,mobile" %}
                     <div class="form-group no-icon">
                         <label>{{ field.label }}{% if field.field.required %} <span class="req">*</span>{% endif %}</label>
                         {{ field }}

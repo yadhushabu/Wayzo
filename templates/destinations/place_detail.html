@@ -1,0 +1,859 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{{ place.name }} - {{ place.destination.name }}</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+
+        /* Hero Section */
+        .hero {
+            position: relative;
+            height: 500px;
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+        }
+
+        .hero-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(to bottom, rgba(0,0,0,0.3), rgba(0,0,0,0.7));
+            display: flex;
+            align-items: flex-end;
+            padding: 40px;
+        }
+
+        .hero-content {
+            color: white;
+            z-index: 1;
+        }
+
+        .hero h1 {
+            font-size: 48px;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+
+        .destination-link {
+            color: white;
+            text-decoration: none;
+            opacity: 0.9;
+            margin-bottom: 15px;
+            display: inline-block;
+        }
+
+        .destination-link:hover {
+            opacity: 1;
+            text-decoration: underline;
+        }
+
+        .badge-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .badge {
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: bold;
+            display: inline-block;
+        }
+
+        .badge-gem {
+            background: #9c27b0;
+            color: white;
+        }
+
+        .badge-rating {
+            background: #4caf50;
+            color: white;
+        }
+
+        .badge-difficulty {
+            background: #ff9800;
+            color: white;
+        }
+
+        .badge-weather {
+            background: #00bcd4;
+            color: white;
+        }
+
+        .badge-photography {
+            background: #2196f3;
+            color: white;
+        }
+
+        .badge-sunset {
+            background: #ff5722;
+            color: white;
+        }
+
+        .badge-sunrise {
+            background: #ffc107;
+            color: white;
+        }
+
+        .content {
+            padding: 40px;
+        }
+
+        /* Info Grid */
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .info-card {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+            transition: transform 0.3s;
+        }
+
+        .info-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .info-card h3 {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 10px;
+        }
+
+        .info-card p {
+            font-size: 24px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        /* Score Dashboard */
+        .score-dashboard {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 30px;
+            color: white;
+        }
+
+        .main-score {
+            text-align: center;
+            padding: 20px;
+        }
+
+        .main-score .score-value {
+            font-size: 64px;
+            font-weight: bold;
+        }
+
+        .score-breakdown {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .score-item {
+            background: rgba(255,255,255,0.2);
+            padding: 12px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .score-item .score-name {
+            font-size: 11px;
+            opacity: 0.8;
+            margin-bottom: 5px;
+        }
+
+        .score-item .score-number {
+            font-size: 20px;
+            font-weight: bold;
+        }
+
+        /* Weather Panel */
+        .weather-panel {
+            background: linear-gradient(135deg, #00bcd4, #0288d1);
+            color: white;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+        }
+
+        .weather-main {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+        }
+
+        .weather-temp {
+            font-size: 48px;
+            font-weight: bold;
+        }
+
+        .weather-icon {
+            width: 80px;
+            height: 80px;
+        }
+
+        .weather-match {
+            background: rgba(255,255,255,0.2);
+            padding: 10px;
+            border-radius: 8px;
+            margin-top: 10px;
+            text-align: center;
+        }
+
+        /* Map */
+        .map-container {
+            margin-bottom: 30px;
+        }
+
+        #map {
+            height: 350px;
+            border-radius: 12px;
+        }
+
+        .map-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .map-btn {
+            padding: 8px 15px;
+            background: #667eea;
+            color: white;
+            text-decoration: none;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+
+        /* Description */
+        .description {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 12px;
+            margin-bottom: 25px;
+            line-height: 1.8;
+        }
+
+        /* Timing Info */
+        .timing-info {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .timing-card {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+        }
+
+        /* Gallery */
+        .gallery {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .gallery-item {
+            position: relative;
+            border-radius: 12px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: transform 0.3s;
+        }
+
+        .gallery-item:hover {
+            transform: scale(1.05);
+        }
+
+        .gallery-item img {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+        }
+
+        /* Modal for images */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.9);
+        }
+
+        .modal-content {
+            margin: auto;
+            display: block;
+            max-width: 90%;
+            max-height: 90%;
+            margin-top: 50px;
+        }
+
+        .close {
+            position: absolute;
+            top: 15px;
+            right: 35px;
+            color: #fff;
+            font-size: 40px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        /* Activities */
+        .activities-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .activity-card {
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 12px;
+            padding: 20px;
+            transition: all 0.3s;
+        }
+
+        .activity-card:hover {
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            transform: translateY(-3px);
+        }
+
+        .activity-price {
+            font-size: 24px;
+            color: #4caf50;
+            font-weight: bold;
+        }
+
+        /* Reviews */
+        .reviews-section {
+            margin-top: 30px;
+        }
+
+        .review-card {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 15px;
+        }
+
+        .review-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            flex-wrap: wrap;
+        }
+
+        .review-user {
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .stars {
+            color: #ffc107;
+            font-size: 18px;
+        }
+
+        .review-date {
+            font-size: 12px;
+            color: #999;
+        }
+
+        .review-text {
+            margin-top: 10px;
+            line-height: 1.6;
+            color: #555;
+        }
+
+        /* Travel Tips */
+        .tips-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .tip-card {
+            background: #e8f4f8;
+            padding: 20px;
+            border-radius: 12px;
+        }
+
+        .tip-card h3 {
+            margin-bottom: 10px;
+            color: #667eea;
+        }
+
+        /* Action Buttons */
+        .action-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 2px solid #f0f0f0;
+        }
+
+        .btn {
+            padding: 12px 25px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: bold;
+            transition: transform 0.3s;
+            display: inline-block;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-warning {
+            background: #ff9800;
+            color: white;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .section-title {
+            font-size: 28px;
+            margin: 30px 0 20px;
+            color: #333;
+            border-left: 5px solid #667eea;
+            padding-left: 15px;
+        }
+
+        .no-data {
+            text-align: center;
+            padding: 40px;
+            background: #f8f9fa;
+            border-radius: 12px;
+            color: #999;
+        }
+
+        @media (max-width: 768px) {
+            .hero {
+                height: 350px;
+            }
+            .hero h1 {
+                font-size: 28px;
+            }
+            .content {
+                padding: 20px;
+            }
+            .score-breakdown {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+    
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+</head>
+<body>
+
+<div class="container">
+    <!-- Hero Section -->
+    <div class="hero" style="background-image: url('{% if place.images.first %}{{ place.images.first.image.url }}{% else %}https://via.placeholder.com/1200x500?text={{ place.name|urlencode }}{% endif %}')">
+        <div class="hero-overlay">
+            <div class="hero-content">
+                <a href="{% url 'destinations:destination_detail' place.destination.id %}" class="destination-link">
+                    ← {{ place.destination.name }}
+                </a>
+                <h1>{{ place.name }}</h1>
+                <div class="badge-container">
+                    {% if place.is_hidden_gem %}
+                        <span class="badge badge-gem">💎 Hidden Gem</span>
+                    {% endif %}
+                    {% if place.average_rating > 0 %}
+                        <span class="badge badge-rating">⭐ {{ place.average_rating|floatformat:1 }}</span>
+                    {% endif %}
+                    <span class="badge badge-difficulty">
+                        {% if place.difficulty_level == 'easy' %}🟢 Easy
+                        {% elif place.difficulty_level == 'moderate' %}🟡 Moderate
+                        {% else %}🔴 Hard{% endif %}
+                    </span>
+                    {% if place.best_for_photography %}
+                        <span class="badge badge-photography">📷 Best for Photography</span>
+                    {% endif %}
+                    {% if place.best_for_sunset %}
+                        <span class="badge badge-sunset">🌅 Best for Sunset</span>
+                    {% endif %}
+                    {% if place.best_for_sunrise %}
+                        <span class="badge badge-sunrise">🌄 Best for Sunrise</span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="content">
+        <!-- Score Dashboard -->
+        <div class="score-dashboard">
+            <div class="main-score">
+                <div class="score-value">{{ popularity_score|floatformat:0|default:place.popularity_score|floatformat:0 }}<span style="font-size: 24px;">/100</span></div>
+                <div class="score-label">🏆 Place Popularity Score</div>
+            </div>
+            <div class="score-breakdown">
+                <div class="score-item">
+                    <div class="score-name">⭐ Rating</div>
+                    <div class="score-number">{{ place.average_rating|floatformat:0|default:0 }}</div>
+                </div>
+                <div class="score-item">
+                    <div class="score-name">👀 Visits</div>
+                    <div class="score-number">{{ place.visit_count|default:0 }}</div>
+                </div>
+                <div class="score-item">
+                    <div class="score-name">📝 Reviews</div>
+                    <div class="score-number">{{ place.total_reviews|default:0 }}</div>
+                </div>
+                <div class="score-item">
+                    <div class="score-name">🎯 Priority</div>
+                    <div class="score-number">{{ place.priority_score|default:0 }}</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Live Weather Panel -->
+        {% if weather_data %}
+        <div class="weather-panel">
+            <div class="weather-main">
+                <div>
+                    <div class="weather-temp">{{ weather_data.temp }}°C</div>
+                    <div>{{ weather_data.description|title }}</div>
+                </div>
+                <img class="weather-icon" src="https://openweathermap.org/img/w/{{ weather_data.icon }}.png" alt="Weather">
+                <div>
+                    <div>💧 Humidity: {{ weather_data.humidity }}%</div>
+                    <div>💨 Wind: {{ weather_data.wind }} km/h</div>
+                </div>
+            </div>
+            {% if place.preferred_weather %}
+                {% if place.preferred_weather|lower in weather_data.description|lower %}
+                    <div class="weather-match">✅ Weather matches your preferred conditions! Perfect time to visit.</div>
+                {% else %}
+                    <div class="weather-match">⚠️ Current weather differs from preferred ({{ place.get_preferred_weather_display }}). Check best months above.</div>
+                {% endif %}
+            {% endif %}
+        </div>
+        {% endif %}
+
+        <!-- Info Grid -->
+        <div class="info-grid">
+            <div class="info-card">
+                <h3>⭐ Average Rating</h3>
+                <p>{{ place.average_rating|floatformat:1|default:"0" }} / 5</p>
+            </div>
+            <div class="info-card">
+                <h3>📝 Total Reviews</h3>
+                <p>{{ place.total_reviews|default:"0" }}</p>
+            </div>
+            <div class="info-card">
+                <h3>👀 Total Visits</h3>
+                <p>{{ place.visit_count|default:"0" }}</p>
+            </div>
+            <div class="info-card">
+                <h3>⏱️ Avg Visit Duration</h3>
+                <p>{{ place.avg_visit_duration|default:"120" }} min</p>
+            </div>
+        </div>
+
+        <!-- Description -->
+        {% if place.description %}
+            <div class="description">
+                <h3 style="margin-bottom: 15px;">📖 About {{ place.name }}</h3>
+                <p>{{ place.description|linebreaks }}</p>
+            </div>
+        {% endif %}
+
+        <!-- Timing Information -->
+        <div class="timing-info">
+            {% if place.opening_time %}
+            <div class="timing-card">
+                <h3>🕒 Opening Time</h3>
+                <p>{{ place.opening_time|time:"g:i A" }}</p>
+            </div>
+            {% endif %}
+            {% if place.closing_time %}
+            <div class="timing-card">
+                <h3>🕒 Closing Time</h3>
+                <p>{{ place.closing_time|time:"g:i A" }}</p>
+            </div>
+            {% endif %}
+            <div class="timing-card">
+                <h3>💰 Entry Fee</h3>
+                <p>{% if place.entry_fee == 0 %}🎫 Free{% else %}₹{{ place.entry_fee }}{% endif %}</p>
+            </div>
+            <div class="timing-card">
+                <h3>🅿️ Parking Fee</h3>
+                <p>{% if place.parking_fee == 0 %}🎫 Free{% else %}₹{{ place.parking_fee }}{% endif %}</p>
+            </div>
+        </div>
+
+        <!-- Best Time Info -->
+        <div class="timing-info">
+            <div class="timing-card">
+                <h3>🌅 Best Time of Day</h3>
+                <p>{{ place.best_time_of_day|default:"Not specified" }}</p>
+            </div>
+            <div class="timing-card">
+                <h3>📅 Best Months</h3>
+                <p>{{ place.best_months_to_visit|default:"Not specified" }}</p>
+            </div>
+            <div class="timing-card">
+                <h3>👥 Suitable For</h3>
+                <p>{{ place.get_suitable_for_display|default:"Everyone" }}</p>
+            </div>
+        </div>
+
+        <!-- Map Section -->
+        {% if place.latitude and place.longitude %}
+        <div class="map-container">
+            <h3 class="section-title">🗺️ Location Map</h3>
+            <div id="map"></div>
+            <div class="map-buttons">
+                <a href="https://www.google.com/maps?q={{ place.latitude }},{{ place.longitude }}" 
+                   target="_blank" class="map-btn">🗺️ Open in Google Maps</a>
+                <a href="https://www.openstreetmap.org/?mlat={{ place.latitude }}&mlon={{ place.longitude }}" 
+                   target="_blank" class="map-btn">📍 Open in OpenStreetMap</a>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- How to Reach -->
+        {% if place.how_to_reach %}
+            <div class="description">
+                <h3 style="margin-bottom: 15px;">🚗 How to Reach</h3>
+                <p>{{ place.how_to_reach|linebreaks }}</p>
+                {% if place.nearest_transport %}
+                    <p><strong>Nearest Transport:</strong> {{ place.nearest_transport }}</p>
+                {% endif %}
+                {% if place.road_condition %}
+                    <p><strong>Road Condition:</strong> {{ place.road_condition }}</p>
+                {% endif %}
+            </div>
+        {% endif %}
+
+        <!-- Gallery Section -->
+        {% if gallery %}
+            <h3 class="section-title">📸 Photo Gallery</h3>
+            <div class="gallery">
+                {% for image in gallery %}
+                    <div class="gallery-item" onclick="openModal('{{ image.image.url }}')">
+                        <img src="{{ image.image.url }}" alt="Gallery image">
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        <!-- Activities Section -->
+        <h3 class="section-title">🎯 Activities & Experiences</h3>
+        {% if activities %}
+            <div class="activities-grid">
+                {% for activity in activities %}
+                    <div class="activity-card">
+                        <h3>{{ activity.name }}</h3>
+                        <p>{{ activity.description|default:"No description" }}</p>
+                        <div class="activity-price">₹{{ activity.price }}</div>
+                        <div>⏱️ {{ activity.duration|default:"Not specified" }}</div>
+                        <div>{% if activity.is_available %}✅ Available{% else %}❌ Currently Unavailable{% endif %}</div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="no-data">
+                <p>No activities listed yet. Check back soon!</p>
+            </div>
+        {% endif %}
+
+        <!-- Travel Tips Section -->
+        <div class="tips-grid">
+            {% if place.travel_tips %}
+            <div class="tip-card">
+                <h3>💡 Travel Tips</h3>
+                <p>{{ place.travel_tips|linebreaks }}</p>
+            </div>
+            {% endif %}
+            {% if place.safety_tips %}
+            <div class="tip-card">
+                <h3>⚠️ Safety Tips</h3>
+                <p>{{ place.safety_tips|linebreaks }}</p>
+            </div>
+            {% endif %}
+            {% if place.things_to_carry %}
+            <div class="tip-card">
+                <h3>🎒 Things to Carry</h3>
+                <p>{{ place.things_to_carry|linebreaks }}</p>
+            </div>
+            {% endif %}
+            {% if place.things_to_do %}
+            <div class="tip-card">
+                <h3>🎯 Things to Do</h3>
+                <p>{{ place.things_to_do|linebreaks }}</p>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Reviews Section -->
+<div class="reviews-section">
+    <h3 class="section-title">⭐ Customer Reviews ({{ reviews|length }})</h3>
+    {% if reviews %}
+        {% for review in reviews %}
+            <div class="review-card">
+                <div class="review-header">
+                    <div>
+                        <span class="review-user">
+                            {% if review.user == request.user %}
+                                You
+                            {% else %}
+                                {{ review.user.username }}
+                            {% endif %}
+                        </span>
+                        <div class="stars">
+                            {% for i in "12345"|make_list %}
+                                {% if forloop.counter <= review.rating %}★{% else %}☆{% endif %}
+                            {% endfor %}
+                            <span style="color: #666; margin-left: 5px;">({{ review.rating }}/5)</span>
+                        </div>
+                    </div>
+                    <div class="review-date">{{ review.created_at|date:"F j, Y" }}</div>
+                </div>
+                <div class="review-text">{{ review.review|linebreaks }}</div>
+                {% if review.user == request.user %}
+                    <div style="margin-top: 10px;">
+                        <a href="{% url 'destinations:edit_review' review.id %}" style="font-size: 12px; color: #667eea; text-decoration: none;">
+                            ✏️ Edit Review
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        {% endfor %}
+    {% else %}
+        <div class="no-data">
+            <p>No reviews yet. Be the first to review this place!</p>
+        </div>
+    {% endif %}
+</div>
+
+        <!-- Action Buttons -->
+        <div class="action-buttons">
+            <a href="{% url 'destinations:add_review' place.id %}" class="btn btn-primary">✍️ Write a Review</a>
+
+
+            {% if request.user == place.created_by or request.user.is_staff %}
+                <a href="{% url 'destinations:edit_place' place.id %}" class="btn btn-warning">✏️ Edit Place</a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Image Modal -->
+<div id="imageModal" class="modal">
+    <span class="close" onclick="closeModal()">&times;</span>
+    <img class="modal-content" id="modalImage">
+</div>
+
+<script>
+// Initialize map
+{% if place.latitude and place.longitude %}
+function initMap() {
+    const lat = {{ place.latitude }};
+    const lng = {{ place.longitude }};
+    
+    const map = L.map('map').setView([lat, lng], 15);
+    
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> contributors'
+    }).addTo(map);
+    
+    L.marker([lat, lng]).addTo(map)
+        .bindPopup('<b>{{ place.name }}</b><br>{{ place.destination.name }}')
+        .openPopup();
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    initMap();
+});
+{% endif %}
+
+// Modal functions
+function openModal(imageUrl) {
+    const modal = document.getElementById('imageModal');
+    const modalImg = document.getElementById('modalImage');
+    modal.style.display = 'block';
+    modalImg.src = imageUrl;
+}
+
+function closeModal() {
+    document.getElementById('imageModal').style.display = 'none';
+}
+
+// Close modal on escape key
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        closeModal();
+    }
+});
+
+// Log for debugging
+document.addEventListener('DOMContentLoaded', function() {
+    console.log("Place loaded: {{ place.name }}");
+    console.log("Rating: {{ place.average_rating }}");
+    console.log("Activities: {{ activities|length }}");
+    console.log("Reviews: {{ reviews|length }}");
+    console.log("Gallery: {{ gallery|length }}");
+});
+</script>
+
+</body>
+</html>

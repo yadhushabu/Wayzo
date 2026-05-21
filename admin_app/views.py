@@ -1,9 +1,11 @@
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import login_required, user_passes_test
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import get_user_model
 from django.contrib import messages
 from django.utils import timezone
 from datetime import timedelta
+
+from destinations.models import DestinationPlace
 
 User = get_user_model()
 
@@ -133,15 +135,24 @@ def toggle_verification(request, user_id):
     return redirect('admin_app:user_profile', user_id=user.id)
 
 
-from django.contrib.admin.views.decorators import staff_member_required
-from django.shortcuts import render
-from destinations.models import Destination
 
-@staff_member_required
-def destination_dashboard(request):
 
-    destinations = Destination.objects.all().order_by("-id")
 
-    return render(request, "admin_app/destination_dashboard.html", {
-        "destinations": destinations
-    })
+# @user_passes_test(lambda u: u.is_staff)
+# def pending_places(request):
+
+#     places = DestinationPlace.objects.filter(is_approved=False)
+
+#     return render(request, "destinations/pending_places.html", {
+#         "places": places
+#     })
+
+# @user_passes_test(lambda u: u.is_staff)
+# def approve_place(request, place_id):
+
+#     place = get_object_or_404(DestinationPlace, id=place_id)
+
+#     place.is_approved = True
+#     place.save()
+
+#     return redirect("destinations:pending_places")
