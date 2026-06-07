@@ -15,7 +15,19 @@ urlpatterns = [
     path('agency/<int:id>/', views.agency_detail, name='agency_detail'),
     path('booking/approve/<int:id>/', views.approve_booking, name='approve_booking'),
     path('booking/reject/<int:id>/', views.reject_booking, name='reject_booking'),
-    path('notifications/', views.all_notifications, name='all_notifications'),
-    path('cancel_booking/<int:id>/',views.cancel_booking_by_agency,name="cancel_booking_by_agency")
+    path('cancel_booking/<int:id>/',views.cancel_booking_by_agency,name="cancel_booking_by_agency"),
+    path(
+        "earnings/",
+        views.agency_earnings,
+        name="agency_earnings"
+    ),
+
+    path('api/booking-details/<int:booking_id>/', views.booking_details_api, name='booking_details_api'),
+
+    # path(
+    #     "support/",
+    #     views.support_center,
+    #     name="support_center"
+    # ),
 
 ]

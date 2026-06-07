@@ -27,10 +27,10 @@ urlpatterns = [
     # PLACE DETAIL
     # =====================================================
     path(
-        "place/<int:place_id>/",
-        views.place_detail,
-        name="place_detail"
-    ),
+    "destination/<int:destination_id>/place/<int:place_id>/",
+    views.place_detail,
+    name="place_detail"
+),
 
     # =====================================================
     # ADD DESTINATION
@@ -80,4 +80,53 @@ urlpatterns = [
 
     path('review/<int:review_id>/edit/', views.edit_review, name='edit_review'),
     path('review/<int:review_id>/delete/', views.delete_review, name='delete_review'),
+
+    path(
+        "place/<int:place_id>/delete/",
+        views.delete_place,
+        name="delete_place"
+    ),
+
+    path(
+    "destination/<int:destination_id>/add-review/",
+    views.add_destination_review,
+    name="add_destination_review"
+),
+
+path(
+    "destination-review/<int:review_id>/edit/",
+    views.edit_destination_review,
+    name="edit_destination_review"
+),
+
+path(
+    "destination-review/<int:review_id>/delete/",
+    views.delete_destination_review,
+    name="delete_destination_review"
+),
+
+path(
+    "approve-destination/<int:destination_id>/",
+    views.approve_destination,
+    name="approve_destination"
+),
+
+path(
+    "reject-destination/<int:destination_id>/",
+    views.reject_destination,
+    name="reject_destination"
+),
+
+path(
+    "approve-place/<int:place_id>/",
+    views.approve_place,
+    name="approve_place"
+),
+
+path(
+    "reject-place/<int:place_id>/",
+    views.reject_place,
+    name="reject_place"
+),
+
 ]

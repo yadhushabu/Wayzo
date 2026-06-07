@@ -1,33 +1,608 @@
-<h2>Notifications 🔔</h2>
+{% extends base_template %}
+{% load static %}
 
-{% for n in notifications %}
+{% block title %}Notifications | Wayzo{% endblock %}
+{% block nav_community %}active{% endblock %}
 
-    <div>
-        <p>{{ n.message }}</p>
+{# ==============================================================
+   We define BOTH style block names used across all 4 base templates:
+     travellers/base.html   → extra_styles  (CSS is inside <style> tag)
+     admin_app/base.html    → extra_styles  (CSS is inside <style> tag)
+     restaurants/base_restaurant.html → extra_css
+     agencies/base_agencies.html      → extra_css
+   Django picks whichever block the parent defines; the other is a no-op.
+=============================================================== #}
 
-        {% if n.notification_type == "join_request" %}
+{% block extra_styles %}{{ block.super }}
+<style>
+/* ── Zero out admin content-area padding so hero bleeds full-width ── */
+.content-area { padding: 0 !important; }
+</style>
 
-            {% if n.request.status == "pending" %}
-                <a href="{% url 'accept_request' n.request.id %}">✅ Accept</a>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap');
 
-            {% elif n.request.status == "approved" %}
-                <p style="color: green;">✔ You accepted this request</p>
+/* ── HERO ── */
+.notif-hero {
+  background: linear-gradient(135deg,#0a3d3d 0%,#082828 100%) !important;
+  position: relative;
+  overflow: hidden;
+  padding: 2.2rem 2.5rem 2.4rem;
+  /* bleed past any content wrapper */
+  margin-top: -2rem;
+  margin-left: -2.5rem;
+  margin-right: -2.5rem;
+  margin-bottom: 0;
+}
+.notif-hero::before {
+  content:'';position:absolute;inset:0;z-index:0;
+  background:
+    radial-gradient(ellipse 60% 80% at 12% 50%,rgba(14,138,138,.28) 0%,transparent 65%),
+    radial-gradient(ellipse 45% 65% at 88% 50%,rgba(14,138,138,.16) 0%,transparent 65%);
+}
+.notif-hero-inner {
+  position:relative;z-index:2;
+  display:flex;align-items:flex-start;justify-content:space-between;
+  flex-wrap:wrap;gap:1.2rem;
+  max-width:1200px;margin:0 auto;
+}
+.hero-eyebrow {
+  font-size:.68rem;font-weight:700;letter-spacing:.15em;
+  text-transform:uppercase;color:#5FC5C5;margin-bottom:.65rem;
+  display:flex;align-items:center;gap:.6rem;
+}
+.hero-eyebrow::before {
+  content:'';width:22px;height:1.5px;background:#5FC5C5;opacity:.55;flex-shrink:0;
+}
+.notif-hero h1 {
+  font-family:'Inter',sans-serif;font-size:clamp(1.4rem,2.5vw,1.9rem);
+  font-weight:700;color:#fff;line-height:1.2;margin-bottom:.4rem;letter-spacing:-.03em;
+}
+.notif-hero p {font-size:.83rem;color:rgba(255,255,255,.62);font-family:'DM Sans',sans-serif;line-height:1.6;}
 
-            {% elif n.request.status == "rejected" %}
-                <p style="color: red;">❌ Request rejected</p>
-            {% endif %}
+/* Hero stat pills */
+.hero-stats {display:flex;align-items:center;gap:.6rem;flex-wrap:wrap;align-self:flex-end;margin-bottom:.15rem;}
+.hero-stat-pill {
+  display:flex;align-items:center;gap:.35rem;
+  padding:.38rem .85rem;border-radius:99px;
+  font-size:.71rem;font-weight:600;font-family:'DM Sans',sans-serif;
+  backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.12);white-space:nowrap;
+}
+.hero-stat-pill.total  {background:rgba(255,255,255,.1);color:#e0f2f2;}
+.hero-stat-pill.unread {background:rgba(14,138,138,.35);color:#5FFFFF;border-color:rgba(14,138,138,.5);}
+.hero-stat-pill.latest {background:rgba(255,255,255,.07);color:rgba(255,255,255,.5);}
 
-        {% endif %}
+/* live dot */
+.live-dot {
+  width:6px;height:6px;border-radius:50%;background:#10B981;display:inline-block;
+  box-shadow:0 0 0 2px rgba(16,185,129,.25);
+  animation:pulse-dot 2s ease-in-out infinite;
+}
+@keyframes pulse-dot {
+  0%,100%{box-shadow:0 0 0 2px rgba(16,185,129,.25);}
+  50%{box-shadow:0 0 0 5px rgba(16,185,129,.08);}
+}
 
-        {% if n.profile_post %}
-            <a href="{% url 'travellers:user_profile' n.profile_post.user.id %}">
-                View Post
-            </a>
-        {% endif %}
+/* ── PAGE BODY ── */
+.notif-page-body {padding:2rem 2.5rem 3rem;}
+.notif-panel {
+  max-width:860px;margin:0 auto;background:#fff;
+  border-radius:20px;overflow:hidden;
+  border:1px solid #E5E7EB;box-shadow:0 6px 28px rgba(0,0,0,.07);
+}
+
+/* Panel header */
+.notif-panel-header {
+  padding:1.1rem 1.5rem;border-bottom:1px solid #F3F4F6;background:#FAFAFA;
+  display:flex;justify-content:space-between;align-items:center;gap:1rem;flex-wrap:wrap;
+}
+.notif-panel-title {
+  display:flex;align-items:center;gap:.55rem;
+  font-size:.85rem;font-weight:700;color:#111827;font-family:'Inter',sans-serif;
+}
+.panel-teal-dot {width:8px;height:8px;border-radius:50%;background:#0E8A8A;flex-shrink:0;}
+.unread-badge {
+  background:#0E8A8A;color:#fff;font-size:.65rem;font-weight:700;
+  padding:.16rem .55rem;border-radius:99px;font-family:'DM Sans',sans-serif;
+}
+.mark-all-btn {
+  display:inline-flex;align-items:center;gap:.3rem;background:none;
+  border:1px solid #E5E7EB;color:#0E8A8A;cursor:pointer;
+  font-size:.75rem;font-weight:600;padding:.38rem .9rem;border-radius:8px;
+  transition:all .15s;font-family:'DM Sans',sans-serif;
+}
+.mark-all-btn:hover {background:#E6F4F4;border-color:#0E8A8A;}
+
+/* ── NOTIFICATION ITEM ── */
+.notif-item {
+  display:flex;align-items:flex-start;gap:1rem;
+  padding:1.1rem 1.5rem;border-bottom:1px solid #F9FAFB;
+  transition:background .14s;position:relative;cursor:pointer;
+}
+.notif-item:last-child{border-bottom:none;}
+.notif-item:hover{background:#FAFBFC;}
+.notif-item.unread{background:#EAF4F4;border-left:3px solid #0E8A8A;}
+.notif-item.unread:hover{background:#E0EEEE;}
+
+/* Avatar */
+.notif-avatar {
+  width:46px;height:46px;border-radius:50%;
+  background:linear-gradient(135deg,#0E8A8A,#1aafaf);
+  display:flex;align-items:center;justify-content:center;
+  overflow:hidden;flex-shrink:0;font-size:1rem;font-weight:700;color:#fff;
+  font-family:'Inter',sans-serif;
+}
+.notif-avatar img{width:100%;height:100%;object-fit:cover;}
+
+/* Content */
+.notif-content{flex:1;min-width:0;}
+.notif-message{font-size:.85rem;color:#111827;line-height:1.55;font-family:'DM Sans',sans-serif;margin-bottom:.28rem;}
+.notif-time{font-size:.68rem;color:#9CA3AF;font-family:'DM Sans',sans-serif;margin-bottom:.55rem;}
+.notif-post-preview{
+  margin-top:.45rem;padding:.45rem .75rem;background:#F3F4F6;
+  border-radius:8px;font-size:.73rem;color:#6B7280;
+  font-family:'DM Sans',sans-serif;margin-bottom:.5rem;
+}
+.notif-post-preview strong{color:#374151;font-weight:600;}
+
+/* Buddy actions */
+.buddy-actions{display:flex;gap:.45rem;align-items:center;margin-top:.55rem;flex-wrap:wrap;}
+.btn-accept,.btn-decline{
+  padding:.38rem 1.1rem;border-radius:8px;font-size:.73rem;font-weight:700;
+  border:none;cursor:pointer;font-family:'DM Sans',sans-serif;
+  transition:all .18s;display:inline-flex;align-items:center;gap:.3rem;
+}
+.btn-accept{background:#0E8A8A;color:#fff;}
+.btn-accept:hover:not(:disabled){background:#0A6B6B;transform:translateY(-1px);box-shadow:0 3px 10px rgba(14,138,138,.3);}
+.btn-decline{background:#F3F4F6;color:#6B7280;border:1px solid #E5E7EB;}
+.btn-decline:hover:not(:disabled){background:#FEF2F2;color:#DC2626;border-color:#FCA5A5;}
+.btn-accept:disabled,.btn-decline:disabled{opacity:.5;cursor:not-allowed;transform:none!important;}
+
+/* Result pill (Instagram-style) */
+.buddy-result-pill{
+  display:inline-flex;align-items:center;gap:.4rem;
+  padding:.35rem .9rem;border-radius:99px;
+  font-size:.72rem;font-weight:700;font-family:'DM Sans',sans-serif;
+  animation:pill-pop .35s cubic-bezier(0.34,1.56,0.64,1) both;
+}
+@keyframes pill-pop{from{opacity:0;transform:scale(.75);}to{opacity:1;transform:scale(1);}}
+.buddy-result-pill.accepted{background:#D1FAE5;color:#065F46;border:1px solid #6EE7B7;}
+.buddy-result-pill.declined{background:#F3F4F6;color:#6B7280;border:1px solid #E5E7EB;}
+
+/* Spinner */
+.btn-spinner{
+  width:12px;height:12px;border:2px solid rgba(255,255,255,.4);
+  border-top-color:#fff;border-radius:50%;
+  animation:spin .7s linear infinite;display:inline-block;
+}
+@keyframes spin{to{transform:rotate(360deg);}}
+
+/* Right column */
+.notif-right-col{display:flex;flex-direction:column;align-items:center;gap:.5rem;flex-shrink:0;}
+.notif-type-icon{width:34px;text-align:center;font-size:1.15rem;padding-top:.1rem;}
+.unread-dot{width:8px;height:8px;border-radius:50%;background:#0E8A8A;flex-shrink:0;}
+
+/* Empty state */
+.notif-empty-state{text-align:center;padding:3.5rem 2rem;}
+.empty-icon{font-size:3.5rem;margin-bottom:1rem;opacity:.4;}
+.notif-empty-state h3{font-size:1rem;font-weight:700;color:#374151;font-family:'Inter',sans-serif;margin-bottom:.35rem;}
+.notif-empty-state p{font-size:.8rem;color:#9CA3AF;font-family:'DM Sans',sans-serif;}
+
+/* Toast */
+#notif-toast{
+  position:fixed;bottom:28px;left:50%;
+  transform:translateX(-50%) translateY(14px);
+  padding:.55rem 1.4rem;border-radius:99px;
+  font-size:.78rem;font-weight:600;font-family:'DM Sans',sans-serif;
+  color:#fff;z-index:9999;opacity:0;
+  transition:all .25s cubic-bezier(.4,0,.2,1);
+  pointer-events:none;white-space:nowrap;box-shadow:0 4px 20px rgba(0,0,0,.18);
+}
+#notif-toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+#notif-toast.success{background:#059669;}
+#notif-toast.error{background:#DC2626;}
+#notif-toast.info{background:#374151;}
+
+/* ── RESPONSIVE ── */
+@media(max-width:860px){
+  .notif-hero{padding:1.5rem 1.2rem 1.8rem;margin-top:-1.5rem;margin-left:-1rem;margin-right:-1rem;}
+  .notif-page-body{padding:1rem .75rem 2.5rem;}
+  .notif-panel{border-radius:14px;}
+  .notif-item{padding:.9rem 1rem;gap:.7rem;}
+  .notif-avatar{width:40px;height:40px;}
+}
+@media(max-width:480px){
+  .notif-hero h1{font-size:1.25rem;}
+  .hero-stat-pill{font-size:.65rem;padding:.3rem .65rem;}
+  .notif-hero{margin-left:-.75rem;margin-right:-.75rem;}
+}
+</style>
+
+{% endblock %}
+
+{% block extra_css %}{{ block.super }}
+<style>
+/* ── Zero out restaurant/agency content wrappers ── */
+.content          { padding: 0 !important; }
+.dashboard-layout { padding: 0 !important; }
+</style>
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap');
+
+/* ── HERO ── */
+.notif-hero {
+  background: linear-gradient(135deg,#0a3d3d 0%,#082828 100%) !important;
+  position: relative;
+  overflow: hidden;
+  padding: 2.2rem 2.5rem 2.4rem;
+  /* bleed past any content wrapper */
+  margin-top: -2rem;
+  margin-left: -2.5rem;
+  margin-right: -2.5rem;
+  margin-bottom: 0;
+}
+.notif-hero::before {
+  content:'';position:absolute;inset:0;z-index:0;
+  background:
+    radial-gradient(ellipse 60% 80% at 12% 50%,rgba(14,138,138,.28) 0%,transparent 65%),
+    radial-gradient(ellipse 45% 65% at 88% 50%,rgba(14,138,138,.16) 0%,transparent 65%);
+}
+.notif-hero-inner {
+  position:relative;z-index:2;
+  display:flex;align-items:flex-start;justify-content:space-between;
+  flex-wrap:wrap;gap:1.2rem;
+  max-width:1200px;margin:0 auto;
+}
+.hero-eyebrow {
+  font-size:.68rem;font-weight:700;letter-spacing:.15em;
+  text-transform:uppercase;color:#5FC5C5;margin-bottom:.65rem;
+  display:flex;align-items:center;gap:.6rem;
+}
+.hero-eyebrow::before {
+  content:'';width:22px;height:1.5px;background:#5FC5C5;opacity:.55;flex-shrink:0;
+}
+.notif-hero h1 {
+  font-family:'Inter',sans-serif;font-size:clamp(1.4rem,2.5vw,1.9rem);
+  font-weight:700;color:#fff;line-height:1.2;margin-bottom:.4rem;letter-spacing:-.03em;
+}
+.notif-hero p {font-size:.83rem;color:rgba(255,255,255,.62);font-family:'DM Sans',sans-serif;line-height:1.6;}
+
+/* Hero stat pills */
+.hero-stats {display:flex;align-items:center;gap:.6rem;flex-wrap:wrap;align-self:flex-end;margin-bottom:.15rem;}
+.hero-stat-pill {
+  display:flex;align-items:center;gap:.35rem;
+  padding:.38rem .85rem;border-radius:99px;
+  font-size:.71rem;font-weight:600;font-family:'DM Sans',sans-serif;
+  backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.12);white-space:nowrap;
+}
+.hero-stat-pill.total  {background:rgba(255,255,255,.1);color:#e0f2f2;}
+.hero-stat-pill.unread {background:rgba(14,138,138,.35);color:#5FFFFF;border-color:rgba(14,138,138,.5);}
+.hero-stat-pill.latest {background:rgba(255,255,255,.07);color:rgba(255,255,255,.5);}
+
+/* live dot */
+.live-dot {
+  width:6px;height:6px;border-radius:50%;background:#10B981;display:inline-block;
+  box-shadow:0 0 0 2px rgba(16,185,129,.25);
+  animation:pulse-dot 2s ease-in-out infinite;
+}
+@keyframes pulse-dot {
+  0%,100%{box-shadow:0 0 0 2px rgba(16,185,129,.25);}
+  50%{box-shadow:0 0 0 5px rgba(16,185,129,.08);}
+}
+
+/* ── PAGE BODY ── */
+.notif-page-body {padding:2rem 2.5rem 3rem;}
+.notif-panel {
+  max-width:860px;margin:0 auto;background:#fff;
+  border-radius:20px;overflow:hidden;
+  border:1px solid #E5E7EB;box-shadow:0 6px 28px rgba(0,0,0,.07);
+}
+
+/* Panel header */
+.notif-panel-header {
+  padding:1.1rem 1.5rem;border-bottom:1px solid #F3F4F6;background:#FAFAFA;
+  display:flex;justify-content:space-between;align-items:center;gap:1rem;flex-wrap:wrap;
+}
+.notif-panel-title {
+  display:flex;align-items:center;gap:.55rem;
+  font-size:.85rem;font-weight:700;color:#111827;font-family:'Inter',sans-serif;
+}
+.panel-teal-dot {width:8px;height:8px;border-radius:50%;background:#0E8A8A;flex-shrink:0;}
+.unread-badge {
+  background:#0E8A8A;color:#fff;font-size:.65rem;font-weight:700;
+  padding:.16rem .55rem;border-radius:99px;font-family:'DM Sans',sans-serif;
+}
+.mark-all-btn {
+  display:inline-flex;align-items:center;gap:.3rem;background:none;
+  border:1px solid #E5E7EB;color:#0E8A8A;cursor:pointer;
+  font-size:.75rem;font-weight:600;padding:.38rem .9rem;border-radius:8px;
+  transition:all .15s;font-family:'DM Sans',sans-serif;
+}
+.mark-all-btn:hover {background:#E6F4F4;border-color:#0E8A8A;}
+
+/* ── NOTIFICATION ITEM ── */
+.notif-item {
+  display:flex;align-items:flex-start;gap:1rem;
+  padding:1.1rem 1.5rem;border-bottom:1px solid #F9FAFB;
+  transition:background .14s;position:relative;cursor:pointer;
+}
+.notif-item:last-child{border-bottom:none;}
+.notif-item:hover{background:#FAFBFC;}
+.notif-item.unread{background:#EAF4F4;border-left:3px solid #0E8A8A;}
+.notif-item.unread:hover{background:#E0EEEE;}
+
+/* Avatar */
+.notif-avatar {
+  width:46px;height:46px;border-radius:50%;
+  background:linear-gradient(135deg,#0E8A8A,#1aafaf);
+  display:flex;align-items:center;justify-content:center;
+  overflow:hidden;flex-shrink:0;font-size:1rem;font-weight:700;color:#fff;
+  font-family:'Inter',sans-serif;
+}
+.notif-avatar img{width:100%;height:100%;object-fit:cover;}
+
+/* Content */
+.notif-content{flex:1;min-width:0;}
+.notif-message{font-size:.85rem;color:#111827;line-height:1.55;font-family:'DM Sans',sans-serif;margin-bottom:.28rem;}
+.notif-time{font-size:.68rem;color:#9CA3AF;font-family:'DM Sans',sans-serif;margin-bottom:.55rem;}
+.notif-post-preview{
+  margin-top:.45rem;padding:.45rem .75rem;background:#F3F4F6;
+  border-radius:8px;font-size:.73rem;color:#6B7280;
+  font-family:'DM Sans',sans-serif;margin-bottom:.5rem;
+}
+.notif-post-preview strong{color:#374151;font-weight:600;}
+
+/* Buddy actions */
+.buddy-actions{display:flex;gap:.45rem;align-items:center;margin-top:.55rem;flex-wrap:wrap;}
+.btn-accept,.btn-decline{
+  padding:.38rem 1.1rem;border-radius:8px;font-size:.73rem;font-weight:700;
+  border:none;cursor:pointer;font-family:'DM Sans',sans-serif;
+  transition:all .18s;display:inline-flex;align-items:center;gap:.3rem;
+}
+.btn-accept{background:#0E8A8A;color:#fff;}
+.btn-accept:hover:not(:disabled){background:#0A6B6B;transform:translateY(-1px);box-shadow:0 3px 10px rgba(14,138,138,.3);}
+.btn-decline{background:#F3F4F6;color:#6B7280;border:1px solid #E5E7EB;}
+.btn-decline:hover:not(:disabled){background:#FEF2F2;color:#DC2626;border-color:#FCA5A5;}
+.btn-accept:disabled,.btn-decline:disabled{opacity:.5;cursor:not-allowed;transform:none!important;}
+
+/* Result pill (Instagram-style) */
+.buddy-result-pill{
+  display:inline-flex;align-items:center;gap:.4rem;
+  padding:.35rem .9rem;border-radius:99px;
+  font-size:.72rem;font-weight:700;font-family:'DM Sans',sans-serif;
+  animation:pill-pop .35s cubic-bezier(0.34,1.56,0.64,1) both;
+}
+@keyframes pill-pop{from{opacity:0;transform:scale(.75);}to{opacity:1;transform:scale(1);}}
+.buddy-result-pill.accepted{background:#D1FAE5;color:#065F46;border:1px solid #6EE7B7;}
+.buddy-result-pill.declined{background:#F3F4F6;color:#6B7280;border:1px solid #E5E7EB;}
+
+/* Spinner */
+.btn-spinner{
+  width:12px;height:12px;border:2px solid rgba(255,255,255,.4);
+  border-top-color:#fff;border-radius:50%;
+  animation:spin .7s linear infinite;display:inline-block;
+}
+@keyframes spin{to{transform:rotate(360deg);}}
+
+/* Right column */
+.notif-right-col{display:flex;flex-direction:column;align-items:center;gap:.5rem;flex-shrink:0;}
+.notif-type-icon{width:34px;text-align:center;font-size:1.15rem;padding-top:.1rem;}
+.unread-dot{width:8px;height:8px;border-radius:50%;background:#0E8A8A;flex-shrink:0;}
+
+/* Empty state */
+.notif-empty-state{text-align:center;padding:3.5rem 2rem;}
+.empty-icon{font-size:3.5rem;margin-bottom:1rem;opacity:.4;}
+.notif-empty-state h3{font-size:1rem;font-weight:700;color:#374151;font-family:'Inter',sans-serif;margin-bottom:.35rem;}
+.notif-empty-state p{font-size:.8rem;color:#9CA3AF;font-family:'DM Sans',sans-serif;}
+
+/* Toast */
+#notif-toast{
+  position:fixed;bottom:28px;left:50%;
+  transform:translateX(-50%) translateY(14px);
+  padding:.55rem 1.4rem;border-radius:99px;
+  font-size:.78rem;font-weight:600;font-family:'DM Sans',sans-serif;
+  color:#fff;z-index:9999;opacity:0;
+  transition:all .25s cubic-bezier(.4,0,.2,1);
+  pointer-events:none;white-space:nowrap;box-shadow:0 4px 20px rgba(0,0,0,.18);
+}
+#notif-toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+#notif-toast.success{background:#059669;}
+#notif-toast.error{background:#DC2626;}
+#notif-toast.info{background:#374151;}
+
+/* ── RESPONSIVE ── */
+@media(max-width:860px){
+  .notif-hero{padding:1.5rem 1.2rem 1.8rem;margin-top:-1.5rem;margin-left:-1rem;margin-right:-1rem;}
+  .notif-page-body{padding:1rem .75rem 2.5rem;}
+  .notif-panel{border-radius:14px;}
+  .notif-item{padding:.9rem 1rem;gap:.7rem;}
+  .notif-avatar{width:40px;height:40px;}
+}
+@media(max-width:480px){
+  .notif-hero h1{font-size:1.25rem;}
+  .hero-stat-pill{font-size:.65rem;padding:.3rem .65rem;}
+  .notif-hero{margin-left:-.75rem;margin-right:-.75rem;}
+}
+</style>
+
+{% endblock %}
+
+{% block content %}
+<!-- ── HERO ── -->
+<div class="notif-hero">
+  <div class="notif-hero-inner">
+    <div class="notif-hero-left">
+      <div class="hero-eyebrow">Stay Connected</div>
+      <h1>🔔 Notifications</h1>
+      <p>Buddy requests, likes, comments &amp; community updates</p>
+    </div>
+    <div class="hero-stats">
+      <span class="hero-stat-pill total"><span class="live-dot"></span> {{ notifications|length }} total</span>
+      {% if unread_count > 0 %}
+      <span class="hero-stat-pill unread" id="heroUnreadPill">
+        <i class="fas fa-circle" style="font-size:.42rem;"></i> {{ unread_count }} unread
+      </span>
+      {% endif %}
+      <span class="hero-stat-pill latest"><i class="fas fa-check" style="font-size:.5rem;"></i> Latest first</span>
+    </div>
+  </div>
+</div>
+
+<!-- ── PANEL ── -->
+<div class="notif-page-body">
+  <div class="notif-panel">
+
+    <div class="notif-panel-header">
+      <div class="notif-panel-title">
+        <span class="panel-teal-dot"></span>
+        All Notifications
+        {% if unread_count > 0 %}<span class="unread-badge" id="unreadBadge">{{ unread_count }} new</span>{% endif %}
+      </div>
+      {% if notifications %}
+        <button class="mark-all-btn" onclick="markAllRead()">
+          <i class="fas fa-check-double"></i> Mark all as read
+        </button>
+      {% endif %}
     </div>
 
-{% empty %}
+    <div id="notificationsList">
+      {% for notification in notifications %}
+        <div class="notif-item {% if not notification.is_read %}unread{% endif %}"
+             id="notif-{{ notification.id }}"
+             data-notification-id="{{ notification.id }}"
+             data-notification-type="{{ notification.notification_type }}">
 
-    <p>No notifications</p>
+          <div class="notif-avatar">
+            {% if notification.sender and notification.sender.profile_picture %}
+              <img src="{{ notification.sender.profile_picture.url }}" alt="{{ notification.sender.username }}">
+            {% elif notification.sender %}{{ notification.sender.username|first|upper }}
+            {% else %}🔔{% endif %}
+          </div>
 
-{% endfor %}
+          <div class="notif-content">
+            <div class="notif-message">{{ notification.message }}</div>
+            <div class="notif-time">{{ notification.created_at|timesince }} ago</div>
+            {% if notification.profile_post %}
+              <div class="notif-post-preview"><strong>Post:</strong> {{ notification.profile_post.content|truncatechars:80 }}</div>
+            {% endif %}
+
+            {% if notification.notification_type == 'buddy_request' and notification.buddy_request %}
+              {% if notification.buddy_request.status == 'pending' %}
+                <div class="buddy-actions" id="buddy-actions-{{ notification.id }}">
+                  <button class="btn-accept" onclick="handleBuddyRequest({{ notification.buddy_request.id }},'accept',{{ notification.id }},this)">
+                    <i class="fas fa-user-check"></i> Accept
+                  </button>
+                  <button class="btn-decline" onclick="handleBuddyRequest({{ notification.buddy_request.id }},'reject',{{ notification.id }},this)">
+                    <i class="fas fa-times"></i> Decline
+                  </button>
+                </div>
+              {% elif notification.buddy_request.status == 'accepted' %}
+                <div class="buddy-actions">
+                  <span class="buddy-result-pill accepted"><i class="fas fa-user-friends"></i> Buddy request accepted</span>
+                </div>
+              {% elif notification.buddy_request.status == 'rejected' %}
+                <div class="buddy-actions">
+                  <span class="buddy-result-pill declined"><i class="fas fa-times-circle"></i> Request declined</span>
+                </div>
+              {% endif %}
+            {% endif %}
+          </div>
+
+          <div class="notif-right-col">
+            <div class="notif-type-icon">
+              {% if notification.notification_type == 'buddy_request' %}🤝
+              {% elif notification.notification_type == 'buddy_request_accepted' %}✅
+              {% elif notification.notification_type == 'buddy_request_rejected' %}❌
+              {% elif notification.notification_type == 'profile_like' %}❤️
+              {% elif notification.notification_type == 'profile_comment' %}💬
+              {% elif notification.notification_type == 'follow' %}👥
+              {% elif notification.notification_type == 'join_request' %}📝
+              {% elif notification.notification_type == 'request_approved' %}✓
+              {% elif notification.notification_type == 'trip_update' %}✈️
+              {% elif notification.notification_type == 'post_like' %}👍
+              {% elif notification.notification_type == 'comment' %}💬
+              {% elif notification.notification_type == 'poll_vote' %}📊
+              {% elif notification.notification_type == 'destination_approved' %}🌍
+              {% elif notification.notification_type == 'place_approved' %}📍
+              {% else %}🔔{% endif %}
+            </div>
+            {% if not notification.is_read %}<div class="unread-dot" id="dot-{{ notification.id }}"></div>{% endif %}
+          </div>
+
+        </div>
+      {% empty %}
+        <div class="notif-empty-state">
+          <div class="empty-icon">🔔</div>
+          <h3>No notifications yet</h3>
+          <p>Buddy requests, likes, comments &amp; community updates will appear here.</p>
+        </div>
+      {% endfor %}
+    </div>
+
+  </div>
+</div>
+
+<div id="notif-toast"></div>
+
+<script>
+function getCsrf(){return document.querySelector('[name=csrfmiddlewaretoken]')?.value||document.cookie.split('; ').find(r=>r.startsWith('csrftoken='))?.split('=')[1]||'';}
+function showToast(msg,type='info'){const el=document.getElementById('notif-toast');el.textContent=msg;el.className=`show ${type}`;clearTimeout(el._t);el._t=setTimeout(()=>{el.className='';},3200);}
+function updateUnreadBadge(delta){
+  const badge=document.getElementById('unreadBadge');
+  const pill=document.getElementById('heroUnreadPill');
+  if(!badge)return;
+  const next=Math.max(0,(parseInt(badge.textContent)||0)+delta);
+  if(next<=0){badge.remove();pill?.remove();}
+  else{badge.textContent=`${next} new`;if(pill)pill.innerHTML=`<i class="fas fa-circle" style="font-size:.42rem;"></i> ${next} unread`;}
+}
+function markRead(notifId){
+  const item=document.getElementById(`notif-${notifId}`);
+  if(!item||!item.classList.contains('unread'))return;
+  fetch(`/community/notification/mark-read/${notifId}/`,{method:'POST',headers:{'X-CSRFToken':getCsrf(),'Content-Type':'application/json'}})
+  .then(()=>{item.classList.remove('unread');document.getElementById(`dot-${notifId}`)?.remove();updateUnreadBadge(-1);})
+  .catch(console.error);
+}
+function markAllRead(){
+  fetch('/community/notification/mark-all-read/',{method:'POST',headers:{'X-CSRFToken':getCsrf(),'Content-Type':'application/json'}})
+  .then(r=>r.json()).then(data=>{
+    if(data.success){
+      document.querySelectorAll('.notif-item.unread').forEach(el=>el.classList.remove('unread'));
+      document.querySelectorAll('.unread-dot').forEach(el=>el.remove());
+      document.getElementById('unreadBadge')?.remove();
+      document.getElementById('heroUnreadPill')?.remove();
+      showToast('All notifications marked as read ✓','success');
+    }
+  }).catch(()=>showToast('Failed to mark all as read','error'));
+}
+function handleBuddyRequest(buddyRequestId,action,notifId,btn){
+  const div=document.getElementById(`buddy-actions-${notifId}`);
+  if(!div)return;
+  div.querySelectorAll('button').forEach(b=>{b.disabled=true;});
+  btn.innerHTML='<span class="btn-spinner"></span>';
+  const url=action==='accept'?`/travellers/buddy/accept/${buddyRequestId}/`:`/travellers/buddy/reject/${buddyRequestId}/`;
+  fetch(`/community/notification/mark-read/${notifId}/`,{method:'POST',headers:{'X-CSRFToken':getCsrf(),'Content-Type':'application/json'}});
+  fetch(url,{method:'POST',headers:{'X-CSRFToken':getCsrf(),'Content-Type':'application/json'}})
+  .then(res=>{
+    if(!res.ok)throw new Error();
+    div.innerHTML=action==='accept'
+      ?'<span class="buddy-result-pill accepted"><i class="fas fa-user-friends"></i> Buddy request accepted</span>'
+      :'<span class="buddy-result-pill declined"><i class="fas fa-times-circle"></i> Request declined</span>';
+    showToast(action==='accept'?'🤝 Buddy request accepted!':'Request declined',action==='accept'?'success':'info');
+    const item=document.getElementById(`notif-${notifId}`);
+    if(item){item.classList.remove('unread');document.getElementById(`dot-${notifId}`)?.remove();updateUnreadBadge(-1);}
+  })
+  .catch(()=>{
+    div.querySelectorAll('button').forEach(b=>{b.disabled=false;});
+    div.querySelector('.btn-accept').innerHTML='<i class="fas fa-user-check"></i> Accept';
+    div.querySelector('.btn-decline').innerHTML='<i class="fas fa-times"></i> Decline';
+    showToast('Something went wrong. Please try again.','error');
+  });
+}
+document.querySelectorAll('.notif-item').forEach(item=>{
+  item.addEventListener('click',function(e){if(e.target.closest('.buddy-actions'))return;markRead(this.dataset.notificationId);});
+});
+</script>
+{% endblock %}
+{% block extra_js %}{% endblock %}
+{% block extra_scripts %}{% endblock %}

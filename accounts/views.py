@@ -12,39 +12,53 @@ def index(request):
     return render(request, 'accounts/index.html')
 
 
+from django.contrib.auth import authenticate, login
+from django.shortcuts import redirect, render
+from django.contrib import messages
+
+
 def login_view(request):
     if request.method == "POST":
         user = authenticate(
             request,
-            username=request.POST['username'],
-            password=request.POST['password']
+            username=request.POST.get("username"),
+            password=request.POST.get("password")
         )
 
         if user:
-
-            # 🔥 Login first
             login(request, user)
 
-            # 🔥 If admin → go directly to admin dashboard
-            if user.role == 'admin' or user.is_superuser:
-                return redirect('admin_app:admin_dashboard')  
+            # Return user to the page they originally requested
+            next_url = request.POST.get("next")
+            if next_url:
+                return redirect(next_url)
 
-            # 🔥 Only normal users need verification
+            # Admins
+            if user.role == "admin" or user.is_superuser:
+                return redirect("admin_app:admin_dashboard")
+
+            # Verification check
             if not user.is_verified:
-                return redirect('agency:pending_verification')
+                return redirect("agency:pending_verification")
 
-            # 🔥 Role-based dashboards
-            if user.role == 'traveller':
-                return redirect('travellers:dashboard')
-            elif user.role == 'agency':
-                return redirect('agency:agency_dashboard')
-            elif user.role == 'restaurant':
-                return redirect('restaurant_dashboard')
+            # Role dashboards
+            if user.role == "traveller":
+                return redirect("travellers:dashboard")
 
-        else:
-            messages.error(request, "Invalid credentials")
+            elif user.role == "agency":
+                return redirect("agency:agency_dashboard")
 
-    return render(request, 'accounts/login.html')
+            elif user.role == "restaurant":
+                return redirect("restaurant_dashboard")
+
+            # Fallback
+            return redirect("travellers:dashboard")
+
+        messages.error(request, "Invalid credentials")
+
+    return render(request, "accounts/login.html", {
+        "next": request.GET.get("next", "")
+    })
 
 def logout_view(request):
     logout(request)

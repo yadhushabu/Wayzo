@@ -1,0 +1,624 @@
+{% extends "admin_app/base.html" %}
+{% load static %}
+
+{% block title %}Support Tickets | Wayzo Admin{% endblock %}
+{% block nav_complaints %}active{% endblock %}
+
+{% block topbar_title %}Support Tickets{% endblock %}
+{% block topbar_subtitle %}Manage and resolve user complaints{% endblock %}
+
+{% block extra_styles %}
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap');
+
+  /* ── PAGE HEADER ── */
+  .page-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1.5rem;
+    margin-bottom: 1.75rem;
+    flex-wrap: wrap;
+  }
+  .page-breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.72rem;
+    color: #9CA3AF;
+    margin-bottom: 0.5rem;
+    font-family: 'DM Sans', sans-serif;
+  }
+  .page-breadcrumb a { color: #9CA3AF; text-decoration: none; }
+  .page-breadcrumb a:hover { color: #0E8A8A; }
+  .page-breadcrumb i { font-size: 0.55rem; }
+  .page-title {
+    font-family: 'Inter', sans-serif;
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: #111827;
+    letter-spacing: -0.025em;
+    margin-bottom: 0.2rem;
+  }
+  .page-desc {
+    font-size: 0.8rem;
+    color: #6B7280;
+    font-family: 'DM Sans', sans-serif;
+  }
+  .live-pill {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.72rem;
+    color: #9CA3AF;
+    font-family: 'DM Sans', sans-serif;
+    padding: 0.4rem 0.85rem;
+    background: #F9FAFB;
+    border: 1px solid #E5E7EB;
+    border-radius: 8px;
+    align-self: flex-end;
+    margin-bottom: 0.2rem;
+    flex-wrap: wrap;
+  gap: 0.2rem 0.35rem;
+  }
+
+  /* ── STAT CARDS ── */
+  .stat-row {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 1rem;
+    margin-bottom: 1.75rem;
+  }
+  .stat-card {
+    background: #ffffff;
+    border: 1px solid #E5E7EB;
+    border-radius: 12px;
+    padding: 1.1rem 1.3rem;
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+    transition: box-shadow 0.2s, transform 0.2s;
+    position: relative;
+    overflow: hidden;
+    cursor: pointer;
+    text-decoration: none;
+  }
+  .stat-card:hover {
+    box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+    transform: translateY(-2px);
+  }
+  .stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    border-radius: 12px 12px 0 0;
+  }
+  .stat-card.all::before     { background: #475569; }
+  .stat-card.open::before    { background: #EF4444; }
+  .stat-card.progress::before{ background: #F59E0B; }
+  .stat-card.resolved::before{ background: #10B981; }
+  .stat-card.closed::before  { background: #9CA3AF; }
+
+  .stat-icon-wrap {
+    width: 40px; height: 40px;
+    border-radius: 9px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; font-size: 1rem;
+  }
+  .stat-icon-wrap.all      { background: #F1F5F9; color: #475569; }
+  .stat-icon-wrap.open     { background: #FEF2F2; color: #EF4444; }
+  .stat-icon-wrap.progress { background: #FFFBEB; color: #D97706; }
+  .stat-icon-wrap.resolved { background: #F0FDF4; color: #16A34A; }
+  .stat-icon-wrap.closed   { background: #F9FAFB; color: #9CA3AF; }
+
+  .stat-value {
+    font-family: 'Inter', sans-serif;
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: #111827;
+    line-height: 1;
+    letter-spacing: -0.03em;
+    margin-bottom: 0.15rem;
+  }
+  .stat-label {
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: #6B7280;
+    font-family: 'DM Sans', sans-serif;
+  }
+
+  /* ── FILTER PANEL ── */
+  .filter-panel {
+    background: #ffffff;
+    border: 1px solid #E5E7EB;
+    border-radius: 12px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+    margin-bottom: 1.25rem;
+    overflow: hidden;
+  }
+  .filter-panel-header {
+    padding: 0.85rem 1.4rem;
+    border-bottom: 1px solid #F3F4F6;
+    background: #FAFAFA;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: #374151;
+    font-family: 'Inter', sans-serif;
+  }
+  .filter-panel-header i { color: #0E8A8A; font-size: 0.78rem; }
+  .filter-body { padding: 1.2rem 1.4rem; }
+  .filter-grid {
+    display: grid;
+    grid-template-columns: 1.4fr 1fr 1fr auto;
+    gap: 1rem;
+    align-items: end;
+  }
+  .filter-field { display: flex; flex-direction: column; gap: 0.4rem; }
+  .filter-label {
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: #9CA3AF;
+    font-family: 'DM Sans', sans-serif;
+  }
+  .filter-input, .filter-select {
+    padding: 0.55rem 0.85rem;
+    border: 1px solid #E5E7EB;
+    border-radius: 8px;
+    font-size: 0.8rem;
+    font-family: 'DM Sans', sans-serif;
+    color: #374151;
+    background: #FAFAFA;
+    transition: all 0.15s;
+    width: 100%;
+  }
+  .filter-input:focus, .filter-select:focus {
+    outline: none;
+    border-color: #0E8A8A;
+    background: white;
+    box-shadow: 0 0 0 3px rgba(14,138,138,0.08);
+  }
+  .filter-actions-group { display: flex; gap: 0.5rem; align-items: center; }
+  .btn-apply {
+    display: inline-flex; align-items: center; gap: 0.3rem;
+    padding: 0.55rem 1.1rem; border-radius: 8px;
+    font-size: 0.78rem; font-weight: 600;
+    background: #0E8A8A; color: white;
+    border: none; cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    transition: all 0.15s; white-space: nowrap;
+  }
+  .btn-apply:hover { background: #0A6B6B; }
+  .btn-clear-filter {
+    display: inline-flex; align-items: center; gap: 0.3rem;
+    padding: 0.55rem 1rem; border-radius: 8px;
+    font-size: 0.78rem; font-weight: 600;
+    background: #F3F4F6; color: #6B7280;
+    border: 1px solid #E5E7EB; text-decoration: none;
+    font-family: 'DM Sans', sans-serif; transition: all 0.15s; white-space: nowrap;
+  }
+  .btn-clear-filter:hover { background: #E5E7EB; color: #374151; }
+
+  /* active filter tags */
+  .active-filters {
+    display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;
+    padding: 0.75rem 1.4rem; border-top: 1px solid #F3F4F6; background: #FFFBEB;
+  }
+  .active-filter-label {
+    font-size: 0.68rem; font-weight: 700; color: #92400E;
+    font-family: 'DM Sans', sans-serif; text-transform: uppercase; letter-spacing: 0.06em;
+  }
+  .active-filter-tag {
+    display: inline-flex; align-items: center; gap: 0.3rem;
+    padding: 0.2rem 0.6rem; background: #FEF3C7; color: #92400E;
+    border: 1px solid #FDE68A; border-radius: 99px;
+    font-size: 0.68rem; font-weight: 600; font-family: 'DM Sans', sans-serif;
+  }
+
+  /* ── TABLE PANEL ── */
+  .table-panel {
+    background: #ffffff;
+    border: 1px solid #E5E7EB;
+    border-radius: 12px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+    overflow: hidden;
+    margin-bottom: 1.5rem;
+  }
+  .table-panel-header {
+    padding: 0.9rem 1.4rem;
+    border-bottom: 1px solid #F3F4F6;
+    background: #FAFAFA;
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 1rem; flex-wrap: wrap;
+  }
+  .table-panel-title {
+    display: flex; align-items: center; gap: 0.6rem;
+    font-size: 0.82rem; font-weight: 700; color: #374151;
+    font-family: 'Inter', sans-serif;
+  }
+  .teal-dot { width: 8px; height: 8px; border-radius: 50%; background: #0E8A8A; flex-shrink: 0; }
+  .result-count-tag {
+    font-size: 0.65rem; font-weight: 700;
+    padding: 0.18rem 0.55rem; border-radius: 99px;
+    background: #E6F4F4; color: #0E8A8A;
+    font-family: 'DM Sans', sans-serif;
+  }
+
+  /* ── COMPLAINTS TABLE ── */
+  .complaints-table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 760px;
+  }
+  .complaints-table thead th {
+    padding: 0.6rem 1.2rem;
+    text-align: left;
+    font-size: 0.68rem;
+    font-weight: 700;
+    color: #9CA3AF;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    background: #F9FAFB;
+    border-bottom: 1px solid #F3F4F6;
+    font-family: 'DM Sans', sans-serif;
+    white-space: nowrap;
+  }
+  .complaints-table tbody td {
+    padding: 0.9rem 1.2rem;
+    font-size: 0.81rem;
+    color: #374151;
+    border-bottom: 1px solid #F9FAFB;
+    vertical-align: middle;
+    font-family: 'DM Sans', sans-serif;
+  }
+  .complaints-table tbody tr:last-child td { border-bottom: none; }
+  .complaints-table tbody tr { transition: background 0.12s; }
+  .complaints-table tbody tr:hover { background: #FAFBFC; }
+
+  /* ticket id */
+  .ticket-id {
+    font-family: 'Inter', sans-serif;
+    font-weight: 700;
+    font-size: 0.75rem;
+    color: #374151;
+  }
+
+  /* user cell */
+  .user-cell { display: flex; align-items: center; gap: 0.55rem; }
+  .mini-avatar {
+    width: 30px; height: 30px; border-radius: 50%;
+    background: linear-gradient(135deg, #0E8A8A, #1aafaf);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.6rem; font-weight: 700; color: white;
+    flex-shrink: 0; font-family: 'Inter', sans-serif;
+  }
+  .user-name-primary { font-weight: 600; color: #111827; font-size: 0.8rem; }
+  .user-name-sub { font-size: 0.67rem; color: #9CA3AF; }
+
+  /* role badge */
+  .role-tag {
+    display: inline-flex; align-items: center; gap: 0.25rem;
+    padding: 0.2rem 0.6rem; border-radius: 99px;
+    font-size: 0.65rem; font-weight: 700;
+    font-family: 'DM Sans', sans-serif; white-space: nowrap;
+  }
+  .role-traveller  { background: #D1FAE5; color: #065F46; }
+  .role-agency     { background: #FEF3C7; color: #92400E; }
+  .role-restaurant { background: #EEF2FF; color: #3730A3; }
+
+  /* title cell */
+  .title-cell {}
+  .title-primary {
+    font-weight: 600; color: #111827; font-size: 0.82rem;
+    margin-bottom: 0.1rem; font-family: 'Inter', sans-serif;
+  }
+  .title-sub {
+    font-size: 0.68rem; color: #9CA3AF;
+    display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical;
+    overflow: hidden; max-width: 260px;
+  }
+
+  /* status badge */
+  .status-badge {
+    display: inline-flex; align-items: center; gap: 0.28rem;
+    padding: 0.24rem 0.7rem; border-radius: 99px;
+    font-size: 0.65rem; font-weight: 700;
+    font-family: 'DM Sans', sans-serif; white-space: nowrap;
+  }
+  .status-badge::before {
+    content: ""; width: 5px; height: 5px; border-radius: 50%; flex-shrink: 0;
+  }
+  .status-open       { background: rgba(239,68,68,0.1); color: #dc2626; }
+  .status-open::before { background: #ef4444; }
+  .status-in_progress { background: rgba(245,158,11,0.1); color: #d97706; }
+  .status-in_progress::before { background: #f59e0b; }
+  .status-resolved   { background: rgba(16,185,129,0.1); color: #059669; }
+  .status-resolved::before { background: #10b981; }
+  .status-closed     { background: rgba(107,114,128,0.1); color: #4b5563; }
+  .status-closed::before { background: #9ca3af; }
+
+  /* timestamp */
+  .ts-text { font-size: 0.72rem; color: #9CA3AF; white-space: nowrap; }
+
+  /* actions cell */
+  .actions-cell { display: flex; align-items: center; gap: 0.4rem; justify-content: flex-end; }
+  .btn-action {
+    display: inline-flex; align-items: center; gap: 0.3rem;
+    padding: 0.36rem 0.8rem; border-radius: 7px;
+    font-size: 0.72rem; font-weight: 600; cursor: pointer;
+    border: 1px solid transparent; transition: all 0.15s;
+    font-family: 'DM Sans', sans-serif; text-decoration: none; white-space: nowrap;
+  }
+  .btn-view-action {
+    background: #F9FAFB; color: #374151; border-color: #E5E7EB;
+  }
+  .btn-view-action:hover { background: #F3F4F6; color: #111827; border-color: #D1D5DB; }
+
+  /* attachment badge */
+  .attach-badge {
+    display: inline-flex; align-items: center; gap: 0.25rem;
+    font-size: 0.65rem; color: #0E8A8A; font-weight: 600;
+    background: #E6F4F4; border-radius: 99px; padding: 0.15rem 0.55rem;
+    font-family: 'DM Sans', sans-serif;
+  }
+
+  /* ── EMPTY STATE ── */
+  .empty-row td { padding: 3rem 1.2rem !important; }
+  .empty-inner {
+    display: flex; flex-direction: column;
+    align-items: center; gap: 0.6rem; text-align: center;
+  }
+  .empty-circle {
+    width: 52px; height: 52px; border-radius: 50%;
+    background: #F3F4F6;
+    display: flex; align-items: center; justify-content: center;
+    color: #D1D5DB; font-size: 1.3rem;
+  }
+  .empty-inner h4 { font-size: 0.88rem; font-weight: 700; color: #374151; font-family: 'Inter', sans-serif; }
+  .empty-inner p  { font-size: 0.75rem; color: #9CA3AF; font-family: 'DM Sans', sans-serif; }
+
+  /* ── RESPONSIVE ── */
+  .table-scroll { overflow-x: auto; }
+
+  @media (max-width: 1100px) {
+    .stat-row { grid-template-columns: repeat(3, 1fr); }
+    .filter-grid { grid-template-columns: 1fr 1fr; }
+  }
+  @media (max-width: 768px) {
+    .stat-row { grid-template-columns: 1fr 1fr; }
+    .filter-grid { grid-template-columns: 1fr; }
+    .page-header { flex-direction: column; gap: 0.75rem; }
+  }
+  @media (max-width: 480px) {
+    .stat-row { grid-template-columns: 1fr 1fr; }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- PAGE HEADER -->
+<div class="page-header">
+  <div>
+    <div class="page-breadcrumb">
+      <a href="{% url 'admin_app:admin_dashboard' %}">Dashboard</a>
+      <i class="fas fa-chevron-right"></i>
+      <span>Support Tickets</span>
+    </div>
+    <div class="page-title">Support Tickets</div>
+    <div class="page-desc">Review, respond to, and resolve user-submitted complaints.</div>
+  </div>
+  <div class="live-pill">
+  <i class="fas fa-circle" style="font-size:0.42rem;color:#10B981;"></i>
+  Live &nbsp;·&nbsp;
+  {{ stats.total }} total &nbsp;·&nbsp;
+  <span style="color:#EF4444;">{{ stats.open }} open</span> &nbsp;·&nbsp;
+  <span style="color:#D97706;">{{ stats.in_progress }} in progress</span> &nbsp;·&nbsp;
+  <span style="color:#10B981;">{{ stats.resolved }} resolved</span> &nbsp;·&nbsp;
+  <span style="color:#9CA3AF;">{{ stats.closed }} closed</span>
+</div>
+</div>
+
+<!-- STAT CARDS -->
+<div class="stat-row">
+  <a href="?{% if request.GET.role %}role={{ request.GET.role }}{% endif %}" class="stat-card all" style="text-decoration:none;color:inherit;">
+    <div class="stat-icon-wrap all"><i class="fas fa-ticket-alt"></i></div>
+    <div>
+      <div class="stat-value">{{ stats.total }}</div>
+      <div class="stat-label">Total Tickets</div>
+    </div>
+  </a>
+  <a href="?status=open{% if request.GET.role %}&role={{ request.GET.role }}{% endif %}" class="stat-card open" style="text-decoration:none;color:inherit;">
+    <div class="stat-icon-wrap open"><i class="fas fa-exclamation-circle"></i></div>
+    <div>
+      <div class="stat-value">{{ stats.open }}</div>
+      <div class="stat-label">Open</div>
+    </div>
+  </a>
+  <a href="?status=in_progress{% if request.GET.role %}&role={{ request.GET.role }}{% endif %}" class="stat-card progress" style="text-decoration:none;color:inherit;">
+    <div class="stat-icon-wrap progress"><i class="fas fa-spinner"></i></div>
+    <div>
+      <div class="stat-value">{{ stats.in_progress }}</div>
+      <div class="stat-label">In Progress</div>
+    </div>
+  </a>
+  <a href="?status=resolved{% if request.GET.role %}&role={{ request.GET.role }}{% endif %}" class="stat-card resolved" style="text-decoration:none;color:inherit;">
+    <div class="stat-icon-wrap resolved"><i class="fas fa-check-circle"></i></div>
+    <div>
+      <div class="stat-value">{{ stats.resolved }}</div>
+      <div class="stat-label">Resolved</div>
+    </div>
+  </a>
+  <a href="?status=closed{% if request.GET.role %}&role={{ request.GET.role }}{% endif %}" class="stat-card closed" style="text-decoration:none;color:inherit;">
+    <div class="stat-icon-wrap closed"><i class="fas fa-archive"></i></div>
+    <div>
+      <div class="stat-value">{{ stats.closed }}</div>
+      <div class="stat-label">Closed</div>
+    </div>
+  </a>
+</div>
+
+<!-- FILTER PANEL -->
+<div class="filter-panel">
+  <div class="filter-panel-header">
+    <i class="fas fa-filter"></i> Filters & Search
+  </div>
+  <div class="filter-body">
+    <form method="GET" id="filterForm">
+      <div class="filter-grid">
+        <div class="filter-field">
+          <label class="filter-label"><i class="fas fa-search" style="margin-right:0.25rem;"></i>Search</label>
+          <input class="filter-input" type="text" name="search"
+            placeholder="Username or ticket title…" value="{{ request.GET.search|default:'' }}">
+        </div>
+        <div class="filter-field">
+          <label class="filter-label"><i class="fas fa-dot-circle" style="margin-right:0.25rem;"></i>Status</label>
+          <select class="filter-select" name="status">
+            <option value="">All Statuses</option>
+            <option value="open"        {% if request.GET.status == 'open' %}selected{% endif %}>Open</option>
+            <option value="in_progress" {% if request.GET.status == 'in_progress' %}selected{% endif %}>In Progress</option>
+            <option value="resolved"    {% if request.GET.status == 'resolved' %}selected{% endif %}>Resolved</option>
+            <option value="closed"      {% if request.GET.status == 'closed' %}selected{% endif %}>Closed</option>
+          </select>
+        </div>
+        <div class="filter-field">
+          <label class="filter-label"><i class="fas fa-user-tag" style="margin-right:0.25rem;"></i>User Role</label>
+          <select class="filter-select" name="role">
+            <option value="">All Roles</option>
+            <option value="traveller"  {% if request.GET.role == 'traveller' %}selected{% endif %}>Traveller</option>
+            <option value="agency"     {% if request.GET.role == 'agency' %}selected{% endif %}>Agency</option>
+            <option value="restaurant" {% if request.GET.role == 'restaurant' %}selected{% endif %}>Restaurant</option>
+          </select>
+        </div>
+        <div class="filter-field">
+          <label class="filter-label">&nbsp;</label>
+          <div class="filter-actions-group">
+            <button type="submit" class="btn-apply"><i class="fas fa-filter"></i> Apply</button>
+            <a href="{% url 'support:admin_complaints' %}" class="btn-clear-filter"><i class="fas fa-times"></i> Clear</a>
+          </div>
+        </div>
+      </div>
+    </form>
+  </div>
+
+  {% if request.GET.status or request.GET.role or request.GET.search %}
+  <div class="active-filters">
+    <span class="active-filter-label"><i class="fas fa-filter" style="margin-right:0.3rem;"></i>Active:</span>
+    {% if request.GET.search %}<span class="active-filter-tag"><i class="fas fa-search"></i> "{{ request.GET.search }}"</span>{% endif %}
+    {% if request.GET.status %}<span class="active-filter-tag"><i class="fas fa-dot-circle"></i> {{ request.GET.status|title }}</span>{% endif %}
+    {% if request.GET.role %}<span class="active-filter-tag"><i class="fas fa-user"></i> {{ request.GET.role|title }}</span>{% endif %}
+  </div>
+  {% endif %}
+</div>
+
+<!-- TABLE PANEL -->
+<div class="table-panel">
+  <div class="table-panel-header">
+    <div class="table-panel-title">
+      <div class="teal-dot"></div>
+      Ticket Queue
+      <span class="result-count-tag">{{ complaints|length }} ticket{{ complaints|length|pluralize }}</span>
+    </div>
+  </div>
+
+  <div class="table-scroll">
+    <table class="complaints-table">
+      <thead>
+        <tr>
+          <th>Ticket</th>
+          <th>User</th>
+          <th>Role</th>
+          <th>Subject</th>
+          <th>Status</th>
+          <th>Attachment</th>
+          <th>Date</th>
+          <th style="text-align:right;">Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for c in complaints %}
+        <tr>
+          <td><span class="ticket-id">#SR{{ c.id|stringformat:"09d" }}</span></td>
+          <td>
+            <div class="user-cell">
+              <div class="mini-avatar">{{ c.user.username|slice:":2"|upper }}</div>
+              <div>
+                <div class="user-name-primary">{{ c.user.username }}</div>
+                <div class="user-name-sub">{{ c.user.email|default:"—" }}</div>
+              </div>
+            </div>
+          </td>
+          <td>
+            <span class="role-tag role-{{ c.user.role|default:'traveller' }}">
+              {% if c.user.role == 'traveller' %}🧳
+              {% elif c.user.role == 'agency' %}🏢
+              {% elif c.user.role == 'restaurant' %}🍽️
+              {% else %}👤{% endif %}
+              {{ c.user.role|title|default:"User" }}
+            </span>
+          </td>
+          <td>
+            <div class="title-cell">
+              <div class="title-primary">{{ c.title|truncatechars:40 }}</div>
+              <div class="title-sub">{{ c.description|truncatechars:60 }}</div>
+            </div>
+          </td>
+          <td>
+            <span class="status-badge status-{{ c.status }}">
+              {% if c.status == 'open' %}Open
+              {% elif c.status == 'in_progress' %}In Progress
+              {% elif c.status == 'resolved' %}Resolved
+              {% else %}Closed{% endif %}
+            </span>
+          </td>
+          <td>
+            {% if c.attachment %}
+              <a href="{{ c.attachment.url }}" target="_blank" class="attach-badge">
+                <i class="fas fa-paperclip"></i> File
+              </a>
+            {% else %}
+              <span style="color:#D1D5DB;font-size:0.75rem;">—</span>
+            {% endif %}
+          </td>
+          <td>
+            <div class="ts-text">
+              {{ c.created_at|date:"d M Y" }}<br>
+              <span style="color:#D1D5DB;">{{ c.created_at|date:"H:i" }}</span>
+            </div>
+          </td>
+          <td>
+            <div class="actions-cell">
+              <a href="{% url 'support:complaint_detail_admin' c.id %}" class="btn-action btn-view-action">
+                <i class="fas fa-eye"></i> View
+              </a>
+            </div>
+          </td>
+        </tr>
+        {% empty %}
+        <tr class="empty-row">
+          <td colspan="8">
+            <div class="empty-inner">
+              <div class="empty-circle"><i class="fas fa-ticket-alt"></i></div>
+              <h4>No tickets found</h4>
+              <p>{% if request.GET.status or request.GET.role or request.GET.search %}Try adjusting your filters.{% else %}No support tickets have been submitted yet.{% endif %}</p>
+              {% if request.GET.status or request.GET.role or request.GET.search %}
+              <a href="{% url 'support:admin_complaints' %}" class="btn-apply" style="margin-top:0.5rem;text-decoration:none;">
+                <i class="fas fa-undo"></i> Clear Filters
+              </a>
+              {% endif %}
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% endblock %}

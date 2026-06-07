@@ -100,7 +100,7 @@
         .form-group input:focus,.form-group select:focus,.form-group textarea:focus { outline:none;border-color:var(--accent-muted);box-shadow:0 0 0 3px rgba(91,110,140,0.1); }
         .form-group input::placeholder,.form-group textarea::placeholder { color:var(--gray-400); }
 
-        /* ── Enhanced Property Type Cards ── */
+        /* Property Type Cards */
         .property-type-label { display:block;font-size:0.72rem;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:var(--gray-700);margin-bottom:0.6rem; }
         .property-type-label .req { color:var(--accent-muted);margin-left:2px; }
         .property-type-grid { display:grid;grid-template-columns:1fr 1fr;gap:0.65rem;margin-bottom:1.2rem; }
@@ -234,7 +234,7 @@
             <div class="step-line" id="line-2"></div>
             <div class="step-item" id="step-ind-3">
                 <div class="step-circle" id="sc3"><span class="step-num">3</span></div>
-                <span class="step-label">Media</span>
+                <span class="step-label">Verification</span>
             </div>
         </div>
 
@@ -275,7 +275,7 @@
                     <label>Username <span class="req">*</span></label>
                     <div class="input-wrap">
                         <span class="input-icon"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span>
-                        {% if form.username %}{{ form.username }}{% else %}<input type="text" name="username" placeholder="Choose a username" required>{% endif %}
+                        <input type="text" name="username" placeholder="Choose a username" required value="{{ form.username.value|default:'' }}">
                     </div>
                     {% if form.username.errors %}<div class="field-error"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/></svg>{{ form.username.errors|join:", " }}</div>{% endif %}
                 </div>
@@ -284,7 +284,7 @@
                     <label>Email Address <span class="req">*</span></label>
                     <div class="input-wrap">
                         <span class="input-icon"><svg viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg></span>
-                        {% if form.email %}{{ form.email }}{% else %}<input type="email" name="email" placeholder="restaurant@example.com" required>{% endif %}
+                        <input type="email" name="email" placeholder="restaurant@example.com" required value="{{ form.email.value|default:'' }}">
                     </div>
                     {% if form.email.errors %}<div class="field-error"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/></svg>{{ form.email.errors|join:", " }}</div>{% endif %}
                 </div>
@@ -294,7 +294,7 @@
                         <label>Password <span class="req">*</span></label>
                         <div class="input-wrap">
                             <span class="input-icon"><svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></span>
-                            {% if form.password1 %}{{ form.password1 }}{% else %}<input type="password" name="password1" placeholder="Create password" required>{% endif %}
+                            <input type="password" name="password1" placeholder="Create password" required>
                         </div>
                         {% if form.password1.errors %}<div class="field-error"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/></svg>{{ form.password1.errors|join:", " }}</div>{% endif %}
                     </div>
@@ -302,7 +302,7 @@
                         <label>Confirm Password <span class="req">*</span></label>
                         <div class="input-wrap">
                             <span class="input-icon"><svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></span>
-                            {% if form.password2 %}{{ form.password2 }}{% else %}<input type="password" name="password2" placeholder="Confirm password" required>{% endif %}
+                            <input type="password" name="password2" placeholder="Confirm password" required>
                         </div>
                         {% if form.password2.errors %}<div class="field-error"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/></svg>{{ form.password2.errors|join:", " }}</div>{% endif %}
                     </div>
@@ -321,132 +321,118 @@
 
                 <div class="field-section" style="margin-top:0;">
                     <svg viewBox="0 0 24 24"><path d="M3 2h1v6a2 2 0 0 0 4 0V2h1v6a3 3 0 0 1-2 2.83V22H6v-11.17A3 3 0 0 1 3 8V2z"/></svg>
-                    Restaurant Info
+                    Restaurant Details
                 </div>
 
                 <div class="form-group">
-                    <label>Name <span class="req">*</span></label>
+                    <label>Restaurant Name <span class="req">*</span></label>
                     <div class="input-wrap">
                         <span class="input-icon"><svg viewBox="0 0 24 24"><path d="M3 2h1v6a2 2 0 0 0 4 0V2h1v6a3 3 0 0 1-2 2.83V22H6v-11.17A3 3 0 0 1 3 8V2z"/></svg></span>
-                        {% if form.restaurant_name %}{{ form.restaurant_name }}{% else %}<input type="text" name="restaurant_name" placeholder="Your restaurant's name" required>{% endif %}
+                        <input type="text" name="restaurant_name" placeholder="Your restaurant's name" required value="{{ form.restaurant_name.value|default:'' }}">
                     </div>
                     {% if form.restaurant_name.errors %}<div class="field-error"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/></svg>{{ form.restaurant_name.errors|join:", " }}</div>{% endif %}
                 </div>
 
-                <!-- ══ ENHANCED PROPERTY TYPE CARDS ══ -->
-                <div>
-                    <span class="property-type-label">Property Type <span class="req">*</span></span>
+                <!-- Property Type Cards -->
+<div>
+    <span class="property-type-label">Property Type <span class="req">*</span></span>
 
-                    <!-- Hidden real field for form submission -->`
-                    {% if form.property_type %}
-                        <div style="display:none;">{{ form.property_type }}</div>
-                    {% else %}
-                        <select name="property_type" style="display:none;">
-                            <option value="restaurant">Restaurant</option>
-                            <option value="Hotel">Hotel</option>
-                            <option value="Resort">Resort</option>
-                            <option value="Homestay">Homestay</option>
-                            <option value="Cafe">Cafe</option>
-                        </select>
-                    {% endif %}
+    <select name="property_type" id="property_type_hidden" style="display:none;">
+        <option value="Restaurant">Restaurant</option>
+        <option value="Hotel">Hotel</option>
+        <option value="Resort">Resort</option>
+        <option value="Homestay">Homestay</option>
+        <option value="Cafe">Cafe</option>
+    </select>
 
-                    <div class="property-type-grid" id="propertyTypeCards">
+    <div class="property-type-grid" id="propertyTypeCards">
+        <label class="property-card" data-value="Restaurant">
+            <input type="radio" name="_pt_ui" value="Restaurant" {% if form.property_type.value == 'Restaurant' or not form.property_type.value %}checked{% endif %}>
+            <div class="pc-icon">
+                <svg viewBox="0 0 24 24"><path d="M3 2h1v6a2 2 0 0 0 4 0V2h1v6a3 3 0 0 1-2 2.83V22H6v-11.17A3 3 0 0 1 3 8V2z"/><path d="M20 2v20M16 2v4a4 4 0 0 0 4 4"/></svg>
+            </div>
+            <div class="pc-text">
+                <div class="pc-label">Restaurant</div>
+                <div class="pc-sub">Full-service dining</div>
+            </div>
+            <div class="pc-radio"></div>
+        </label>
 
-                        <label class="property-card" data-value="restaurant">
-                            <input type="radio" name="_pt_ui" value="restaurant">
-                            <div class="pc-icon">
-                                <svg viewBox="0 0 24 24"><path d="M3 2h1v6a2 2 0 0 0 4 0V2h1v6a3 3 0 0 1-2 2.83V22H6v-11.17A3 3 0 0 1 3 8V2z"/><path d="M20 2v20M16 2v4a4 4 0 0 0 4 4"/></svg>
-                            </div>
-                            <div class="pc-text">
-                                <div class="pc-label">Restaurant</div>
-                                <div class="pc-sub">Full-service dining</div>
-                            </div>
-                            <div class="pc-radio"></div>
-                        </label>
+        <label class="property-card" data-value="Hotel">
+            <input type="radio" name="_pt_ui" value="Hotel" {% if form.property_type.value == 'Hotel' %}checked{% endif %}>
+            <div class="pc-icon">
+                <svg viewBox="0 0 24 24"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg>
+            </div>
+            <div class="pc-text">
+                <div class="pc-label">Hotel</div>
+                <div class="pc-sub">Stay & dining</div>
+            </div>
+            <div class="pc-radio"></div>
+        </label>
 
-                        <label class="property-card" data-value="Hotel">
-                            <input type="radio" name="_pt_ui" value="Hotel">
-                            <div class="pc-icon">
-                                <svg viewBox="0 0 24 24"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg>
-                            </div>
-                            <div class="pc-text">
-                                <div class="pc-label">Hotel</div>
-                                <div class="pc-sub">Stay & dining</div>
-                            </div>
-                            <div class="pc-radio"></div>
-                        </label>
+        <label class="property-card" data-value="Resort">
+            <input type="radio" name="_pt_ui" value="Resort" {% if form.property_type.value == 'Resort' %}checked{% endif %}>
+            <div class="pc-icon">
+                <svg viewBox="0 0 24 24"><path d="M6 13.87A4 4 0 0 1 7.41 6a5.11 5.11 0 0 1 1.05-1.54 5 5 0 0 1 7.08 0A5.11 5.11 0 0 1 16.59 6 4 4 0 0 1 18 13.87V21H6z"/><line x1="6" y1="17" x2="18" y2="17"/></svg>
+            </div>
+            <div class="pc-text">
+                <div class="pc-label">Resort</div>
+                <div class="pc-sub">Luxury & relaxation</div>
+            </div>
+            <div class="pc-radio"></div>
+        </label>
 
-                        <label class="property-card" data-value="Resort">
-                            <input type="radio" name="_pt_ui" value="Resort">
-                            <div class="pc-icon">
-                                <svg viewBox="0 0 24 24"><path d="M6 13.87A4 4 0 0 1 7.41 6a5.11 5.11 0 0 1 1.05-1.54 5 5 0 0 1 7.08 0A5.11 5.11 0 0 1 16.59 6 4 4 0 0 1 18 13.87V21H6z"/><line x1="6" y1="17" x2="18" y2="17"/></svg>
-                            </div>
-                            <div class="pc-text">
-                                <div class="pc-label">Resort</div>
-                                <div class="pc-sub">Luxury & relaxation</div>
-                            </div>
-                            <div class="pc-radio"></div>
-                        </label>
+        <label class="property-card" data-value="Homestay">
+            <input type="radio" name="_pt_ui" value="Homestay" {% if form.property_type.value == 'Homestay' %}checked{% endif %}>
+            <div class="pc-icon">
+                <svg viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 1 7 7c0 5-7 13-7 13S5 14 5 9a7 7 0 0 1 7-7z"/><circle cx="12" cy="9" r="2.5"/></svg>
+            </div>
+            <div class="pc-text">
+                <div class="pc-label">Homestay</div>
+                <div class="pc-sub">Local experience</div>
+            </div>
+            <div class="pc-radio"></div>
+        </label>
 
-                        <label class="property-card" data-value="Homestay">
-                            <input type="radio" name="_pt_ui" value="Homestay">
-                            <div class="pc-icon">
-                                <svg viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 1 7 7c0 5-7 13-7 13S5 14 5 9a7 7 0 0 1 7-7z"/><circle cx="12" cy="9" r="2.5"/></svg>
-                            </div>
-                            <div class="pc-text">
-                                <div class="pc-label">Homestay</div>
-                                <div class="pc-sub">Local experience</div>
-                            </div>
-                            <div class="pc-radio"></div>
-                        </label>
+        <label class="property-card" data-value="Cafe">
+            <input type="radio" name="_pt_ui" value="Cafe" {% if form.property_type.value == 'Cafe' %}checked{% endif %}>
+            <div class="pc-icon">
+                <svg viewBox="0 0 24 24"><path d="M2 20h20M4 20V10l8-6 8 6v10"/><path d="M10 20v-6h4v6"/></svg>
+            </div>
+            <div class="pc-text">
+                <div class="pc-label">Cafe</div>
+                <div class="pc-sub">Coffee & snacks</div>
+            </div>
+            <div class="pc-radio"></div>
+        </label>
+    </div>
+    {% if form.property_type.errors %}<div class="field-error"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/></svg>{{ form.property_type.errors|join:", " }}</div>{% endif %}
+</div>
 
-                        <label class="property-card" data-value="Cafe">
-                            <input type="radio" name="_pt_ui" value="Cafe">
-                            <div class="pc-icon">
-                                <svg viewBox="0 0 24 24"><path d="M2 20h20M4 20V10l8-6 8 6v10"/><path d="M10 20v-6h4v6"/></svg>
-                            </div>
-                            <div class="pc-text">
-                                <div class="pc-label">Cafe</div>
-                                <div class="pc-sub">Coffee & snacks</div>
-                            </div>
-                            <div class="pc-radio"></div>
-                        </label>
-
+                <div class="form-group">
+                    <label>Mobile Number <span class="req">*</span></label>
+                    <div class="input-wrap">
+                        <span class="input-icon"><svg viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 11.9 19.79 19.79 0 0 1 1.61 3.27 2 2 0 0 1 3.6 1h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.6a16 16 0 0 0 6 6z"/></svg></span>
+                        <input type="tel" name="mobile" placeholder="+91 98765 43210" required value="{{ form.mobile.value|default:'' }}">
                     </div>
-                    {% if form.property_type.errors %}<div class="field-error"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/></svg>{{ form.property_type.errors|join:", " }}</div>{% endif %}
+                    {% if form.mobile.errors %}<div class="field-error"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/></svg>{{ form.mobile.errors|join:", " }}</div>{% endif %}
                 </div>
 
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>Mobile <span class="req">*</span></label>
-                        <div class="input-wrap">
-                            <span class="input-icon"><svg viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 11.9 19.79 19.79 0 0 1 1.61 3.27 2 2 0 0 1 3.6 1h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.6a16 16 0 0 0 6 6z"/></svg></span>
-                            {% if form.mobile %}{{ form.mobile }}{% else %}<input type="tel" name="phone" placeholder="+91 98765 43210" required>
-                            {% if form.mobile.errors %}
-    <div class="field-error">
-        {{ form.mobile.errors|join:", " }}
-    </div>{% endif %}
-                            {% endif %}
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Street Address -->
                 <div class="form-group">
                     <label>Address <span class="req">*</span></label>
                     <div class="input-wrap">
                         <span class="input-icon"><svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg></span>
-                        {% if form.address %}{{ form.address }}{% else %}<input type="text" name="address" placeholder="Street address" required>{% endif %}
+                        <textarea name="address" rows="2" placeholder="Street address" required>{{ form.address.value|default:'' }}</textarea>
                     </div>
+                    {% if form.address.errors %}<div class="field-error"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/></svg>{{ form.address.errors|join:", " }}</div>{% endif %}
                 </div>
 
-                <!-- City & State side by side -->
                 <div class="form-row">
                     <div class="form-group">
                         <label>City <span class="req">*</span></label>
                         <div class="input-wrap">
                             <span class="input-icon"><svg viewBox="0 0 24 24"><path d="M3 21h18M3 7h18M5 21V7l7-4 7 4v14M9 21V9h6v12"/></svg></span>
-                            {% if form.city %}{{ form.city }}{% else %}<input type="text" name="city" placeholder="City" required>{% endif %}
+                            <input type="text" name="city" placeholder="City" required value="{{ form.city.value|default:'' }}">
                         </div>
                         {% if form.city.errors %}<div class="field-error"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/></svg>{{ form.city.errors|join:", " }}</div>{% endif %}
                     </div>
@@ -454,7 +440,7 @@
                         <label>State <span class="req">*</span></label>
                         <div class="input-wrap">
                             <span class="input-icon"><svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg></span>
-                            {% if form.state %}{{ form.state }}{% else %}<input type="text" name="state" placeholder="State" required>{% endif %}
+                            <input type="text" name="state" placeholder="State" required value="{{ form.state.value|default:'' }}">
                         </div>
                         {% if form.state.errors %}<div class="field-error"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/></svg>{{ form.state.errors|join:", " }}</div>{% endif %}
                     </div>
@@ -471,55 +457,56 @@
                 </div>
             </div>
 
-            <!-- STEP 3: Media & Submit -->
+            <!-- STEP 3: Verification Documents -->
             <div class="form-step" id="formStep3" style="display:none;">
                 <div class="field-section">
                     <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-                    Photos &amp; Verification
+                    Verification Documents
                 </div>
 
                 <div class="file-group">
-                    <label>Profile Photo</label>
+                    <label>Profile Picture <span class="req">*</span></label>
                     <div class="file-drop">
-                        <input type="file" name="profile_picture" accept="image/*" onchange="showFileName(this,'logoName')">
+                        <input type="file" name="profile_picture" accept="image/*" onchange="showFileName(this,'profileName')" required>
                         <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
                         <p><span>Click to upload</span> or drag &amp; drop</p>
                         <p style="font-size:0.72rem;margin-top:0.2rem;">PNG, JPG up to 5MB</p>
-                        <p class="file-name" id="logoName"></p>
+                        <p class="file-name" id="profileName"></p>
                     </div>
+                    {% if form.profile_picture.errors %}<div class="field-error"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/></svg>{{ form.profile_picture.errors|join:", " }}</div>{% endif %}
+                </div>
+
+                <div class="form-group">
+                    <label>FSSAI License Number <span class="req">*</span></label>
+                    <div class="input-wrap no-icon">
+                        <input type="text" name="fssai_license_number" placeholder="Enter FSSAI license number" required value="{{ form.fssai_license_number.value|default:'' }}">
+                    </div>
+                    {% if form.fssai_license_number.errors %}<div class="field-error"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/></svg>{{ form.fssai_license_number.errors|join:", " }}</div>{% endif %}
                 </div>
 
                 <div class="file-group">
-                    <label>License Document <span style="font-weight:400;color:var(--gray-500);text-transform:none;letter-spacing:0;">(optional)</span></label>
+                    <label>License Document <span class="req">*</span></label>
                     <div class="file-drop">
-                        <input type="file" name="license_document" accept="image/*" onchange="showFileName(this,'licenseName')">
+                        <input type="file" name="license_document" accept="image/*,.pdf" onchange="showFileName(this,'licenseName')" required>
                         <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-                        <p><span>Click to upload</span></p>
-                        <p style="font-size:0.72rem;margin-top:0.2rem;">PNG, JPG up to 5MB</p>
+                        <p><span>Click to upload</span> license document</p>
+                        <p style="font-size:0.72rem;margin-top:0.2rem;">PNG, JPG, PDF up to 5MB</p>
                         <p class="file-name" id="licenseName"></p>
                     </div>
+                    {% if form.license_document.errors %}<div class="field-error"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/></svg>{{ form.license_document.errors|join:", " }}</div>{% endif %}
                 </div>
 
                 <div class="file-group">
-                    <label>ID Proof <span style="font-weight:400;color:var(--gray-500);text-transform:none;letter-spacing:0;">(optional)</span></label>
+                    <label>ID Proof <span class="req">*</span></label>
                     <div class="file-drop">
-                        <input type="file" name="id_proof" accept="image/*" onchange="showFileName(this,'idName')">
+                        <input type="file" name="id_proof" accept="image/*,.pdf" onchange="showFileName(this,'idName')" required>
                         <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-                        <p><span>Click to upload</span></p>
-                        <p style="font-size:0.72rem;margin-top:0.2rem;">PNG, JPG up to 5MB</p>
+                        <p><span>Click to upload</span> ID proof (Aadhar, PAN, etc.)</p>
+                        <p style="font-size:0.72rem;margin-top:0.2rem;">PNG, JPG, PDF up to 5MB</p>
                         <p class="file-name" id="idName"></p>
                     </div>
+                    {% if form.id_proof.errors %}<div class="field-error"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/></svg>{{ form.id_proof.errors|join:", " }}</div>{% endif %}
                 </div>
-
-                {% for field in form %}
-                    {% if field.name not in "first_name,last_name,username,email,password1,password2,restaurant_name,mobile,address,city,state,cuisine_type,description,opening_time,closing_time,seating_capacity,logo,photos,id_proof,license_document,profile_picture,property_type" %}
-                    <div class="form-group no-icon">
-                        <label>{{ field.label }}{% if field.field.required %} <span class="req">*</span>{% endif %}</label>
-                        {{ field }}
-                        {% if field.errors %}<div class="field-error"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/></svg>{{ field.errors|join:", " }}</div>{% endif %}
-                    </div>
-                    {% endif %}
-                {% endfor %}
 
                 <div class="checkbox-group">
                     <input type="checkbox" id="terms" name="terms" required>
@@ -563,7 +550,12 @@
                 `#formStep${currentStep} textarea`
             );
             let valid = true;
-            fields.forEach(f => { if (f.required && !f.value.trim()) { valid = false; markError(f); } });
+            fields.forEach(f => { 
+                if (f.required && !f.value.trim()) { 
+                    valid = false; 
+                    markError(f); 
+                } 
+            });
             if (!valid) return;
         }
         document.getElementById(`formStep${currentStep}`).style.display = 'none';
@@ -582,6 +574,9 @@
             s++; if (s > 5) { clearInterval(shake); field.style.transform = ''; }
         }, 50);
         field.addEventListener('input', () => { field.style.borderColor = ''; field.style.backgroundColor = ''; }, { once: true });
+        if (field.type === 'file') {
+            field.addEventListener('change', () => { field.style.borderColor = ''; field.style.backgroundColor = ''; }, { once: true });
+        }
     }
 
     function updateSteps(active) {
@@ -589,29 +584,60 @@
             const ind = document.getElementById(`step-ind-${i}`);
             const sc  = document.getElementById(`sc${i}`);
             const ln  = document.getElementById(`line-${i}`);
-            ind.classList.remove('active','done'); sc.classList.remove('active','done');
+            if (ind) ind.classList.remove('active','done');
+            if (sc) sc.classList.remove('active','done');
             if (ln) ln.classList.remove('done');
-            if (i < active) { ind.classList.add('done'); sc.classList.add('done'); sc.innerHTML = '✓'; if (ln) ln.classList.add('done'); }
-            else if (i === active) { ind.classList.add('active'); sc.classList.add('active'); sc.innerHTML = `<span class="step-num">${i}</span>`; }
-            else { sc.innerHTML = `<span class="step-num">${i}</span>`; }
+            if (i < active) { 
+                if (ind) ind.classList.add('done'); 
+                if (sc) { sc.classList.add('done'); sc.innerHTML = '✓'; }
+                if (ln) ln.classList.add('done'); 
+            }
+            else if (i === active) { 
+                if (ind) ind.classList.add('active'); 
+                if (sc) { sc.classList.add('active'); sc.innerHTML = `<span class="step-num">${i}</span>`; }
+            }
+            else { 
+                if (sc) sc.innerHTML = `<span class="step-num">${i}</span>`; 
+            }
         }
     }
 
     /* Property Type Cards */
     const cards = document.querySelectorAll('.property-card');
-    const realField = document.querySelector('[name="property_type"]');
+    const realField = document.getElementById('property_type_hidden');
     cards.forEach(card => {
         card.addEventListener('click', () => {
             cards.forEach(c => c.classList.remove('selected'));
             card.classList.add('selected');
-            if (realField) realField.value = card.dataset.value;
+            const radio = card.querySelector('input[type="radio"]');
+            if (radio && realField) {
+                radio.checked = true;
+                realField.value = card.dataset.value;
+            }
         });
     });
+    
     // Pre-select on form-error redisplay
     if (realField && realField.value) {
         const pre = document.querySelector(`.property-card[data-value="${realField.value}"]`);
         if (pre) pre.classList.add('selected');
+    } else if (realField) {
+        const defaultCard = document.querySelector('.property-card[data-value="restaurant"]');
+        if (defaultCard) {
+            defaultCard.classList.add('selected');
+            realField.value = 'restaurant';
+        }
     }
+
+    // Update hidden field when radio changes
+    const radios = document.querySelectorAll('.property-card input[type="radio"]');
+    radios.forEach(radio => {
+        radio.addEventListener('change', function() {
+            if (realField) {
+                realField.value = this.value;
+            }
+        });
+    });
 
     /* File name display */
     window.showFileName = function (input, targetId) {
@@ -621,13 +647,6 @@
             el.style.display = 'block';
         }
     };
-
-    /* Drag & drop */
-    document.querySelectorAll('.file-drop').forEach(zone => {
-        zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('drag-over'); });
-        zone.addEventListener('dragleave', () => zone.classList.remove('drag-over'));
-        zone.addEventListener('drop', e => { e.preventDefault(); zone.classList.remove('drag-over'); });
-    });
 
     /* Submit loading */
     const form = document.getElementById('restForm');
@@ -652,7 +671,14 @@
         });
     }
 
-    if (document.querySelectorAll('.message.error, .field-error').length > 0) goToStep(1);
+    // Show step 2 or 3 if there are errors on those steps
+    if (document.querySelectorAll('#formStep2 .field-error, #formStep2 .message.error').length > 0) {
+        goToStep(2);
+    } else if (document.querySelectorAll('#formStep3 .field-error, #formStep3 .message.error').length > 0) {
+        goToStep(3);
+    } else if (document.querySelectorAll('.message.error').length > 0) {
+        goToStep(1);
+    }
 })();
 </script>
 </body>

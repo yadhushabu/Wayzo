@@ -1,0 +1,1136 @@
+{% extends "admin_app/base.html" %}
+{% load static %}
+
+{% block title %}{{ profile_user.get_display_name }} — Profile | Wayzo Admin{% endblock %}
+
+{% block topbar_title %}User Profile{% endblock %}
+{% block topbar_subtitle %}View and manage user details{% endblock %}
+
+{% block extra_styles %}
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap');
+
+  /* ── BREADCRUMB ── */
+  .page-breadcrumb {
+    display: flex; align-items: center; gap: 0.4rem;
+    font-size: 0.72rem; color: #9CA3AF;
+    margin-bottom: 1.2rem;
+    font-family: 'DM Sans', sans-serif;
+  }
+  .page-breadcrumb a { color: #9CA3AF; text-decoration: none; }
+  .page-breadcrumb a:hover { color: #0E8A8A; }
+  .page-breadcrumb i { font-size: 0.55rem; }
+
+  /* ── PROFILE HERO ── */
+  .profile-hero {
+    background: linear-gradient(135deg, #0d1f2d 0%, #0e3848 50%, #0b2e22 100%);
+    border-radius: 18px;
+    padding: 2rem 2.2rem;
+    margin-bottom: 1.5rem;
+    position: relative;
+    overflow: hidden;
+  }
+  .profile-hero::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.02'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+    pointer-events: none;
+  }
+  .profile-hero::after {
+    content: '';
+    position: absolute; top: -100px; right: -80px;
+    width: 280px; height: 280px; border-radius: 50%;
+    background: radial-gradient(circle, rgba(14,138,138,0.2) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .profile-hero-inner {
+    position: relative; z-index: 1;
+    display: flex; gap: 1.8rem; align-items: flex-start; flex-wrap: wrap;
+  }
+
+  /* avatar */
+  .profile-avatar-wrap { position: relative; flex-shrink: 0; }
+  .profile-avatar {
+    width: 100px; height: 100px; border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid rgba(255,255,255,0.15);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+    display: block;
+    background: linear-gradient(135deg, #0E8A8A, #1aafaf);
+    font-family: 'Inter', sans-serif; font-size: 2rem; font-weight: 700;
+    color: white;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .avatar-status-dot {
+    position: absolute; bottom: 4px; right: 4px;
+    width: 16px; height: 16px; border-radius: 50%;
+    border: 2px solid #0d1f2d;
+  }
+  .avatar-status-dot.active   { background: #10B981; }
+  .avatar-status-dot.inactive { background: #F43F5E; }
+
+  /* hero info */
+  .profile-info { flex: 1; min-width: 0; }
+  .profile-name {
+    font-family: 'Inter', sans-serif;
+    font-size: 1.6rem; font-weight: 700;
+    color: white; letter-spacing: -0.02em;
+    margin-bottom: 0.5rem; line-height: 1.2;
+  }
+  .profile-meta-row {
+    display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center;
+    margin-bottom: 0.9rem;
+  }
+  .hero-badge {
+    display: inline-flex; align-items: center; gap: 0.35rem;
+    padding: 0.22rem 0.75rem;
+    border-radius: 99px;
+    font-size: 0.7rem; font-weight: 700;
+    font-family: 'DM Sans', sans-serif;
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.15);
+    color: rgba(255,255,255,0.85);
+    backdrop-filter: blur(4px);
+  }
+  .hero-badge i { font-size: 0.6rem; }
+  .hero-badge.active-badge   { background: rgba(16,185,129,0.2); border-color: rgba(16,185,129,0.35); color: #6ee7b7; }
+  .hero-badge.inactive-badge { background: rgba(244,63,94,0.2);  border-color: rgba(244,63,94,0.35);  color: #fda4af; }
+  .hero-badge.verified-badge { background: rgba(14,138,138,0.25); border-color: rgba(14,138,138,0.4); color: #5dd8d8; }
+
+  .profile-contact-row {
+    display: flex; flex-wrap: wrap; gap: 1.2rem;
+    font-size: 0.78rem; color: rgba(255,255,255,0.55);
+    font-family: 'DM Sans', sans-serif;
+  }
+  .profile-contact-row span { display: flex; align-items: center; gap: 0.35rem; }
+  .profile-contact-row i { font-size: 0.65rem; color: rgba(255,255,255,0.3); }
+
+  /* hero actions */
+  .profile-actions {
+    display: flex; flex-wrap: wrap; gap: 0.5rem;
+    margin-top: 1.2rem; padding-top: 1.2rem;
+    border-top: 1px solid rgba(255,255,255,0.08);
+  }
+  .btn-hero {
+    display: inline-flex; align-items: center; gap: 0.35rem;
+    padding: 0.42rem 1rem; border-radius: 8px;
+    font-size: 0.75rem; font-weight: 600;
+    font-family: 'DM Sans', sans-serif;
+    cursor: pointer; text-decoration: none; border: 1px solid transparent;
+    transition: all 0.18s;
+  }
+  .btn-hero i { font-size: 0.65rem; }
+  .btn-hero-teal { background: #0E8A8A; color: white; border-color: #0E8A8A; }
+  .btn-hero-teal:hover { background: #0A6B6B; }
+  .btn-hero-green { background: rgba(16,185,129,0.15); color: #34d399; border-color: rgba(16,185,129,0.3); }
+  .btn-hero-green:hover { background: #10B981; color: white; border-color: #10B981; }
+  .btn-hero-rose  { background: rgba(244,63,94,0.15); color: #fb7185; border-color: rgba(244,63,94,0.3); }
+  .btn-hero-rose:hover  { background: #F43F5E; color: white; border-color: #F43F5E; }
+  .btn-hero-ghost { background: rgba(255,255,255,0.07); color: rgba(255,255,255,0.7); border-color: rgba(255,255,255,0.12); }
+  .btn-hero-ghost:hover { background: rgba(255,255,255,0.12); color: white; }
+
+  /* ── TABS ── */
+  .profile-tab-bar {
+    display: flex; gap: 0.3rem; flex-wrap: wrap;
+    background: white;
+    border: 1px solid #E5E7EB;
+    border-radius: 12px;
+    padding: 0.4rem;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  }
+  .p-tab {
+    padding: 0.5rem 1.1rem;
+    border: none; background: transparent;
+    font-size: 0.78rem; font-weight: 600;
+    color: #6B7280; border-radius: 8px;
+    cursor: pointer; font-family: 'DM Sans', sans-serif;
+    transition: all 0.18s; display: flex; align-items: center; gap: 0.35rem;
+    white-space: nowrap;
+  }
+  .p-tab i { font-size: 0.68rem; }
+  .p-tab:hover { background: #F9FAFB; color: #374151; }
+  .p-tab.active { background: #0E8A8A; color: white; box-shadow: 0 2px 8px rgba(14,138,138,0.3); }
+
+  /* ── TAB CONTENT ── */
+  .tab-pane { display: none; animation: fadeUp 0.25s ease; }
+  .tab-pane.active { display: block; }
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+  /* ── SHARED CARD ── */
+  .p-card {
+    background: white; border-radius: 14px;
+    border: 1px solid #E5E7EB;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+    margin-bottom: 1.25rem; overflow: hidden;
+  }
+  .p-card-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 1rem 1.4rem; border-bottom: 1px solid #F3F4F6;
+    background: #FAFAFA;
+  }
+  .p-card-title {
+    font-size: 0.85rem; font-weight: 700; color: #374151;
+    font-family: 'Inter', sans-serif;
+    display: flex; align-items: center; gap: 0.5rem;
+  }
+  .p-card-title i { color: #0E8A8A; font-size: 0.8rem; }
+  .p-card-body { padding: 1.4rem; }
+
+  /* colored top stripe */
+  .p-card.stripe-teal   { border-top: 3px solid #0E8A8A; }
+  .p-card.stripe-amber  { border-top: 3px solid #F59E0B; }
+  .p-card.stripe-indigo { border-top: 3px solid #4F46E5; }
+  .p-card.stripe-green  { border-top: 3px solid #10B981; }
+  .p-card.stripe-rose   { border-top: 3px solid #F43F5E; }
+
+  /* ── INFO GRID ── */
+  .info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1rem;
+  }
+  .info-item {}
+  .info-label {
+    font-size: 0.65rem; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.08em;
+    color: #9CA3AF; margin-bottom: 0.3rem;
+    font-family: 'DM Sans', sans-serif;
+  }
+  .info-value {
+    font-size: 0.85rem; font-weight: 600;
+    color: #111827; font-family: 'Inter', sans-serif;
+  }
+  .info-value a { color: #0E8A8A; text-decoration: none; }
+  .info-value a:hover { text-decoration: underline; }
+
+  /* ── STAT MINI CARDS ── */
+  .mini-stat-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 1rem; margin-bottom: 1.25rem;
+  }
+  .mini-stat {
+    background: white; border: 1px solid #E5E7EB;
+    border-radius: 12px; padding: 1.1rem 1.2rem;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+    transition: transform 0.2s, box-shadow 0.2s;
+    position: relative; overflow: hidden;
+  }
+  .mini-stat:hover { transform: translateY(-2px); box-shadow: 0 4px 16px rgba(0,0,0,0.08); }
+  .mini-stat::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0;
+    height: 3px; border-radius: 12px 12px 0 0;
+  }
+  .mini-stat.t::before  { background: #0E8A8A; }
+  .mini-stat.g::before  { background: #10B981; }
+  .mini-stat.a::before  { background: #F59E0B; }
+  .mini-stat.r::before  { background: #F43F5E; }
+  .mini-stat.i::before  { background: #4F46E5; }
+  .mini-stat-value {
+    font-family: 'Inter', sans-serif; font-size: 1.7rem;
+    font-weight: 700; color: #111827; line-height: 1;
+    margin-bottom: 0.3rem; letter-spacing: -0.02em;
+  }
+  .mini-stat-label {
+    font-size: 0.7rem; font-weight: 600;
+    color: #9CA3AF; font-family: 'DM Sans', sans-serif;
+    text-transform: uppercase; letter-spacing: 0.06em;
+  }
+
+  /* ── TABLE ── */
+  .p-table { width: 100%; border-collapse: collapse; }
+  .p-table thead th {
+    padding: 0.6rem 1rem; text-align: left;
+    font-size: 0.65rem; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.08em;
+    color: #9CA3AF; background: #F9FAFB;
+    border-bottom: 1px solid #F3F4F6;
+    font-family: 'DM Sans', sans-serif; white-space: nowrap;
+  }
+  .p-table tbody td {
+    padding: 0.85rem 1rem; font-size: 0.8rem;
+    color: #374151; border-bottom: 1px solid #F9FAFB;
+    font-family: 'DM Sans', sans-serif; vertical-align: middle;
+  }
+  .p-table tbody tr:last-child td { border-bottom: none; }
+  .p-table tbody tr:hover { background: #FAFBFC; }
+  .table-scroll { overflow-x: auto; }
+
+  /* ── BADGES ── */
+  .badge {
+    display: inline-flex; align-items: center; gap: 0.25rem;
+    padding: 0.2rem 0.65rem; border-radius: 99px;
+    font-size: 0.65rem; font-weight: 700;
+    font-family: 'DM Sans', sans-serif; white-space: nowrap;
+  }
+  .badge-pending   { background: #FEF3C7; color: #92400E; }
+  .badge-confirmed { background: #D1FAE5; color: #065F46; }
+  .badge-cancelled { background: #FFE4E6; color: #9F1239; }
+  .badge-completed { background: #EEF2FF; color: #3730A3; }
+  .badge-paid      { background: #D1FAE5; color: #065F46; }
+  .badge-unpaid    { background: #FEF3C7; color: #92400E; }
+  .badge-available { background: #D1FAE5; color: #065F46; }
+  .badge-booked    { background: #FFE4E6; color: #9F1239; }
+  .badge-active    { background: #D1FAE5; color: #065F46; }
+  .badge-inactive  { background: #FFE4E6; color: #9F1239; }
+
+  /* ── ACTIVITY FEED ── */
+  .activity-feed {}
+  .activity-item {
+    display: flex; gap: 1rem; align-items: flex-start;
+    padding: 0.9rem 0; border-bottom: 1px solid #F3F4F6;
+  }
+  .activity-item:last-child { border-bottom: none; }
+  .activity-icon {
+    width: 36px; height: 36px; border-radius: 10px;
+    background: #EAF4F4; color: #0E8A8A;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.9rem; flex-shrink: 0;
+  }
+  .activity-body { flex: 1; min-width: 0; }
+  .activity-action { font-size: 0.82rem; font-weight: 600; color: #111827; margin-bottom: 0.15rem; font-family: 'Inter', sans-serif; }
+  .activity-desc   { font-size: 0.74rem; color: #9CA3AF; font-family: 'DM Sans', sans-serif; line-height: 1.4; }
+  .activity-time   { font-size: 0.68rem; color: #D1D5DB; white-space: nowrap; font-family: 'DM Sans', sans-serif; flex-shrink: 0; }
+
+  /* ── DESTINATION / PLACE GRID ── */
+  .content-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 1rem;
+  }
+  .content-card {
+    background: white; border: 1px solid #E5E7EB;
+    border-radius: 12px; padding: 1.1rem 1.2rem;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+  .content-card:hover { transform: translateY(-2px); box-shadow: 0 4px 14px rgba(0,0,0,0.08); }
+  .content-card h5 { font-size: 0.85rem; font-weight: 700; color: #111827; margin-bottom: 0.3rem; font-family: 'Inter', sans-serif; }
+  .content-card small { font-size: 0.72rem; color: #9CA3AF; font-family: 'DM Sans', sans-serif; display: flex; align-items: center; gap: 0.3rem; }
+
+  /* ── GALLERY ── */
+  .gallery-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 0.85rem;
+  }
+  .gallery-item { border-radius: 10px; overflow: hidden; background: #F3F4F6; }
+  .gallery-item img { width: 100%; height: 110px; object-fit: cover; display: block; }
+  .gallery-item p { font-size: 0.67rem; text-align: center; padding: 0.4rem; color: #6B7280; font-family: 'DM Sans', sans-serif; font-weight: 600; }
+
+  /* ── EMPTY STATE ── */
+  .empty-state {
+    text-align: center; padding: 3rem 1rem;
+    display: flex; flex-direction: column; align-items: center; gap: 0.6rem;
+  }
+  .empty-circle {
+    width: 52px; height: 52px; border-radius: 50%;
+    background: #F3F4F6; display: flex; align-items: center; justify-content: center;
+    color: #D1D5DB; font-size: 1.3rem;
+  }
+  .empty-state h4 { font-size: 0.85rem; font-weight: 700; color: #374151; font-family: 'Inter', sans-serif; }
+  .empty-state p  { font-size: 0.75rem; color: #9CA3AF; font-family: 'DM Sans', sans-serif; }
+
+  /* ── SUBSECTION ── */
+  .subsection { margin-top: 1.5rem; }
+  .subsection:first-child { margin-top: 0; }
+  .subsection-title {
+    font-size: 0.8rem; font-weight: 700; color: #374151;
+    font-family: 'Inter', sans-serif;
+    display: flex; align-items: center; gap: 0.45rem;
+    margin-bottom: 0.85rem; padding-bottom: 0.6rem;
+    border-bottom: 1px solid #F3F4F6;
+  }
+  .subsection-title i { color: #0E8A8A; font-size: 0.72rem; }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 768px) {
+    .profile-hero-inner { flex-direction: column; gap: 1rem; }
+    .profile-avatar { width: 80px; height: 80px; font-size: 1.5rem; }
+    .profile-name { font-size: 1.3rem; }
+    .profile-tab-bar { overflow-x: auto; flex-wrap: nowrap; }
+    .p-tab { padding: 0.45rem 0.85rem; font-size: 0.72rem; }
+    .mini-stat-grid { grid-template-columns: 1fr 1fr; }
+    .info-grid { grid-template-columns: 1fr 1fr; }
+  }
+  @media (max-width: 480px) {
+    .info-grid { grid-template-columns: 1fr; }
+    .mini-stat-grid { grid-template-columns: 1fr 1fr; }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- Breadcrumb -->
+<div class="page-breadcrumb">
+  <a href="{% url 'admin_app:admin_dashboard' %}">Dashboard</a>
+  <i class="fas fa-chevron-right"></i>
+  <a href="{% url 'admin_app:user_management' %}">User Management</a>
+  <i class="fas fa-chevron-right"></i>
+  <span>{{ profile_user.get_display_name }}</span>
+</div>
+
+<!-- ══════════════ PROFILE HERO ══════════════ -->
+<div class="profile-hero">
+  <div class="profile-hero-inner">
+
+    <!-- Avatar -->
+    <div class="profile-avatar-wrap">
+      {% if profile_user.profile_picture and profile_user.profile_picture.url %}
+        <img src="{{ profile_user.profile_picture.url }}"
+             alt="{{ profile_user.get_display_name }}"
+             class="profile-avatar"
+             style="display:block;">
+      {% else %}
+        <div class="profile-avatar">
+          {{ profile_user.first_name|first|upper }}{{ profile_user.last_name|first|upper }}
+        </div>
+      {% endif %}
+      <div class="avatar-status-dot {% if profile_user.is_active %}active{% else %}inactive{% endif %}"></div>
+    </div>
+
+    <!-- Info -->
+    <div class="profile-info">
+      <h1 class="profile-name">{{ profile_user.get_display_name }}</h1>
+      <div class="profile-meta-row">
+        <!-- Role badge -->
+        <span class="hero-badge">
+          <i class="fas {% if profile_user.role == 'traveller' %}fa-user-friends{% elif profile_user.role == 'agency' %}fa-building{% elif profile_user.role == 'restaurant' %}fa-utensils{% else %}fa-user{% endif %}"></i>
+          {{ profile_user.get_role_display|default:"User" }}
+        </span>
+        <!-- Status badge -->
+        {% if profile_user.is_active %}
+          <span class="hero-badge active-badge"><i class="fas fa-circle"></i> Active</span>
+        {% else %}
+          <span class="hero-badge inactive-badge"><i class="fas fa-ban"></i> Inactive</span>
+        {% endif %}
+        <!-- Verified badge -->
+        {% if agency_profile and agency_profile.is_approved or restaurantprofile and restaurantprofile.is_approved %}
+          <span class="hero-badge verified-badge"><i class="fas fa-check-circle"></i> Verified</span>
+        {% endif %}
+      </div>
+
+      <div class="profile-contact-row">
+        <span><i class="fas fa-envelope"></i> {{ profile_user.email|default:"—" }}</span>
+        <span><i class="fas fa-phone"></i> {% if profile_user.get_phone %}{{ profile_user.get_phone }}{% else %}Not provided{% endif %}</span>
+        <span><i class="fas fa-calendar-alt"></i> Joined {{ profile_user.date_joined|date:"M d, Y" }}</span>
+        <span><i class="fas fa-clock"></i> Last login {{ profile_user.last_login|date:"M d, Y"|default:"Never" }}</span>
+      </div>
+
+      <!-- Action buttons -->
+      <div class="profile-actions">
+        {% if agency_profile %}
+        <a href="{% url 'admin_app:toggle_verification' profile_user.id %}"
+           class="btn-hero {% if agency_profile.is_approved %}btn-hero-rose{% else %}btn-hero-green{% endif %}"
+           onclick="return confirm('{% if agency_profile.is_approved %}Remove verification?{% else %}Verify this agency?{% endif %}');">
+          <i class="fas {% if agency_profile.is_approved %}fa-times-circle{% else %}fa-check-circle{% endif %}"></i>
+          {% if agency_profile.is_approved %}Remove Verification{% else %}Verify Account{% endif %}
+        </a>
+        {% endif %}
+        {% if restaurantprofile %}
+        <a href="{% url 'admin_app:toggle_verification' profile_user.id %}"
+           class="btn-hero {% if restaurantprofile.is_approved %}btn-hero-rose{% else %}btn-hero-green{% endif %}"
+           onclick="return confirm('{% if restaurantprofile.is_approved %}Remove verification?{% else %}Verify this restaurant?{% endif %}');">
+          <i class="fas {% if restaurantprofile.is_approved %}fa-times-circle{% else %}fa-check-circle{% endif %}"></i>
+          {% if restaurantprofile.is_approved %}Remove Verification{% else %}Verify Account{% endif %}
+        </a>
+        {% endif %}
+        {% if profile_user.id != request.user.id %}
+        <a href="{% url 'admin_app:toggle_user_status' profile_user.id %}"
+           class="btn-hero {% if profile_user.is_active %}btn-hero-rose{% else %}btn-hero-green{% endif %}"
+           onclick="return confirm('{% if profile_user.is_active %}Deactivate this user?{% else %}Activate this user?{% endif %}');">
+          <i class="fas {% if profile_user.is_active %}fa-lock{% else %}fa-unlock{% endif %}"></i>
+          {% if profile_user.is_active %}Deactivate{% else %}Activate{% endif %}
+        </a>
+        {% endif %}
+        <a href="{% url 'admin_app:admin_dashboard' %}" class="btn-hero btn-hero-ghost">
+          <i class="fas fa-arrow-left"></i> Back
+        </a>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══════════════ TAB BAR ══════════════ -->
+<div class="profile-tab-bar">
+  <button class="p-tab active" data-tab="overview">
+    <i class="fas fa-user-circle"></i> Overview
+  </button>
+
+  {% if profile_user.role == "traveller" %}
+    <button class="p-tab" data-tab="destinations"><i class="fas fa-map-marked-alt"></i> Destinations</button>
+    <button class="p-tab" data-tab="places"><i class="fas fa-map-pin"></i> Places</button>
+    <button class="p-tab" data-tab="bookings"><i class="fas fa-calendar-check"></i> Bookings</button>
+  {% endif %}
+
+  {% if profile_user.role == "agency" %}
+    <button class="p-tab" data-tab="packages"><i class="fas fa-box"></i> Packages</button>
+    <button class="p-tab" data-tab="bookings"><i class="fas fa-calendar-check"></i> Bookings Received</button>
+    <button class="p-tab" data-tab="revenue"><i class="fas fa-rupee-sign"></i> Revenue</button>
+  {% endif %}
+
+  {% if profile_user.role == "restaurant" %}
+    <button class="p-tab" data-tab="rooms"><i class="fas fa-bed"></i> Rooms</button>
+    <button class="p-tab" data-tab="tables"><i class="fas fa-chair"></i> Tables</button>
+    <button class="p-tab" data-tab="bookings"><i class="fas fa-calendar-check"></i> Bookings</button>
+    <button class="p-tab" data-tab="revenue"><i class="fas fa-rupee-sign"></i> Revenue</button>
+  {% endif %}
+
+  <button class="p-tab" data-tab="activity">
+    <i class="fas fa-history"></i> Activity Log
+  </button>
+</div>
+
+
+<!-- ══════════════════════════════════════
+     TAB: OVERVIEW
+══════════════════════════════════════ -->
+<div id="overview" class="tab-pane active">
+
+  <!-- User Info -->
+  <div class="p-card stripe-teal">
+    <div class="p-card-header">
+      <div class="p-card-title"><i class="fas fa-id-card"></i> User Information</div>
+    </div>
+    <div class="p-card-body">
+      <div class="info-grid">
+        <div class="info-item"><div class="info-label">Username</div><div class="info-value">@{{ profile_user.username }}</div></div>
+        <div class="info-item"><div class="info-label">Full Name</div><div class="info-value">{{ profile_user.get_display_name }}</div></div>
+        <div class="info-item"><div class="info-label">Email</div><div class="info-value">{{ profile_user.email|default:"—" }}</div></div>
+        <div class="info-item"><div class="info-label">Phone</div><div class="info-value">{% if profile_user.get_phone %}{{ profile_user.get_phone }}{% else %}—{% endif %}</div></div>
+        <div class="info-item"><div class="info-label">Role</div><div class="info-value">{{ profile_user.get_role_display|default:"User" }}</div></div>
+        <div class="info-item"><div class="info-label">Date Joined</div><div class="info-value">{{ profile_user.date_joined|date:"F d, Y" }}</div></div>
+        <div class="info-item"><div class="info-label">Last Login</div><div class="info-value">{{ profile_user.last_login|date:"F d, Y H:i"|default:"Never" }}</div></div>
+        <div class="info-item">
+          <div class="info-label">Status</div>
+          <div class="info-value">
+            {% if profile_user.is_active %}
+              <span class="badge badge-active">● Active</span>
+            {% else %}
+              <span class="badge badge-inactive">● Inactive</span>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {% if agency_profile %}
+  <div class="p-card stripe-amber">
+    <div class="p-card-header">
+      <div class="p-card-title"><i class="fas fa-building"></i> Agency Details</div>
+      {% if agency_profile.is_approved %}
+        <span class="badge badge-active">✓ Verified</span>
+      {% else %}
+        <span class="badge badge-unpaid">Unverified</span>
+      {% endif %}
+    </div>
+    <div class="p-card-body">
+      <div class="info-grid">
+        <div class="info-item"><div class="info-label">Agency Name</div><div class="info-value">{{ agency_profile.agency_name }}</div></div>
+        <div class="info-item"><div class="info-label">License Number</div><div class="info-value">{{ agency_profile.license_number|default:"—" }}</div></div>
+        <div class="info-item"><div class="info-label">Mobile</div><div class="info-value">{{ agency_profile.mobile|default:"—" }}</div></div>
+        <div class="info-item"><div class="info-label">Location</div><div class="info-value">{{ agency_profile.city|default:"" }}{% if agency_profile.city and agency_profile.state %}, {% endif %}{{ agency_profile.state|default:"—" }}</div></div>
+        <div class="info-item">
+          <div class="info-label">License Document</div>
+          <div class="info-value">{% if agency_profile.license_document %}<a href="{{ agency_profile.license_document.url }}" target="_blank"><i class="fas fa-file-pdf"></i> View PDF</a>{% else %}—{% endif %}</div>
+        </div>
+        <div class="info-item">
+          <div class="info-label">ID Proof</div>
+          <div class="info-value">{% if agency_profile.place_id_proof %}<a href="{{ agency_profile.place_id_proof.url }}" target="_blank"><i class="fas fa-file-image"></i> View</a>{% else %}—{% endif %}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  {% if restaurantprofile %}
+  <div class="p-card stripe-indigo">
+    <div class="p-card-header">
+      <div class="p-card-title"><i class="fas fa-utensils"></i> Restaurant Details</div>
+      {% if restaurantprofile.is_approved %}
+        <span class="badge badge-active">✓ Verified</span>
+      {% else %}
+        <span class="badge badge-unpaid">Unverified</span>
+      {% endif %}
+    </div>
+    <div class="p-card-body">
+      <div class="info-grid">
+        <div class="info-item"><div class="info-label">Restaurant Name</div><div class="info-value">{{ restaurantprofile.restaurant_name }}</div></div>
+        <div class="info-item"><div class="info-label">Mobile</div><div class="info-value">{{ restaurantprofile.mobile|default:"—" }}</div></div>
+        <div class="info-item"><div class="info-label">Location</div><div class="info-value">{{ restaurantprofile.city|default:"" }}{% if restaurantprofile.city and restaurantprofile.state %}, {% endif %}{{ restaurantprofile.state|default:"—" }}</div></div>
+        <div class="info-item">
+          <div class="info-label">License Document</div>
+          <div class="info-value">{% if restaurantprofile.license_document %}<a href="{{ restaurantprofile.license_document.url }}" target="_blank"><i class="fas fa-file-pdf"></i> View PDF</a>{% else %}—{% endif %}</div>
+        </div>
+        <div class="info-item">
+          <div class="info-label">ID Proof</div>
+          <div class="info-value">{% if restaurantprofile.place_id_proof %}<a href="{{ restaurantprofile.place_id_proof.url }}" target="_blank"><i class="fas fa-file-image"></i> View</a>{% else %}—{% endif %}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {% if gallery_images %}
+  <div class="p-card">
+    <div class="p-card-header">
+      <div class="p-card-title"><i class="fas fa-images"></i> Property Gallery</div>
+      <span style="font-size:0.72rem;color:#9CA3AF;font-family:'DM Sans',sans-serif;">{{ gallery_images|length }} image{{ gallery_images|length|pluralize }}</span>
+    </div>
+    <div class="p-card-body">
+      <div class="gallery-grid">
+        {% for img in gallery_images %}
+        <div class="gallery-item">
+          <img src="{{ img.image.url }}" alt="">
+          <p>{{ img.get_section_display }}</p>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+  {% endif %}
+  {% endif %}
+
+</div><!-- /overview -->
+
+
+<!-- ══════════════════════════════════════
+     TRAVELLER TABS
+══════════════════════════════════════ -->
+{% if profile_user.role == "traveller" %}
+
+<div id="destinations" class="tab-pane">
+  <div class="p-card stripe-teal">
+    <div class="p-card-header">
+      <div class="p-card-title"><i class="fas fa-map-marked-alt"></i> Destinations</div>
+      <span style="font-size:0.72rem;color:#9CA3AF;font-family:'DM Sans',sans-serif;">{{ destinations|length }} total</span>
+    </div>
+    <div class="p-card-body">
+      {% if destinations %}
+      <div class="content-grid">
+        {% for dest in destinations %}
+        <div class="content-card">
+          <h5>{{ dest.name }}</h5>
+          <small><i class="far fa-calendar-alt"></i> {{ dest.created_at|date:"M d, Y" }}</small>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="empty-state">
+        <div class="empty-circle"><i class="fas fa-map-marked-alt"></i></div>
+        <h4>No destinations yet</h4>
+        <p>This traveller hasn't added any destinations.</p>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<div id="places" class="tab-pane">
+  <div class="p-card stripe-amber">
+    <div class="p-card-header">
+      <div class="p-card-title"><i class="fas fa-map-pin"></i> Places</div>
+      <span style="font-size:0.72rem;color:#9CA3AF;font-family:'DM Sans',sans-serif;">{{ places|length }} total</span>
+    </div>
+    <div class="p-card-body">
+      {% if places %}
+      <div class="content-grid">
+        {% for place in places %}
+        <div class="content-card">
+          <h5>{{ place.name }}</h5>
+          {% if place.destination %}<small><i class="fas fa-globe"></i> {{ place.destination.name }}</small>{% endif %}
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="empty-state">
+        <div class="empty-circle"><i class="fas fa-map-pin"></i></div>
+        <h4>No places yet</h4>
+        <p>This traveller hasn't added any places.</p>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<div id="bookings" class="tab-pane">
+  <!-- Package Bookings -->
+  <div class="p-card stripe-teal">
+    <div class="p-card-header">
+      <div class="p-card-title"><i class="fas fa-suitcase"></i> Package Bookings</div>
+      <span style="font-size:0.72rem;color:#9CA3AF;font-family:'DM Sans',sans-serif;">{{ package_bookings|length }} bookings</span>
+    </div>
+    {% if package_bookings %}
+    <div class="table-scroll">
+      <table class="p-table">
+        <thead><tr><th>Package</th><th>Travel Date</th><th>Amount</th><th>Status</th><th>Payment</th></tr></thead>
+        <tbody>
+          {% for b in package_bookings %}
+          <tr>
+            <td style="font-weight:600;color:#111827;">{{ b.package.title|truncatechars:35 }}</td>
+            <td>{{ b.travel_date|date:"M d, Y" }}</td>
+            <td style="font-weight:600;">₹{{ b.total_amount }}</td>
+            <td><span class="badge badge-{{ b.status }}">{{ b.status|title }}</span></td>
+            <td><span class="badge {% if b.payment_status == 'paid' %}badge-paid{% else %}badge-unpaid{% endif %}">{{ b.payment_status|title }}</span></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="p-card-body">
+      <div class="empty-state">
+        <div class="empty-circle"><i class="fas fa-suitcase"></i></div>
+        <h4>No package bookings</h4><p>None yet.</p>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- Room Bookings -->
+  <div class="p-card stripe-indigo">
+    <div class="p-card-header">
+      <div class="p-card-title"><i class="fas fa-bed"></i> Room Bookings</div>
+      <span style="font-size:0.72rem;color:#9CA3AF;font-family:'DM Sans',sans-serif;">{{ room_bookings|length }} bookings</span>
+    </div>
+    {% if room_bookings %}
+    <div class="table-scroll">
+      <table class="p-table">
+        <thead><tr><th>Room</th><th>Room Type</th><th>Check In</th><th>Check Out</th><th>Amount</th><th>Status</th></tr></thead>
+        <tbody>
+          {% for b in room_bookings %}
+          <tr>
+            <td style="font-weight:600;">{{ b.room.room_number|default:"—" }}</td>
+            <td>{{ b.room.room_type.name|default:"—" }}</td>
+            <td>{{ b.check_in|date:"M d, Y" }}</td>
+            <td>{{ b.check_out|date:"M d, Y" }}</td>
+            <td style="font-weight:600;">₹{{ b.total_amount }}</td>
+            <td><span class="badge badge-{{ b.status }}">{{ b.status|title }}</span></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="p-card-body">
+      <div class="empty-state">
+        <div class="empty-circle"><i class="fas fa-bed"></i></div>
+        <h4>No room bookings</h4><p>None yet.</p>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- Table Bookings -->
+  <div class="p-card stripe-amber">
+    <div class="p-card-header">
+      <div class="p-card-title"><i class="fas fa-chair"></i> Table Bookings</div>
+      <span style="font-size:0.72rem;color:#9CA3AF;font-family:'DM Sans',sans-serif;">{{ table_bookings|length }} bookings</span>
+    </div>
+    {% if table_bookings %}
+    <div class="table-scroll">
+      <table class="p-table">
+        <thead><tr><th>Table</th><th>Restaurant</th><th>Date</th><th>Time</th><th>Guests</th><th>Status</th></tr></thead>
+        <tbody>
+          {% for b in table_bookings %}
+          <tr>
+            <td style="font-weight:600;">Table {{ b.table.table_number }}</td>
+            <td>{{ b.table.restaurant.restaurant_name|default:"—" }}</td>
+            <td>{{ b.booking_date|date:"M d, Y" }}</td>
+            <td>{{ b.booking_time|time:"g:i A" }}</td>
+            <td>{{ b.guests }}</td>
+            <td><span class="badge badge-{{ b.status }}">{{ b.status|title }}</span></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="p-card-body">
+      <div class="empty-state">
+        <div class="empty-circle"><i class="fas fa-chair"></i></div>
+        <h4>No table bookings</h4><p>None yet.</p>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+{% endif %}{# /traveller #}
+
+
+<!-- ══════════════════════════════════════
+     AGENCY TABS
+══════════════════════════════════════ -->
+{% if profile_user.role == "agency" %}
+
+<div id="packages" class="tab-pane">
+  <div class="mini-stat-grid">
+    <div class="mini-stat t"><div class="mini-stat-value">{{ packages|length }}</div><div class="mini-stat-label">Packages</div></div>
+    <div class="mini-stat g"><div class="mini-stat-value">{{ bookings_received|length }}</div><div class="mini-stat-label">Total Bookings</div></div>
+    <div class="mini-stat a"><div class="mini-stat-value">{{ paid_bookings_count }}</div><div class="mini-stat-label">Paid Bookings</div></div>
+    <div class="mini-stat i"><div class="mini-stat-value">₹{{ revenue|floatformat:0 }}</div><div class="mini-stat-label">Revenue</div></div>
+  </div>
+  <div class="p-card stripe-teal">
+    <div class="p-card-header">
+      <div class="p-card-title"><i class="fas fa-box"></i> Tour Packages</div>
+      <span style="font-size:0.72rem;color:#9CA3AF;font-family:'DM Sans',sans-serif;">{{ packages|length }} total</span>
+    </div>
+    {% if packages %}
+    <div class="table-scroll">
+      <table class="p-table">
+        <thead><tr><th>Title</th><th>Price</th><th>Status</th><th>Created</th></tr></thead>
+        <tbody>
+          {% for p in packages %}
+          <tr>
+            <td style="font-weight:600;color:#111827;">{{ p.title|truncatechars:40 }}</td>
+            <td style="font-weight:600;">₹{{ p.price }}</td>
+            <td><span class="badge badge-{{ p.status }}">{{ p.status|title }}</span></td>
+            <td>{{ p.created_at|date:"M d, Y" }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="p-card-body">
+      <div class="empty-state">
+        <div class="empty-circle"><i class="fas fa-box-open"></i></div>
+        <h4>No packages yet</h4><p>This agency hasn't created any packages.</p>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<div id="bookings" class="tab-pane">
+  <div class="p-card stripe-green">
+    <div class="p-card-header">
+      <div class="p-card-title"><i class="fas fa-calendar-check"></i> Bookings Received</div>
+      <span style="font-size:0.72rem;color:#9CA3AF;font-family:'DM Sans',sans-serif;">{{ bookings_received|length }} bookings</span>
+    </div>
+    {% if bookings_received %}
+    <div class="table-scroll">
+      <table class="p-table">
+        <thead><tr><th>Traveller</th><th>Package</th><th>Travel Date</th><th>Amount</th><th>Status</th><th>Payment</th></tr></thead>
+        <tbody>
+          {% for b in bookings_received %}
+          <tr>
+            <td style="font-weight:600;color:#111827;">{{ b.traveller.get_display_name|default:b.traveller.username }}</td>
+            <td>{{ b.package.title|truncatechars:30 }}</td>
+            <td>{{ b.travel_date|date:"M d, Y" }}</td>
+            <td style="font-weight:600;">₹{{ b.total_amount }}</td>
+            <td><span class="badge badge-{{ b.status }}">{{ b.status|title }}</span></td>
+            <td><span class="badge {% if b.payment_status == 'paid' %}badge-paid{% else %}badge-unpaid{% endif %}">{{ b.payment_status|title }}</span></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="p-card-body">
+      <div class="empty-state">
+        <div class="empty-circle"><i class="fas fa-inbox"></i></div>
+        <h4>No bookings received</h4><p>No travellers have booked yet.</p>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<div id="revenue" class="tab-pane">
+  <div class="mini-stat-grid">
+    <div class="mini-stat t"><div class="mini-stat-value">₹{{ revenue|floatformat:0 }}</div><div class="mini-stat-label">Total Revenue</div></div>
+    <div class="mini-stat g"><div class="mini-stat-value">{{ paid_bookings_count }}</div><div class="mini-stat-label">Paid Bookings</div></div>
+  </div>
+  <div class="p-card stripe-green">
+    <div class="p-card-header">
+      <div class="p-card-title"><i class="fas fa-rupee-sign"></i> Revenue Breakdown</div>
+    </div>
+    {% if bookings_received %}
+    <div class="table-scroll">
+      <table class="p-table">
+        <thead><tr><th>Traveller</th><th>Package</th><th>Amount</th><th>Payment</th><th>Date</th></tr></thead>
+        <tbody>
+          {% for b in bookings_received %}
+          <tr>
+            <td style="font-weight:600;color:#111827;">{{ b.traveller.get_display_name|default:b.traveller.username }}</td>
+            <td>{{ b.package.title|truncatechars:30 }}</td>
+            <td style="font-weight:600;">₹{{ b.total_amount }}</td>
+            <td><span class="badge {% if b.payment_status == 'paid' %}badge-paid{% else %}badge-unpaid{% endif %}">{{ b.payment_status|title }}</span></td>
+            <td>{{ b.booking_date|date:"M d, Y" }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="p-card-body">
+      <div class="empty-state">
+        <div class="empty-circle"><i class="fas fa-rupee-sign"></i></div>
+        <h4>No revenue data</h4><p>No paid bookings yet.</p>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+{% endif %}{# /agency #}
+
+
+<!-- ══════════════════════════════════════
+     RESTAURANT TABS
+══════════════════════════════════════ -->
+{% if profile_user.role == "restaurant" %}
+
+<div id="rooms" class="tab-pane">
+  <div class="mini-stat-grid">
+    <div class="mini-stat t"><div class="mini-stat-value">{{ total_rooms }}</div><div class="mini-stat-label">Total Rooms</div></div>
+    <div class="mini-stat g"><div class="mini-stat-value">{{ available_rooms }}</div><div class="mini-stat-label">Available</div></div>
+    <div class="mini-stat r"><div class="mini-stat-value">{{ booked_rooms }}</div><div class="mini-stat-label">Booked</div></div>
+  </div>
+  <div class="p-card stripe-teal">
+    <div class="p-card-header">
+      <div class="p-card-title"><i class="fas fa-bed"></i> Rooms</div>
+      <span style="font-size:0.72rem;color:#9CA3AF;font-family:'DM Sans',sans-serif;">{{ rooms|length }} total</span>
+    </div>
+    {% if rooms %}
+    <div class="table-scroll">
+      <table class="p-table">
+        <thead><tr><th>Room Number</th><th>Room Type</th><th>Status</th></tr></thead>
+        <tbody>
+          {% for room in rooms %}
+          <tr>
+            <td style="font-weight:600;color:#111827;">{{ room.room_number }}</td>
+            <td>{{ room.room_type.name|default:"—" }}</td>
+            <td>
+              {% if room.status %}
+                <span class="badge badge-{{ room.status }}">{{ room.status|title }}</span>
+              {% else %}
+                <span class="badge {% if room.is_active %}badge-available{% else %}badge-inactive{% endif %}">{% if room.is_active %}Available{% else %}Inactive{% endif %}</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="p-card-body">
+      <div class="empty-state">
+        <div class="empty-circle"><i class="fas fa-door-open"></i></div>
+        <h4>No rooms yet</h4><p>No rooms have been added.</p>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<div id="tables" class="tab-pane">
+  <div class="mini-stat-grid">
+    <div class="mini-stat t"><div class="mini-stat-value">{{ total_tables }}</div><div class="mini-stat-label">Total Tables</div></div>
+    <div class="mini-stat g"><div class="mini-stat-value">{{ available_tables }}</div><div class="mini-stat-label">Available</div></div>
+  </div>
+  <div class="p-card stripe-amber">
+    <div class="p-card-header">
+      <div class="p-card-title"><i class="fas fa-chair"></i> Tables</div>
+      <span style="font-size:0.72rem;color:#9CA3AF;font-family:'DM Sans',sans-serif;">{{ tables|length }} total</span>
+    </div>
+    {% if tables %}
+    <div class="table-scroll">
+      <table class="p-table">
+        <thead><tr><th>Table Number</th><th>Capacity</th><th>Type</th><th>Status</th></tr></thead>
+        <tbody>
+          {% for t in tables %}
+          <tr>
+            <td style="font-weight:600;color:#111827;">Table {{ t.table_number }}</td>
+            <td>{{ t.capacity }} seats</td>
+            <td>{{ t.table_type|default:"Standard"|title }}</td>
+            <td>
+              {% if t.is_active and t.is_reservable %}
+                <span class="badge badge-available">Available</span>
+              {% else %}
+                <span class="badge badge-inactive">Not Available</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="p-card-body">
+      <div class="empty-state">
+        <div class="empty-circle"><i class="fas fa-chair"></i></div>
+        <h4>No tables yet</h4><p>No tables have been added.</p>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<div id="bookings" class="tab-pane">
+  <div class="p-card stripe-teal">
+    <div class="p-card-header">
+      <div class="p-card-title"><i class="fas fa-bed"></i> Room Bookings</div>
+      <span style="font-size:0.72rem;color:#9CA3AF;font-family:'DM Sans',sans-serif;">{{ room_bookings|length }} bookings</span>
+    </div>
+    {% if room_bookings %}
+    <div class="table-scroll">
+      <table class="p-table">
+        <thead><tr><th>Guest</th><th>Room</th><th>Check In</th><th>Check Out</th><th>Amount</th><th>Status</th></tr></thead>
+        <tbody>
+          {% for b in room_bookings %}
+          <tr>
+            <td style="font-weight:600;color:#111827;">{{ b.user.get_display_name|default:b.user.username }}</td>
+            <td>{{ b.room.room_number }}</td>
+            <td>{{ b.check_in|date:"M d, Y" }}</td>
+            <td>{{ b.check_out|date:"M d, Y" }}</td>
+            <td style="font-weight:600;">₹{{ b.total_amount }}</td>
+            <td><span class="badge badge-{{ b.status }}">{{ b.status|title }}</span></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="p-card-body">
+      <div class="empty-state">
+        <div class="empty-circle"><i class="fas fa-bed"></i></div>
+        <h4>No room bookings</h4><p>None yet.</p>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+
+  <div class="p-card stripe-amber">
+    <div class="p-card-header">
+      <div class="p-card-title"><i class="fas fa-chair"></i> Table Bookings</div>
+      <span style="font-size:0.72rem;color:#9CA3AF;font-family:'DM Sans',sans-serif;">{{ table_bookings|length }} bookings</span>
+    </div>
+    {% if table_bookings %}
+    <div class="table-scroll">
+      <table class="p-table">
+        <thead><tr><th>Guest</th><th>Table</th><th>Date</th><th>Time</th><th>Guests</th><th>Status</th></tr></thead>
+        <tbody>
+          {% for b in table_bookings %}
+          <tr>
+            <td style="font-weight:600;color:#111827;">{{ b.user.get_display_name|default:b.user.username }}</td>
+            <td>Table {{ b.table.table_number }}</td>
+            <td>{{ b.booking_date|date:"M d, Y" }}</td>
+            <td>{{ b.booking_time|time:"g:i A" }}</td>
+            <td>{{ b.guests }}</td>
+            <td><span class="badge badge-{{ b.status }}">{{ b.status|title }}</span></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="p-card-body">
+      <div class="empty-state">
+        <div class="empty-circle"><i class="fas fa-chair"></i></div>
+        <h4>No table bookings</h4><p>None yet.</p>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<div id="revenue" class="tab-pane">
+  <div class="mini-stat-grid">
+    <div class="mini-stat t"><div class="mini-stat-value">₹{{ room_revenue|floatformat:0 }}</div><div class="mini-stat-label">Room Revenue</div></div>
+    <div class="mini-stat a"><div class="mini-stat-value">₹{{ table_revenue|floatformat:0 }}</div><div class="mini-stat-label">Table Revenue</div></div>
+    <div class="mini-stat g"><div class="mini-stat-value">₹{{ total_revenue|floatformat:0 }}</div><div class="mini-stat-label">Total Revenue</div></div>
+  </div>
+  <div class="p-card">
+    <div class="p-card-header">
+      <div class="p-card-title"><i class="fas fa-rupee-sign"></i> Revenue Summary</div>
+    </div>
+    <div class="p-card-body">
+      <div class="info-grid">
+        <div class="info-item"><div class="info-label">Room Revenue</div><div class="info-value" style="color:#0E8A8A;font-size:1.3rem;">₹{{ room_revenue|floatformat:0 }}</div></div>
+        <div class="info-item"><div class="info-label">Table Revenue</div><div class="info-value" style="color:#F59E0B;font-size:1.3rem;">₹{{ table_revenue|floatformat:0 }}</div></div>
+        <div class="info-item"><div class="info-label">Total Revenue</div><div class="info-value" style="color:#10B981;font-size:1.3rem;">₹{{ total_revenue|floatformat:0 }}</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endif %}{# /restaurant #}
+
+
+<!-- ══════════════════════════════════════
+     ACTIVITY LOG
+══════════════════════════════════════ -->
+<div id="activity" class="tab-pane">
+  <div class="p-card stripe-teal">
+    <div class="p-card-header">
+      <div class="p-card-title"><i class="fas fa-history"></i> Recent Activity</div>
+      <span style="font-size:0.72rem;color:#9CA3AF;font-family:'DM Sans',sans-serif;">{{ activity_logs|length }} event{{ activity_logs|length|pluralize }}</span>
+    </div>
+    <div class="p-card-body">
+      {% if activity_logs %}
+      <div class="activity-feed">
+        {% for log in activity_logs %}
+        <div class="activity-item">
+          <div class="activity-icon">
+            <i class="fas
+              {% if 'BOOK' in log.action or 'PACKAGE' in log.action %}fa-suitcase
+              {% elif 'PAYMENT' in log.action or 'PAID' in log.action %}fa-rupee-sign
+              {% elif 'ROOM' in log.action %}fa-bed
+              {% elif 'TABLE' in log.action %}fa-chair
+              {% elif 'PROFILE' in log.action %}fa-user-edit
+              {% elif 'DESTINATION' in log.action %}fa-map-marker-alt
+              {% else %}fa-bell{% endif %}">
+            </i>
+          </div>
+          <div class="activity-body">
+            <div class="activity-action">{{ log.action }}</div>
+            <div class="activity-desc">{{ log.description|truncatechars:90 }}</div>
+          </div>
+          <div class="activity-time" title="{{ log.created_at|date:'F d, Y H:i:s' }}">
+            {{ log.created_at|timesince }} ago
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="empty-state">
+        <div class="empty-circle"><i class="fas fa-clipboard-list"></i></div>
+        <h4>No activity yet</h4>
+        <p>No logs found for this user.</p>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const tabs    = document.querySelectorAll('.p-tab');
+    const panes   = document.querySelectorAll('.tab-pane');
+    const STORAGE = 'wayzo_profile_tab_{{ profile_user.id }}';
+
+    function activate(tabId) {
+      tabs.forEach(t => t.classList.toggle('active', t.dataset.tab === tabId));
+      panes.forEach(p => p.classList.toggle('active', p.id === tabId));
+      try { localStorage.setItem(STORAGE, tabId); } catch(e) {}
+    }
+
+    tabs.forEach(btn => btn.addEventListener('click', () => activate(btn.dataset.tab)));
+
+    // Restore saved tab
+    try {
+      const saved = localStorage.getItem(STORAGE);
+      const exists = saved && document.getElementById(saved);
+      if (exists) activate(saved);
+    } catch(e) {}
+  });
+</script>
+
+{% endblock %}

@@ -1,0 +1,885 @@
+{% extends "travellers/base.html" %}
+{% load static %}
+
+{% block title %}Create Private Trip | Wayzo{% endblock %}
+{% block nav_community %}active{% endblock %}
+
+{% block extra_styles %}
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,400&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap');
+
+:root {
+    --teal:#0e8a8a; --teal-dark:#0a6e6e; --teal-pale:#eaf4f4;
+    --amber:#f59e0b; --amber-pale:#fef3c7;
+    --green:#10b981; --green-pale:#d1fae5;
+    --red:#ef4444; --red-pale:#fee2e2;
+    --ink:#1e242c; --ink2:#334155; --muted:#64748b;
+    --surface:#fff; --s2:#f8f9fc;
+    --gray-100:#f8f9fc; --gray-150:#f1f3f8; --gray-200:#e9edf2;
+    --gray-300:#dce2ea; --gray-400:#bec7d1;
+    --gray-700:#4a515c; --gray-900:#191e24;
+    --text-dark:#1e242c; --text-soft:#3c4350; --text-light:#6f7886;
+    --radius:18px; --radius-sm:10px;
+    --sh:0 4px 16px rgba(0,0,0,.06);
+    --sh-lg:0 12px 40px rgba(0,0,0,.1);
+}
+
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'DM Sans',sans-serif;background:var(--gray-100);color:var(--text-dark);-webkit-font-smoothing:antialiased;}
+
+/* ══════════════════════════════
+   HERO
+══════════════════════════════ */
+.trip-hero {
+    position:relative; height:220px; overflow:hidden;
+    background:linear-gradient(135deg,#0a3d3d 0%,#0d2b2a 60%,#061018 100%);
+    flex-shrink:0;
+}
+.trip-hero::before {
+    content:'';
+    position:absolute; inset:0; z-index:1;
+    background:
+        radial-gradient(ellipse 60% 80% at 80% 50%, rgba(14,138,138,.22) 0%, transparent 70%),
+        radial-gradient(ellipse 40% 60% at 10% 80%, rgba(14,138,138,.12) 0%, transparent 70%);
+}
+.trip-hero::after {
+    content:'';
+    position:absolute; inset:0; z-index:1;
+    background-image:radial-gradient(rgba(255,255,255,.06) 1px, transparent 1px);
+    background-size:28px 28px;
+}
+.hero-fade-bottom {
+    position:absolute; bottom:0; left:0; right:0; height:90px;
+    background:linear-gradient(to bottom, transparent, var(--gray-100));
+    z-index:3; pointer-events:none;
+}
+.trip-hero-content {
+    position:relative; z-index:4;
+    height:100%; display:flex; flex-direction:column;
+    justify-content:flex-end;
+    padding:1.5rem 3rem 2.2rem;
+    max-width:1000px; margin:0 auto;
+}
+.hero-eyebrow {
+    display:inline-flex; align-items:center; gap:.4rem;
+    background:rgba(255,255,255,.1); backdrop-filter:blur(10px);
+    border:1px solid rgba(255,255,255,.18); border-radius:40px;
+    padding:.24rem .8rem; font-size:.62rem; font-weight:600;
+    letter-spacing:.08em; text-transform:uppercase;
+    color:rgba(255,255,255,.8); margin-bottom:.55rem; width:fit-content;
+}
+.hero-eyebrow::before {
+    content:''; width:5px; height:5px; border-radius:50%;
+    background:#5FC5C5; display:inline-block; flex-shrink:0;
+}
+.trip-hero-content h1 {
+    font-family:'Playfair Display',serif;
+    font-size:clamp(1.4rem,2.6vw,1.9rem); font-weight:700;
+    color:white; line-height:1.15;
+    text-shadow:0 2px 16px rgba(0,0,0,.35);
+}
+.trip-hero-content p {
+    font-size:.8rem; color:rgba(255,255,255,.6);
+    margin-top:.3rem; font-weight:300;
+}
+.hero-chips {
+    display:flex; gap:.45rem; margin-top:.65rem; flex-wrap:wrap;
+}
+.hero-chip {
+    display:inline-flex; align-items:center; gap:.3rem;
+    background:rgba(255,255,255,.1); backdrop-filter:blur(8px);
+    border:1px solid rgba(255,255,255,.15); border-radius:99px;
+    padding:.22rem .7rem; font-size:.68rem; color:rgba(255,255,255,.78);
+    font-weight:500;
+}
+
+/* ══════════════════════════════
+   PAGE WRAPPER
+══════════════════════════════ */
+.trip-page {
+    max-width:1000px; margin:0 auto;
+    padding:2rem 2rem 5rem;
+}
+
+/* Error banner */
+.error-banner {
+    background:var(--red-pale); border:1px solid #fca5a5;
+    border-radius:var(--radius-sm); padding:.85rem 1.1rem;
+    margin-bottom:1.5rem; font-size:.8rem; color:var(--red);
+}
+.error-banner strong { display:block; margin-bottom:.3rem; }
+
+/* ══════════════════════════════
+   SECTION CARDS
+══════════════════════════════ */
+.section-card {
+    background:white; border:1px solid var(--gray-200);
+    border-radius:var(--radius); overflow:hidden;
+    box-shadow:var(--sh); margin-bottom:1.5rem;
+    animation:fadeUp .35s ease both;
+}
+.section-card:nth-child(2){animation-delay:.05s;}
+.section-card:nth-child(3){animation-delay:.1s;}
+.section-card:nth-child(4){animation-delay:.15s;}
+.section-card:nth-child(5){animation-delay:.2s;}
+
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
+
+.section-head {
+    padding:.9rem 1.5rem; background:var(--s2);
+    border-bottom:1px solid var(--gray-200);
+    display:flex; align-items:center; gap:.6rem;
+}
+.section-head-icon {
+    width:30px; height:30px; border-radius:9px;
+    background:var(--teal-pale); display:flex; align-items:center;
+    justify-content:center; font-size:.9rem; flex-shrink:0;
+}
+.section-head-text h3 {
+    font-size:.88rem; font-weight:700; color:var(--ink); line-height:1.2;
+}
+.section-head-text p { font-size:.68rem; color:var(--muted); margin-top:.08rem; }
+
+.section-body { padding:1.4rem 1.5rem; }
+
+/* ══════════════════════════════
+   FIELD STYLES
+══════════════════════════════ */
+.field-row {
+    display:grid; gap:1.1rem;
+    margin-bottom:1.1rem;
+}
+.field-row.cols-2 { grid-template-columns:1fr 1fr; }
+.field-row.cols-3 { grid-template-columns:1fr 1fr 1fr; }
+.field-row.cols-1 { grid-template-columns:1fr; }
+.field-row:last-child { margin-bottom:0; }
+
+.field-group { display:flex; flex-direction:column; gap:.4rem; }
+.field-label {
+    font-size:.75rem; font-weight:700; color:var(--ink2);
+    letter-spacing:.01em;
+}
+.field-label .req { color:var(--red); margin-left:.15rem; }
+.field-hint { font-size:.67rem; color:var(--muted); }
+
+.section-body input[type="text"],
+.section-body input[type="number"],
+.section-body input[type="date"],
+.section-body textarea,
+.section-body select {
+    width:100%; padding:.65rem 1rem;
+    border:1.5px solid var(--gray-200); border-radius:var(--radius-sm);
+    font-size:.85rem; font-family:'DM Sans',sans-serif; color:var(--ink);
+    background:white; transition:border-color .15s, box-shadow .15s;
+    outline:none; appearance:none; -webkit-appearance:none;
+}
+.section-body input[type="text"]:focus,
+.section-body input[type="number"]:focus,
+.section-body input[type="date"]:focus,
+.section-body textarea:focus,
+.section-body select:focus {
+    border-color:var(--teal);
+    box-shadow:0 0 0 3px rgba(14,138,138,.1);
+}
+.section-body input::placeholder,
+.section-body textarea::placeholder { color:var(--gray-400); }
+.section-body textarea { resize:vertical; min-height:90px; line-height:1.6; }
+
+.select-wrap { position:relative; }
+.select-wrap::after {
+    content:''; position:absolute; right:14px; top:50%;
+    transform:translateY(-50%);
+    border:5px solid transparent; border-top:6px solid var(--gray-400);
+    pointer-events:none;
+}
+.select-wrap select { padding-right:2.2rem; cursor:pointer; }
+
+/* ══════════════════════════════
+   IMAGE UPLOAD SECTION
+══════════════════════════════ */
+.images-section {
+    border:1.5px solid var(--gray-200);
+    border-radius:var(--radius);
+    overflow:hidden;
+    margin-bottom:1.5rem;
+}
+.images-header {
+    padding:.8rem 1.2rem; background:var(--s2);
+    border-bottom:1px solid var(--gray-200);
+    display:flex; align-items:center; justify-content:space-between;
+}
+.images-header-left {
+    display:flex; align-items:center; gap:.5rem;
+    font-size:.8rem; font-weight:700; color:var(--ink);
+}
+.images-header-left svg { width:15px; height:15px; stroke:var(--teal); fill:none; stroke-width:2; }
+.images-count-badge {
+    background:var(--teal-pale); color:var(--teal-dark);
+    font-size:.65rem; font-weight:700; padding:.12rem .45rem;
+    border-radius:99px; min-width:20px; text-align:center;
+}
+
+.image-grid-wrapper {
+    padding:1rem 1.2rem;
+    display:grid;
+    grid-template-columns:repeat(auto-fill, minmax(120px, 1fr));
+    gap:.75rem;
+}
+.img-preview-tile {
+    aspect-ratio:1; border-radius:12px; overflow:hidden;
+    position:relative; background:var(--gray-150);
+}
+.img-preview-tile img { width:100%; height:100%; object-fit:cover; display:block; }
+.img-remove-btn {
+    position:absolute; top:5px; right:5px;
+    background:rgba(0,0,0,.65); color:white;
+    border:none; border-radius:50%; width:24px; height:24px;
+    cursor:pointer; font-size:.9rem;
+}
+.img-remove-btn:hover { background:var(--red); }
+
+.add-image-row {
+    padding:.65rem 1.2rem; border-top:1px solid var(--gray-150);
+    display:flex; align-items:center; gap:.5rem;
+}
+.add-image-btn-row {
+    display:flex; align-items:center; gap:.45rem;
+    background:none; border:1.5px dashed var(--gray-300);
+    border-radius:40px; padding:.42rem 1rem;
+    font-size:.75rem; font-weight:600; color:var(--muted);
+    cursor:pointer;
+}
+.add-image-btn-row:hover { border-color:var(--teal); color:var(--teal); background:var(--teal-pale); }
+.add-image-btn-row:disabled { opacity:.45; cursor:not-allowed; }
+
+/* ══════════════════════════════
+   ITINERARY SECTION
+══════════════════════════════ */
+.itinerary-section {
+    border:1.5px solid var(--gray-200);
+    border-radius:var(--radius);
+    overflow:hidden;
+    margin-bottom:1.5rem;
+}
+.itinerary-header {
+    padding:.8rem 1.2rem; background:var(--s2);
+    border-bottom:1px solid var(--gray-200);
+    display:flex; align-items:center; justify-content:space-between;
+}
+.itinerary-header-left {
+    display:flex; align-items:center; gap:.5rem;
+    font-size:.8rem; font-weight:700; color:var(--ink);
+}
+.itinerary-count-badge {
+    background:var(--teal-pale); color:var(--teal-dark);
+    font-size:.65rem; font-weight:700; padding:.12rem .45rem;
+    border-radius:99px; min-width:20px; text-align:center;
+}
+.itinerary-days {
+    padding:1rem 1.2rem;
+    display:flex;
+    flex-direction:column;
+    gap:1rem;
+}
+.day-card {
+    border:1px solid var(--gray-200);
+    border-radius:var(--radius-sm);
+    overflow:hidden;
+    background:white;
+}
+.day-header {
+    padding:.6rem 1rem;
+    background:var(--gray-100);
+    border-bottom:1px solid var(--gray-200);
+    font-weight:600;
+    font-size:.8rem;
+    color:var(--teal-dark);
+    display:flex;
+    align-items:center;
+    gap:.5rem;
+}
+.day-header span {
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    width:22px;
+    height:22px;
+    background:var(--teal);
+    color:white;
+    border-radius:6px;
+    font-size:.7rem;
+}
+.day-body {
+    padding:1rem;
+    display:flex;
+    flex-direction:column;
+    gap:.8rem;
+}
+.day-body input, .day-body textarea {
+    width:100%;
+}
+
+/* ══════════════════════════════
+   TOGGLE SWITCHES
+══════════════════════════════ */
+.toggle-row {
+    display:flex; align-items:center; justify-content:space-between;
+    padding:.7rem .95rem; border-radius:var(--radius-sm);
+    border:1.5px solid var(--gray-200); background:white;
+    transition:border-color .2s, background .2s; cursor:pointer;
+    user-select:none;
+}
+.toggle-row:hover { border-color:var(--teal); background:var(--teal-pale); }
+.toggle-row.on { border-color:var(--teal); background:var(--teal-pale); }
+
+.toggle-info { display:flex; align-items:center; gap:.65rem; }
+.toggle-icon { font-size:1rem; width:24px; text-align:center; flex-shrink:0; }
+.toggle-label { font-size:.82rem; font-weight:600; color:var(--ink); }
+.toggle-sub { font-size:.67rem; color:var(--muted); margin-top:.08rem; }
+
+.toggle-pill {
+    width:38px; height:22px; border-radius:99px;
+    background:var(--gray-300); position:relative;
+    transition:background .25s; flex-shrink:0;
+}
+.toggle-pill.on { background:var(--teal); }
+.toggle-pill::after {
+    content:''; position:absolute; top:3px; left:3px;
+    width:16px; height:16px; border-radius:50%;
+    background:white; transition:transform .25s;
+    box-shadow:0 1px 4px rgba(0,0,0,.2);
+}
+.toggle-pill.on::after { transform:translateX(16px); }
+
+.section-body input[type="checkbox"] { display:none; }
+
+/* Private Notice */
+.private-notice {
+    display:flex; align-items:center; gap:.75rem;
+    padding:.85rem 1.1rem; border-radius:var(--radius-sm);
+    background:var(--amber-pale); border:1px solid #fcd34d;
+    margin-bottom:1.1rem;
+}
+.private-notice-icon { font-size:1.1rem; flex-shrink:0; }
+.private-notice p { font-size:.76rem; color:#92400e; line-height:1.5; }
+.private-notice strong { font-weight:700; }
+
+/* Form Actions */
+.form-actions-bar {
+    background:white; border:1px solid var(--gray-200);
+    border-radius:var(--radius);
+    box-shadow:0 8px 32px rgba(0,0,0,.08),0 1px 4px rgba(0,0,0,.04);
+    padding:1rem 1.5rem;
+    display:flex; align-items:center; justify-content:space-between;
+    gap:1rem; flex-wrap:wrap;
+    animation:fadeUp .35s .2s ease both;
+}
+.form-actions-hint { font-size:.73rem; color:var(--muted); display:flex; align-items:center; gap:.4rem; }
+.form-actions-hint svg { width:14px; height:14px; stroke:var(--teal); fill:none; stroke-width:2; flex-shrink:0; }
+.form-actions-btns { display:flex; gap:.6rem; }
+
+.action-btn {
+    display:inline-flex; align-items:center; gap:.4rem;
+    padding:.56rem 1.4rem; border-radius:40px;
+    font-size:.82rem; font-weight:600; text-decoration:none;
+    transition:all .2s; cursor:pointer; border:none;
+    font-family:'DM Sans',sans-serif; white-space:nowrap;
+}
+.action-btn svg { width:15px; height:15px; stroke:currentColor; fill:none; stroke-width:2; }
+.action-btn-primary { background:var(--teal); color:white; }
+.action-btn-primary:hover { background:var(--teal-dark); transform:translateY(-1px); box-shadow:0 4px 16px rgba(14,138,138,.3); }
+.action-btn-ghost { background:transparent; color:var(--text-light); border:1.5px solid var(--gray-200); }
+.action-btn-ghost:hover { background:var(--s2); border-color:var(--gray-300); color:var(--ink); }
+
+.errorlist { list-style:none; margin-top:.3rem; padding:0; font-size:.7rem; color:var(--red); }
+
+/* Responsive */
+@media(max-width:768px){
+    .trip-hero { height:180px; }
+    .trip-hero-content { padding:1.2rem 1rem 1.8rem; }
+    .trip-page { padding:1.2rem 1rem 3rem; }
+    .field-row.cols-2,
+    .field-row.cols-3 { grid-template-columns:1fr; }
+    .form-actions-bar { flex-direction:column; align-items:stretch; }
+    .form-actions-btns { justify-content:flex-end; }
+    .image-grid-wrapper { grid-template-columns:repeat(3,1fr); }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- ══ HERO ══ -->
+<div class="trip-hero">
+    <div class="hero-fade-bottom"></div>
+    <div class="trip-hero-content">
+        <div class="hero-eyebrow">Private Trip</div>
+        <h1>🔒 Create a Private Trip</h1>
+        <p>Invite-only · your journey, your crew</p>
+        <div class="hero-chips">
+            <span class="hero-chip">🔒 Invite Only</span>
+            <span class="hero-chip">👥 Your Members</span>
+            <span class="hero-chip">📍 Live Tracking</span>
+            <span class="hero-chip">📸 Share Photos</span>
+            <span class="hero-chip">✈️ Plan Together</span>
+        </div>
+    </div>
+</div>
+
+<div class="trip-page">
+
+    {% if form.errors %}
+    <div class="error-banner">
+        <strong>Please fix the following errors:</strong>
+        {{ form.errors }}
+    </div>
+    {% endif %}
+
+    <form method="POST" enctype="multipart/form-data" id="tripForm" novalidate>
+        {% csrf_token %}
+        {{ image_formset.management_form }}
+        {{ itinerary_formset.management_form }}
+
+        <!-- ── SECTION 1: Basic Details ── -->
+        <div class="section-card">
+            <div class="section-head">
+                <div class="section-head-icon">📋</div>
+                <div class="section-head-text">
+                    <h3>Basic Details</h3>
+                    <p>Name, description and key information about your trip</p>
+                </div>
+            </div>
+            <div class="section-body">
+
+                <div class="field-row cols-1">
+                    <div class="field-group">
+                        <label class="field-label">Trip Title <span class="req">*</span></label>
+                        {{ form.title }}
+                        {% if form.title.errors %}<ul class="errorlist">{{ form.title.errors }}</ul>{% endif %}
+                    </div>
+                </div>
+
+                <div class="field-row cols-1">
+                    <div class="field-group">
+                        <label class="field-label">Destination / Places Covered <span class="req">*</span></label>
+                        {{ form.places_covered }}
+                        {% if form.places_covered.errors %}<ul class="errorlist">{{ form.places_covered.errors }}</ul>{% endif %}
+                        <span class="field-hint">e.g. Munnar → Thekkady → Alleppey</span>
+                    </div>
+                </div>
+
+                <div class="field-row cols-1">
+                    <div class="field-group">
+                        <label class="field-label">Description <span class="req">*</span></label>
+                        {{ form.description }}
+                        {% if form.description.errors %}<ul class="errorlist">{{ form.description.errors }}</ul>{% endif %}
+                        <span class="field-hint">What makes this trip special? Give travellers a taste of the adventure.</span>
+                    </div>
+                </div>
+
+                <div class="field-row cols-3">
+                    <div class="field-group">
+                        <label class="field-label">Trip Type <span class="req">*</span></label>
+                        <div class="select-wrap">{{ form.trip_type }}</div>
+                        {% if form.trip_type.errors %}<ul class="errorlist">{{ form.trip_type.errors }}</ul>{% endif %}
+                    </div>
+                    <div class="field-group">
+                        <label class="field-label">Budget (₹) <span class="req">*</span></label>
+                        {{ form.budget }}
+                        {% if form.budget.errors %}<ul class="errorlist">{{ form.budget.errors }}</ul>{% endif %}
+                    </div>
+                    <div class="field-group">
+                        <label class="field-label">Max Members</label>
+                        {{ form.max_members }}
+                        {% if form.max_members.errors %}<ul class="errorlist">{{ form.max_members.errors }}</ul>{% endif %}
+                        <span class="field-hint">Maximum participants including you</span>
+                    </div>
+                </div>
+
+                <div class="field-row cols-3">
+                    <div class="field-group">
+                        <label class="field-label">Duration Days <span class="req">*</span></label>
+                        {{ form.duration_days }}
+                        {% if form.duration_days.errors %}<ul class="errorlist">{{ form.duration_days.errors }}</ul>{% endif %}
+                    </div>
+                    <div class="field-group">
+                        <label class="field-label">Duration Nights <span class="req">*</span></label>
+                        {{ form.duration_nights }}
+                        {% if form.duration_nights.errors %}<ul class="errorlist">{{ form.duration_nights.errors }}</ul>{% endif %}
+                    </div>
+                    <div class="field-group">
+                        <label class="field-label">Start Date</label>
+                        {{ form.start_date }}
+                        {% if form.start_date.errors %}<ul class="errorlist">{{ form.start_date.errors }}</ul>{% endif %}
+                    </div>
+                </div>
+
+                <div class="field-row cols-1">
+                    <div class="field-group">
+                        <label class="field-label">End Date</label>
+                        {{ form.end_date }}
+                        {% if form.end_date.errors %}<ul class="errorlist">{{ form.end_date.errors }}</ul>{% endif %}
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- ── SECTION 2: Trip Settings ── -->
+        <div class="section-card">
+            <div class="section-head">
+                <div class="section-head-icon">⚙️</div>
+                <div class="section-head-text">
+                    <h3>Trip Settings</h3>
+                    <p>Visibility and participation controls</p>
+                </div>
+            </div>
+            <div class="section-body">
+
+                <div class="private-notice">
+                    <div class="private-notice-icon">🔒</div>
+                    <p>This trip will be created as <strong>Private · Invite Only</strong>. Only people you invite will be able to see and join it.</p>
+                </div>
+
+                <!-- Hidden forced values -->
+                {{ form.join_type.as_hidden }}
+                {{ form.visibility.as_hidden }}
+                {{ form.join_type }}
+                {{ form.visibility }}
+
+                <!-- Toggles -->
+                <div class="field-row cols-1" style="gap:.6rem;">
+                    <div class="toggle-row" id="trackingToggle" onclick="flipToggle('id_live_tracking_enabled','trackingToggle','trackingPill')">
+                        <div class="toggle-info">
+                            <span class="toggle-icon">📍</span>
+                            <div>
+                                <div class="toggle-label">Enable Live Tracking</div>
+                                <div class="toggle-sub">Share real-time location with trip members</div>
+                            </div>
+                        </div>
+                        <div class="toggle-pill" id="trackingPill"></div>
+                    </div>
+                    {{ form.live_tracking_enabled }}
+
+                    <div class="toggle-row" id="activeToggle" onclick="flipToggle('id_is_active','activeToggle','activePill')">
+                        <div class="toggle-info">
+                            <span class="toggle-icon">✅</span>
+                            <div>
+                                <div class="toggle-label">Mark as Active Trip</div>
+                                <div class="toggle-sub">Trip is live and open for activity</div>
+                            </div>
+                        </div>
+                        <div class="toggle-pill" id="activePill"></div>
+                    </div>
+                    {{ form.is_active }}
+                </div>
+
+            </div>
+        </div>
+
+        <!-- ── SECTION 3: Inclusions & Exclusions ── -->
+        <div class="section-card">
+            <div class="section-head">
+                <div class="section-head-icon">📝</div>
+                <div class="section-head-text">
+                    <h3>What's Included & Excluded</h3>
+                    <p>Help travellers know what to expect</p>
+                </div>
+            </div>
+            <div class="section-body">
+
+                <div class="field-row cols-2">
+                    <div class="field-group">
+                        <label class="field-label">Inclusions</label>
+                        {{ form.inclusions }}
+                        {% if form.inclusions.errors %}<ul class="errorlist">{{ form.inclusions.errors }}</ul>{% endif %}
+                        <span class="field-hint">e.g. Accommodation, meals, transport</span>
+                    </div>
+                    <div class="field-group">
+                        <label class="field-label">Exclusions</label>
+                        {{ form.exclusions }}
+                        {% if form.exclusions.errors %}<ul class="errorlist">{{ form.exclusions.errors }}</ul>{% endif %}
+                        <span class="field-hint">e.g. Flights, personal expenses</span>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- ── SECTION 4: Rules & Policies ── -->
+        <div class="section-card">
+            <div class="section-head">
+                <div class="section-head-icon">📋</div>
+                <div class="section-head-text">
+                    <h3>Rules & Policies</h3>
+                    <p>Set ground rules and cancellation terms</p>
+                </div>
+            </div>
+            <div class="section-body">
+
+                <div class="field-row cols-1">
+                    <div class="field-group">
+                        <label class="field-label">Trip Rules <span class="req">*</span></label>
+                        {{ form.rules }}
+                        {% if form.rules.errors %}<ul class="errorlist">{{ form.rules.errors }}</ul>{% endif %}
+                        <span class="field-hint">Ground rules for a smooth trip experience</span>
+                    </div>
+                </div>
+
+                <div class="field-row cols-2">
+                    <div class="field-group">
+                        <label class="field-label">Things to Pack</label>
+                        {{ form.things_to_pack }}
+                        {% if form.things_to_pack.errors %}<ul class="errorlist">{{ form.things_to_pack.errors }}</ul>{% endif %}
+                        <span class="field-hint">Suggested items to pack</span>
+                    </div>
+                    <div class="field-group">
+                        <label class="field-label">Cancellation Policy</label>
+                        {{ form.cancellation_policy }}
+                        {% if form.cancellation_policy.errors %}<ul class="errorlist">{{ form.cancellation_policy.errors }}</ul>{% endif %}
+                        <span class="field-hint">Cancellation terms and conditions</span>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- ── SECTION 5: Photos ── -->
+        <div class="section-card">
+            <div class="section-head">
+                <div class="section-head-icon">📸</div>
+                <div class="section-head-text">
+                    <h3>Trip Photos</h3>
+                    <p>Add images to showcase your trip (optional)</p>
+                </div>
+            </div>
+            <div class="section-body">
+
+                <div class="images-section">
+                    <div class="images-header">
+                        <div class="images-header-left">
+                            <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                            Photos
+                            <span class="images-count-badge" id="imgCountBadge">0 / 5</span>
+                        </div>
+                        <span style="font-size:.68rem;color:var(--muted);">JPG, PNG, WebP · max 5 MB each</span>
+                    </div>
+
+                    <div class="image-grid-wrapper" id="imageGrid"></div>
+
+                    <div class="add-image-row">
+                        <button type="button" class="add-image-btn-row" onclick="triggerImageUpload()">
+                            <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                            Add Photo
+                        </button>
+                        <input type="file" id="hiddenFileInput" accept="image/*" style="display:none;" multiple onchange="handleFileSelected(this)">
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- ── SECTION 6: Itinerary ── -->
+        <div class="section-card">
+            <div class="section-head">
+                <div class="section-head-icon">🗓️</div>
+                <div class="section-head-text">
+                    <h3>Daily Itinerary</h3>
+                    <p>Plan each day of your trip</p>
+                </div>
+            </div>
+            <div class="section-body">
+
+                <div class="itinerary-section">
+                    <div class="itinerary-header">
+                        <div class="itinerary-header-left">
+                            <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+                            Daily Itinerary
+                            <span class="itinerary-count-badge" id="itineraryCount">0 days</span>
+                        </div>
+                        <span style="font-size:.68rem;color:var(--muted);">Plan each day of your trip</span>
+                    </div>
+                    <div class="itinerary-days" id="itineraryContainer">
+                        <div style="text-align:center; padding:2rem; color:var(--muted);">
+                            👆 Set the trip duration above to create daily itinerary
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- ── ACTIONS ── -->
+        <div class="form-actions-bar">
+            <div class="form-actions-hint">
+                <svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                Private · Invite Only · visible only to you and invitees
+            </div>
+            <div class="form-actions-btns">
+                <a href="{% url 'community:private_trip_list' %}" class="action-btn action-btn-ghost">
+                    <svg viewBox="0 0 24 24"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+                    Cancel
+                </a>
+                <button type="submit" class="action-btn action-btn-primary" id="submitBtn">
+                    <svg viewBox="0 0 24 24"><path d="M22 2L11 13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                    Create Private Trip
+                </button>
+            </div>
+        </div>
+
+    </form>
+</div>
+
+<script>
+/* ── Toggle switches ── */
+function flipToggle(inputId, rowId, pillId) {
+    const input = document.getElementById(inputId);
+    const row   = document.getElementById(rowId);
+    const pill  = document.getElementById(pillId);
+    if (!input) return;
+    input.checked = !input.checked;
+    pill.classList.toggle('on', input.checked);
+    row.classList.toggle('on', input.checked);
+}
+
+/* ── Sync initial checkbox state to pill UI ── */
+window.addEventListener('DOMContentLoaded', () => {
+    [['id_live_tracking_enabled','trackingPill','trackingToggle'],
+     ['id_is_active','activePill','activeToggle']].forEach(([id, pill, row]) => {
+        const input = document.getElementById(id);
+        if (input && input.checked) {
+            document.getElementById(pill)?.classList.add('on');
+            document.getElementById(row)?.classList.add('on');
+        }
+    });
+});
+
+/* ── Image Upload Handling ── */
+let imageFiles = [];
+let totalForms = parseInt(document.getElementById('id_form-TOTAL_FORMS')?.value || 0);
+
+function triggerImageUpload() {
+    document.getElementById('hiddenFileInput').click();
+}
+
+function handleFileSelected(input) {
+    if (!input.files) return;
+    const files = Array.from(input.files);
+    
+    files.forEach(file => {
+        if (!file.type.startsWith('image/')) return;
+        if (file.size > 5 * 1024 * 1024) return;
+        
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const formIndex = totalForms;
+            imageFiles.push({ file, dataUrl: e.target.result });
+            totalForms++;
+            
+            const realInput = document.createElement('input');
+            realInput.type = 'file';
+            realInput.name = `form-${formIndex}-image`;
+            realInput.style.display = 'none';
+            document.getElementById('tripForm').appendChild(realInput);
+            
+            const dt = new DataTransfer();
+            dt.items.add(file);
+            realInput.files = dt.files;
+            
+            if (document.getElementById('id_form-TOTAL_FORMS'))
+                document.getElementById('id_form-TOTAL_FORMS').value = totalForms;
+            
+            renderImages();
+        };
+        reader.readAsDataURL(file);
+    });
+    input.value = '';
+}
+
+function removeImage(idx) {
+    imageFiles.splice(idx, 1);
+    renderImages();
+}
+
+function renderImages() {
+    const grid = document.getElementById('imageGrid');
+    grid.innerHTML = '';
+    imageFiles.forEach((item, i) => {
+        const tile = document.createElement('div');
+        tile.className = 'img-preview-tile';
+        tile.innerHTML = `
+            <img src="${item.dataUrl}" alt="Preview">
+            <button type="button" class="img-remove-btn" onclick="removeImage(${i})">×</button>
+        `;
+        grid.appendChild(tile);
+    });
+    document.getElementById('imgCountBadge').textContent = `${imageFiles.length} / 5`;
+    
+    const addBtn = document.querySelector('.add-image-btn-row');
+    if (imageFiles.length >= 5) {
+        addBtn.disabled = true;
+        addBtn.style.opacity = '0.5';
+    } else {
+        addBtn.disabled = false;
+        addBtn.style.opacity = '1';
+    }
+}
+
+/* ── Itinerary Generation ── */
+const durationDaysField = document.getElementById('id_duration_days');
+const itineraryContainer = document.getElementById('itineraryContainer');
+const totalItineraryForms = document.getElementById('id_itinerary-TOTAL_FORMS');
+
+function generateItineraryForms() {
+    let days = parseInt(durationDaysField.value) || 0;
+    if (days < 1) {
+        itineraryContainer.innerHTML = '<div style="text-align:center; padding:2rem; color:var(--muted);">👆 Set the trip duration above to create daily itinerary</div>';
+        if (totalItineraryForms) totalItineraryForms.value = 0;
+        document.getElementById('itineraryCount').textContent = '0 days';
+        return;
+    }
+    
+    if (days > 30) days = 30;
+    if (totalItineraryForms) totalItineraryForms.value = days;
+    
+    let html = '';
+    for (let i = 0; i < days; i++) {
+        html += `
+            <div class="day-card">
+                <div class="day-header">
+                    <span>${i+1}</span>
+                    Day ${i+1}
+                </div>
+                <div class="day-body">
+                    <input type="hidden" name="itinerary-${i}-day_number" value="${i+1}">
+                    <input type="text" name="itinerary-${i}-title" class="form-input" placeholder="Day Title (e.g. Arrival & City Tour)" required>
+                    <textarea name="itinerary-${i}-description" class="form-input" placeholder="Describe the day's activities, places to visit, meals, etc." rows="3" required></textarea>
+                </div>
+            </div>
+        `;
+    }
+    itineraryContainer.innerHTML = html;
+    document.getElementById('itineraryCount').textContent = `${days} day${days !== 1 ? 's' : ''}`;
+}
+
+durationDaysField.addEventListener('change', generateItineraryForms);
+generateItineraryForms();
+
+/* ── Submit spinner ── */
+document.getElementById('tripForm').addEventListener('submit', function() {
+    const btn = document.getElementById('submitBtn');
+    btn.disabled = true;
+    btn.innerHTML = `
+        <svg viewBox="0 0 24 24" style="animation:spin .7s linear infinite;width:15px;height:15px;">
+            <path d="M21 12a9 9 0 1 1-9-9" stroke="white" stroke-width="2.5" fill="none"/>
+        </svg>
+        Creating Trip…
+    `;
+});
+
+const s = document.createElement('style');
+s.textContent = '@keyframes spin{to{transform:rotate(360deg)}}';
+document.head.appendChild(s);
+</script>
+
+{% endblock %}

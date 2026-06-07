@@ -50,6 +50,7 @@ INSTALLED_APPS = [
      'community',
      'planner',
      'destinations',
+     "support",
 
 ]
 
@@ -75,6 +76,12 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'travellers.context_processors.user_profile_context',
+                'travellers.context_processors.unread_messages_count',
+                'travellers.context_processors.buddy_pending_count',
+                'admin_app.context_processors.admin_notifications',
+                'community.context_processors.notification_counts',
+                'support.context_processors.complaint_counts',
             ],
             'libraries':{
                 'custom_filters': 'templatetags.custom_filters',
@@ -154,6 +161,9 @@ SERPAPI_KEY = os.getenv("SERPAPI_KEY")
 GEONAMES_USERNAME = os.getenv("GEONAMES_USERNAME")
 OPENTRIPMAP_KEY = os.getenv("OPENTRIPMAP_KEY")
 OPENWEATHER_API_KEY = os.getenv("OPENWEATHER_API_KEY")
+RAZORPAY_KEY_ID = os.getenv("RAZORPAY_KEY_ID")
+RAZORPAY_KEY_SECRET = os.getenv("RAZORPAY_KEY_SECRET")
+
 
 # 🔒 Validate keys properly
 if not GROQ_API_KEY:

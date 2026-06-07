@@ -185,39 +185,47 @@ class PackageItinerary(models.Model):
 from django.utils.timezone import now
 
 
+from django.db import models
+from django.utils import timezone
+from django.conf import settings
+
+
 class PackageBooking(models.Model):
 
-    package = models.ForeignKey(TourPackage, on_delete=models.CASCADE)
-
+    package = models.ForeignKey("TourPackage", on_delete=models.CASCADE)
     traveller = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
 
     travellers_count = models.PositiveIntegerField()
     travel_date = models.DateField()
     booked_at = models.DateTimeField(auto_now_add=True)
 
-    status = models.CharField(
-    max_length=20,
-    choices=[
-        ("pending", "Pending"),
-        ("confirmed", "Confirmed"),
-        ("rejected", "Rejected"),   # ✅ ADD THIS
-        ("cancelled", "Cancelled")
-    ],
-    default="pending"
-    )
+    approval_deadline = models.DateTimeField(null=True, blank=True)
 
-    cancelled_by = models.CharField(
+    # ===============================
+    # 🚀 TRIP LIFECYCLE (LIVE STATUS)
+    # ===============================
+    status = models.CharField(
         max_length=20,
         choices=[
-            ("user", "User"),
-            ("agency", "Agency"),
-            ("system", "System")
+            ("pending", "Pending"),
+            ("confirmed", "Confirmed"),
+            ("in_progress", "In Progress"),
+            ("completed", "Completed"),
+            ("rejected", "Rejected"),
+            ("cancelled", "Cancelled"),
         ],
-        null=True,
-        blank=True
+        default="pending"
     )
 
-    # 💳 PAYMENT
+    # ===============================
+    # 🏁 COMPLETION TRACKING
+    # ===============================
+    is_completed = models.BooleanField(default=False)
+    completed_at = models.DateTimeField(null=True, blank=True)
+
+    # ===============================
+    # 💳 PAYMENT DETAILS
+    # ===============================
     total_amount = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     advance_amount = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     remaining_amount = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
@@ -227,31 +235,66 @@ class PackageBooking(models.Model):
         choices=[
             ("pending", "Pending"),
             ("partial", "Partial Paid"),
-            ("paid", "Fully Paid")
+            ("paid", "Fully Paid"),
         ],
         default="pending"
     )
 
-    # ❌ NEW: who cancelled
+    # ===============================
+    # ❌ CANCELLATION INFO
+    # ===============================
     cancelled_by = models.CharField(
         max_length=20,
         choices=[
             ("user", "User"),
             ("agency", "Agency"),
-            ("system", "System")
+            ("system", "System"),
         ],
         null=True,
         blank=True
     )
 
-    # 💸 store refund
+    # ===============================
+    # 💸 REFUND SYSTEM
+    # ===============================
     refund_amount = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     refund_percentage = models.IntegerField(null=True, blank=True)
 
+    is_refunded = models.BooleanField(default=False)
+
+    refund_status = models.CharField(
+        max_length=20,
+        choices=[
+            ("not_applicable", "Not Applicable"),
+            ("pending", "Refund Pending"),
+            ("processing", "Processing"),
+            ("success", "Refund Successful"),
+            ("failed", "Refund Failed"),
+        ],
+        default="not_applicable"
+    )
+
+    refund_reference_id = models.CharField(max_length=100, null=True, blank=True)
+    refund_processed_at = models.DateTimeField(null=True, blank=True)
+
     # ===============================
-    # ✅ REFUND PERCENTAGE
+    # 🧾 INVOICE SYSTEM
+    # ===============================
+    invoice_number = models.CharField(max_length=50, unique=True, null=True, blank=True)
+    invoice_generated_at = models.DateTimeField(null=True, blank=True)
+
+    # ===============================
+    # 💰 AGENCY EARNINGS
+    # ===============================
+    platform_commission = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    agency_earnings = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+
+    # ===============================
+    # 📊 REFUND RULES
     # ===============================
     def get_refund_percentage(self):
+        from django.utils.timezone import now
+
         days_left = (self.travel_date - now().date()).days
         policies = self.package.cancellation_policies.all().order_by('-days_before')
 
@@ -261,18 +304,42 @@ class PackageBooking(models.Model):
 
         return 0
 
-    # ===============================
-    # ✅ FINAL REFUND
-    # ===============================
     def calculate_refund_amount(self):
         total = self.total_amount or 0
 
-        # 💥 FULL refund cases
+        # FULL refund cases (agency/system cancellation)
         if self.cancelled_by in ["agency", "system"]:
-            return total
+            if self.payment_status == "paid":
+                return self.total_amount or 0
+            elif self.payment_status == "partial":
+                return self.advance_amount or 0
+            return 0
 
         percentage = self.get_refund_percentage() or 0
         return (total * percentage) / 100
+
+    # ===============================
+    # ⭐ REVIEW ELIGIBILITY
+    # ===============================
+    @property
+    def can_review(self):
+        return (
+            self.status == "completed"
+            and self.travel_date < timezone.now().date()
+        )
+
+    # ===============================
+    # 🏁 AUTO COMPLETION CHECK
+    # ===============================
+    @property
+    def can_mark_completed(self):
+        return (
+            self.status == "in_progress"
+            and self.travel_date <= timezone.now().date()
+        )
+
+    def __str__(self):
+        return f"{self.traveller} - {self.package.title}"
     
 
 class PackageImage(models.Model):
@@ -291,23 +358,101 @@ class PackageImage(models.Model):
         return f"Image for {self.package.title}"
     
 
+from django.db import models
+from django.utils import timezone
+
+
 class Payment(models.Model):
-        PAYMENT_TYPE = (
-            ("advance", "Advance"),
-            ("full", "Full Payment"),
-        )
 
-        booking = models.ForeignKey(PackageBooking, on_delete=models.CASCADE, related_name="payments")
+    PAYMENT_TYPE = (
+        ("advance", "Advance"),
+        ("full", "Full Payment"),
+    )
 
-        amount = models.DecimalField(max_digits=10, decimal_places=2)
+    STATUS_CHOICES = (
+        ("pending", "Pending"),
+        ("success", "Success"),
+        ("failed", "Failed"),
+        ("refunded", "Refunded"),
+    )
 
-        payment_type = models.CharField(max_length=10, choices=PAYMENT_TYPE)
+    booking = models.ForeignKey(
+        PackageBooking,
+        on_delete=models.CASCADE,
+        related_name="payments"
+    )
 
-        is_paid = models.BooleanField(default=False)
+    amount = models.DecimalField(
+        max_digits=10,
+        decimal_places=2
+    )
 
-        transaction_id = models.CharField(max_length=200, blank=True, null=True)
+    payment_type = models.CharField(
+        max_length=10,
+        choices=PAYMENT_TYPE
+    )
 
-        paid_at = models.DateTimeField(null=True, blank=True)
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default="pending"
+    )
+
+    # Razorpay fields
+    razorpay_order_id = models.CharField(
+        max_length=200,
+        blank=True,
+        null=True
+    )
+
+    razorpay_payment_id = models.CharField(
+        max_length=200,
+        blank=True,
+        null=True
+    )
+
+    razorpay_signature = models.TextField(
+        blank=True,
+        null=True
+    )
+
+    # Keep for compatibility if already used elsewhere
+    transaction_id = models.CharField(
+        max_length=200,
+        blank=True,
+        null=True
+    )
+
+    refund_amount = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        default=0
+    )
+
+    is_paid = models.BooleanField(
+        default=False
+    )
+
+    paid_at = models.DateTimeField(
+        null=True,
+        blank=True
+    )
+
+    created_at = models.DateTimeField(
+        auto_now_add=True
+    )
+
+    def mark_success(self, payment_id, signature):
+        self.status = "success"
+        self.is_paid = True
+        self.razorpay_payment_id = payment_id
+        self.razorpay_signature = signature
+        self.transaction_id = payment_id
+        self.paid_at = timezone.now()
+        self.save()
+
+    def __str__(self):
+        return f"{self.booking.id} - {self.payment_type}"
 
 
 class CancellationPolicy(models.Model):
@@ -322,3 +467,59 @@ class CancellationPolicy(models.Model):
 
     def __str__(self):
         return f"{self.days_before} days → {self.refund_percentage}% refund"
+    
+
+
+class PackageReview(models.Model):
+
+    booking = models.OneToOneField(
+        PackageBooking,
+        on_delete=models.CASCADE,
+        related_name="review"
+    )
+
+    traveller = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE
+    )
+
+    package = models.ForeignKey(
+        TourPackage,
+        on_delete=models.CASCADE,
+        related_name="reviews"
+    )
+
+    agency = models.ForeignKey(
+        AgencyProfile,
+        on_delete=models.CASCADE,
+        related_name="reviews"
+    )
+
+    rating = models.IntegerField()
+    review = models.TextField()
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.package.title} - {self.rating}"
+    
+
+class Refund(models.Model):
+    booking = models.ForeignKey(PackageBooking, on_delete=models.CASCADE, related_name="refunds")
+
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+
+    status = models.CharField(
+        max_length=20,
+        choices=[
+            ("processing", "Processing"),
+            ("success", "Success"),
+            ("failed", "Failed"),
+        ],
+        default="processing"
+    )
+
+    gateway_ref_id = models.CharField(max_length=200, blank=True, null=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    processed_at = models.DateTimeField(null=True, blank=True)

@@ -1,0 +1,749 @@
+{% extends "admin_app/base.html" %}
+{% load static %}
+
+{% block title %}Pending Approvals | Wayzo Admin{% endblock %}
+{% block nav_approvals %}active{% endblock %}
+
+{% block topbar_title %}Pending Approvals{% endblock %}
+{% block topbar_subtitle %}Review and action submitted destinations and places{% endblock %}
+
+{% block extra_styles %}
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap');
+
+  /* ── PAGE HEADER ── */
+  .page-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1.5rem;
+    margin-bottom: 1.75rem;
+    flex-wrap: wrap;
+  }
+  .page-header-left {}
+  .page-breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.72rem;
+    color: #9CA3AF;
+    margin-bottom: 0.5rem;
+    font-family: 'DM Sans', sans-serif;
+  }
+  .page-breadcrumb a { color: #9CA3AF; text-decoration: none; }
+  .page-breadcrumb a:hover { color: #0E8A8A; }
+  .page-breadcrumb i { font-size: 0.55rem; }
+  .page-title {
+    font-family: 'Inter', sans-serif;
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: #111827;
+    letter-spacing: -0.025em;
+    margin-bottom: 0.2rem;
+  }
+  .page-desc {
+    font-size: 0.8rem;
+    color: #6B7280;
+    font-family: 'DM Sans', sans-serif;
+  }
+  .last-updated {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.72rem;
+    color: #9CA3AF;
+    font-family: 'DM Sans', sans-serif;
+    padding: 0.4rem 0.85rem;
+    background: #F9FAFB;
+    border: 1px solid #E5E7EB;
+    border-radius: 8px;
+    align-self: flex-end;
+    margin-bottom: 0.2rem;
+  }
+
+  /* ── STAT CARDS ROW ── */
+  .stat-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+    margin-bottom: 1.75rem;
+  }
+  .stat-card {
+    background: #ffffff;
+    border: 1px solid #E5E7EB;
+    border-radius: 12px;
+    padding: 1.25rem 1.4rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+    transition: box-shadow 0.2s, transform 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+  .stat-card:hover {
+    box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+    transform: translateY(-1px);
+  }
+  .stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    border-radius: 12px 12px 0 0;
+  }
+  .stat-card.teal::before   { background: #0E8A8A; }
+  .stat-card.amber::before  { background: #D97706; }
+  .stat-card.slate::before  { background: #475569; }
+
+  .stat-icon-wrap {
+    width: 44px;
+    height: 44px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .stat-icon-wrap.teal  { background: #F0FAFA; color: #0E8A8A; }
+  .stat-icon-wrap.amber { background: #FFFBEB; color: #D97706; }
+  .stat-icon-wrap.slate { background: #F8FAFC; color: #475569; }
+  .stat-icon-wrap i { font-size: 1.1rem; }
+
+  .stat-info {}
+  .stat-value {
+    font-family: 'Inter', sans-serif;
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: #111827;
+    line-height: 1;
+    letter-spacing: -0.03em;
+    margin-bottom: 0.2rem;
+  }
+  .stat-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #6B7280;
+    font-family: 'DM Sans', sans-serif;
+    margin-bottom: 0.15rem;
+  }
+  .stat-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.28rem;
+    font-size: 0.68rem;
+    font-weight: 600;
+    font-family: 'DM Sans', sans-serif;
+    padding: 0.18rem 0.55rem;
+    border-radius: 99px;
+  }
+  .stat-status.pending { background: #FEF3C7; color: #92400E; }
+  .stat-status.clear   { background: #D1FAE5; color: #065F46; }
+  .stat-status i { font-size: 0.55rem; }
+
+  /* ── TOOLBAR ── */
+  .toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1rem;
+    flex-wrap: wrap;
+  }
+  .tab-group {
+    display: flex;
+    background: #F3F4F6;
+    border-radius: 9px;
+    padding: 3px;
+    gap: 2px;
+  }
+  .tab-btn {
+    padding: 0.38rem 1.1rem;
+    border-radius: 7px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    background: transparent;
+    color: #6B7280;
+    font-family: 'DM Sans', sans-serif;
+    transition: all 0.15s;
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+  }
+  .tab-btn .tab-count {
+    background: #D1D5DB;
+    color: #374151;
+    font-size: 0.6rem;
+    font-weight: 700;
+    padding: 0.1rem 0.4rem;
+    border-radius: 99px;
+    min-width: 18px;
+    text-align: center;
+    transition: all 0.15s;
+  }
+  .tab-btn.active {
+    background: #ffffff;
+    color: #111827;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+  }
+  .tab-btn.active .tab-count {
+    background: #0E8A8A;
+    color: white;
+  }
+  .tab-btn:hover:not(.active) { color: #374151; }
+
+  /* ── SECTION PANEL ── */
+  .review-panel {
+    background: #ffffff;
+    border: 1px solid #E5E7EB;
+    border-radius: 12px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+    margin-bottom: 1.25rem;
+    overflow: hidden;
+  }
+  .review-panel.hidden { display: none; }
+
+  .panel-header {
+    padding: 0.9rem 1.4rem;
+    border-bottom: 1px solid #F3F4F6;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #FAFAFA;
+  }
+  .panel-header-left {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+  }
+  .panel-type-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .panel-type-dot.teal  { background: #0E8A8A; }
+  .panel-type-dot.amber { background: #D97706; }
+  .panel-title {
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: #374151;
+    font-family: 'Inter', sans-serif;
+  }
+  .panel-count-tag {
+    font-size: 0.65rem;
+    font-weight: 700;
+    padding: 0.18rem 0.55rem;
+    border-radius: 99px;
+    font-family: 'DM Sans', sans-serif;
+  }
+  .panel-count-tag.has-items { background: #FEF3C7; color: #92400E; }
+  .panel-count-tag.no-items  { background: #D1FAE5; color: #065F46; }
+
+  /* ── TABLE ── */
+  .review-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  .review-table thead th {
+    padding: 0.6rem 1.4rem;
+    text-align: left;
+    font-size: 0.68rem;
+    font-weight: 700;
+    color: #9CA3AF;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    background: #F9FAFB;
+    border-bottom: 1px solid #F3F4F6;
+    font-family: 'DM Sans', sans-serif;
+    white-space: nowrap;
+  }
+  .review-table tbody td {
+    padding: 0.95rem 1.4rem;
+    font-size: 0.82rem;
+    color: #374151;
+    border-bottom: 1px solid #F9FAFB;
+    vertical-align: middle;
+    font-family: 'DM Sans', sans-serif;
+  }
+  .review-table tbody tr:last-child td { border-bottom: none; }
+  .review-table tbody tr {
+    transition: background 0.15s;
+  }
+  .review-table tbody tr:hover { background: #FAFBFC; }
+
+  /* name cell */
+  .name-cell {}
+  .name-primary {
+    font-weight: 600;
+    color: #111827;
+    font-size: 0.85rem;
+    margin-bottom: 0.15rem;
+    font-family: 'Inter', sans-serif;
+  }
+  .name-secondary {
+    font-size: 0.7rem;
+    color: #9CA3AF;
+    font-family: 'DM Sans', sans-serif;
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    max-width: 300px;
+  }
+
+  /* submitter cell */
+  .submitter-cell {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+  }
+  .mini-avatar {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #0E8A8A, #1aafaf);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.62rem;
+    font-weight: 700;
+    color: white;
+    flex-shrink: 0;
+    font-family: 'Inter', sans-serif;
+  }
+  .submitter-name { font-weight: 600; font-size: 0.78rem; color: #374151; }
+  .submitter-date { font-size: 0.68rem; color: #9CA3AF; }
+
+  /* location / destination tag */
+  .location-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    font-size: 0.72rem;
+    color: #6B7280;
+    font-family: 'DM Sans', sans-serif;
+  }
+  .location-tag i { font-size: 0.65rem; color: #D1D5DB; }
+
+  /* category pill */
+  .cat-pill {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.2rem 0.6rem;
+    border-radius: 99px;
+    font-size: 0.65rem;
+    font-weight: 700;
+    background: #EEF2FF;
+    color: #4338CA;
+    font-family: 'DM Sans', sans-serif;
+  }
+
+  /* ── ACTION BUTTONS ── */
+  .actions-cell {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    justify-content: flex-end;
+  }
+  .btn-action {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.38rem 0.85rem;
+    border-radius: 7px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    cursor: pointer;
+    border: 1px solid transparent;
+    transition: all 0.15s;
+    font-family: 'DM Sans', sans-serif;
+    text-decoration: none;
+    white-space: nowrap;
+  }
+  .btn-action i { font-size: 0.65rem; }
+  .btn-view-action {
+    background: #F9FAFB;
+    color: #374151;
+    border-color: #E5E7EB;
+  }
+  .btn-view-action:hover { background: #F3F4F6; color: #111827; border-color: #D1D5DB; }
+
+  .btn-approve-action {
+    background: #F0FDF4;
+    color: #15803D;
+    border-color: #BBF7D0;
+  }
+  .btn-approve-action:hover { background: #16A34A; color: white; border-color: #16A34A; }
+
+  .btn-reject-action {
+    background: #FFF1F2;
+    color: #BE123C;
+    border-color: #FECDD3;
+  }
+  .btn-reject-action:hover { background: #E11D48; color: white; border-color: #E11D48; }
+
+  /* ── EMPTY STATE ── */
+  .empty-state-row td {
+    padding: 3rem 1.4rem !important;
+  }
+  .empty-state-inner {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.6rem;
+    text-align: center;
+  }
+  .empty-check {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: #D1FAE5;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #059669;
+    font-size: 1.1rem;
+  }
+  .empty-state-inner h4 {
+    font-size: 0.88rem;
+    font-weight: 700;
+    color: #374151;
+    font-family: 'Inter', sans-serif;
+  }
+  .empty-state-inner p {
+    font-size: 0.75rem;
+    color: #9CA3AF;
+    font-family: 'DM Sans', sans-serif;
+  }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 900px) {
+    .stat-row { grid-template-columns: 1fr 1fr; }
+    .review-table thead { display: none; }
+    .review-table tbody td {
+      display: block;
+      padding: 0.5rem 1rem;
+      border-bottom: none;
+    }
+    .review-table tbody tr {
+      display: block;
+      padding: 0.75rem 0;
+      border-bottom: 1px solid #F3F4F6;
+    }
+    .actions-cell { justify-content: flex-start; padding-top: 0.5rem; }
+  }
+  @media (max-width: 600px) {
+    .stat-row { grid-template-columns: 1fr; }
+    .page-header { flex-direction: column; gap: 0.75rem; }
+    .toolbar { flex-direction: column; align-items: flex-start; }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- ═══════════ PAGE HEADER ═══════════ -->
+<div class="page-header">
+  <div class="page-header-left">
+    <div class="page-breadcrumb">
+      <a href="{% url 'admin_app:admin_dashboard' %}">Dashboard</a>
+      <i class="fas fa-chevron-right"></i>
+      <span>Pending Approvals</span>
+    </div>
+    <div class="page-title">Pending Approvals</div>
+    <div class="page-desc">Review and action content submitted by users before it goes live.</div>
+  </div>
+  <div class="last-updated">
+    <i class="fas fa-circle" style="font-size:0.45rem;color:#10B981;"></i>
+    Live &nbsp;·&nbsp; Auto-refreshes every 30s
+  </div>
+</div>
+
+<!-- ═══════════ STAT CARDS ═══════════ -->
+<div class="stat-row">
+
+  <div class="stat-card teal">
+    <div class="stat-icon-wrap teal">
+      <i class="fas fa-map-marked-alt"></i>
+    </div>
+    <div class="stat-info">
+      <div class="stat-value">{{ pending_destinations|length }}</div>
+      <div class="stat-label">Pending Destinations</div>
+      <span class="stat-status {% if pending_destinations %}pending{% else %}clear{% endif %}">
+        {% if pending_destinations %}
+          <i class="fas fa-clock"></i> Awaiting review
+        {% else %}
+          <i class="fas fa-check"></i> All clear
+        {% endif %}
+      </span>
+    </div>
+  </div>
+
+  <div class="stat-card amber">
+    <div class="stat-icon-wrap amber">
+      <i class="fas fa-map-pin"></i>
+    </div>
+    <div class="stat-info">
+      <div class="stat-value">{{ pending_places|length }}</div>
+      <div class="stat-label">Pending Places</div>
+      <span class="stat-status {% if pending_places %}pending{% else %}clear{% endif %}">
+        {% if pending_places %}
+          <i class="fas fa-clock"></i> Awaiting review
+        {% else %}
+          <i class="fas fa-check"></i> All clear
+        {% endif %}
+      </span>
+    </div>
+  </div>
+
+  <div class="stat-card slate">
+    <div class="stat-icon-wrap slate">
+      <i class="fas fa-layer-group"></i>
+    </div>
+    <div class="stat-info">
+      <div class="stat-value">{{ pending_count }}</div>
+      <div class="stat-label">Total in Queue</div>
+      <span class="stat-status {% if pending_count > 0 %}pending{% else %}clear{% endif %}">
+        {% if pending_count > 0 %}
+          <i class="fas fa-exclamation-circle"></i> Action required
+        {% else %}
+          <i class="fas fa-check"></i> Queue empty
+        {% endif %}
+      </span>
+    </div>
+  </div>
+
+</div>
+
+<!-- ═══════════ TOOLBAR ═══════════ -->
+<div class="toolbar">
+  <div class="tab-group">
+    <button class="tab-btn active" data-target="all">
+      All
+      <span class="tab-count">{{ pending_count }}</span>
+    </button>
+    <button class="tab-btn" data-target="destinations">
+      Destinations
+      <span class="tab-count">{{ pending_destinations|length }}</span>
+    </button>
+    <button class="tab-btn" data-target="places">
+      Places
+      <span class="tab-count">{{ pending_places|length }}</span>
+    </button>
+  </div>
+</div>
+
+<!-- ═══════════ DESTINATIONS TABLE ═══════════ -->
+<div class="review-panel" id="section-destinations">
+  <div class="panel-header">
+    <div class="panel-header-left">
+      <div class="panel-type-dot teal"></div>
+      <span class="panel-title">Destinations</span>
+      <span class="panel-count-tag {% if pending_destinations %}has-items{% else %}no-items{% endif %}">
+        {{ pending_destinations|length }} {% if pending_destinations %}pending{% else %}approved{% endif %}
+      </span>
+    </div>
+  </div>
+  <table class="review-table">
+    <thead>
+      <tr>
+        <th>Destination</th>
+        <th>Submitted by</th>
+        <th>Location</th>
+        <th style="text-align:right;">Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% if pending_destinations %}
+        {% for destination in pending_destinations %}
+        <tr>
+          <td>
+            <div class="name-cell">
+              <div class="name-primary">{{ destination.name }}</div>
+              {% if destination.description %}
+              <div class="name-secondary">{{ destination.description|truncatewords:12 }}</div>
+              {% endif %}
+            </div>
+          </td>
+          <td>
+            <div class="submitter-cell">
+              <div class="mini-avatar">{{ destination.created_by.username|slice:":2"|upper }}</div>
+              <div>
+                <div class="submitter-name">{{ destination.created_by.username }}</div>
+                <div class="submitter-date">{{ destination.created_at|date:"M d, Y" }}</div>
+              </div>
+            </div>
+          </td>
+          <td>
+            {% if destination.city %}
+            <span class="location-tag">
+              <i class="fas fa-map-marker-alt"></i>
+              {{ destination.city }}{% if destination.country %}, {{ destination.country }}{% endif %}
+            </span>
+            {% else %}
+            <span style="color:#D1D5DB;font-size:0.75rem;">—</span>
+            {% endif %}
+          </td>
+          <td>
+            <div class="actions-cell">
+              <a href="{% url 'destinations:destination_detail' destination.id %}" class="btn-action btn-view-action" target="_blank">
+                <i class="fas fa-eye"></i> View
+              </a>
+              <form method="POST" action="{% url 'destinations:approve_destination' destination.id %}" style="display:inline;">
+                {% csrf_token %}
+                <button type="submit" class="btn-action btn-approve-action"
+                  onclick="return confirm('Approve {{ destination.name }}?')">
+                  <i class="fas fa-check"></i> Approve
+                </button>
+              </form>
+              <form method="POST" action="{% url 'destinations:reject_destination' destination.id %}" style="display:inline;">
+                {% csrf_token %}
+                <button type="submit" class="btn-action btn-reject-action"
+                  onclick="return confirm('Reject {{ destination.name }}?')">
+                  <i class="fas fa-times"></i> Reject
+                </button>
+              </form>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      {% else %}
+        <tr class="empty-state-row">
+          <td colspan="4">
+            <div class="empty-state-inner">
+              <div class="empty-check"><i class="fas fa-check"></i></div>
+              <h4>No pending destinations</h4>
+              <p>All submitted destinations have been reviewed.</p>
+            </div>
+          </td>
+        </tr>
+      {% endif %}
+    </tbody>
+  </table>
+</div>
+
+<!-- ═══════════ PLACES TABLE ═══════════ -->
+<div class="review-panel" id="section-places">
+  <div class="panel-header">
+    <div class="panel-header-left">
+      <div class="panel-type-dot amber"></div>
+      <span class="panel-title">Places</span>
+      <span class="panel-count-tag {% if pending_places %}has-items{% else %}no-items{% endif %}">
+        {{ pending_places|length }} {% if pending_places %}pending{% else %}approved{% endif %}
+      </span>
+    </div>
+  </div>
+  <table class="review-table">
+    <thead>
+      <tr>
+        <th>Place</th>
+        <th>Submitted by</th>
+        <th>Destination &amp; Category</th>
+        <th style="text-align:right;">Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% if pending_places %}
+        {% for place in pending_places %}
+        <tr>
+          <td>
+            <div class="name-cell">
+              <div class="name-primary">{{ place.name }}</div>
+              {% if place.description %}
+              <div class="name-secondary">{{ place.description|truncatewords:12 }}</div>
+              {% endif %}
+            </div>
+          </td>
+          <td>
+            <div class="submitter-cell">
+              <div class="mini-avatar">{{ place.created_by.username|slice:":2"|upper }}</div>
+              <div>
+                <div class="submitter-name">{{ place.created_by.username }}</div>
+                <div class="submitter-date">{{ place.created_at|date:"M d, Y" }}</div>
+              </div>
+            </div>
+          </td>
+          <td>
+            <div style="display:flex;flex-direction:column;gap:0.3rem;">
+              <span class="location-tag">
+                <i class="fas fa-globe"></i>
+                {{ place.destination.name }}
+              </span>
+              {% if place.category %}
+              <span class="cat-pill">{{ place.get_category_display }}</span>
+              {% endif %}
+            </div>
+          </td>
+          <td>
+            <div class="actions-cell">
+              <a href="{% url 'destinations:place_detail' place.destination.id place.id %}" class="btn-action btn-view-action" target="_blank">
+                <i class="fas fa-eye"></i> View
+              </a>
+              <form method="POST" action="{% url 'destinations:approve_place' place.id %}" style="display:inline;">
+                {% csrf_token %}
+                <button type="submit" class="btn-action btn-approve-action"
+                  onclick="return confirm('Approve {{ place.name }}?')">
+                  <i class="fas fa-check"></i> Approve
+                </button>
+              </form>
+              <form method="POST" action="{% url 'destinations:reject_place' place.id %}" style="display:inline;">
+                {% csrf_token %}
+                <button type="submit" class="btn-action btn-reject-action"
+                  onclick="return confirm('Reject {{ place.name }}?')">
+                  <i class="fas fa-times"></i> Reject
+                </button>
+              </form>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      {% else %}
+        <tr class="empty-state-row">
+          <td colspan="4">
+            <div class="empty-state-inner">
+              <div class="empty-check"><i class="fas fa-check"></i></div>
+              <h4>No pending places</h4>
+              <p>All submitted places have been reviewed.</p>
+            </div>
+          </td>
+        </tr>
+      {% endif %}
+    </tbody>
+  </table>
+</div>
+
+<script>
+  // Tab switching
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', function () {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      this.classList.add('active');
+      const t = this.dataset.target;
+      const sd = document.getElementById('section-destinations');
+      const sp = document.getElementById('section-places');
+      sd.classList.toggle('hidden', t === 'places');
+      sp.classList.toggle('hidden', t === 'destinations');
+    });
+  });
+
+  // Auto-refresh counts every 30s
+  setInterval(() => {
+    fetch(window.location.href)
+      .then(r => r.text())
+      .then(html => {
+        const doc = new DOMParser().parseFromString(html, 'text/html');
+        document.querySelectorAll('.stat-value').forEach((el, i) => {
+          const fresh = doc.querySelectorAll('.stat-value')[i];
+          if (fresh) el.textContent = fresh.textContent;
+        });
+        document.querySelectorAll('.tab-count').forEach((el, i) => {
+          const fresh = doc.querySelectorAll('.tab-count')[i];
+          if (fresh) el.textContent = fresh.textContent;
+        });
+      }).catch(() => {});
+  }, 30000);
+</script>
+{% endblock %}

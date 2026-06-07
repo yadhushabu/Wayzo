@@ -1,0 +1,35 @@
+{% extends base_template %}
+{% load static %}
+
+{% block content %}
+
+<div class="container py-5">
+
+    <div class="card shadow border-0 rounded-4 p-4 text-center">
+
+        <h2 class="text-danger mb-3">⚠️ Delete Destination</h2>
+
+        <p class="mb-4">
+            Are you sure you want to delete
+            <strong>{{ destination.name }}</strong>?
+        </p>
+
+        <form method="POST">
+            {% csrf_token %}
+
+            <a href="{% url 'destinations:destination_detail' destination.id %}"
+               class="btn btn-secondary me-2">
+                Cancel
+            </a>
+
+            <button type="submit"
+                    class="btn btn-danger">
+                Yes, Delete
+            </button>
+        </form>
+
+    </div>
+
+</div>
+
+{% endblock %}

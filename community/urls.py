@@ -1,5 +1,6 @@
 from django.urls import path
 from . import views
+app_name = 'community'
 
 urlpatterns = [
 
@@ -10,10 +11,12 @@ urlpatterns = [
     path('', views.community_list, name="community_list"),
     path('create/', views.create_community, name="create_community"),
     path('<int:pk>/', views.community_detail, name="community_detail"),
+    path('leave/<int:community_id>/', views.leave_community, name='leave_community'),
 
     # 🔹 Join / Requests
     path('join/<int:community_id>/', views.join_community, name="join_community"),
     path('accept-request/<int:request_id>/', views.accept_request, name="accept_request"),
+    path('reject-request/<int:request_id>/', views.reject_request, name='reject_request'), 
 
     # 🔹 Posts & Trips
     path('<int:community_id>/post/', views.create_post, name="create_post"),
@@ -38,7 +41,43 @@ urlpatterns = [
     path('reject/<int:participant_id>/', views.reject_participant, name='reject_participant'),
     path('remove/<int:participant_id>/', views.remove_participant, name='remove_participant'),
 
+
+    path('api/unread-notifications-count/', views.get_unread_notifications_count, name='unread_notifications_count'),
+    path('api/recent-notifications/', views.get_recent_notifications, name='recent_notifications'),
+    path('notification/mark-read/<int:notification_id>/', views.mark_notification_read, name='mark_notification_read'),
+    path('notification/mark-all-read/', views.mark_all_notifications_read, name='mark_all_notifications_read'),
     
-    
+    path(
+    'private-trip/create/',
+    views.create_private_trip,
+    name='create_private_trip'
+),
+
+path(
+    'trip/join/<str:invite_code>/',
+    views.join_private_trip,
+    name='join_private_trip'
+),
+
+path(
+    'trip/update-location/',
+    views.update_location,
+    name='update_location'
+),
+
+path(
+    'trip/<int:trip_id>/locations/',
+    views.get_trip_locations,
+    name='get_trip_locations'),
+
+    path('private-trip/list/', views.private_trip_list, name="private_trip_list"),
+    path('trip/invite/<str:invite_code>/', views.invite_trip_page, name='invite_trip'),
+    path(
+    'trip/<int:trip_id>/live-map/',
+    views.trip_live_map,
+    name='trip_live_map'
+),
+    path('promote-to-coordinator/<int:participant_id>/', views.promote_to_coordinator, name='promote_to_coordinator'),
+
 
 ]

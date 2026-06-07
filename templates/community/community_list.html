@@ -1,878 +1,883 @@
+{% extends "travellers/base.html" %}
 {% load static %}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Wayzo | Browse Communities</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
-    <style>
-        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
-        :root {
-            --gray-100:     #F8F9FC;
-            --gray-150:     #F1F3F8;
-            --gray-200:     #E9EDF2;
-            --gray-300:     #DCE2EA;
-            --gray-400:     #BEC7D1;
-            --gray-500:     #9AA3AF;
-            --gray-600:     #6E7682;
-            --gray-700:     #4A515C;
-            --gray-800:     #2E343D;
-            --gray-850:     #21262E;
-            --gray-900:     #191E24;
-            --gray-950:     #0F1217;
-            --accent-muted: #5B6E8C;
-            --accent-deep:  #3A4A67;
-            --accent-light: #8A9CBA;
-            --accent-pale:  #EFF2F9;
-            --white:        #FFFFFF;
-            --text-dark:    #1E242C;
-            --text-soft:    #3C4350;
-            --text-light:   #6F7886;
-            --green:        #22C55E;
-            --amber:        #F59E0B;
-            --rose:         #F43F5E;
-            --sidebar-w:    260px;
-        }
+{% block title %}Browse Communities | Wayzo{% endblock %}
+{% block nav_community %}active{% endblock %}
 
-        html { height: 100%; }
-        body {
-            font-family: 'Inter', sans-serif;
-            background: var(--gray-100);
-            color: var(--text-dark);
-            display: flex; min-height: 100vh; overflow-x: hidden;
-        }
-
-        /* ══ SIDEBAR ══ */
-        .sidebar {
-            width: var(--sidebar-w); background: var(--gray-950);
-            height: 100vh; position: fixed; top: 0; left: 0;
-            display: flex; flex-direction: column; z-index: 300;
-            border-right: 1px solid rgba(255,255,255,0.06);
-            transform: translateX(0);
-            transition: transform 0.32s cubic-bezier(0.4,0,0.2,1), box-shadow 0.32s ease;
-            overflow: hidden;
-        }
-        .sidebar.collapsed { transform: translateX(calc(-1 * var(--sidebar-w))); }
-        .sidebar-overlay {
-            display: none; position: fixed; inset: 0;
-            background: rgba(0,0,0,0.45); z-index: 290; opacity: 0;
-            transition: opacity 0.3s ease; backdrop-filter: blur(2px);
-        }
-        .sidebar-overlay.visible { opacity: 1; }
-        .sidebar-brand {
-            padding: 1.8rem 1.6rem 1.4rem;
-            border-bottom: 1px solid rgba(255,255,255,0.06);
-        }
-        .sidebar-logo {
-            font-family: 'Playfair Display', serif;
-            font-size: 1.5rem; font-weight: 600; letter-spacing: -0.01em;
-            color: white; text-decoration: none; display: block; margin-bottom: 0.2rem;
-        }
-        .sidebar-sub {
-            font-size: 0.68rem; color: rgba(255,255,255,0.3);
-            letter-spacing: 0.08em; text-transform: uppercase;
-        }
-        .sidebar-profile {
-            padding: 1.2rem 1.6rem;
-            border-bottom: 1px solid rgba(255,255,255,0.06);
-            display: flex; align-items: center; gap: 0.85rem;
-        }
-        .sidebar-avatar {
-            width: 38px; height: 38px; border-radius: 50%;
-            background: var(--accent-deep);
-            display: flex; align-items: center; justify-content: center;
-            font-size: 0.85rem; font-weight: 600; color: white;
-            overflow: hidden; flex-shrink: 0;
-            border: 2px solid rgba(255,255,255,0.08);
-        }
-        .sidebar-avatar img { width: 100%; height: 100%; object-fit: cover; }
-        .sidebar-profile-info { overflow: hidden; }
-        .sidebar-profile-name {
-            font-size: 0.82rem; font-weight: 600; color: white;
-            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-        }
-        .sidebar-profile-role { font-size: 0.68rem; color: rgba(255,255,255,0.35); }
-        .sidebar-nav { flex: 1; padding: 1rem 0.8rem; overflow-y: auto; }
-        .nav-group-label {
-            font-size: 0.62rem; font-weight: 600; letter-spacing: 0.12em;
-            text-transform: uppercase; color: rgba(255,255,255,0.22);
-            padding: 0.6rem 0.8rem 0.4rem; display: block;
-        }
-        .nav-item {
-            display: flex; align-items: center; gap: 0.75rem;
-            padding: 0.65rem 0.8rem; border-radius: 8px;
-            text-decoration: none; color: rgba(255,255,255,0.5);
-            font-size: 0.82rem; font-weight: 500;
-            transition: all 0.2s; margin-bottom: 2px;
-            cursor: pointer; border: none; background: none; width: 100%; text-align: left;
-        }
-        .nav-item svg { width: 16px; height: 16px; stroke: currentColor; stroke-width: 1.8; fill: none; flex-shrink: 0; }
-        .nav-item:hover { background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.85); }
-        .nav-item.active { background: rgba(138,156,186,0.14); color: var(--accent-light); }
-        .nav-item.active svg { stroke: var(--accent-light); }
-        .sidebar-footer { padding: 0.8rem; border-top: 1px solid rgba(255,255,255,0.06); }
-        .logout-btn {
-            display: flex; align-items: center; gap: 0.75rem;
-            padding: 0.65rem 0.8rem; border-radius: 8px;
-            text-decoration: none; color: rgba(255,255,255,0.35);
-            font-size: 0.82rem; font-weight: 500; transition: all 0.2s; width: 100%;
-        }
-        .logout-btn svg { width: 16px; height: 16px; stroke: currentColor; stroke-width: 1.8; fill: none; }
-        .logout-btn:hover { background: rgba(239,68,68,0.1); color: #F87171; }
-
-        /* ══ MAIN ══ */
-        .main {
-            margin-left: var(--sidebar-w); flex: 1; display: flex; flex-direction: column;
-            min-height: 100vh;
-            transition: margin-left 0.32s cubic-bezier(0.4,0,0.2,1);
-        }
-        .main.sidebar-collapsed { margin-left: 0; }
-
-        /* ══ TOPBAR ══ */
-        .topbar {
-            background: var(--white); border-bottom: 1px solid var(--gray-200);
-            padding: 0 2rem; height: 64px;
-            display: flex; align-items: center; justify-content: space-between;
-            position: sticky; top: 0; z-index: 200; gap: 1rem;
-        }
-        .topbar-left { display: flex; align-items: center; gap: 1rem; flex: 1; min-width: 0; }
-        .topbar-left h1 {
-            font-family: 'Playfair Display', serif;
-            font-size: 1.2rem; font-weight: 500; color: var(--gray-900); white-space: nowrap;
-        }
-        .topbar-left p { font-size: 0.75rem; color: var(--text-light); margin-top: 1px; white-space: nowrap; }
-        .topbar-right { display: flex; align-items: center; gap: 0.75rem; flex-shrink: 0; }
-        .hamburger {
-            width: 36px; height: 36px; display: flex; flex-direction: column;
-            align-items: center; justify-content: center; gap: 5px;
-            background: transparent; border: none; cursor: pointer;
-            padding: 4px; border-radius: 8px; flex-shrink: 0; transition: background 0.2s;
-        }
-        .hamburger:hover { background: var(--gray-150); }
-        .hamburger span {
-            display: block; width: 20px; height: 2px; background: var(--gray-700);
-            border-radius: 2px;
-            transition: transform 0.3s cubic-bezier(0.4,0,0.2,1), opacity 0.3s ease, width 0.3s ease;
-            transform-origin: center;
-        }
-        .hamburger.is-open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
-        .hamburger.is-open span:nth-child(2) { opacity: 0; width: 0; }
-        .hamburger.is-open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
-        .topbar-btn {
-            display: flex; align-items: center; gap: 0.5rem;
-            padding: 0.5rem 1.1rem; border-radius: 40px;
-            font-size: 0.78rem; font-weight: 500; cursor: pointer;
-            text-decoration: none; border: none; font-family: 'Inter', sans-serif; transition: all 0.2s;
-        }
-        .topbar-btn svg { width: 14px; height: 14px; stroke: currentColor; stroke-width: 2; fill: none; }
-        .topbar-btn.outline { border: 1.5px solid var(--gray-300); background: transparent; color: var(--gray-700); }
-        .topbar-btn.outline:hover { border-color: var(--accent-muted); color: var(--accent-deep); }
-        .topbar-btn.solid { background: var(--gray-900); color: white; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
-        .topbar-btn.solid:hover { background: var(--accent-deep); }
-
-        /* ── Notification bell ── */
-        .notif-wrap { position: relative; }
-        .notif-btn {
-            width: 36px; height: 36px; border-radius: 10px;
-            border: 1.5px solid var(--gray-200); background: transparent;
-            display: flex; align-items: center; justify-content: center;
-            cursor: pointer; color: var(--gray-600); transition: all 0.2s; position: relative;
-        }
-        .notif-btn svg { width: 16px; height: 16px; stroke: currentColor; stroke-width: 1.8; fill: none; }
-        .notif-btn:hover { border-color: var(--accent-muted); color: var(--accent-deep); background: var(--accent-pale); }
-        .notif-dot {
-            position: absolute; top: -3px; right: -3px;
-            width: 8px; height: 8px; border-radius: 50%;
-            background: var(--rose); border: 2px solid var(--white);
-        }
-        .notif-dropdown {
-            display: none; position: absolute; right: 0; top: calc(100% + 10px);
-            width: 320px; background: var(--white);
-            border: 1px solid var(--gray-200); border-radius: 14px;
-            box-shadow: 0 12px 40px rgba(0,0,0,0.12); z-index: 500; overflow: hidden;
-        }
-        .notif-dropdown.open { display: block; animation: fadeUp 0.2s ease; }
-        .notif-header {
-            padding: 0.9rem 1.2rem; border-bottom: 1px solid var(--gray-200);
-            display: flex; align-items: center; justify-content: space-between;
-        }
-        .notif-header span { font-size: 0.82rem; font-weight: 600; color: var(--gray-900); }
-        .notif-header a { font-size: 0.72rem; color: var(--accent-deep); text-decoration: none; }
-        .notif-header a:hover { text-decoration: underline; }
-        .notif-item {
-            padding: 0.85rem 1.2rem; border-bottom: 1px solid var(--gray-100);
-            font-size: 0.8rem; color: var(--text-soft); line-height: 1.5; transition: background 0.15s;
-        }
-        .notif-item:last-child { border-bottom: none; }
-        .notif-item:hover { background: var(--gray-100); }
-        .notif-empty { padding: 1.5rem 1.2rem; text-align: center; color: var(--text-light); font-size: 0.82rem; }
-
-        /* ══ HERO ══ */
-        .hero {
-            background: var(--gray-900);
-            position: relative; overflow: hidden;
-            padding: 3.5rem 2.5rem 2rem;
-            display: flex; flex-direction: column; align-items: center;
-            text-align: center;
-        }
-        .hero::before {
-            content: ''; position: absolute; inset: 0; z-index: 0;
-            background:
-                radial-gradient(ellipse 60% 80% at 15% 50%, rgba(58,74,103,0.4) 0%, transparent 65%),
-                radial-gradient(ellipse 50% 70% at 85% 50%, rgba(91,110,140,0.2) 0%, transparent 65%);
-        }
-        /* Subtle grid lines in bg */
-        .hero::after {
-            content: ''; position: absolute; inset: 0; z-index: 0;
-            background-image: linear-gradient(rgba(138,156,186,0.04) 1px, transparent 1px),
-                              linear-gradient(90deg, rgba(138,156,186,0.04) 1px, transparent 1px);
-            background-size: 40px 40px;
-        }
-        .hero-inner { position: relative; z-index: 2; width: 100%; max-width: 680px; }
-        .hero-eyebrow {
-            font-size: 0.68rem; font-weight: 700; letter-spacing: 0.15em;
-            text-transform: uppercase; color: var(--accent-light);
-            margin-bottom: 0.85rem; display: flex; align-items: center; justify-content: center; gap: 0.6rem;
-        }
-        .hero-eyebrow::before, .hero-eyebrow::after {
-            content: ''; width: 24px; height: 1.5px; background: var(--accent-light); opacity: 0.5; flex-shrink: 0;
-        }
-        .hero h1 {
-            font-family: 'Playfair Display', serif;
-            font-size: clamp(1.8rem, 3vw, 2.6rem); font-weight: 600; color: white;
-            line-height: 1.2; margin-bottom: 0.75rem;
-        }
-        .hero h1 em { font-style: italic; color: var(--accent-light); }
-        .hero-sub {
-            font-size: 0.88rem; color: rgba(255,255,255,0.5); margin-bottom: 1.8rem; line-height: 1.6;
-        }
-
-        /* Search bar */
-        .search-bar {
-            display: flex; align-items: center; gap: 0;
-            background: white; border-radius: 50px;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.25);
-            overflow: hidden; padding: 0.3rem 0.3rem 0.3rem 1.2rem;
-            margin-bottom: 1.4rem;
-        }
-        .search-bar svg {
-            width: 16px; height: 16px; stroke: var(--gray-500); stroke-width: 2; fill: none; flex-shrink: 0;
-        }
-        .search-bar input {
-            flex: 1; border: none; outline: none; padding: 0.5rem 0.75rem;
-            font-size: 0.88rem; font-family: 'Inter', sans-serif; color: var(--text-dark);
-            background: transparent;
-        }
-        .search-bar input::placeholder { color: var(--gray-400); }
-        .search-bar button {
-            padding: 0.6rem 1.4rem; border-radius: 40px;
-            background: var(--gray-900); color: white; border: none;
-            font-size: 0.8rem; font-weight: 600; cursor: pointer;
-            font-family: 'Inter', sans-serif; transition: background 0.2s; white-space: nowrap;
-        }
-        .search-bar button:hover { background: var(--accent-deep); }
-
-        /* Filter pills */
-        .filter-pills {
-            display: flex; flex-wrap: wrap; gap: 0.5rem; justify-content: center;
-        }
-        .filter-pill {
-            padding: 0.38rem 1rem; border-radius: 40px;
-            font-size: 0.74rem; font-weight: 500; cursor: pointer;
-            border: 1.5px solid rgba(255,255,255,0.15);
-            background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.6);
-            text-decoration: none; transition: all 0.2s; white-space: nowrap;
-        }
-        .filter-pill:hover { background: rgba(255,255,255,0.12); color: white; border-color: rgba(255,255,255,0.3); }
-        .filter-pill.active { background: white; color: var(--gray-900); border-color: white; font-weight: 600; }
-
-        /* ══ CONTENT ══ */
-        .content { padding: 2rem 2.5rem 3rem; }
-
-        /* Results bar */
-        .results-bar {
-            display: flex; align-items: center; justify-content: space-between;
-            margin-bottom: 1.2rem; flex-wrap: wrap; gap: 0.75rem;
-        }
-        .results-count { font-size: 0.82rem; color: var(--text-light); }
-        .results-count strong { color: var(--text-dark); font-weight: 600; }
-
-        /* Sort select */
-        .sort-select {
-            padding: 0.45rem 2rem 0.45rem 0.85rem; border-radius: 8px;
-            border: 1.5px solid var(--gray-200); background: var(--white);
-            font-size: 0.78rem; font-family: 'Inter', sans-serif; color: var(--text-dark);
-            cursor: pointer; outline: none; appearance: none;
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236E7682' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
-            background-repeat: no-repeat; background-position: right 0.65rem center;
-            transition: border-color 0.2s;
-        }
-        .sort-select:focus { border-color: var(--accent-muted); }
-
-        /* ── Community grid ── */
+{% block extra_styles %}
+<style>
+    /* Hero Section - Matching Community Home */
+    .hero-section {
+        position: relative;
+        min-height: 480px;
+        overflow: hidden;
+        margin-bottom: 2rem;
+        border-radius: 0 0 40px 40px;
+        background: linear-gradient(135deg, #0a3d3d 0%, #1a5a40 100%);
+    }
+    .hero-bg {
+        position: absolute;
+        inset: 0;
+        background-image: url("{% static 'images/astrounat.jpg' %}");
+        background-size: cover;
+        background-position: center 35%;
+        z-index: 0;
+    }
+    .hero-bg::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(135deg, rgba(0,0,0,0.75) 0%, rgba(14,138,138,0.55) 50%, rgba(0,0,0,0.75) 100%);
+    }
+    .hero-pattern {
+        position: absolute;
+        inset: 0;
+        z-index: 0;
+        background: radial-gradient(ellipse 55% 80% at 80% 50%, rgba(14,138,138,0.25) 0%, transparent 70%);
+    }
+    .hero-content {
+        position: relative;
+        z-index: 2;
+        padding: 5rem 2.5rem 6rem;
+        max-width: 650px;
+    }
+    .hero-eyebrow {
+        font-size: 0.7rem;
+        font-weight: 700;
+        letter-spacing: 0.15em;
+        text-transform: uppercase;
+        color: #5FC5C5;
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+    }
+    .hero-eyebrow::before {
+        content: '';
+        width: 40px;
+        height: 3px;
+        background: #5FC5C5;
+        flex-shrink: 0;
+        border-radius: 2px;
+    }
+    .hero-content h1 {
+        font-family: 'Playfair Display', serif;
+        font-size: clamp(2rem, 4vw, 3.2rem);
+        font-weight: 700;
+        color: white;
+        line-height: 1.2;
+        margin-bottom: 1rem;
+        text-shadow: 0 2px 20px rgba(0,0,0,0.3);
+    }
+    .hero-content h1 em {
+        font-style: italic;
+        color: #5FC5C5;
+        position: relative;
+        display: inline-block;
+    }
+    .hero-divider {
+        width: 80px;
+        height: 4px;
+        background: linear-gradient(90deg, #5FC5C5, #0E8A8A, transparent);
+        margin-bottom: 1.2rem;
+        border-radius: 2px;
+    }
+    .hero-content p {
+        font-size: 0.95rem;
+        color: rgba(255,255,255,0.88);
+        line-height: 1.7;
+        margin-bottom: 1.5rem;
+        max-width: 500px;
+    }
+    
+    /* Search & Filter Section */
+    .search-section {
+        background: rgba(255,255,255,0.08);
+        backdrop-filter: blur(12px);
+        border-radius: 32px;
+        padding: 1.5rem;
+        margin-top: 1rem;
+        border: 1px solid rgba(255,255,255,0.15);
+    }
+    .search-bar {
+        display: flex;
+        align-items: center;
+        gap: 0;
+        background: #fff;
+        border-radius: 50px;
+        overflow: hidden;
+        padding: 0.2rem 0.2rem 0.2rem 1.2rem;
+        margin-bottom: 1.2rem;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+    .search-bar svg {
+        width: 18px;
+        height: 18px;
+        stroke: #9AA3AF;
+        stroke-width: 2;
+        fill: none;
+        flex-shrink: 0;
+    }
+    .search-bar input {
+        flex: 1;
+        border: none;
+        outline: none;
+        padding: 0.7rem 0.8rem;
+        font-size: 0.9rem;
+        font-family: 'DM Sans', sans-serif;
+        color: #1E242C;
+        background: transparent;
+    }
+    .search-bar input::placeholder {
+        color: #BEC7D1;
+    }
+    .search-bar button {
+        padding: 0.65rem 1.8rem;
+        border-radius: 40px;
+        background: #0e8a8a;
+        color: #fff;
+        border: none;
+        font-size: 0.85rem;
+        font-weight: 700;
+        cursor: pointer;
+        font-family: 'DM Sans', sans-serif;
+        transition: background 0.2s;
+        white-space: nowrap;
+    }
+    .search-bar button:hover {
+        background: #0a6e6e;
+    }
+    
+    .filter-row {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 1rem;
+        margin-top: 0.5rem;
+    }
+    .type-tabs {
+        display: flex;
+        gap: 0.3rem;
+        background: rgba(255,255,255,0.1);
+        padding: 0.25rem;
+        border-radius: 50px;
+    }
+    .type-tab {
+        padding: 0.45rem 1.2rem;
+        border-radius: 40px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-decoration: none;
+        transition: all 0.2s;
+        color: rgba(255,255,255,0.7);
+    }
+    .type-tab.active {
+        background: #0e8a8a;
+        color: #fff;
+    }
+    .type-tab:hover:not(.active) {
+        background: rgba(255,255,255,0.15);
+        color: #fff;
+    }
+    
+    .interest-pills {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        align-items: center;
+    }
+    .interest-label {
+        font-size: 0.7rem;
+        color: rgba(255,255,255,0.5);
+        margin-right: 0.3rem;
+    }
+    .interest-pill {
+        padding: 0.35rem 1rem;
+        border-radius: 40px;
+        font-size: 0.72rem;
+        font-weight: 500;
+        cursor: pointer;
+        border: 1px solid rgba(255,255,255,0.2);
+        background: rgba(255,255,255,0.08);
+        color: rgba(255,255,255,0.7);
+        text-decoration: none;
+        transition: all 0.2s;
+    }
+    .interest-pill:hover {
+        background: rgba(255,255,255,0.18);
+        color: #fff;
+        border-color: rgba(255,255,255,0.35);
+    }
+    .interest-pill.active {
+        background: #0e8a8a;
+        color: #fff;
+        border-color: #0e8a8a;
+    }
+    
+    /* Results Bar */
+    .results-bar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin: 2rem 0 1.5rem;
+        flex-wrap: wrap;
+        gap: 1rem;
+        padding: 0.5rem 0;
+    }
+    .results-count {
+        font-size: 0.85rem;
+        color: #6F7886;
+    }
+    .results-count strong {
+        color: #1E242C;
+        font-weight: 600;
+    }
+    .sort-select {
+        padding: 0.5rem 2.2rem 0.5rem 1rem;
+        border-radius: 10px;
+        border: 1.5px solid #E9EDF2;
+        background: #fff;
+        font-size: 0.8rem;
+        font-family: 'DM Sans', sans-serif;
+        color: #1E242C;
+        cursor: pointer;
+        outline: none;
+        appearance: none;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236E7682' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 0.8rem center;
+        transition: border-color 0.2s;
+    }
+    .sort-select:focus {
+        border-color: #0e8a8a;
+    }
+    
+    /* Community Grid */
+    .community-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+    
+    /* Community Card */
+    .community-card {
+        background: white;
+        border: 1px solid #E9EDF2;
+        border-radius: 24px;
+        overflow: hidden;
+        transition: all 0.3s ease;
+        display: flex;
+        flex-direction: column;
+        animation: fadeUp 0.5s ease both;
+        text-decoration: none;
+    }
+    .community-card:nth-child(1) { animation-delay: 0.05s; }
+    .community-card:nth-child(2) { animation-delay: 0.1s; }
+    .community-card:nth-child(3) { animation-delay: 0.15s; }
+    .community-card:nth-child(4) { animation-delay: 0.2s; }
+    .community-card:nth-child(5) { animation-delay: 0.25s; }
+    .community-card:nth-child(6) { animation-delay: 0.3s; }
+    
+    @keyframes fadeUp {
+        from { opacity: 0; transform: translateY(30px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .community-card:hover {
+        transform: translateY(-6px);
+        box-shadow: 0 20px 48px rgba(0,0,0,0.11);
+        border-color: #DCE2EA;
+    }
+    
+    /* Thumbnail */
+    .community-thumb {
+        height: 160px;
+        position: relative;
+        overflow: hidden;
+        background: linear-gradient(135deg, #E6F3F3, #D1FAFA);
+    }
+    .community-thumb img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.5s ease;
+    }
+    .community-card:hover .community-thumb img {
+        transform: scale(1.08);
+    }
+    .community-thumb-placeholder {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+        color: #0E8A8A;
+        font-size: 2rem;
+    }
+    
+    /* Badges */
+    .badge-wrap {
+        position: absolute;
+        top: 0.75rem;
+        left: 0.75rem;
+        z-index: 2;
+        display: flex;
+        gap: 0.45rem;
+    }
+    .badge {
+        font-size: 0.6rem;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        padding: 0.22rem 0.65rem;
+        border-radius: 40px;
+        backdrop-filter: blur(6px);
+    }
+    .badge.public {
+        background: rgba(14,138,138,0.9);
+        color: #fff;
+    }
+    .badge.private {
+        background: rgba(244,63,94,0.9);
+        color: #fff;
+    }
+    .interest-tag {
+        position: absolute;
+        bottom: 0.75rem;
+        right: 0.75rem;
+        z-index: 2;
+        font-size: 0.6rem;
+        font-weight: 600;
+        background: rgba(15,18,36,0.75);
+        color: rgba(255,255,255,0.9);
+        padding: 0.22rem 0.65rem;
+        border-radius: 40px;
+        backdrop-filter: blur(4px);
+    }
+    
+    /* Card Body */
+    .card-body {
+        padding: 1rem 1.2rem;
+        flex: 1;
+    }
+    .card-name {
+        font-size: 1rem;
+        font-weight: 700;
+        color: #191E24;
+        margin-bottom: 0.4rem;
+        line-height: 1.3;
+    }
+    .card-desc {
+        font-size: 0.75rem;
+        color: #6F7886;
+        line-height: 1.5;
+        margin-bottom: 0.8rem;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+    .card-meta {
+        display: flex;
+        gap: 1rem;
+        font-size: 0.7rem;
+        color: #6F7886;
+    }
+    .card-meta span {
+        display: flex;
+        align-items: center;
+        gap: 0.3rem;
+    }
+    .card-meta svg {
+        width: 12px;
+        height: 12px;
+        stroke: currentColor;
+        stroke-width: 2;
+        fill: none;
+    }
+    
+    /* Card Footer */
+    .card-footer {
+        padding: 0.8rem 1.2rem 1rem;
+        border-top: 1px solid #F1F3F8;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.8rem;
+    }
+    .member-stack {
+        display: flex;
+        align-items: center;
+    }
+    .member-av {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #0e8a8a, #0a6e6e);
+        border: 2px solid #fff;
+        margin-left: -8px;
+        font-size: 0.7rem;
+        font-weight: 700;
+        color: #fff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }
+    .member-av:first-child {
+        margin-left: 0;
+    }
+    .member-av img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+    .member-count {
+        font-size: 0.7rem;
+        color: #6F7886;
+        margin-left: 6px;
+    }
+    
+    /* Action Buttons */
+    .action-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        padding: 0.5rem 1.2rem;
+        border-radius: 40px;
+        font-size: 0.75rem;
+        font-weight: 700;
+        cursor: pointer;
+        text-decoration: none;
+        border: none;
+        font-family: 'DM Sans', sans-serif;
+        transition: all 0.2s;
+        white-space: nowrap;
+    }
+    .action-btn.join {
+        background: linear-gradient(135deg, #0e8a8a, #0a6e6e);
+        color: #fff;
+        box-shadow: 0 4px 12px rgba(14,138,138,0.3);
+    }
+    .action-btn.join:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 18px rgba(14,138,138,0.4);
+    }
+    .action-btn.view {
+        background: #F1F3F8;
+        color: #4A515C;
+        border: 1px solid #E9EDF2;
+    }
+    .action-btn.view:hover {
+        background: #0e8a8a;
+        color: #fff;
+        border-color: #0e8a8a;
+        transform: translateY(-2px);
+    }
+    .action-btn.request {
+        background: rgba(245,158,11,0.1);
+        color: #92400e;
+        border: 1.5px solid rgba(245,158,11,0.3);
+    }
+    .action-btn.request:hover {
+        background: rgba(245,158,11,0.2);
+    }
+    .action-btn.pending {
+        background: #F1F3F8;
+        color: #9AA3AF;
+        cursor: default;
+        border: 1.5px solid #E9EDF2;
+    }
+    .action-btn svg {
+        width: 13px;
+        height: 13px;
+        stroke: currentColor;
+        stroke-width: 2.5;
+        fill: none;
+    }
+    
+    /* Empty State */
+    .empty-state {
+        background: #fff;
+        border: 2px dashed #DCE2EA;
+        border-radius: 24px;
+        padding: 3rem;
+        text-align: center;
+        grid-column: 1 / -1;
+        transition: all 0.3s;
+    }
+    .empty-state:hover {
+        border-color: #0e8a8a;
+        background: #e6f3f3;
+    }
+    .empty-state svg {
+        width: 64px;
+        height: 64px;
+        stroke: #BEC7D1;
+        stroke-width: 1.5;
+        fill: none;
+        margin-bottom: 1rem;
+    }
+    .empty-state h4 {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: #4A515C;
+        margin-bottom: 0.5rem;
+    }
+    .empty-state p {
+        font-size: 0.85rem;
+        color: #6F7886;
+        margin-bottom: 1.5rem;
+    }
+    .empty-actions {
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+    
+    /* Pagination */
+    .pagination {
+        display: flex;
+        justify-content: center;
+        gap: 0.5rem;
+        margin-top: 2.5rem;
+        flex-wrap: wrap;
+    }
+    .page-link {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 38px;
+        height: 38px;
+        padding: 0 0.85rem;
+        border-radius: 10px;
+        background: #fff;
+        border: 1px solid #E9EDF2;
+        color: #4A515C;
+        text-decoration: none;
+        font-size: 0.8rem;
+        font-weight: 500;
+        transition: all 0.2s;
+    }
+    .page-link:hover {
+        background: #e6f3f3;
+        border-color: #0e8a8a;
+        color: #0e8a8a;
+    }
+    .page-link.active {
+        background: #0e8a8a;
+        border-color: #0e8a8a;
+        color: #fff;
+        font-weight: 700;
+    }
+    .page-link.disabled {
+        opacity: 0.45;
+        cursor: not-allowed;
+        pointer-events: none;
+    }
+    
+    /* Responsive */
+    @media (max-width: 1024px) {
         .community-grid {
-            display: grid; grid-template-columns: repeat(3, 1fr);
-            gap: 1.4rem; margin-bottom: 2.5rem;
+            grid-template-columns: repeat(2, 1fr);
         }
+    }
+    @media (max-width: 768px) {
+        .hero-content {
+            padding: 3rem 1.5rem 4rem;
+        }
+        .hero-content h1 {
+            font-size: 1.8rem;
+        }
+        .search-section {
+            padding: 1rem;
+        }
+        .filter-row {
+            flex-direction: column;
+            align-items: stretch;
+        }
+        .type-tabs {
+            justify-content: center;
+        }
+        .interest-pills {
+            justify-content: center;
+        }
+        .community-grid {
+            grid-template-columns: 1fr;
+        }
+        .results-bar {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+    }
+</style>
+{% endblock %}
 
-        .community-card {
-            background: var(--white); border: 1px solid var(--gray-200);
-            border-radius: 16px; overflow: hidden; transition: all 0.25s;
-            display: flex; flex-direction: column;
-        }
-        .community-card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 16px 36px rgba(0,0,0,0.08);
-            border-color: var(--gray-300);
-        }
+{% block content %}
 
-        /* Thumb */
-        .c-thumb {
-            height: 140px; background: var(--gray-150);
-            position: relative; overflow: hidden;
-            display: flex; align-items: center; justify-content: center;
-        }
-        .c-thumb img { width: 100%; height: 100%; object-fit: cover; }
-        .c-thumb-placeholder { display: flex; flex-direction: column; align-items: center; gap: 0.4rem; color: var(--gray-400); }
-        .c-thumb-placeholder svg { width: 30px; height: 30px; stroke: currentColor; stroke-width: 1.5; fill: none; }
-        .c-thumb::after {
-            content: ''; position: absolute; inset: 0;
-            background: linear-gradient(to bottom, transparent 40%, rgba(15,18,23,0.5));
-        }
-
-        /* Badges on thumb */
-        .c-badge-wrap { position: absolute; top: 0.65rem; left: 0.65rem; z-index: 2; display: flex; gap: 0.4rem; }
-        .c-badge {
-            font-size: 0.6rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
-            padding: 0.22rem 0.6rem; border-radius: 40px;
-        }
-        .c-badge.private {
-            background: rgba(244,63,94,0.85); color: white;
-            display: flex; align-items: center; gap: 0.3rem;
-            backdrop-filter: blur(4px);
-        }
-        .c-badge.private svg { width: 9px; height: 9px; stroke: currentColor; stroke-width: 2.5; fill: none; }
-        .c-badge.public { background: rgba(34,197,94,0.8); color: white; backdrop-filter: blur(4px); }
-        .c-badge.joined { background: var(--gray-900); color: white; backdrop-filter: blur(4px); }
-        .c-badge.requested { background: rgba(245,158,11,0.85); color: white; backdrop-filter: blur(4px); }
-
-        /* Interest tag on bottom of thumb */
-        .c-interest {
-            position: absolute; bottom: 0.65rem; right: 0.7rem; z-index: 2;
-            font-size: 0.6rem; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase;
-            background: rgba(15,18,23,0.65); color: rgba(255,255,255,0.8);
-            padding: 0.2rem 0.55rem; border-radius: 40px; backdrop-filter: blur(4px);
-        }
-
-        /* Body */
-        .c-body { padding: 1.1rem 1.2rem 0.8rem; flex: 1; }
-        .c-name {
-            font-size: 0.92rem; font-weight: 600; color: var(--gray-900);
-            margin-bottom: 0.35rem; line-height: 1.3;
-        }
-        .c-desc {
-            font-size: 0.76rem; color: var(--text-light); line-height: 1.55;
-            margin-bottom: 0.75rem;
-            display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
-        }
-        .c-meta {
-            display: flex; gap: 0.85rem; font-size: 0.72rem; color: var(--text-light); flex-wrap: wrap;
-        }
-        .c-meta span { display: flex; align-items: center; gap: 0.3rem; }
-        .c-meta svg { width: 11px; height: 11px; stroke: currentColor; stroke-width: 2; fill: none; }
-
-        /* Footer */
-        .c-footer {
-            padding: 0.8rem 1.2rem;
-            border-top: 1px solid var(--gray-200);
-            display: flex; align-items: center; justify-content: space-between; gap: 0.6rem;
-        }
-
-        /* CTA buttons on card */
-        .c-btn {
-            display: inline-flex; align-items: center; gap: 0.4rem;
-            padding: 0.48rem 1.1rem; border-radius: 40px;
-            font-size: 0.74rem; font-weight: 600; cursor: pointer;
-            text-decoration: none; border: none; font-family: 'Inter', sans-serif;
-            transition: all 0.2s; white-space: nowrap;
-        }
-        .c-btn svg { width: 12px; height: 12px; stroke: currentColor; stroke-width: 2.5; fill: none; }
-        .c-btn.join { background: var(--gray-900); color: white; }
-        .c-btn.join:hover { background: var(--accent-deep); }
-        .c-btn.view { background: var(--accent-pale); color: var(--accent-deep); }
-        .c-btn.view:hover { background: #dce6f5; }
-        .c-btn.request { background: rgba(245,158,11,0.1); color: #B45309; border: 1.5px solid rgba(245,158,11,0.3); }
-        .c-btn.request:hover { background: rgba(245,158,11,0.18); }
-        .c-btn.pending { background: var(--gray-150); color: var(--gray-500); cursor: default; border: 1.5px solid var(--gray-200); }
-        .c-btn.pending svg { opacity: 0.5; }
-
-        /* Member avatars stack */
-        .member-stack { display: flex; align-items: center; }
-        .member-stack .ma {
-            width: 24px; height: 24px; border-radius: 50%;
-            background: var(--accent-deep); border: 2px solid var(--white);
-            margin-left: -6px; font-size: 0.55rem; font-weight: 700; color: white;
-            display: flex; align-items: center; justify-content: center;
-            overflow: hidden;
-        }
-        .member-stack .ma:first-child { margin-left: 0; }
-        .member-stack .ma img { width: 100%; height: 100%; object-fit: cover; }
-        .member-count { font-size: 0.7rem; color: var(--text-light); margin-left: 6px; white-space: nowrap; }
-
-        /* Empty state */
-        .empty-state {
-            background: var(--white); border: 1.5px dashed var(--gray-300);
-            border-radius: 16px; padding: 4rem 2rem;
-            text-align: center; grid-column: 1 / -1;
-        }
-        .empty-state svg { width: 44px; height: 44px; stroke: var(--gray-300); stroke-width: 1.5; fill: none; margin-bottom: 1rem; }
-        .empty-state h4 { font-size: 1rem; font-weight: 600; color: var(--gray-700); margin-bottom: 0.4rem; }
-        .empty-state p { font-size: 0.83rem; color: var(--text-light); margin-bottom: 1.5rem; }
-
-        /* ══ FOOTER ══ */
-        .site-footer {
-            background: var(--gray-950); color: rgba(255,255,255,0.6);
-            padding: 4rem 5% 2rem;
-        }
-        .footer-grid {
-            display: grid; grid-template-columns: 2fr 1fr 1fr 1fr;
-            gap: 2.5rem; margin-bottom: 2.8rem;
-        }
-        .footer-logo {
-            font-family: 'Playfair Display', serif;
-            font-size: 1.55rem; font-weight: 600; letter-spacing: -0.01em;
-            color: white; display: block; margin-bottom: 1rem; text-decoration: none;
-        }
-        .footer-logo:hover { color: rgba(255,255,255,0.75); }
-        .footer-desc { font-size: 0.85rem; color: rgba(255,255,255,0.45); line-height: 1.7; max-width: 240px; }
-        .footer-col h5 {
-            font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase;
-            font-weight: 600; color: var(--gray-300); margin-bottom: 1.2rem;
-        }
-        .footer-col ul { list-style: none; display: flex; flex-direction: column; gap: 0.7rem; }
-        .footer-col ul a { font-size: 0.85rem; color: rgba(255,255,255,0.5); text-decoration: none; transition: color 0.2s; }
-        .footer-col ul a:hover { color: white; }
-        .footer-bottom {
-            border-top: 1px solid rgba(255,255,255,0.08); padding-top: 2rem;
-            display: flex; justify-content: space-between; align-items: center;
-            font-size: 0.75rem; color: rgba(255,255,255,0.3);
-        }
-
-        /* ══ RESPONSIVE ══ */
-        @media (max-width: 1100px) { .community-grid { grid-template-columns: repeat(2, 1fr); } }
-        @media (max-width: 860px) {
-            .sidebar-overlay { display: block; }
-            .sidebar { transform: translateX(calc(-1 * var(--sidebar-w))); }
-            .sidebar.open { transform: translateX(0); box-shadow: 8px 0 40px rgba(0,0,0,0.35); }
-            .main { margin-left: 0 !important; }
-        }
-        @media (max-width: 640px) {
-            .community-grid { grid-template-columns: 1fr; }
-            .hero { padding: 2.5rem 1.2rem 1.8rem; }
-            .content { padding: 1.5rem 1rem 2rem; }
-            .topbar { padding: 0 1rem; }
-            .footer-grid { grid-template-columns: 1fr; }
-            .footer-bottom { flex-direction: column; gap: 0.6rem; text-align: center; }
-        }
-        @media (max-width: 1000px) { .footer-grid { grid-template-columns: 1fr 1fr; gap: 2rem; } }
-
-        @keyframes fadeUp { from { opacity:0; transform:translateY(14px); } to { opacity:1; transform:translateY(0); } }
-        .community-grid { animation: fadeUp 0.45s 0.1s ease both; }
-        .results-bar    { animation: fadeUp 0.45s 0.05s ease both; }
-    </style>
-</head>
-<body>
-
-<div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
-
-<!-- ══ SIDEBAR ══ -->
-<aside class="sidebar" id="sidebar">
-    <div class="sidebar-brand">
-        <a class="sidebar-logo" href="{% url 'index' %}">Wayzo</a>
-        <span class="sidebar-sub">Traveller Portal</span>
-    </div>
-    <div class="sidebar-profile">
-        <div class="sidebar-avatar">
-            {% if profile.profile_picture %}
-                <img src="{{ profile.profile_picture.url }}" alt="{{ profile.first_name }}">
-            {% else %}
-                {{ profile.first_name|first|upper }}{{ profile.last_name|first|upper }}
-            {% endif %}
-        </div>
-        <div class="sidebar-profile-info">
-            <div class="sidebar-profile-name">{{ profile.first_name }} {{ profile.last_name }}</div>
-            <div class="sidebar-profile-role">Explorer</div>
-        </div>
-    </div>
-    <nav class="sidebar-nav">
-        <span class="nav-group-label">Main</span>
-        <a href="{% url 'user_profile' %}" class="nav-item">
-            <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
-            Home
-        </a>
-        <a href="{% url 'all_packages' %}" class="nav-item">
-            <svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-            Tour Packages
-        </a>
-        <a href="{% url 'all_restaurants' %}" class="nav-item">
-            <svg viewBox="0 0 24 24"><line x1="12" y1="2" x2="12" y2="6"/><line x1="12" y1="18" x2="12" y2="22"/><path d="M4.93 4.93l2.83 2.83"/><path d="M16.24 16.24l2.83 2.83"/><line x1="2" y1="12" x2="6" y2="12"/><line x1="18" y1="12" x2="22" y2="12"/></svg>
-            Restaurants
-        </a>
-        <a href="{% url 'my_bookings' %}" class="nav-item">
-            <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
-            My Bookings
-        </a>
-        <a href="{% url 'wishlist' %}" class="nav-item">
-            <svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
-            Wishlist
-        </a>
-        <span class="nav-group-label" style="margin-top:0.6rem;">Account</span>
-        <a href="{% url 'edit_profile' %}" class="nav-item">
-            <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-            Edit Profile
-        </a>
-        <a href="{% url 'community_home' %}" class="nav-item active">
-            <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-            Community
-        </a>
-    </nav>
-    <div class="sidebar-footer">
-        <a href="{% url 'logout' %}" class="logout-btn">
-            <svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-            Sign Out
-        </a>
-    </div>
-</aside>
-
-<!-- ══ MAIN ══ -->
-<div class="main">
-
-    <!-- Topbar -->
-    <div class="topbar">
-        <div class="topbar-left">
-            <button class="hamburger is-open" id="hamburgerBtn" onclick="toggleSidebar()" aria-label="Toggle navigation">
-                <span></span><span></span><span></span>
-            </button>
-            <div>
-                <h1>Browse Communities</h1>
-                <p>Find and join travel groups that match your vibe</p>
-            </div>
-        </div>
-        <div class="topbar-right">
-            <!-- Notification bell -->
-            <div class="notif-wrap">
-                <button class="notif-btn" id="notifBtn" onclick="toggleNotif()" aria-label="Notifications">
-                    <svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
-                    {% if notifications %}<span class="notif-dot"></span>{% endif %}
-                </button>
-                <div class="notif-dropdown" id="notifDropdown">
-                    <div class="notif-header">
-                        <span>Notifications</span>
-                        <a href="{% url 'notifications' %}">View all</a>
-                    </div>
-                    {% for n in notifications %}
-                        <div class="notif-item">{{ n.message }}</div>
-                    {% empty %}
-                        <div class="notif-empty">You're all caught up!</div>
-                    {% endfor %}
-                </div>
-            </div>
-            <a href="{% url 'community_home' %}" class="topbar-btn outline">
-                <svg viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
-                Back
-            </a>
-            <a href="{% url 'create_community' %}" class="topbar-btn solid">
-                <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                Create Community
-            </a>
-        </div>
-    </div>
-
-    <!-- ══ HERO ══ -->
-    <div class="hero">
-        <div class="hero-inner">
-            <div class="hero-eyebrow">Explore &amp; Connect</div>
-            <h1>Discover communities that<br>share <em>your journey.</em></h1>
-            <p class="hero-sub">Search from hundreds of travel communities — adventure groups, food trails, backpacker circles and more.</p>
-
-            <!-- Search bar -->
+<!-- Hero Section -->
+<div class="hero-section">
+    <div class="hero-bg"></div>
+    <div class="hero-pattern"></div>
+    <div class="hero-content">
+        <div class="hero-eyebrow">Find Your Tribe</div>
+        <h1>Discover communities that<br>share <em>your journey.</em></h1>
+        <div class="hero-divider"></div>
+        <p>Search from hundreds of travel communities — adventure groups, food trails, backpacker circles and more.</p>
+        
+        <!-- Search & Filter Section -->
+        <div class="search-section">
             <form method="GET" action="" class="search-bar">
-                <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-                <input
-                    type="text" name="q"
-                    value="{{ request.GET.q }}"
-                    placeholder="Search communities by name or interest…"
-                    autocomplete="off"
-                >
+                <svg viewBox="0 0 24 24">
+                    <circle cx="11" cy="11" r="8"/>
+                    <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                </svg>
+                <input type="text" name="q" value="{{ search_query|default:'' }}" 
+                       placeholder="Search by name, interest or keyword…" autocomplete="off">
                 <button type="submit">Search</button>
             </form>
-
-            <!-- Interest filter pills -->
-            <div class="filter-pills">
-                <a href="?type=all" class="filter-pill {% if not request.GET.type or request.GET.type == 'all' %}active{% endif %}">All</a>
-                <a href="?type=adventure" class="filter-pill {% if request.GET.type == 'adventure' %}active{% endif %}">Adventure</a>
-                <a href="?type=beach" class="filter-pill {% if request.GET.type == 'beach' %}active{% endif %}">Beach</a>
-                <a href="?type=cultural" class="filter-pill {% if request.GET.type == 'cultural' %}active{% endif %}">Cultural</a>
-                <a href="?type=food" class="filter-pill {% if request.GET.type == 'food' %}active{% endif %}">Food &amp; Drink</a>
-                <a href="?type=backpacking" class="filter-pill {% if request.GET.type == 'backpacking' %}active{% endif %}">Backpacking</a>
-                <a href="?type=luxury" class="filter-pill {% if request.GET.type == 'luxury' %}active{% endif %}">Luxury</a>
-                <a href="?type=pilgrimage" class="filter-pill {% if request.GET.type == 'pilgrimage' %}active{% endif %}">Pilgrimage</a>
+            
+            <div class="filter-row">
+                <div class="type-tabs">
+                    <a href="?{% if search_query %}q={{ search_query }}&{% endif %}type=all{% if interest_filter and interest_filter != 'all' %}&interest={{ interest_filter }}{% endif %}{% if sort_by %}&sort={{ sort_by }}{% endif %}"
+                       class="type-tab {% if not community_type or community_type == 'all' %}active{% endif %}">All</a>
+                    <a href="?{% if search_query %}q={{ search_query }}&{% endif %}type=public{% if interest_filter and interest_filter != 'all' %}&interest={{ interest_filter }}{% endif %}{% if sort_by %}&sort={{ sort_by }}{% endif %}"
+                       class="type-tab {% if community_type == 'public' %}active{% endif %}">🌍 Public</a>
+                    <a href="?{% if search_query %}q={{ search_query }}&{% endif %}type=private{% if interest_filter and interest_filter != 'all' %}&interest={{ interest_filter }}{% endif %}{% if sort_by %}&sort={{ sort_by }}{% endif %}"
+                       class="type-tab {% if community_type == 'private' %}active{% endif %}">🔒 Private</a>
+                </div>
+            </div>
+            
+            <div class="interest-pills" style="margin-top: 0.8rem;">
+                <span class="interest-label">Browse by interest:</span>
+                <a href="?{% if search_query %}q={{ search_query }}&{% endif %}{% if community_type and community_type != 'all' %}type={{ community_type }}&{% endif %}interest=all{% if sort_by %}&sort={{ sort_by }}{% endif %}"
+                   class="interest-pill {% if not interest_filter or interest_filter == 'all' %}active{% endif %}">All</a>
+                {% for interest in valid_interests %}
+                <a href="?{% if search_query %}q={{ search_query }}&{% endif %}{% if community_type and community_type != 'all' %}type={{ community_type }}&{% endif %}interest={{ interest }}{% if sort_by %}&sort={{ sort_by }}{% endif %}"
+                   class="interest-pill {% if interest_filter == interest %}active{% endif %}">{{ interest|title }}</a>
+                {% endfor %}
             </div>
         </div>
     </div>
+</div>
 
-    <!-- ══ CONTENT ══ -->
-    <div class="content">
-
-        <!-- Results bar -->
-        <div class="results-bar">
-            <p class="results-count">
-                Showing <strong>{{ communities|length }}</strong> communit{{ communities|length|pluralize:"y,ies" }}
-                {% if request.GET.q %} for <strong>"{{ request.GET.q }}"</strong>{% endif %}
-                {% if request.GET.type and request.GET.type != 'all' %} in <strong>{{ request.GET.type|title }}</strong>{% endif %}
-            </p>
-            <select class="sort-select" onchange="sortCommunities(this.value)">
-                <option value="newest">Newest first</option>
-                <option value="members">Most members</option>
-                <option value="name">Name A–Z</option>
+<!-- Page Body -->
+<div class="page-body" style="max-width: 1400px; margin: 0 auto; padding: 0 2rem 4rem;">
+    
+    <!-- Results Bar -->
+    <div class="results-bar">
+        <p class="results-count">
+            Showing <strong>{{ communities.paginator.count }}</strong>
+            communit{{ communities.paginator.count|pluralize:"y,ies" }}
+            {% if search_query %} for <strong>"{{ search_query }}"</strong>{% endif %}
+            {% if community_type and community_type != 'all' %} · <strong>{{ community_type|title }}</strong>{% endif %}
+            {% if interest_filter and interest_filter != 'all' %} · <strong>{{ interest_filter|title }}</strong>{% endif %}
+        </p>
+        <form method="GET" action="" id="sortForm">
+            <input type="hidden" name="q" value="{{ search_query|default:'' }}">
+            <input type="hidden" name="type" value="{{ community_type|default:'all' }}">
+            <input type="hidden" name="interest" value="{{ interest_filter|default:'all' }}">
+            <select name="sort" class="sort-select" onchange="this.form.submit()">
+                <option value="newest" {% if sort_by == 'newest' %}selected{% endif %}>Newest first</option>
+                <option value="oldest" {% if sort_by == 'oldest' %}selected{% endif %}>Oldest first</option>
+                <option value="members" {% if sort_by == 'members' %}selected{% endif %}>Most members</option>
+                <option value="name" {% if sort_by == 'name' %}selected{% endif %}>Name A–Z</option>
             </select>
-        </div>
-
-        <!-- Community grid -->
-        <div class="community-grid" id="communityGrid">
-            {% for c in communities %}
-            <div class="community-card" data-name="{{ c.name|lower }}" data-members="{{ c.members.count }}" data-date="{{ c.created_at|date:'U' }}">
-
-                <!-- Thumb -->
-                <div class="c-thumb">
-                    {% if c.cover_image %}
-                        <img src="{{ c.cover_image.url }}" alt="{{ c.name }}">
+        </form>
+    </div>
+    
+    <!-- Community Grid -->
+    <div class="community-grid">
+        {% for community in communities %}
+        <a href="{% url 'community:community_detail' community.id %}" class="community-card">
+            <!-- Thumbnail -->
+            <div class="community-thumb">
+                {% if community.cover_image %}
+                    <img src="{{ community.cover_image.url }}" alt="{{ community.name }}" loading="lazy">
+                {% else %}
+                    <div class="community-thumb-placeholder">
+                        🏘️
+                    </div>
+                {% endif %}
+                
+                <!-- Badges -->
+                <div class="badge-wrap">
+                    {% if community.community_type == 'private' %}
+                        <span class="badge private">🔒 Private</span>
                     {% else %}
-                        <div class="c-thumb-placeholder">
-                            <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/></svg>
-                        </div>
-                    {% endif %}
-
-                    <!-- Badges -->
-                    <div class="c-badge-wrap">
-                        {% if c.community_type == 'private' %}
-                            <span class="c-badge private">
-                                <svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-                                Private
-                            </span>
-                        {% else %}
-                            <span class="c-badge public">Public</span>
-                        {% endif %}
-
-                        {% if c.id in joined_community_ids %}
-                            <span class="c-badge joined">Joined</span>
-                        {% elif c.id in requested_community_ids %}
-                            <span class="c-badge requested">Requested</span>
-                        {% endif %}
-                    </div>
-
-                    <!-- Interest tag -->
-                    {% if c.interest %}
-                        <span class="c-interest">{{ c.interest }}</span>
+                        <span class="badge public">🌍 Public</span>
                     {% endif %}
                 </div>
-
-                <!-- Body -->
-                <div class="c-body">
-                    <div class="c-name">{{ c.name }}</div>
-                    <p class="c-desc">{{ c.description|default:"No description provided." }}</p>
-                    <div class="c-meta">
-                        <span>
-                            <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
-                            {{ c.members.count }} member{{ c.members.count|pluralize }}
-                        </span>
-                        <span>
-                            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                            {{ c.created_at|date:"M Y" }}
-                        </span>
-                    </div>
-                </div>
-
-                <!-- Footer CTA -->
-                <div class="c-footer">
-                    <!-- Member avatars -->
-                    <div class="member-stack" style="display:flex;align-items:center;">
-                        {% for m in c.members.all|slice:":3" %}
-                            <div class="ma">
-                                {% if m.profile_picture %}
-                                    <img src="{{ m.profile_picture.url }}" alt="">
-                                {% else %}
-                                    {{ m.first_name|first|upper }}
-                                {% endif %}
-                            </div>
-                        {% endfor %}
-                        {% if c.members.count > 3 %}
-                            <span class="member-count">+{{ c.members.count|add:"-3" }}</span>
-                        {% endif %}
-                    </div>
-
-                    <!-- Action button -->
-                    {% if user.is_authenticated %}
-                        {% if c.id in joined_community_ids %}
-                            <a href="{% url 'community_detail' c.id %}" class="c-btn view">
-                                <svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-                                View
-                            </a>
-                        {% elif c.id in requested_community_ids %}
-                            <span class="c-btn pending">
-                                <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                                Pending
-                            </span>
-                        {% elif c.community_type == 'private' %}
-                            <a href="{% url 'request_join_community' c.id %}" class="c-btn request">
-                                <svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-                                Request to Join
-                            </a>
-                        {% else %}
-                            <a href="{% url 'join_community' c.id %}" class="c-btn join">
-                                <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                                Join
-                            </a>
-                        {% endif %}
-                    {% endif %}
+                
+                {% if community.interest %}
+                    <span class="interest-tag">{{ community.interest|title }}</span>
+                {% endif %}
+            </div>
+            
+            <!-- Body -->
+            <div class="card-body">
+                <div class="card-name">{{ community.name }}</div>
+                <p class="card-desc">{{ community.description|default:"No description provided."|truncatechars:100 }}</p>
+                <div class="card-meta">
+                    <span>
+                        <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+                        {{ community.members.count }} member{{ community.members.count|pluralize }}
+                    </span>
+                    <span>
+                        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                        {{ community.created_at|date:"M Y" }}
+                    </span>
                 </div>
             </div>
-            {% empty %}
-            <div class="empty-state">
-                <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-                <h4>No communities found</h4>
-                <p>
-                    {% if request.GET.q %}
-                        No results for "{{ request.GET.q }}". Try a different search term.
-                    {% else %}
-                        Be the first to create one!
+            
+            <!-- Footer with Member Avatars - FIXED to use .user attribute -->
+            <div class="card-footer">
+                <div class="member-stack">
+                    {% for member_rel in community.members.all|slice:":3" %}
+                    {% with member=member_rel.user %}
+                    <div class="member-av" title="{{ member.get_full_name|default:member.username }}">
+                        {% if member.profile_picture %}
+                            <img src="{{ member.profile_picture.url }}" alt="{{ member.username }}">
+                        {% else %}
+                            {{ member.username|first|upper }}
+                        {% endif %}
+                    </div>
+                    {% endwith %}
+                    {% endfor %}
+                    {% if community.members.count > 3 %}
+                        <span class="member-count">+{{ community.members.count|add:"-3" }} more</span>
+                    {% elif community.members.count == 0 %}
+                        <span class="member-count">Be the first to join!</span>
                     {% endif %}
-                </p>
-                <a href="{% url 'create_community' %}" class="topbar-btn solid" style="display:inline-flex;">
-                    <svg viewBox="0 0 24 24" style="width:14px;height:14px;stroke:currentColor;stroke-width:2;fill:none;"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                </div>
+                
+                <!-- CTA Button -->
+                {% if user.is_authenticated %}
+                    {% if community.id in joined_community_ids %}
+                        <span class="action-btn view">
+                            <svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                            Member
+                        </span>
+                    {% elif community.id in requested_community_ids %}
+                        <span class="action-btn pending">
+                            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                            Pending
+                        </span>
+                    {% elif community.community_type == 'private' %}
+                        <span class="action-btn request">
+                            <svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                            Request
+                        </span>
+                    {% else %}
+                        <span class="action-btn join">
+                            <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                            Join
+                        </span>
+                    {% endif %}
+                {% else %}
+                    <a href="{% url 'login' %}?next={{ request.path }}" class="action-btn join">
+                        <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                        Login to Join
+                    </a>
+                {% endif %}
+            </div>
+        </a>
+        {% empty %}
+        <div class="empty-state">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                <circle cx="9" cy="7" r="4"/>
+                <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+            </svg>
+            <h4>No communities found</h4>
+            <p>
+                {% if search_query or community_type != 'all' or interest_filter != 'all' %}
+                    Try adjusting your search or filter criteria.
+                {% else %}
+                    Be the first to create a community!
+                {% endif %}
+            </p>
+            <div class="empty-actions">
+                <a href="{% url 'community:create_community' %}" class="action-btn join" style="display: inline-flex;">
+                    <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
                     Create Community
                 </a>
-            </div>
-            {% endfor %}
-        </div>
-
-    </div><!-- /content -->
-
-    <!-- ══ FOOTER ══ -->
-    <footer class="site-footer">
-        <div class="footer-grid">
-            <div>
-                <a class="footer-logo" href="{% url 'index' %}">Wayzo</a>
-                <p class="footer-desc">Your smart travel companion. Discover, plan, and experience the world beautifully.</p>
-            </div>
-            <div class="footer-col">
-                <h5>Explore</h5>
-                <ul>
-                    <li><a href="{% url 'all_packages' %}">Destinations</a></li>
-                    <li><a href="{% url 'all_restaurants' %}">Restaurants</a></li>
-                    <li><a href="#">Hotels</a></li>
-                    <li><a href="{% url 'all_packages' %}">Packages</a></li>
-                </ul>
-            </div>
-            <div class="footer-col">
-                <h5>My Account</h5>
-                <ul>
-                    <li><a href="{% url 'my_bookings' %}">My Bookings</a></li>
-                    <li><a href="{% url 'wishlist' %}">Wishlist</a></li>
-                    <li><a href="{% url 'edit_profile' %}">Profile Settings</a></li>
-                    <li><a href="{% url 'community_home' %}">Community</a></li>
-                </ul>
-            </div>
-            <div class="footer-col">
-                <h5>Support</h5>
-                <ul>
-                    <li><a href="#">Help Center</a></li>
-                    <li><a href="#">FAQs</a></li>
-                    <li><a href="#">Contact Us</a></li>
-                    <li><a href="#">Terms &amp; Privacy</a></li>
-                </ul>
+                {% if search_query or interest_filter != 'all' or community_type != 'all' %}
+                <a href="{% url 'community:community_list' %}" class="action-btn view" style="display: inline-flex;">
+                    Clear Filters
+                </a>
+                {% endif %}
             </div>
         </div>
-        <div class="footer-bottom">
-            <span>© 2025 Wayzo. All rights reserved.</span>
-            <span>Made for explorers everywhere</span>
-        </div>
-    </footer>
+        {% endfor %}
+    </div>
+    
+    <!-- Pagination -->
+    {% if communities.paginator.num_pages > 1 %}
+    <div class="pagination">
+        {% if communities.has_previous %}
+            <a href="?page=1{% if search_query %}&q={{ search_query }}{% endif %}{% if community_type and community_type != 'all' %}&type={{ community_type }}{% endif %}{% if interest_filter and interest_filter != 'all' %}&interest={{ interest_filter }}{% endif %}{% if sort_by %}&sort={{ sort_by }}{% endif %}" class="page-link">« First</a>
+            <a href="?page={{ communities.previous_page_number }}{% if search_query %}&q={{ search_query }}{% endif %}{% if community_type and community_type != 'all' %}&type={{ community_type }}{% endif %}{% if interest_filter and interest_filter != 'all' %}&interest={{ interest_filter }}{% endif %}{% if sort_by %}&sort={{ sort_by }}{% endif %}" class="page-link">‹ Prev</a>
+        {% else %}
+            <span class="page-link disabled">« First</span>
+            <span class="page-link disabled">‹ Prev</span>
+        {% endif %}
+        
+        {% for num in communities.paginator.page_range %}
+            {% if num == communities.number %}
+                <span class="page-link active">{{ num }}</span>
+            {% elif num > communities.number|add:'-3' and num < communities.number|add:'3' %}
+                <a href="?page={{ num }}{% if search_query %}&q={{ search_query }}{% endif %}{% if community_type and community_type != 'all' %}&type={{ community_type }}{% endif %}{% if interest_filter and interest_filter != 'all' %}&interest={{ interest_filter }}{% endif %}{% if sort_by %}&sort={{ sort_by }}{% endif %}" class="page-link">{{ num }}</a>
+            {% endif %}
+        {% endfor %}
+        
+        {% if communities.has_next %}
+            <a href="?page={{ communities.next_page_number }}{% if search_query %}&q={{ search_query }}{% endif %}{% if community_type and community_type != 'all' %}&type={{ community_type }}{% endif %}{% if interest_filter and interest_filter != 'all' %}&interest={{ interest_filter }}{% endif %}{% if sort_by %}&sort={{ sort_by }}{% endif %}" class="page-link">Next ›</a>
+            <a href="?page={{ communities.paginator.num_pages }}{% if search_query %}&q={{ search_query }}{% endif %}{% if community_type and community_type != 'all' %}&type={{ community_type }}{% endif %}{% if interest_filter and interest_filter != 'all' %}&interest={{ interest_filter }}{% endif %}{% if sort_by %}&sort={{ sort_by }}{% endif %}" class="page-link">Last »</a>
+        {% else %}
+            <span class="page-link disabled">Next ›</span>
+            <span class="page-link disabled">Last »</span>
+        {% endif %}
+    </div>
+    {% endif %}
+    
+</div>
 
-</div><!-- /main -->
+{% endblock %}
 
+{% block extra_scripts %}
 <script>
-    /* ── Sidebar ── */
-    const sidebar      = document.getElementById('sidebar');
-    const hamburgerBtn = document.getElementById('hamburgerBtn');
-    const mainEl       = document.querySelector('.main');
-    const overlay      = document.getElementById('sidebarOverlay');
-    const MOBILE_BP    = 860;
-
-    function isMobile() { return window.innerWidth <= MOBILE_BP; }
-    function setSidebarOpen(open) {
-        if (isMobile()) {
-            sidebar.classList.toggle('open', open);
-            overlay.classList.toggle('visible', open);
-            hamburgerBtn.classList.toggle('is-open', open);
-        } else {
-            open ? (sidebar.classList.remove('collapsed'), mainEl.classList.remove('sidebar-collapsed'))
-                 : (sidebar.classList.add('collapsed'), mainEl.classList.add('sidebar-collapsed'));
-            overlay.classList.remove('visible');
-            hamburgerBtn.classList.toggle('is-open', open);
-        }
+    // Loading feedback on navigation
+    function showLoading() {
+        const grid = document.querySelector('.community-grid');
+        if (grid) grid.style.opacity = '0.5';
     }
-    function toggleSidebar() {
-        isMobile() ? setSidebarOpen(!sidebar.classList.contains('open'))
-                   : setSidebarOpen(sidebar.classList.contains('collapsed'));
-    }
-    function closeSidebar() { setSidebarOpen(false); }
-
-    if (isMobile()) {
-        sidebar.classList.remove('open'); sidebar.classList.add('collapsed');
-        overlay.classList.remove('visible'); hamburgerBtn.classList.remove('is-open');
-    } else {
-        sidebar.classList.add('collapsed'); mainEl.classList.add('sidebar-collapsed');
-        hamburgerBtn.classList.remove('is-open');
-    }
-    window.addEventListener('resize', () => {
-        if (!isMobile()) {
-            sidebar.classList.remove('open'); overlay.classList.remove('visible');
-            sidebar.classList.add('collapsed'); mainEl.classList.add('sidebar-collapsed');
-            hamburgerBtn.classList.remove('is-open');
+    
+    document.querySelectorAll('form').forEach(form => {
+        form.addEventListener('submit', showLoading);
+    });
+    
+    document.querySelectorAll('.type-tab, .interest-pill, .page-link').forEach(el => {
+        if (!el.classList.contains('disabled')) {
+            el.addEventListener('click', showLoading);
         }
     });
-    document.addEventListener('keydown', e => {
-        if (e.key === 'Escape') { closeSidebar(); closeNotif(); }
-    });
-
-    /* ── Notifications ── */
-    function toggleNotif() {
-        document.getElementById('notifDropdown').classList.toggle('open');
-    }
-    function closeNotif() {
-        document.getElementById('notifDropdown').classList.remove('open');
-    }
-    document.addEventListener('click', function(e) {
-        const wrap = document.querySelector('.notif-wrap');
-        if (wrap && !wrap.contains(e.target)) closeNotif();
-    });
-
-    /* ── Client-side sort ── */
-    function sortCommunities(val) {
-        const grid = document.getElementById('communityGrid');
-        const cards = Array.from(grid.querySelectorAll('.community-card'));
-        cards.sort((a, b) => {
-            if (val === 'members') return parseInt(b.dataset.members) - parseInt(a.dataset.members);
-            if (val === 'name')    return a.dataset.name.localeCompare(b.dataset.name);
-            if (val === 'newest')  return parseInt(b.dataset.date) - parseInt(a.dataset.date);
-            return 0;
+    
+    // Debounced live search
+    let searchTimer;
+    const searchInput = document.querySelector('.search-bar input');
+    if (searchInput) {
+        searchInput.addEventListener('input', function() {
+            clearTimeout(searchTimer);
+            searchTimer = setTimeout(() => {
+                showLoading();
+                document.querySelector('.search-bar').submit();
+            }, 500);
         });
-        cards.forEach(c => grid.appendChild(c));
     }
 </script>
-</body>
-</html>
+{% endblock %}

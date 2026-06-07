@@ -1,0 +1,392 @@
+{% extends "agencies/base_agencies.html" %}
+{% load static %}
+
+{% block title %}Earnings & Analytics | Wayzo Agency{% endblock %}
+
+{% block page_title %}Earnings & Analytics{% endblock %}
+
+{% block breadcrumb %}Earnings{% endblock %}
+
+{% block extra_css %}
+<style>
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+    
+    .stat-box {
+        background: white;
+        border-radius: 20px;
+        padding: 1.5rem;
+        transition: transform 0.2s, box-shadow 0.2s;
+        border: 1px solid var(--gray-200);
+    }
+    
+    .stat-box:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+    }
+    
+    .stat-box h4 {
+        font-size: 0.85rem;
+        color: var(--text-light);
+        margin-bottom: 0.5rem;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .stat-box h2 {
+        font-size: 2rem;
+        font-weight: 700;
+        color: var(--gray-800);
+        margin: 0;
+    }
+    
+    .chart-card {
+        background: white;
+        border-radius: 20px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        border: 1px solid var(--gray-200);
+    }
+    
+    .chart-card h3 {
+        font-size: 1.1rem;
+        font-weight: 600;
+        margin-bottom: 1.5rem;
+        color: var(--gray-800);
+    }
+    
+    .chart-container {
+        position: relative;
+        height: 350px;
+        width: 100%;
+    }
+    
+    .charts-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+    
+    .table-card {
+        background: white;
+        border-radius: 20px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        border: 1px solid var(--gray-200);
+    }
+    
+    .table-card h3 {
+        font-size: 1.1rem;
+        font-weight: 600;
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+    
+    table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    
+    thead th {
+        text-align: left;
+        padding: 0.75rem 0.5rem;
+        border-bottom: 2px solid var(--gray-200);
+        font-weight: 600;
+        font-size: 0.8rem;
+        color: var(--gray-600);
+    }
+    
+    tbody td {
+        padding: 0.75rem 0.5rem;
+        border-bottom: 1px solid var(--gray-100);
+        font-size: 0.85rem;
+    }
+    
+    .badge {
+        display: inline-block;
+        padding: 0.2rem 0.6rem;
+        border-radius: 20px;
+        font-size: 0.7rem;
+        font-weight: 500;
+        background: #D1FAE5;
+        color: #065F46;
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 3rem;
+        color: var(--text-light);
+    }
+    
+    @media (max-width: 768px) {
+        .charts-row {
+            grid-template-columns: 1fr;
+        }
+        .stats-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header" style="margin-bottom: 2rem;">
+    <h1 style="font-size: 1.8rem; font-weight: 600;">📊 Earnings & Analytics</h1>
+    <p style="color: var(--text-light);">Track your agency's revenue and performance metrics</p>
+</div>
+
+<div class="stats-grid">
+    <div class="stat-box">
+        <h4>💰 Total Revenue</h4>
+        <h2>₹{{ total_earnings|floatformat:2|default:"0" }}</h2>
+    </div>
+    <div class="stat-box">
+        <h4>📦 Total Bookings</h4>
+        <h2>{{ total_bookings|default:"0" }}</h2>
+    </div>
+    <div class="stat-box">
+        <h4>⏳ Pending Payments</h4>
+        <h2>₹{{ pending_payments|floatformat:2|default:"0" }}</h2>
+    </div>
+    <div class="stat-box">
+        <h4>❌ Cancelled Bookings</h4>
+        <h2>{{ cancelled_bookings|default:"0" }}</h2>
+    </div>
+</div>
+
+<div class="charts-row">
+    <div class="chart-card">
+        <h3>🎯 Revenue by Package</h3>
+        <div class="chart-container">
+            <canvas id="packageRevenueChart" style="width:100%; height:300px;"></canvas>
+        </div>
+    </div>
+    <div class="chart-card">
+        <h3>📈 Monthly Revenue Trend</h3>
+        <div class="chart-container">
+            <canvas id="monthlyRevenueChart" style="width:100%; height:300px;"></canvas>
+        </div>
+    </div>
+</div>
+
+<div class="table-card">
+    <h3>🏆 Top Performing Packages</h3>
+    {% if top_packages %}
+    <table>
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Package Name</th>
+                <th>Bookings</th>
+                <th>Revenue</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for package in top_packages %}
+            <tr>
+                <td>{{ forloop.counter }}</td>
+                <td><strong>{{ package.package__title|truncatechars:50 }}</strong></td>
+                <td>{{ package.bookings_count }}</td>
+                <td>₹{{ package.revenue|floatformat:2 }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <div class="empty-state">No package data available</div>
+    {% endif %}
+</div>
+
+<div class="table-card">
+    <h3>📋 Recent Bookings</h3>
+    {% if recent_bookings %}
+    <table>
+        <thead>
+            <tr>
+                <th>Traveller</th>
+                <th>Package</th>
+                <th>Amount</th>
+                <th>Status</th>
+                <th>Date</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for booking in recent_bookings %}
+            <tr>
+                <td>{{ booking.traveller.get_full_name|default:booking.traveller.username }}</td>
+                <td>{{ booking.package.title|truncatechars:35 }}</td>
+                <td>₹{{ booking.total_amount|floatformat:2 }}</td>
+                <td><span class="badge">{{ booking.status|title }}</span></td>
+                <td>{{ booking.booked_at|date:"M d, Y" }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <div class="empty-state">No recent bookings found</div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+<script>
+// Initialize charts when the page is fully loaded
+window.addEventListener('load', function() {
+    console.log('Window loaded, initializing charts...');
+    
+    // Get data from Django template
+    const packageLabels = [
+        {% for item in package_revenue %}
+            "{{ item.package__title|escapejs }}",
+        {% endfor %}
+    ];
+    
+    const packageValues = [
+        {% for item in package_revenue %}
+            {{ item.revenue }},
+        {% endfor %}
+    ];
+    
+    const monthLabels = [
+        {% for item in monthly_revenue %}
+            "{{ item.month|date:'M Y' }}",
+        {% endfor %}
+    ];
+    
+    const monthValues = [
+        {% for item in monthly_revenue %}
+            {{ item.total }},
+        {% endfor %}
+    ];
+    
+    console.log('Package Labels:', packageLabels);
+    console.log('Package Values:', packageValues);
+    console.log('Month Labels:', monthLabels);
+    console.log('Month Values:', monthValues);
+    
+    // Create Package Revenue Pie Chart
+    const packageCanvas = document.getElementById('packageRevenueChart');
+    if (packageCanvas && packageLabels.length > 0) {
+        try {
+            new Chart(packageCanvas, {
+                type: 'pie',
+                data: {
+                    labels: packageLabels,
+                    datasets: [{
+                        data: packageValues,
+                        backgroundColor: ['#0E8A8A', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: { font: { size: 11 } }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const label = context.label || '';
+                                    const value = context.raw || 0;
+                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                    const percentage = ((value / total) * 100).toFixed(1);
+                                    return `${label}: ₹${value.toFixed(2)} (${percentage}%)`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+            console.log('Package chart created successfully');
+        } catch(e) {
+            console.error('Error creating package chart:', e);
+        }
+    } else {
+        console.log('No package data for chart');
+        if (packageCanvas) {
+            const emptyMsg = document.createElement('div');
+            emptyMsg.className = 'empty-state';
+            emptyMsg.textContent = 'No revenue data available';
+            packageCanvas.parentElement.appendChild(emptyMsg);
+            packageCanvas.style.display = 'none';
+        }
+    }
+    
+    // Create Monthly Revenue Line Chart
+    const monthlyCanvas = document.getElementById('monthlyRevenueChart');
+    if (monthlyCanvas && monthLabels.length > 0) {
+        try {
+            new Chart(monthlyCanvas, {
+                type: 'line',
+                data: {
+                    labels: monthLabels,
+                    datasets: [{
+                        label: 'Revenue (₹)',
+                        data: monthValues,
+                        borderColor: '#0E8A8A',
+                        backgroundColor: 'rgba(14, 138, 138, 0.1)',
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.4,
+                        pointBackgroundColor: '#0E8A8A',
+                        pointBorderColor: '#ffffff',
+                        pointBorderWidth: 2,
+                        pointRadius: 5,
+                        pointHoverRadius: 7
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        legend: { position: 'top' },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return `Revenue: ₹${context.raw.toFixed(2)}`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return '₹' + value.toLocaleString();
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+            console.log('Monthly chart created successfully');
+        } catch(e) {
+            console.error('Error creating monthly chart:', e);
+        }
+    } else {
+        console.log('No monthly data for chart');
+        if (monthlyCanvas) {
+            const emptyMsg = document.createElement('div');
+            emptyMsg.className = 'empty-state';
+            emptyMsg.textContent = 'No monthly data available';
+            monthlyCanvas.parentElement.appendChild(emptyMsg);
+            monthlyCanvas.style.display = 'none';
+        }
+    }
+});
+</script>
+{% endblock %}

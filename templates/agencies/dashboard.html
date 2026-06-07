@@ -1,1165 +1,402 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>Wayzo | {{ agency.agency_name }} — Dashboard</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+{% extends "agencies/base_agencies.html" %}
+{% load static %}
 
-        :root {
-            --gray-100: #F8F9FC;
-            --gray-150: #F1F3F8;
-            --gray-200: #E9EDF2;
-            --gray-300: #DCE2EA;
-            --gray-400: #BEC7D1;
-            --gray-500: #9AA3AF;
-            --gray-600: #6E7682;
-            --gray-700: #4A515C;
-            --gray-800: #2E343D;
-            --gray-850: #21262E;
-            --gray-900: #191E24;
-            --gray-950: #0F1217;
-            --accent-muted: #5B6E8C;
-            --accent-deep: #3A4A67;
-            --accent-light: #8A9CBA;
-            --accent-pale: #EFF2F9;
-            --white: #FFFFFF;
-            --text-dark: #1E242C;
-            --text-soft: #3C4350;
-            --text-light: #6F7886;
-            --green: #22C55E;
-            --amber: #F59E0B;
-            --blue-start: #3B82F6;
-            --blue-mid: #2563EB;
-            --blue-deep: #1E3A8A;
-            --gradient-primary: linear-gradient(135deg, #3B82F6 0%, #1E3A8A 100%);
-            --gradient-soft: linear-gradient(135deg, #60A5FA 0%, #3B82F6 50%, #2563EB 100%);
-            --gradient-glow: linear-gradient(135deg, #4F46E5 0%, #3B82F6 50%, #1E3A8A 100%);
-            --sidebar-w: 270px;
-            --rightbar-w: 280px;
-        }
+{% block title %}Dashboard | Wayzo{% endblock %}
 
-        body {
-            font-family: 'Inter', sans-serif;
-            background: var(--gray-100);
-            color: var(--text-dark);
-            display: flex;
-            min-height: 100vh;
-            overflow-x: hidden;
-        }
+{% block page_title %}Dashboard{% endblock %}
 
-        /* ========= SIDEBAR (LEFT) ========= */
-        .sidebar {
-            width: var(--sidebar-w);
-            background: var(--gray-950);
-            height: 100vh;
-            position: fixed;
-            top: 0;
-            left: 0;
-            display: flex;
-            flex-direction: column;
-            z-index: 300;
-            border-right: 1px solid rgba(255,255,255,0.06);
-            transform: translateX(0);
-            transition: transform 0.3s cubic-bezier(0.4,0,0.2,1);
-            overflow-y: auto;
-        }
-        .sidebar.collapsed {
-            transform: translateX(calc(-1 * var(--sidebar-w)));
-        }
-        .sidebar-overlay {
-            display: none;
-            position: fixed;
-            inset: 0;
-            background: rgba(0,0,0,0.45);
-            z-index: 290;
-            backdrop-filter: blur(2px);
-            transition: opacity 0.3s;
-        }
-        .sidebar-overlay.visible {
-            display: block;
-            opacity: 1;
-        }
-        .sidebar-brand {
-            padding: 1.6rem 1.6rem 1rem;
-            border-bottom: 1px solid rgba(255,255,255,0.06);
-        }
-        .sidebar-logo {
-            font-family: 'Playfair Display', serif;
-            font-size: 1.5rem;
-            font-weight: 600;
-            color: white;
-            text-decoration: none;
-            display: block;
-        }
-        .sidebar-sub {
-            font-size: 0.65rem;
-            color: rgba(255,255,255,0.35);
-            letter-spacing: 0.08em;
-            text-transform: uppercase;
-        }
-        .sidebar-nav {
-            flex: 1;
-            padding: 1.2rem 0.8rem;
-        }
-        .nav-group-label {
-            font-size: 0.6rem;
-            font-weight: 600;
-            letter-spacing: 0.12em;
-            text-transform: uppercase;
-            color: rgba(255,255,255,0.25);
-            padding: 0.5rem 0.8rem;
-            margin-top: 0.4rem;
-        }
-        .nav-item {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            padding: 0.65rem 0.8rem;
-            border-radius: 10px;
-            text-decoration: none;
-            color: rgba(255,255,255,0.55);
-            font-size: 0.82rem;
-            font-weight: 500;
-            transition: all 0.2s;
-            margin-bottom: 2px;
-        }
-        .nav-item svg {
-            width: 18px;
-            height: 18px;
-            stroke: currentColor;
-            stroke-width: 1.7;
-            fill: none;
-        }
-        .nav-item:hover {
-            background: rgba(255,255,255,0.07);
-            color: rgba(255,255,255,0.9);
-        }
-        .nav-item.active {
-            background: rgba(138,156,186,0.18);
-            color: var(--accent-light);
-        }
-        .logout-sidebar {
-            margin-top: auto;
-            border-top: 1px solid rgba(255,255,255,0.06);
-            padding: 0.8rem;
-        }
-        .logout-sidebar a {
-            display: flex;
-            align-items: center;
-            gap: 0.65rem;
-            color: rgba(255,255,255,0.45);
-            text-decoration: none;
-            padding: 0.5rem 0.7rem;
-            border-radius: 8px;
-            font-size: 0.78rem;
-            font-weight: 500;
-            transition: all 0.2s;
-        }
-        .logout-sidebar a svg {
-            width: 16px;
-            height: 16px;
-        }
-        .logout-sidebar a:hover {
-            background: rgba(239,68,68,0.1);
-            color: #F87171;
-        }
+{% block extra_css %}
+<style>
+    /* Dashboard specific styles */
+    .stat-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1.2rem;
+        margin-bottom: 1.8rem;
+    }
+    .stat-card {
+        background: var(--gradient-primary);
+        border-radius: 24px;
+        padding: 1.4rem 1.5rem;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+        color: white;
+        box-shadow: 0 8px 20px rgba(59,130,246,0.25);
+    }
+    .stat-card::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -20%;
+        width: 150px;
+        height: 150px;
+        background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+        border-radius: 50%;
+        pointer-events: none;
+    }
+    .stat-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 16px 30px rgba(59,130,246,0.35);
+    }
+    .stat-title {
+        font-size: 0.7rem;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: rgba(255,255,255,0.7);
+        margin-bottom: 0.6rem;
+        font-weight: 500;
+    }
+    .stat-number {
+        font-size: 2rem;
+        font-weight: 700;
+        color: white;
+        line-height: 1;
+        margin-bottom: 0.3rem;
+    }
+    .stat-trend {
+        font-size: 0.7rem;
+        color: rgba(255,255,255,0.8);
+        margin-top: 0.3rem;
+        display: inline-block;
+        background: rgba(255,255,255,0.15);
+        padding: 0.2rem 0.6rem;
+        border-radius: 20px;
+    }
 
-        /* ========= MAIN LAYOUT ========= */
-        .main-wrapper {
-            margin-left: var(--sidebar-w);
-            flex: 1;
-            transition: margin-left 0.3s;
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-        }
-        .main-wrapper.sidebar-collapsed {
-            margin-left: 0;
-        }
-        /* topbar */
-        .topbar {
-            background: var(--white);
-            border-bottom: 1px solid var(--gray-200);
-            padding: 0 1.8rem;
-            height: 70px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            position: sticky;
-            top: 0;
-            z-index: 200;
-        }
-        .topbar-left {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-        }
-        .hamburger {
-            background: transparent;
-            border: none;
-            cursor: pointer;
-            display: flex;
-            flex-direction: column;
-            gap: 5px;
-            padding: 6px;
-        }
-        .hamburger span {
-            width: 20px;
-            height: 2px;
-            background: var(--gray-700);
-            border-radius: 2px;
-            transition: 0.2s;
-        }
-        .topbar-right {
-            display: flex;
-            align-items: center;
-            gap: 1.2rem;
-        }
-        .notification-btn {
-            background: var(--gray-150);
-            border: none;
-            border-radius: 40px;
-            width: 38px;
-            height: 38px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            transition: 0.2s;
-            position: relative;
-        }
-        .notification-btn:hover {
-            background: var(--gray-200);
-        }
-        .notification-btn svg {
-            width: 18px;
-            stroke: var(--gray-700);
-        }
-        .notification-badge {
-            position: absolute;
-            top: -2px;
-            right: -2px;
-            background: #EF4444;
-            color: white;
-            font-size: 0.6rem;
-            font-weight: bold;
-            width: 16px;
-            height: 16px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        .avatar-menu {
-            position: relative;
-            cursor: pointer;
-        }
-        .avatar-trigger {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            background: var(--gray-150);
-            padding: 0.3rem 0.8rem 0.3rem 0.4rem;
-            border-radius: 40px;
-            transition: 0.2s;
-        }
-        .avatar-trigger:hover {
-            background: var(--gray-200);
-        }
-        .avatar-img {
-            width: 36px;
-            height: 36px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 600;
-            color: white;
-            font-size: 0.9rem;
-            background: var(--accent-deep);
-            overflow: hidden;
-        }
-        .avatar-img img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-        .avatar-name {
-            font-size: 0.8rem;
-            font-weight: 500;
-            color: var(--gray-800);
-        }
-        .dropdown-popup {
-            position: absolute;
-            top: 50px;
-            right: 0;
-            background: white;
-            border-radius: 16px;
-            box-shadow: 0 20px 35px -12px rgba(0,0,0,0.15);
-            width: 240px;
-            padding: 0.8rem 0;
-            z-index: 400;
-            border: 1px solid var(--gray-200);
-            opacity: 0;
-            visibility: hidden;
-            transform: translateY(-6px);
-            transition: all 0.2s;
-        }
-        .dropdown-popup.show {
-            opacity: 1;
-            visibility: visible;
-            transform: translateY(0);
-        }
-        .dropdown-info {
-            padding: 0.5rem 1rem;
-            border-bottom: 1px solid var(--gray-200);
-            margin-bottom: 0.4rem;
-        }
-        .dropdown-info p {
-            font-size: 0.85rem;
-            font-weight: 600;
-            color: var(--gray-900);
-        }
-        .dropdown-info span {
-            font-size: 0.7rem;
-            color: var(--text-light);
-            display: block;
-            margin-top: 2px;
-        }
-        .dropdown-item {
-            display: flex;
-            align-items: center;
-            gap: 0.7rem;
-            padding: 0.6rem 1rem;
-            color: var(--gray-700);
-            text-decoration: none;
-            font-size: 0.8rem;
-            transition: background 0.1s;
-        }
-        .dropdown-item:hover {
-            background: var(--gray-150);
-        }
+    .completed-card {
+        background: var(--gradient-glow);
+        border-radius: 24px;
+        padding: 1.5rem 1.8rem;
+        margin-bottom: 1.5rem;
+        color: white;
+        box-shadow: 0 10px 28px rgba(79,70,229,0.3);
+        position: relative;
+        overflow: hidden;
+    }
+    .completed-card .stat-title {
+        color: rgba(255,255,255,0.8);
+        font-size: 0.75rem;
+    }
+    .completed-card .stat-number {
+        font-size: 2.2rem;
+    }
 
-        /* ========= CONTENT + RIGHT SIDEBAR ========= */
-        .dashboard-layout {
-            display: flex;
-            flex: 1;
-            gap: 1.5rem;
-            padding: 1.8rem 2rem 2rem;
+    .analytics-card {
+        background: var(--gradient-soft);
+        border-radius: 24px;
+        padding: 1.4rem;
+        margin-bottom: 1.8rem;
+        color: white;
+        box-shadow: 0 8px 20px rgba(59,130,246,0.2);
+    }
+    .analytics-card h4 {
+        font-weight: 600;
+        font-size: 0.9rem;
+        margin-bottom: 1rem;
+    }
+    .revenue-row {
+        display: flex;
+        justify-content: space-between;
+        margin: 0.8rem 0;
+        font-size: 0.85rem;
+        padding: 0.3rem 0;
+        border-bottom: 1px solid rgba(255,255,255,0.15);
+    }
+    .profit-badge {
+        background: rgba(34,197,94,0.25);
+        color: white;
+        border-radius: 40px;
+        padding: 0.2rem 0.8rem;
+        font-size: 0.7rem;
+        font-weight: 600;
+    }
+
+    .packages-mini {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1rem;
+        margin-top: 0.6rem;
+    }
+    .package-card-link {
+        text-decoration: none;
+        display: block;
+    }
+    .mini-package {
+        background: white;
+        border-radius: 16px;
+        overflow: hidden;
+        transition: all 0.3s;
+        border: 1px solid var(--gray-200);
+        cursor: pointer;
+    }
+    .mini-package:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 12px 24px rgba(0,0,0,0.1);
+        border-color: var(--blue-start);
+    }
+    .package-image-container {
+        height: 140px;
+        overflow: hidden;
+        position: relative;
+        background: linear-gradient(135deg, var(--gray-200), var(--gray-300));
+    }
+    .package-image {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.3s;
+    }
+    .mini-package:hover .package-image {
+        transform: scale(1.05);
+    }
+    .featured-badge {
+        position: absolute;
+        top: 10px;
+        left: 10px;
+        background: linear-gradient(135deg, #F59E0B, #D97706);
+        color: white;
+        font-size: 0.65rem;
+        font-weight: 600;
+        padding: 0.2rem 0.6rem;
+        border-radius: 20px;
+        display: flex;
+        align-items: center;
+        gap: 0.3rem;
+        z-index: 2;
+    }
+    .discount-badge {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        background: #EF4444;
+        color: white;
+        font-size: 0.65rem;
+        font-weight: 700;
+        padding: 0.2rem 0.6rem;
+        border-radius: 20px;
+        z-index: 2;
+    }
+    .package-content {
+        padding: 0.8rem;
+    }
+    .package-content h4 {
+        font-size: 0.85rem;
+        font-weight: 600;
+        margin-bottom: 0.3rem;
+        color: var(--gray-900);
+    }
+    .package-details {
+        font-size: 0.7rem;
+        color: var(--text-light);
+        margin-bottom: 0.5rem;
+    }
+    .package-price {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+    }
+    .current-price {
+        font-size: 0.9rem;
+        font-weight: 700;
+        color: var(--blue-start);
+    }
+    .original-price {
+        font-size: 0.7rem;
+        color: var(--text-light);
+        text-decoration: line-through;
+    }
+
+    .right-sidebar {
+        margin-top: 1.5rem;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1.2rem;
+    }
+    .trending-list, .upcoming-list {
+        background: white;
+        border-radius: 20px;
+        border: 1px solid var(--gray-200);
+        padding: 1rem;
+    }
+    .trending-list h4, .upcoming-list h4 {
+        font-size: 0.85rem;
+        font-weight: 600;
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+    }
+    .trend-item, .upcoming-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.6rem 0;
+        border-bottom: 1px solid var(--gray-200);
+        font-size: 0.8rem;
+    }
+    .trend-item:last-child, .upcoming-item:last-child {
+        border-bottom: none;
+    }
+    .trend-name {
+        font-weight: 500;
+    }
+    .trend-count {
+        color: var(--text-light);
+        font-size: 0.7rem;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 2rem;
+        background: var(--gray-100);
+        border-radius: 16px;
+        grid-column: 1 / -1;
+    }
+
+    @media (max-width: 1000px) {
+        .packages-mini {
+            grid-template-columns: repeat(2, 1fr);
         }
-        .main-content {
-            flex: 1;
-            min-width: 0;
+    }
+    @media (max-width: 768px) {
+        .stat-grid {
+            grid-template-columns: 1fr;
+        }
+        .packages-mini {
+            grid-template-columns: 1fr;
         }
         .right-sidebar {
-            width: var(--rightbar-w);
-            flex-shrink: 0;
-            display: flex;
-            flex-direction: column;
-            gap: 1.5rem;
+            grid-template-columns: 1fr;
         }
-        
-        /* Stylish Gradient Cards */
-        .stat-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 1.2rem;
-            margin-bottom: 1.8rem;
-        }
-        .stat-card {
-            background: var(--gradient-primary);
-            border-radius: 24px;
-            padding: 1.4rem 1.5rem;
-            transition: all 0.3s ease;
-            position: relative;
-            overflow: hidden;
-            color: white;
-            box-shadow: 0 8px 20px rgba(59,130,246,0.25);
-        }
-        .stat-card::before {
-            content: '';
-            position: absolute;
-            top: -50%;
-            right: -20%;
-            width: 150px;
-            height: 150px;
-            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
-            border-radius: 50%;
-            pointer-events: none;
-        }
-        .stat-card::after {
-            content: '';
-            position: absolute;
-            bottom: -30%;
-            left: -10%;
-            width: 120px;
-            height: 120px;
-            background: radial-gradient(circle, rgba(255,255,255,0.08) 0%, transparent 70%);
-            border-radius: 50%;
-            pointer-events: none;
-        }
-        .stat-card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 16px 30px rgba(59,130,246,0.35);
-        }
-        .stat-title {
-            font-size: 0.7rem;
-            text-transform: uppercase;
-            letter-spacing: 0.08em;
-            color: rgba(255,255,255,0.7);
-            margin-bottom: 0.6rem;
-            font-weight: 500;
-        }
-        .stat-number {
-            font-size: 2rem;
-            font-weight: 700;
-            color: white;
-            line-height: 1;
-            margin-bottom: 0.3rem;
-        }
-        .stat-trend {
-            font-size: 0.7rem;
-            color: rgba(255,255,255,0.8);
-            margin-top: 0.3rem;
-            display: inline-block;
-            background: rgba(255,255,255,0.15);
-            padding: 0.2rem 0.6rem;
-            border-radius: 20px;
-        }
+    }
+</style>
+{% endblock %}
 
-        /* Trips Completed Card - Enhanced Gradient */
-        .completed-card {
-            background: var(--gradient-glow);
-            border-radius: 24px;
-            padding: 1.5rem 1.8rem;
-            margin-bottom: 1.5rem;
-            color: white;
-            box-shadow: 0 10px 28px rgba(79,70,229,0.3);
-            position: relative;
-            overflow: hidden;
-        }
-        .completed-card::before {
-            content: '';
-            position: absolute;
-            top: -30%;
-            right: -10%;
-            width: 200px;
-            height: 200px;
-            background: radial-gradient(circle, rgba(255,255,255,0.12) 0%, transparent 70%);
-            border-radius: 50%;
-            pointer-events: none;
-        }
-        .completed-card .stat-title {
-            color: rgba(255,255,255,0.8);
-            font-size: 0.75rem;
-        }
-        .completed-card .stat-number {
-            color: white;
-            font-size: 2.2rem;
-        }
-        .completed-card .stat-trend {
-            color: rgba(255,255,255,0.8);
-            background: rgba(255,255,255,0.15);
-        }
-
-        /* Analytics Card - Soft Blue Gradient */
-        .analytics-card {
-            background: var(--gradient-soft);
-            border-radius: 24px;
-            padding: 1.4rem;
-            margin-bottom: 1.8rem;
-            color: white;
-            box-shadow: 0 8px 20px rgba(59,130,246,0.2);
-            position: relative;
-            overflow: hidden;
-        }
-        .analytics-card::before {
-            content: '';
-            position: absolute;
-            top: -20%;
-            right: -5%;
-            width: 180px;
-            height: 180px;
-            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
-            border-radius: 50%;
-            pointer-events: none;
-        }
-        .analytics-card h4 {
-            font-weight: 600;
-            font-size: 0.9rem;
-            color: white;
-            margin-bottom: 1rem;
-            letter-spacing: -0.2px;
-        }
-        .revenue-row {
-            display: flex;
-            justify-content: space-between;
-            margin: 0.8rem 0;
-            font-size: 0.85rem;
-            padding: 0.3rem 0;
-            border-bottom: 1px solid rgba(255,255,255,0.15);
-        }
-        .revenue-row span {
-            color: rgba(255,255,255,0.8);
-        }
-        .revenue-row strong {
-            color: white;
-            font-weight: 600;
-        }
-        .profit-badge {
-            background: rgba(34,197,94,0.25);
-            color: white;
-            border-radius: 40px;
-            padding: 0.2rem 0.8rem;
-            font-size: 0.7rem;
-            font-weight: 600;
-            backdrop-filter: blur(4px);
-        }
-        
-        /* Featured Packages Cards with Images and Badges */
-        .packages-mini {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 1.2rem;
-            margin-top: 0.6rem;
-        }
-        .package-card-link {
-            text-decoration: none;
-            display: block;
-        }
-        .mini-package {
-            background: white;
-            border-radius: 20px;
-            overflow: hidden;
-            transition: all 0.3s ease;
-            border: 1px solid var(--gray-200);
-            cursor: pointer;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.03);
-            position: relative;
-        }
-        .mini-package:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 16px 28px rgba(0,0,0,0.1);
-            border-color: var(--blue-start);
-        }
-        .package-image-container {
-            height: 140px;
-            overflow: hidden;
-            position: relative;
-            background: linear-gradient(135deg, var(--gray-200), var(--gray-300));
-        }
-        .package-image {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            transition: transform 0.4s ease;
-        }
-        .mini-package:hover .package-image {
-            transform: scale(1.05);
-        }
-        .package-placeholder {
-            width: 100%;
-            height: 100%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: var(--gray-500);
-            background: linear-gradient(135deg, var(--gray-150), var(--gray-200));
-        }
-        
-        /* Featured Badge */
-        .featured-badge {
-            position: absolute;
-            top: 12px;
-            left: 12px;
-            background: linear-gradient(135deg, #F59E0B, #D97706);
-            color: white;
-            font-size: 0.65rem;
-            font-weight: 600;
-            padding: 0.25rem 0.7rem;
-            border-radius: 20px;
-            z-index: 10;
-            display: flex;
-            align-items: center;
-            gap: 0.3rem;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-            backdrop-filter: blur(2px);
-        }
-        .featured-badge svg {
-            width: 12px;
-            height: 12px;
-            fill: gold;
-            stroke: none;
-        }
-        
-        /* Discount Badge */
-        .discount-badge {
-            position: absolute;
-            top: 12px;
-            right: 12px;
-            background: linear-gradient(135deg, #EF4444, #DC2626);
-            color: white;
-            font-size: 0.65rem;
-            font-weight: 700;
-            padding: 0.25rem 0.7rem;
-            border-radius: 20px;
-            z-index: 10;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-        }
-        
-        .package-content {
-            padding: 0.9rem 1rem;
-        }
-        .package-content h4 {
-            font-size: 0.9rem;
-            font-weight: 600;
-            color: var(--text-dark);
-            margin-bottom: 0.3rem;
-            line-height: 1.3;
-            padding-right: 0.5rem;
-        }
-        .package-details {
-            font-size: 0.7rem;
-            color: var(--text-light);
-            margin-bottom: 0.5rem;
-        }
-        .package-price {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            flex-wrap: wrap;
-        }
-        .current-price {
-            font-size: 0.9rem;
-            font-weight: 700;
-            color: var(--blue-start);
-        }
-        .original-price {
-            font-size: 0.7rem;
-            color: var(--text-light);
-            text-decoration: line-through;
-        }
-        .discount-percent {
-            font-size: 0.65rem;
-            color: #EF4444;
-            font-weight: 600;
-            background: rgba(239,68,68,0.1);
-            padding: 0.15rem 0.4rem;
-            border-radius: 12px;
-        }
-        
-        .trending-list, .upcoming-list {
-            background: white;
-            border-radius: 20px;
-            border: 1px solid var(--gray-200);
-            padding: 1rem;
-        }
-        .trending-list h4, .upcoming-list h4 {
-            font-size: 0.85rem;
-            font-weight: 600;
-            margin-bottom: 1rem;
-            display: flex;
-            align-items: center;
-            gap: 0.4rem;
-        }
-        .trend-item, .upcoming-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 0.6rem 0;
-            border-bottom: 1px solid var(--gray-200);
-            font-size: 0.8rem;
-        }
-        .trend-item:last-child, .upcoming-item:last-child {
-            border-bottom: none;
-        }
-        .trend-name {
-            font-weight: 500;
-        }
-        .trend-count {
-            color: var(--text-light);
-            font-size: 0.7rem;
-        }
-
-        @media (max-width: 1100px) {
-            .dashboard-layout {
-                flex-direction: column;
-            }
-            .right-sidebar {
-                width: 100%;
-                display: grid;
-                grid-template-columns: 1fr 1fr;
-                gap: 1rem;
-            }
-        }
-        @media (max-width: 780px) {
-            .stat-grid {
-                grid-template-columns: 1fr;
-            }
-            .packages-mini {
-                grid-template-columns: 1fr;
-            }
-            .right-sidebar {
-                grid-template-columns: 1fr;
-            }
-        }
-        @media (max-width: 860px) {
-            .sidebar {
-                transform: translateX(-100%);
-            }
-            .sidebar.open {
-                transform: translateX(0);
-            }
-            .main-wrapper {
-                margin-left: 0 !important;
-            }
-            .sidebar-overlay {
-                display: block;
-                opacity: 0;
-                visibility: hidden;
-            }
-            .sidebar-overlay.visible {
-                opacity: 1;
-                visibility: visible;
-            }
-        }
-        .footer-site {
-            background: var(--gray-950);
-            color: rgba(255,255,255,0.6);
-            padding: 3rem 2rem 2rem;
-            margin-top: 2rem;
-        }
-        .footer-grid {
-            display: grid;
-            grid-template-columns: 2fr 1fr 1fr 1fr;
-            gap: 2rem;
-            max-width: 1400px;
-            margin: 0 auto;
-            
-        }
-        .footer-brand {
-            max-width: 300px;
-        }
-        .footer-logo {
-            font-family: 'Playfair Display', serif;
-            font-size: 1.6rem;
-            font-weight: 600;
-            color: white;
-            text-decoration: none;
-            display: inline-block;
-            margin-bottom: 0.75rem;
-        }
-        .footer-desc {
-            font-size: 0.85rem;
-            line-height: 1.6;
-            color: rgba(255,255,255,0.5);
-        }
-        .footer-col h5 {
-            font-size: 0.75rem;
-            font-weight: 600;
-            letter-spacing: 0.1em;
-            text-transform: uppercase;
-            margin-bottom: 1.2rem;
-            color: rgba(255,255,255,0.7);
-        }
-        .footer-col ul {
-            list-style: none;
-            padding: 0;
-        }
-        .footer-col li {
-            margin-bottom: 0.7rem;
-        }
-        .footer-col a {
-            color: rgba(255,255,255,0.5);
-            font-size: 0.8rem;
-            text-decoration: none;
-            transition: color 0.2s;
-        }
-        .footer-col a:hover {
-            color: white;
-        }
-        .footer-bottom {
-            text-align: center;
-            border-top: 1px solid rgba(255,255,255,0.08);
-            padding-top: 2rem;
-            margin-top: 2rem;
-            font-size: 0.75rem;
-            color: rgba(255,255,255,0.4);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 1rem;
-            max-width: 1400px;
-            margin-left: auto;
-            margin-right: auto;
-        }
-        @media (max-width: 900px) {
-            .footer-grid {
-                grid-template-columns: 1fr 1fr;
-                gap: 1.5rem;
-            }
-            .footer-brand {
-                grid-column: 1 / -1;
-                max-width: 100%;
-                text-align: center;
-            }
-            .footer-bottom {
-                flex-direction: column;
-                text-align: center;
-            }
-        }
-        @media (max-width: 600px) {
-            .footer-grid {
-                grid-template-columns: 1fr;
-                text-align: center;
-            }
-            .footer-brand {
-                text-align: center;
-            }
-            .footer-col {
-                text-align: center;
-            }
-        }
-        a {
-            text-decoration: none;
-        }
-        .empty-state {
-            text-align: center;
-            padding: 2rem;
-            background: var(--gray-150);
-            border-radius: 16px;
-        }
-    </style>
-</head>
-<body>
-<div class="sidebar-overlay" id="sidebarOverlay"></div>
-<aside class="sidebar" id="sidebar">
-    <div class="sidebar-brand">
-        <a class="sidebar-logo" href="{% url 'index' %}">Wayzo</a>
-        <div class="sidebar-sub">Agency Portal</div>
+{% block content %}
+<div class="stat-grid">
+    <div class="stat-card">
+        <div class="stat-title">Total Packages</div>
+        <div class="stat-number">{{ packages.count }}</div>
+        <div class="stat-trend">Active packages</div>
     </div>
-    <nav class="sidebar-nav">
-        <span class="nav-group-label">Main</span>
-        <a href="{% url 'agency:agency_dashboard' %}" class="nav-item {% if request.resolver_match.url_name == 'agency_dashboard' %}active{% endif %}">
-            <svg viewBox="0 0 24 24"><path d="M3 9L12 3L21 9L12 15L3 9Z" stroke="currentColor" fill="none"/><path d="M9 21V15H15V21" stroke="currentColor" fill="none"/></svg>Home
-        </a>
-        <a href="{% url 'agency:agency_packages' %}" class="nav-item {% if request.resolver_match.url_name == 'agency_packages' %}active{% endif %}">
-            <svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>Tour Packages
-        </a>
-        <a href="{% url 'agency:agency_bookings' %}" class="nav-item {% if request.resolver_match.url_name == 'agency_bookings' %}active{% endif %}">
-            <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>Bookings
-        </a>
-        <a href="{% url 'agency:add_package' %}" class="nav-item {% if request.resolver_match.url_name == 'add_package' %}active{% endif %}">
-            <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Add New Package
-        </a>
-        <span class="nav-group-label">Insights</span>
-        <a href="#" class="nav-item" id="nav-analytics">
-            <svg viewBox="0 0 24 24"><path d="M18 20V10M12 20V4M6 20v-6"/><line x1="2" y1="20" x2="22" y2="20"/></svg>Analytics
-        </a>
-        <a href="#" class="nav-item" id="nav-reviews">
-            <svg viewBox="0 0 24 24"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>Reviews
-        </a>
-        <a href="#" class="nav-item" id="nav-reports">
-            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H5.78a1.65 1.65 0 0 0-1.51 1 1.65 1.65 0 0 0 .33 1.82l.04.04A10 10 0 0 0 12 17.66a10 10 0 0 0 6.36-2.62l.04-.04z"/></svg>Reports
-        </a>
-        <a href="{% url 'agency:edit_agencyprofile' %}" class="nav-item {% if request.resolver_match.url_name == 'edit_agencyprofile' %}active{% endif %}">
-            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 1v6m0 6v6M1 12h6m6 0h6"/></svg>Settings
-        </a>
-    </nav>
-    <div class="logout-sidebar">
-        <a href="{% url 'logout' %}">
-            <svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-            Sign Out
-        </a>
+    <div class="stat-card">
+        <div class="stat-title">Total Bookings</div>
+        <div class="stat-number">{{ bookings_count }}</div>
+        <div class="stat-trend">Confirmed & pending</div>
     </div>
-</aside>
+    <div class="stat-card">
+        <div class="stat-title">Total Revenue</div>
+        <div class="stat-number">₹{{ dashboard_revenue|floatformat:0|default:"0" }}</div>
+        <div class="stat-trend">From confirmed bookings</div>
+    </div>
+</div>
 
-<div class="main-wrapper" id="mainWrapper">
-    <div class="topbar">
-        <div class="topbar-left">
-            <button class="hamburger" id="hamburgerBtn"><span></span><span></span><span></span></button>
-            <div><h1 style="font-size:1.2rem;font-family:'Playfair Display';">Dashboard</h1><p style="font-size:0.7rem;">Agency performance at glance</p></div>
-        </div>
-        <div class="topbar-right">
-            <button class="notification-btn" id="notificationBtn">
-                <svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
-                <span class="notification-badge">{{ unread_notifications|default:"3" }}</span>
-            </button>
-            <div class="avatar-menu" id="avatarMenu">
-                <div class="avatar-trigger" id="avatarTrigger">
-                    <div class="avatar-img" id="avatarImg">
-                        {% if user.profile_picture %}
-                            <img src="{{ user.profile_picture.url }}" alt="{{ user.username }}">
+<div class="completed-card">
+    <div class="stat-title">📊 Agency Performance</div>
+    <div class="stat-number">{{ packages.count }} Packages • {{ bookings_count }} Bookings</div>
+    <div class="stat-trend">Keep up the great work!</div>
+</div>
+
+<div class="analytics-card">
+    <h4>💰 Revenue Overview</h4>
+    <div class="revenue-row">
+        <span>Total Revenue</span>
+        <strong>₹{{ dashboard_revenue|floatformat:2|default:"0" }}</strong>
+    </div>
+    <div class="revenue-row">
+        <span>Total Bookings</span>
+        <strong>{{ bookings_count }}</strong>
+    </div>
+    <div class="revenue-row">
+        <span>Profit Margin</span>
+        <span class="profit-badge">Est. 35-45%</span>
+    </div>
+    <div style="height:6px;background:rgba(255,255,255,0.2);border-radius:10px;margin:10px 0;">
+        <div style="width:40%;background:white;height:6px;border-radius:10px;"></div>
+    </div>
+</div>
+
+<div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
+        <h3 style="font-size:1rem;font-weight:700;">⭐ Recent Packages</h3>
+        <a href="{% url 'agency:agency_packages' %}" style="font-size:0.75rem;color:var(--teal);">View all →</a>
+    </div>
+    <div class="packages-mini">
+        {% for package in packages|slice:":6" %}
+        <a href="{% url 'agency:package_detail' package.id %}" class="package-card-link">
+            <div class="mini-package">
+                <div class="package-image-container">
+                    {% if package.is_featured %}
+                    <div class="featured-badge">
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                        Featured
+                    </div>
+                    {% endif %}
+                    {% if package.discounted_price %}
+                    <div class="discount-badge">-{{ package.discount_percentage }}%</div>
+                    {% endif %}
+                    {% if package.images.first %}
+                        <img class="package-image" src="{{ package.images.first.image.url }}" alt="{{ package.title }}">
+                    {% else %}
+                        <div class="package-image-container" style="display:flex;align-items:center;justify-content:center;">
+                            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                        </div>
+                    {% endif %}
+                </div>
+                <div class="package-content">
+                    <h4>{{ package.title|truncatechars:25 }}</h4>
+                    <div class="package-details">{{ package.duration_days }}D/{{ package.duration_nights }}N</div>
+                    <div class="package-price">
+                        {% if package.discounted_price %}
+                            <span class="current-price">₹{{ package.discounted_price|floatformat:0 }}</span>
+                            <span class="original-price">₹{{ package.price|floatformat:0 }}</span>
                         {% else %}
-                            {{ agency.agency_name|first|upper }}
+                            <span class="current-price">₹{{ package.price|floatformat:0 }}</span>
                         {% endif %}
                     </div>
-                    <span class="avatar-name" id="avatarName">{{ agency.agency_name|truncatechars:15 }}</span>
-                </div>
-                <div class="dropdown-popup" id="dropdownPopup">
-                    <div class="dropdown-info">
-                        <p id="agencyNameDisplay">{{ agency.agency_name }}</p>
-                        <span id="agencyPlaceDisplay">{{ agency.city }}{% if agency.city and agency.state %}, {% endif %}{{ agency.state|default:"Location not set" }}</span>
-                    </div>
-                    <a href="{% url 'agency:edit_agencyprofile' %}" class="dropdown-item"><svg width="14" height="14" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>Profile Settings</a>
-                    <a href="{% url 'logout' %}" class="dropdown-item"><svg width="14" height="14" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>Sign Out</a>
                 </div>
             </div>
-        </div>
-    </div>
-
-    <div class="dashboard-layout">
-        <div class="main-content">
-            <div class="stat-grid">
-                <div class="stat-card">
-                    <div class="stat-title">Total Bookings</div>
-                    <div class="stat-number">{{ total_bookings|default:"2,345" }}</div>
-                    <div class="stat-trend">↑ {{ bookings_growth|default:"12" }}% vs last month</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-title">Total Customers</div>
-                    <div class="stat-number">{{ total_customers|default:"4,271" }}</div>
-                    <div class="stat-trend">↑ {{ customers_growth|default:"21" }}% vs last month</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-title">Total Revenue</div>
-                    <div class="stat-number">₹{{ total_revenue|default:"240,237,127"|floatformat:0 }}</div>
-                    <div class="stat-trend">+{{ revenue_margin|default:"8.3" }}% margin ↑</div>
-                </div>
-            </div>
-            
-            <div class="completed-card">
-                <div class="stat-title">Total Trips Completed</div>
-                <div class="stat-number">{{ trips_completed|default:"1,597" }}</div>
-                <div class="stat-trend">Deal-based trips: {{ deal_based_trips|default:"1,024" }}</div>
-            </div>
-            
-            <div class="analytics-card">
-                <h4>Revenue & Profit Analytics</h4>
-                <div class="revenue-row"><span>Revenue</span><strong>₹{{ total_revenue|default:"240,237,127.12"|floatformat:2 }}</strong></div>
-                <div class="revenue-row"><span>Total Cost</span><strong>₹{{ total_cost|default:"120,237,127.12"|floatformat:2 }}</strong></div>
-                <div class="revenue-row"><span>Profit Margin</span><span class="profit-badge">{{ profit_margin|default:"42.12" }}%</span></div>
-                <div style="height:6px;background:rgba(255,255,255,0.2);border-radius:10px;margin:10px 0;"><div style="width:{{ profit_margin|default:"42.12" }}%;background:white;height:6px;border-radius:10px;"></div></div>
-            </div>
-            
-            <div><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.8rem;"><h3 style="font-size:1rem;font-weight:600;">⭐ Featured Packages</h3><a href="{% url 'agency:agency_packages' %}" style="font-size:0.7rem;color:var(--accent-muted);">View all →</a></div>
-            <div class="packages-mini">
-                {% for package in packages|slice:":6" %}
-                <a href="{% url 'agency:package_detail' package.id %}" class="package-card-link">
-                    <div class="mini-package">
-                        <div class="package-image-container">
-                            {% if package.is_featured %}
-                            <div class="featured-badge">
-                                <svg viewBox="0 0 24 24" fill="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-                                Featured
-                            </div>
-                            {% endif %}
-                            {% if package.discounted_price and package.discounted_price > 0 %}
-                            <div class="discount-badge">
-                                -{{ package.discount_percentage }}% OFF
-                            </div>
-                            {% endif %}
-                            {% if package.images and package.images.first %}
-                                <img class="package-image" src="{{ package.images.first.image.url }}" alt="{{ package.title }}">
-                            {% else %}
-                                <div class="package-placeholder">
-                                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-                                </div>
-                            {% endif %}
-                        </div>
-                        <div class="package-content">
-                            <h4>{{ package.title|truncatechars:30 }}</h4>
-                            <div class="package-details">{{ package.duration_days }}D/{{ package.duration_nights }}N | {{ package.places_covered|truncatechars:20 }}</div>
-                            <div class="package-price">
-                                {% if package.discounted_price and package.discounted_price > 0 %}
-                                    <span class="current-price">₹{{ package.discounted_price|floatformat:0 }}</span>
-                                    <span class="original-price">₹{{ package.price|floatformat:0 }}</span>
-                                    {% if package.discount_percentage %}
-                                    <span class="discount-percent">Save {{ package.discount_percentage }}%</span>
-                                    {% endif %}
-                                {% else %}
-                                    <span class="current-price">₹{{ package.price|floatformat:0 }}</span>
-                                    <span style="font-size:0.65rem;font-weight:normal;">/ person</span>
-                                {% endif %}
-                            </div>
-                        </div>
-                    </div>
-                </a>
-                {% empty %}
-                <div class="empty-state" style="grid-column:1/-1;">No packages yet. <a href="{% url 'agency:add_package' %}">Add your first package</a></div>
-                {% endfor %}
-            </div></div>
-        </div>
-        <div class="right-sidebar">
-            <div class="trending-list"><h4>🔥 Trending Destinations</h4><div>
-                {% for dest in trending_destinations %}
-                <div class="trend-item"><span class="trend-name">📍 {{ dest.name }}</span><span class="trend-count">{{ dest.bookings }} bookings</span></div>
-                {% empty %}
-                <div class="trend-item">No trending data yet</div>
-                {% endfor %}
-            </div></div>
-            <div class="upcoming-list">
-    <h4>🗓️ Upcoming Bookings</h4>
-    <div>
-        {% for booking in upcoming_bookings %}
-            <div class="upcoming-item">
-                <div>
-                    ✈️ {{ booking.package.title }} <br>
-                    <small>👤 {{ booking.traveller.username }}</small>
-                </div>
-                <span style="font-size:0.7rem;">
-                    {{ booking.travel_date }}
-                </span>
-            </div>
+        </a>
         {% empty %}
-            <div class="upcoming-item">No upcoming bookings</div>
+        <div class="empty-state">
+            <p>No packages yet.</p>
+            <a href="{% url 'agency:add_package' %}" style="color:var(--teal);margin-top:0.5rem;display:inline-block;">Create your first package →</a>
+        </div>
         {% endfor %}
     </div>
 </div>
+
+<div class="right-sidebar">
+    <div class="trending-list">
+        <h4>🔥 Trending</h4>
+        <div>
+            {% for package in packages|slice:":5" %}
+            <div class="trend-item">
+                <span class="trend-name">{{ package.title|truncatechars:20 }}</span>
+                <span class="trend-count">{{ package.bookings_count|default:"0" }} bookings</span>
+            </div>
+            {% empty %}
+            <div class="trend-item">No data yet</div>
+            {% endfor %}
         </div>
     </div>
-
-    <footer class="footer-site">
-        <div class="footer-grid">
-            <div class="footer-brand">
-                <a class="footer-logo" href="{% url 'index' %}">Wayzo</a>
-                <p class="footer-desc">Your smart travel companion.<br>Discover, plan, and experience the world beautifully.</p>
+    <div class="upcoming-list">
+        <h4>🗓️ Upcoming Bookings</h4>
+        <div>
+            {% for booking in upcoming_bookings %}
+            <div class="upcoming-item">
+                <div>
+                    ✈️ {{ booking.package.title|truncatechars:15 }}<br>
+                    <small>{{ booking.travel_date|date:"d M Y" }}</small>
+                </div>
+                <span style="font-size:0.7rem;">{{ booking.status|title }}</span>
             </div>
-            <div class="footer-col">
-                <h5>EXPLORE</h5>
-                <ul>
-                    <li><a href="#">Destinations</a></li>
-                    <li><a href="#">Restaurants</a></li>
-                    <li><a href="#">Hotels</a></li>
-                    <li><a href="#">Packages</a></li>
-                </ul>
-            </div>
-            <div class="footer-col">
-                <h5>TRAVELLERS</h5>
-                <ul>
-                    <li><a href="{% url 'traveller_register' %}">Join as Traveller</a></li>
-                    <li><a href="{% url 'login' %}">Login</a></li>
-                    <li><a href="#">How it Works</a></li>
-                    <li><a href="#">FAQs</a></li>
-                </ul>
-            </div>
-            <div class="footer-col">
-                <h5>PARTNERS</h5>
-                <ul>
-                    <li><a href="{% url 'agency_register' %}">Register Agency</a></li>
-                    <li><a href="{% url 'restaurant_register' %}">Register Restaurant</a></li>
-                    <li><a href="#">Partner Benefits</a></li>
-                    <li><a href="#">Contact Us</a></li>
-                </ul>
-            </div>
+            {% empty %}
+            <div class="upcoming-item">No upcoming bookings</div>
+            {% endfor %}
         </div>
-        <div class="footer-bottom">
-            <span>© 2025 Wayzo. All rights reserved.</span>
-            <span>Made for explorers everywhere</span>
-        </div>
-    </footer>
+    </div>
 </div>
-
-<script>
-    // Sidebar toggle functionality
-    const sidebarEl = document.getElementById('sidebar');
-    const hamburger = document.getElementById('hamburgerBtn');
-    const overlay = document.getElementById('sidebarOverlay');
-    const mainWrapper = document.getElementById('mainWrapper');
-    
-    function isMobile() { return window.innerWidth <= 860; }
-    
-    function setSidebarOpen(open) {
-        if(isMobile()) {
-            sidebarEl.classList.toggle('open', open);
-            overlay.classList.toggle('visible', open);
-        } else {
-            if(open) {
-                sidebarEl.classList.remove('collapsed');
-                mainWrapper.classList.remove('sidebar-collapsed');
-            } else {
-                sidebarEl.classList.add('collapsed');
-                mainWrapper.classList.add('sidebar-collapsed');
-            }
-        }
-    }
-    
-    function toggleSidebar() {
-        if(isMobile()) {
-            setSidebarOpen(!sidebarEl.classList.contains('open'));
-        } else {
-            setSidebarOpen(sidebarEl.classList.contains('collapsed'));
-        }
-    }
-    
-    function closeSidebar() {
-        if(isMobile()) setSidebarOpen(false);
-    }
-    
-    if(hamburger) hamburger.addEventListener('click', toggleSidebar);
-    if(overlay) overlay.addEventListener('click', closeSidebar);
-    
-    // Initial state
-    if(!isMobile()) {
-        sidebarEl.classList.add('collapsed');
-        mainWrapper.classList.add('sidebar-collapsed');
-    } else {
-        sidebarEl.classList.remove('open');
-        overlay.classList.remove('visible');
-    }
-    
-    window.addEventListener('resize', () => {
-        if(!isMobile()) {
-            sidebarEl.classList.add('collapsed');
-            mainWrapper.classList.add('sidebar-collapsed');
-            sidebarEl.classList.remove('open');
-            overlay.classList.remove('visible');
-        } else {
-            sidebarEl.classList.remove('collapsed');
-            mainWrapper.classList.remove('sidebar-collapsed');
-        }
-    });
-
-    // Avatar dropdown
-    const avatarTrigger = document.getElementById('avatarTrigger');
-    const dropdown = document.getElementById('dropdownPopup');
-    if(avatarTrigger && dropdown) {
-        avatarTrigger.addEventListener('click', (e) => {
-            e.stopPropagation();
-            dropdown.classList.toggle('show');
-        });
-        document.addEventListener('click', (e) => {
-            if (!avatarTrigger.contains(e.target) && !dropdown.contains(e.target)) {
-                dropdown.classList.remove('show');
-            }
-        });
-    }
-
-    // Notification button
-    const notificationBtn = document.getElementById('notificationBtn');
-    if(notificationBtn) {
-        notificationBtn.addEventListener('click', () => {
-            alert('🔔 You have new notifications. Check your dashboard for updates.');
-        });
-    }
-
-    // Analytics, Reviews, Reports placeholder navigation
-    const analyticsNav = document.getElementById('nav-analytics');
-    const reviewsNav = document.getElementById('nav-reviews');
-    const reportsNav = document.getElementById('nav-reports');
-    
-    if(analyticsNav) analyticsNav.addEventListener('click', (e) => { e.preventDefault(); alert('📊 Analytics dashboard coming soon. Your data is being prepared.'); });
-    if(reviewsNav) reviewsNav.addEventListener('click', (e) => { e.preventDefault(); alert('⭐ Reviews management will be available soon.'); });
-    if(reportsNav) reportsNav.addEventListener('click', (e) => { e.preventDefault(); alert('📈 Detailed reports coming in the next update.'); });
-</script>
-</body>
-</html>
+{% endblock %}

@@ -1,203 +1,743 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Edit Review - {{ review.place.name }}</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+{% extends base_template %}
+{% load static %}
 
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            padding: 20px;
-        }
+{% block title %}Edit Review | Wayzo{% endblock %}
 
-        .container {
-            max-width: 800px;
-            margin: 0 auto;
-            background: white;
-            border-radius: 20px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-            overflow: hidden;
-        }
+{% block extra_styles %}
+@import url('https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,500;0,600;1,400&display=swap');
 
-        .header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 30px;
-            text-align: center;
-        }
+:root {
+    --rv-teal:      #0e8a8a;
+    --rv-teal-d:    #0a6b6b;
+    --rv-teal-pale: #e6f4f4;
+    --rv-ink:       #0d1117;
+    --rv-ink2:      #1c2333;
+    --rv-muted:     #586069;
+    --rv-border:    #e1e4e8;
+    --rv-surface:   #ffffff;
+    --rv-s2:        #f6f8fa;
+    --rv-s3:        #f0f3f6;
+    --rv-rose:      #f43f5e;
+    --rv-amber:     #f59e0b;
+    --rv-green:     #16a34a;
+    --rv-green-p:   #dcfce7;
+    --rv-r:         14px;
+    --rv-sh:        0 1px 8px rgba(0,0,0,.06), 0 4px 16px rgba(0,0,0,.04);
+}
 
-        .header h1 {
-            font-size: 32px;
-            margin-bottom: 10px;
-        }
+.rv-page {
+    font-family: 'Sora', sans-serif;
+    background: var(--rv-s2);
+    min-height: 100vh;
+    padding-bottom: 5rem;
+}
 
-        .content {
-            padding: 30px;
-        }
+/* ── HERO STRIP ── */
+.rv-hero-strip {
+    background: linear-gradient(135deg, #0d1117 0%, #0e3a4a 50%, #0a3d2a 100%);
+    padding: 2.5rem 2.5rem 4rem;
+    position: relative; overflow: hidden;
+}
+.rv-hero-art { position: absolute; inset: 0; z-index: 1; overflow: hidden; pointer-events: none; }
+.rv-hero-art svg { position: absolute; bottom: 0; left: 0; width: 100%; height: 100%; }
 
-        .place-info {
-            background: #f8f9fa;
-            padding: 20px;
-            border-radius: 12px;
-            margin-bottom: 25px;
-        }
+.rv-hero-strip-inner {
+    max-width: 860px; margin: 0 auto;
+    position: relative; z-index: 2;
+}
+.rv-breadcrumb {
+    display: flex; align-items: center; gap: .4rem;
+    font-size: .7rem; color: rgba(255,255,255,.5); margin-bottom: .8rem;
+}
+.rv-breadcrumb a { color: rgba(255,255,255,.6); text-decoration: none; transition: color .2s; }
+.rv-breadcrumb a:hover { color: #5FC5C5; }
+.rv-breadcrumb svg { width: 10px; height: 10px; stroke: rgba(255,255,255,.3); fill: none; stroke-width: 2; }
+.rv-hero-eyebrow {
+    display: inline-flex; align-items: center; gap: .4rem;
+    background: rgba(255,255,255,.1); backdrop-filter: blur(8px);
+    border: 1px solid rgba(255,255,255,.18); border-radius: 99px;
+    padding: .26rem .85rem; font-size: .66rem; font-weight: 600;
+    color: rgba(255,255,255,.85); margin-bottom: .65rem;
+    text-transform: uppercase; letter-spacing: .06em;
+}
+.rv-hero-eyebrow span { width: 6px; height: 6px; border-radius: 50%; background: #5FC5C5; }
+.rv-hero-title {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(1.6rem, 3vw, 2.4rem);
+    font-weight: 600; color: white; line-height: 1.15;
+    text-shadow: 0 2px 16px rgba(0,0,0,.3);
+}
+.rv-hero-title em { font-style: italic; color: #8DE8E8; }
+.rv-hero-sub { font-size: .82rem; color: rgba(255,255,255,.6); margin-top: .35rem; }
 
-        .place-info h3 {
-            color: #333;
-            margin-bottom: 5px;
-        }
+/* ── BODY ── */
+.rv-body {
+    max-width: 860px; margin: -2rem auto 0;
+    padding: 0 2rem 3rem;
+    position: relative; z-index: 5;
+}
 
-        .form-group {
-            margin-bottom: 25px;
-        }
+/* ── LAYOUT ── */
+.rv-grid {
+    display: grid;
+    grid-template-columns: 1fr 280px;
+    gap: 1.5rem;
+    align-items: start;
+}
 
-        label {
-            display: block;
-            font-weight: bold;
-            margin-bottom: 10px;
-            color: #555;
-        }
+/* ── SECTION CARD ── */
+.rv-section {
+    background: var(--rv-surface); border: 1px solid var(--rv-border);
+    border-radius: var(--rv-r); overflow: hidden; box-shadow: var(--rv-sh);
+    animation: rvFadeUp .4s ease both;
+}
+.rv-section:nth-child(2) { animation-delay: .06s; }
 
-        .rating-stars {
-            display: flex;
-            flex-direction: row-reverse;
-            justify-content: flex-end;
-            gap: 10px;
-        }
+@keyframes rvFadeUp {
+    from { opacity: 0; transform: translateY(10px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
 
-        .rating-stars input {
-            display: none;
-        }
+.rv-section-head {
+    display: flex; align-items: center; gap: .6rem;
+    padding: 1rem 1.4rem; border-bottom: 1px solid var(--rv-border);
+    background: var(--rv-s2);
+}
+.rv-section-icon {
+    width: 32px; height: 32px; border-radius: 8px;
+    background: var(--rv-teal-pale); display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+}
+.rv-section-icon svg { width: 16px; height: 16px; stroke: var(--rv-teal); fill: none; stroke-width: 2; }
+.rv-section-head h3 { font-size: .9rem; font-weight: 700; color: var(--rv-ink); margin: 0; }
+.rv-section-head p  { font-size: .72rem; color: var(--rv-muted); margin: .1rem 0 0; }
+.rv-section-body { padding: 1.6rem; }
 
-        .rating-stars label {
-            font-size: 40px;
-            color: #ddd;
-            cursor: pointer;
-            transition: color 0.2s;
-        }
+/* ── STAR RATING ── */
+.rv-stars-label {
+    font-size: .76rem; font-weight: 700; color: var(--rv-ink2);
+    display: flex; align-items: center; gap: .4rem; margin-bottom: .75rem;
+}
+.rv-stars-label span { color: var(--rv-rose); font-size: .72rem; }
 
-        .rating-stars label:hover,
-        .rating-stars label:hover ~ label,
-        .rating-stars input:checked ~ label {
-            color: #ffc107;
-        }
+.rv-star-grid {
+    display: grid; grid-template-columns: repeat(5, 1fr); gap: .6rem; margin-bottom: .9rem;
+}
+.rv-star-opt input[type="radio"] { display: none; }
+.rv-star-card {
+    padding: .9rem .5rem; border: 1.5px solid var(--rv-border); border-radius: 10px;
+    text-align: center; cursor: pointer; transition: all .2s; background: var(--rv-surface);
+    display: flex; flex-direction: column; align-items: center; gap: .3rem;
+}
+.rv-star-card:hover {
+    border-color: var(--rv-amber); transform: translateY(-3px);
+    box-shadow: 0 6px 16px rgba(245,158,11,.15);
+}
+.rv-star-opt input:checked + .rv-star-card {
+    border-color: var(--rv-amber);
+    background: linear-gradient(135deg, #fffbeb, #fef3c7);
+    transform: scale(1.04);
+    box-shadow: 0 6px 18px rgba(245,158,11,.2);
+}
+.rv-star-num {
+    font-size: 1.4rem; line-height: 1;
+    transition: transform .2s;
+}
+.rv-star-opt:hover .rv-star-num,
+.rv-star-opt input:checked ~ * .rv-star-num { transform: scale(1.15); }
+.rv-star-lbl { font-size: .65rem; font-weight: 700; color: var(--rv-ink2); }
+.rv-star-sub { font-size: .6rem; color: var(--rv-muted); }
 
-        .review-text {
-            width: 100%;
-            padding: 15px;
-            border: 1px solid #ddd;
-            border-radius: 12px;
-            font-size: 14px;
-            font-family: inherit;
-            resize: vertical;
-        }
+/* Live star feedback bar */
+.rv-rating-feedback {
+    display: flex; align-items: center; gap: .75rem;
+    padding: .7rem 1rem; background: var(--rv-s2);
+    border: 1px solid var(--rv-border); border-radius: 10px;
+    font-size: .78rem; color: var(--rv-muted);
+    transition: all .3s; margin-bottom: 1.3rem;
+}
+.rv-rating-feedback.active {
+    background: linear-gradient(135deg, #fffbeb, #fef9e7);
+    border-color: rgba(245,158,11,.3); color: #78350f;
+}
+.rv-rating-feedback .rv-fb-stars { font-size: 1rem; letter-spacing: .05em; }
+.rv-rating-feedback .rv-fb-text  { font-weight: 600; }
 
-        .review-text:focus {
-            outline: none;
-            border-color: #667eea;
-        }
+/* ── TEXTAREA ── */
+.rv-field { margin-bottom: 1.2rem; }
+.rv-label {
+    display: flex; align-items: center; gap: .4rem;
+    font-size: .76rem; font-weight: 700; color: var(--rv-ink2); margin-bottom: .45rem;
+}
+.rv-label span { color: var(--rv-rose); }
+.rv-label-hint { font-size: .68rem; color: var(--rv-muted); font-weight: 400; margin-left: auto; }
 
-        .btn-submit {
-            width: 100%;
-            padding: 14px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border: none;
-            border-radius: 10px;
-            font-size: 16px;
-            font-weight: bold;
-            cursor: pointer;
-        }
+.rv-textarea {
+    width: 100%; padding: .85rem .95rem;
+    border: 1.5px solid var(--rv-border); border-radius: 10px;
+    font-size: .84rem; font-family: 'Sora', sans-serif;
+    color: var(--rv-ink); background: var(--rv-surface);
+    min-height: 150px; resize: vertical; line-height: 1.7;
+    transition: border-color .2s, box-shadow .2s;
+}
+.rv-textarea:focus {
+    outline: none; border-color: var(--rv-teal);
+    box-shadow: 0 0 0 3px rgba(14,138,138,.12);
+}
+.rv-textarea::placeholder { color: #b8bec6; }
 
-        .btn-danger {
-            background: #dc3545;
-            margin-top: 10px;
-        }
+.rv-char-bar {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-top: .4rem;
+}
+.rv-char-count { font-size: .68rem; color: var(--rv-muted); }
+.rv-char-count.warn { color: var(--rv-amber); font-weight: 600; }
+.rv-char-count.over { color: var(--rv-rose); font-weight: 600; }
+.rv-char-prog {
+    height: 3px; flex: 1; max-width: 100px; background: var(--rv-border); border-radius: 99px; overflow: hidden; margin-left: .65rem;
+}
+.rv-char-fill { height: 100%; background: var(--rv-teal); border-radius: 99px; transition: width .2s, background .2s; }
 
-        .btn-danger:hover {
-            background: #c82333;
-        }
+/* ── SUBMIT AREA ── */
+.rv-submit-area {
+    display: flex; align-items: center; justify-content: space-between;
+    padding-top: 1.2rem; border-top: 1px solid var(--rv-border); flex-wrap: wrap; gap: 1rem;
+}
+.rv-submit-note { font-size: .75rem; color: var(--rv-muted); line-height: 1.55; }
+.rv-submit-note strong { color: var(--rv-ink); display: block; font-size: .82rem; margin-bottom: .1rem; }
 
-        .action-buttons {
-            display: flex;
-            gap: 15px;
-            margin-top: 20px;
-        }
+.rv-submit-btn {
+    display: inline-flex; align-items: center; gap: .55rem;
+    padding: .82rem 2rem; background: var(--rv-teal); color: white;
+    border: none; border-radius: 99px; font-size: .9rem; font-weight: 700;
+    cursor: pointer; font-family: 'Sora', sans-serif; transition: all .25s;
+    box-shadow: 0 4px 16px rgba(14,138,138,.35);
+}
+.rv-submit-btn:hover { background: var(--rv-teal-d); transform: translateY(-2px); box-shadow: 0 8px 24px rgba(14,138,138,.4); }
+.rv-submit-btn:disabled { background: var(--rv-border); color: var(--rv-muted); box-shadow: none; transform: none; cursor: not-allowed; }
+.rv-submit-btn svg { width: 17px; height: 17px; stroke: white; fill: none; stroke-width: 2; }
 
-        .action-buttons a {
-            flex: 1;
-            text-align: center;
-            text-decoration: none;
-            padding: 12px;
-            border-radius: 10px;
-            color: white;
-        }
+.rv-cancel-btn {
+    display: inline-flex; align-items: center; gap: .45rem;
+    padding: .78rem 1.4rem; background: transparent; color: var(--rv-muted);
+    border: 1.5px solid var(--rv-border); border-radius: 99px;
+    font-size: .84rem; font-weight: 600; text-decoration: none;
+    font-family: 'Sora', sans-serif; transition: all .2s;
+}
+.rv-cancel-btn:hover { border-color: var(--rv-rose); color: var(--rv-rose); }
 
-        .btn-cancel {
-            background: #6c757d;
-        }
+.rv-delete-btn {
+    display: inline-flex; align-items: center; gap: .45rem;
+    padding: .78rem 1.4rem; background: transparent; color: var(--rv-rose);
+    border: 1.5px solid var(--rv-rose); border-radius: 99px;
+    font-size: .84rem; font-weight: 600; text-decoration: none;
+    font-family: 'Sora', sans-serif; transition: all .2s;
+    cursor: pointer;
+}
+.rv-delete-btn:hover {
+    background: var(--rv-rose); color: white;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(244,63,94,.3);
+}
+.rv-delete-btn svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 2; }
 
-        @media (max-width: 768px) {
-            .rating-stars label {
-                font-size: 30px;
-            }
-        }
-    </style>
-</head>
-<body>
+/* ── SIDEBAR ── */
+.rv-side { position: sticky; top: 90px; display: flex; flex-direction: column; gap: 1.2rem; }
 
-<div class="container">
-    <div class="header">
-        <h1>✏️ Edit Your Review</h1>
-        <p>Update your experience at {{ review.place.name }}</p>
-    </div>
+.rv-side-card {
+    background: var(--rv-surface); border: 1px solid var(--rv-border);
+    border-radius: var(--rv-r); overflow: hidden; box-shadow: var(--rv-sh);
+}
+.rv-side-card-head {
+    display: flex; align-items: center; gap: .5rem;
+    padding: .85rem 1.1rem; border-bottom: 1px solid var(--rv-border);
+    background: var(--rv-s2); font-size: .8rem; font-weight: 700; color: var(--rv-ink);
+}
+.rv-side-card-head svg { width: 14px; height: 14px; stroke: var(--rv-teal); fill: none; stroke-width: 2; }
+.rv-side-card-body { padding: 1rem 1.1rem; }
 
-    <div class="content">
-        <div class="place-info">
-            <h3>{{ review.place.name }}</h3>
-            <p>{{ review.place.destination.name }}</p>
+/* Place context card */
+.rv-place-card {
+    background: linear-gradient(135deg, var(--rv-teal) 0%, var(--rv-teal-d) 100%);
+    border-radius: var(--rv-r); padding: 1.25rem;
+    box-shadow: 0 6px 20px rgba(14,138,138,.3);
+}
+.rv-place-card-label { font-size: .62rem; opacity: .7; text-transform: uppercase; letter-spacing: .08em; color: white; margin-bottom: .4rem; }
+.rv-place-card-name { font-family: 'Playfair Display', serif; font-size: 1.25rem; font-weight: 600; color: #8DE8E8; line-height: 1.25; margin-bottom: .5rem; }
+.rv-place-card-meta { display: flex; align-items: center; gap: .35rem; font-size: .72rem; color: rgba(255,255,255,.7); }
+.rv-place-card-meta svg { width: 11px; height: 11px; stroke: rgba(255,255,255,.6); fill: none; }
+.rv-place-divider { height: 1px; background: rgba(255,255,255,.15); margin: .75rem 0; }
+.rv-place-stat {
+    display: flex; align-items: center; justify-content: space-between;
+    font-size: .72rem;
+}
+.rv-place-stat span { color: rgba(255,255,255,.65); }
+.rv-place-stat strong { color: white; font-weight: 700; }
+
+/* Review info card */
+.rv-review-info {
+    background: var(--rv-s2);
+    border-radius: 10px;
+    padding: .85rem;
+    margin-bottom: .75rem;
+}
+.rv-review-info-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: .72rem;
+    padding: .4rem 0;
+    border-bottom: 1px solid var(--rv-border);
+}
+.rv-review-info-item:last-child {
+    border-bottom: none;
+}
+.rv-review-info-label {
+    color: var(--rv-muted);
+}
+.rv-review-info-value {
+    font-weight: 600;
+    color: var(--rv-ink);
+}
+
+/* Tips */
+.rv-tips-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: .65rem; }
+.rv-tips-list li { display: flex; align-items: flex-start; gap: .55rem; font-size: .75rem; color: var(--rv-muted); line-height: 1.55; }
+.rv-tip-dot { width: 18px; height: 18px; border-radius: 50%; flex-shrink: 0; margin-top: 1px; background: var(--rv-teal-pale); display: flex; align-items: center; justify-content: center; font-size: .62rem; }
+
+/* Alert */
+.rv-alert {
+    border-radius: 10px; padding: .85rem 1.1rem; margin-bottom: 1.4rem;
+    display: flex; align-items: flex-start; gap: .7rem; font-size: .8rem;
+}
+.rv-alert.error   { background: #fff5f5; border: 1px solid rgba(244,63,94,.2); color: #9b1c2e; }
+.rv-alert.success { background: var(--rv-green-p); border: 1px solid rgba(22,163,74,.2); color: #14532d; }
+.rv-alert svg { width: 16px; height: 16px; flex-shrink: 0; margin-top: 1px; fill: none; stroke-width: 2; stroke: currentColor; }
+
+/* Responsive */
+@media (max-width: 900px) {
+    .rv-grid { grid-template-columns: 1fr; }
+    .rv-side { position: static; }
+    .rv-body { padding: 0 1.2rem 3rem; }
+}
+@media (max-width: 640px) {
+    .rv-hero-strip { padding: 2rem 1.2rem 3.5rem; }
+    .rv-body { padding: 0 1rem 2rem; }
+    .rv-star-grid { grid-template-columns: repeat(3, 1fr); }
+    .rv-star-grid .rv-star-opt:nth-child(4),
+    .rv-star-grid .rv-star-opt:nth-child(5) { grid-column: span 1; }
+}
+{% endblock %}
+
+{% block content %}
+<div class="rv-page">
+
+    <!-- ══ HERO STRIP ══ -->
+    <div class="rv-hero-strip">
+        <div class="rv-hero-art">
+            <svg viewBox="0 0 1440 260" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                    <radialGradient id="rvGA" cx="70%" cy="50%" r="45%">
+                        <stop offset="0%" stop-color="#f59e0b" stop-opacity=".08"/>
+                        <stop offset="100%" stop-color="transparent" stop-opacity="0"/>
+                    </radialGradient>
+                </defs>
+                <rect width="1440" height="260" fill="url(#rvGA)"/>
+                <g opacity=".2" fill="#fff">
+                    <circle cx="120" cy="45" r="1.2"/><circle cx="340" cy="28" r=".9"/><circle cx="600" cy="62" r="1"/>
+                    <circle cx="860" cy="22" r="1.3"/><circle cx="1100" cy="50" r=".8"/><circle cx="1340" cy="36" r="1.1"/>
+                </g>
+                <g opacity=".35">
+                    <text x="1260" y="80" font-size="22" fill="#fbbf24">★</text>
+                    <text x="1300" y="55" font-size="14" fill="#fbbf24" opacity=".5">★</text>
+                    <text x="1340" y="90" font-size="10" fill="#fbbf24" opacity=".4">★</text>
+                </g>
+                <circle cx="1310" cy="65" r="32" fill="#fef3c7" opacity=".07"/>
+                <circle cx="1310" cy="65" r="18" fill="#fef9e7" opacity=".14"/>
+            </svg>
         </div>
 
-        <form method="POST">
+        <div class="rv-hero-strip-inner">
+            <div class="rv-breadcrumb">
+                <a href="{% url 'destinations:destination_list' %}">Destinations</a>
+                <svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
+                <a href="{% url 'destinations:destination_detail' review.place.destination.id %}">{{ review.place.destination.name }}</a>
+                <svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
+                <a href="{% url 'destinations:place_detail'
+    review.place.destination.id
+    review.place.id %}">
+    {{ review.place.name }}
+</a>
+                <svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
+                <span style="color:rgba(255,255,255,.4)">Edit Review</span>
+            </div>
+            <div class="rv-hero-eyebrow"><span></span> Edit Review</div>
+            <h1 class="rv-hero-title">Update Your<br><em>Experience</em></h1>
+            <p class="rv-hero-sub">Help fellow travellers by sharing your honest feedback</p>
+        </div>
+    </div>
+
+    <!-- ══ BODY ══ -->
+    <div class="rv-body">
+
+        {% if messages %}
+        {% for message in messages %}
+        <div class="rv-alert {% if message.tags == 'error' %}error{% else %}success{% endif %}">
+            {% if message.tags == 'error' %}
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            {% else %}
+            <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+            {% endif %}
+            <span>{{ message }}</span>
+        </div>
+        {% endfor %}
+        {% endif %}
+
+        <form method="POST" id="rvForm">
             {% csrf_token %}
 
-            <div class="form-group">
-                <label>Your Rating</label>
-                <div class="rating-stars">
-                    <input type="radio" name="rating" value="5" id="star5" {% if review.rating == 5 %}checked{% endif %}>
-                    <label for="star5">★</label>
-                    <input type="radio" name="rating" value="4" id="star4" {% if review.rating == 4 %}checked{% endif %}>
-                    <label for="star4">★</label>
-                    <input type="radio" name="rating" value="3" id="star3" {% if review.rating == 3 %}checked{% endif %}>
-                    <label for="star3">★</label>
-                    <input type="radio" name="rating" value="2" id="star2" {% if review.rating == 2 %}checked{% endif %}>
-                    <label for="star2">★</label>
-                    <input type="radio" name="rating" value="1" id="star1" {% if review.rating == 1 %}checked{% endif %}>
-                    <label for="star1">★</label>
+            <div class="rv-grid">
+
+                <!-- ══ MAIN ══ -->
+                <div>
+
+                    <!-- ── Star Rating ── -->
+                    <div class="rv-section">
+                        <div class="rv-section-head">
+                            <div class="rv-section-icon">
+                                <svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                            </div>
+                            <div>
+                                <h3>Your Rating</h3>
+                                <p>Update your rating for this place</p>
+                            </div>
+                        </div>
+                        <div class="rv-section-body">
+
+                            <div class="rv-stars-label">
+                                Rating <span>*</span>
+                            </div>
+
+                            <div class="rv-star-grid">
+                                <label class="rv-star-opt">
+                                    <input type="radio" name="rating" value="5" {% if review.rating == 5 %}checked{% endif %} required>
+                                    <div class="rv-star-card">
+                                        <div class="rv-star-num">⭐⭐⭐⭐⭐</div>
+                                        <div class="rv-star-lbl">5 Stars</div>
+                                        <div class="rv-star-sub">Excellent</div>
+                                    </div>
+                                </label>
+                                <label class="rv-star-opt">
+                                    <input type="radio" name="rating" value="4" {% if review.rating == 4 %}checked{% endif %}>
+                                    <div class="rv-star-card">
+                                        <div class="rv-star-num">⭐⭐⭐⭐</div>
+                                        <div class="rv-star-lbl">4 Stars</div>
+                                        <div class="rv-star-sub">Very Good</div>
+                                    </div>
+                                </label>
+                                <label class="rv-star-opt">
+                                    <input type="radio" name="rating" value="3" {% if review.rating == 3 %}checked{% endif %}>
+                                    <div class="rv-star-card">
+                                        <div class="rv-star-num">⭐⭐⭐</div>
+                                        <div class="rv-star-lbl">3 Stars</div>
+                                        <div class="rv-star-sub">Good</div>
+                                    </div>
+                                </label>
+                                <label class="rv-star-opt">
+                                    <input type="radio" name="rating" value="2" {% if review.rating == 2 %}checked{% endif %}>
+                                    <div class="rv-star-card">
+                                        <div class="rv-star-num">⭐⭐</div>
+                                        <div class="rv-star-lbl">2 Stars</div>
+                                        <div class="rv-star-sub">Average</div>
+                                    </div>
+                                </label>
+                                <label class="rv-star-opt">
+                                    <input type="radio" name="rating" value="1" {% if review.rating == 1 %}checked{% endif %}>
+                                    <div class="rv-star-card">
+                                        <div class="rv-star-num">⭐</div>
+                                        <div class="rv-star-lbl">1 Star</div>
+                                        <div class="rv-star-sub">Poor</div>
+                                    </div>
+                                </label>
+                            </div>
+
+                            <!-- Live feedback bar -->
+                            <div class="rv-rating-feedback" id="rvFeedback">
+                                <span class="rv-fb-stars" id="rvFbStars">
+                                    {% if review.rating == 5 %}⭐⭐⭐⭐⭐
+                                    {% elif review.rating == 4 %}⭐⭐⭐⭐☆
+                                    {% elif review.rating == 3 %}⭐⭐⭐☆☆
+                                    {% elif review.rating == 2 %}⭐⭐☆☆☆
+                                    {% elif review.rating == 1 %}⭐☆☆☆☆
+                                    {% else %}☆☆☆☆☆{% endif %}
+                                </span>
+                                <span class="rv-fb-text" id="rvFbText">
+                                    {% if review.rating == 5 %}Excellent — you loved it!
+                                    {% elif review.rating == 4 %}Very Good — worth the visit
+                                    {% elif review.rating == 3 %}Good — a decent experience
+                                    {% elif review.rating == 2 %}Average — had some issues
+                                    {% elif review.rating == 1 %}Poor — not recommended
+                                    {% else %}Select a rating above{% endif %}
+                                </span>
+                            </div>
+
+                        </div>
+                    </div>
+
+                    <!-- ── Review Text ── -->
+                    <div class="rv-section">
+                        <div class="rv-section-head">
+                            <div class="rv-section-icon">
+                                <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                            </div>
+                            <div>
+                                <h3>Your Review</h3>
+                                <p>Edit your feedback about this place</p>
+                            </div>
+                        </div>
+                        <div class="rv-section-body">
+
+                            <div class="rv-field">
+                                <label class="rv-label" for="id_review">
+                                    Review <span>*</span>
+                                    <span class="rv-label-hint" id="rvMinHint">Min 10 characters</span>
+                                </label>
+                                <textarea class="rv-textarea" name="review" id="id_review"
+                                          placeholder="Share your experience — what did you enjoy? What should others know before visiting?"
+                                          required>{{ review.review }}</textarea>
+                                <div class="rv-char-bar">
+                                    <span class="rv-char-count" id="rvCharCount">0 / 2000</span>
+                                    <div class="rv-char-prog">
+                                        <div class="rv-char-fill" id="rvCharFill" style="width:0%"></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="rv-submit-area">
+                                <div class="rv-submit-note">
+                                    <strong>Update your review?</strong>
+                                    Your feedback helps fellow travellers plan their visit.
+                                </div>
+                                <div style="display:flex;align-items:center;gap:.75rem;">
+                                    <a href="{% url 'destinations:place_detail' review.place.destination.id review.place.id %}"
+   class="rv-cancel-btn">
+    Cancel
+</a>
+                                    <button type="submit" class="rv-submit-btn" id="rvSubmitBtn">
+                                        <svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                                        Update Review
+                                    </button>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+
                 </div>
-            </div>
 
-            <div class="form-group">
-                <label>Your Review</label>
-                <textarea name="review" class="review-text" rows="6" required>{{ review.review }}</textarea>
-            </div>
+                <!-- ══ SIDEBAR ══ -->
+                <div class="rv-side">
 
-            <button type="submit" class="btn-submit">💾 Update Review</button>
+                    <!-- Place context card -->
+                    <div class="rv-place-card">
+                        <div class="rv-place-card-label">Reviewing</div>
+                        <div class="rv-place-card-name">{{ review.place.name }}</div>
+                        <div class="rv-place-card-meta">
+                            <svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                            {{ review.place.destination.name }}{% if review.place.destination.city %}, {{ review.place.destination.city }}{% endif %}
+                        </div>
+                        {% if review.place.category or review.place.average_rating %}
+                        <div class="rv-place-divider"></div>
+                        <div class="rv-place-stat">
+                            {% if review.place.category %}<span>{{ review.place.category }}</span>{% endif %}
+                            {% if review.place.average_rating %}
+                            <strong>⭐ {{ review.place.average_rating|floatformat:1 }}</strong>
+                            {% endif %}
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Review info card -->
+                    <div class="rv-side-card">
+                        <div class="rv-side-card-head">
+                            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                            Review Info
+                        </div>
+                        <div class="rv-side-card-body">
+                            <div class="rv-review-info">
+                                <div class="rv-review-info-item">
+                                    <span class="rv-review-info-label">Posted on</span>
+                                    <span class="rv-review-info-value">{{ review.created_at|date:"M d, Y" }}</span>
+                                </div>
+                                {% if review.updated_at != review.created_at %}
+                                <div class="rv-review-info-item">
+                                    <span class="rv-review-info-label">Last edited</span>
+                                    <span class="rv-review-info-value">{{ review.updated_at|date:"M d, Y" }}</span>
+                                </div>
+                                {% endif %}
+                                <div class="rv-review-info-item">
+                                    <span class="rv-review-info-label">Current Rating</span>
+                                    <span class="rv-review-info-value">⭐ {{ review.rating }}/5</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Tips card -->
+                    <div class="rv-side-card">
+                        <div class="rv-side-card-head">
+                            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                            Writing Tips
+                        </div>
+                        <div class="rv-side-card-body">
+                            <ul class="rv-tips-list">
+                                <li><div class="rv-tip-dot">✍️</div> Be specific — mention what you liked or what surprised you.</li>
+                                <li><div class="rv-tip-dot">📅</div> Include when you visited; conditions change by season.</li>
+                                <li><div class="rv-tip-dot">💡</div> Share practical tips like parking, timings or what to bring.</li>
+                                <li><div class="rv-tip-dot">📸</div> Describe what the experience felt like to help others visualise it.</li>
+                                <li><div class="rv-tip-dot">⚖️</div> Be honest and balanced — both pros and cons are valuable.</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- Danger Zone card -->
+                    <div class="rv-side-card">
+                        <div class="rv-side-card-head">
+                            <svg viewBox="0 0 24 24"><path d="M12 8v4m0 4h.01M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2z"/></svg>
+                            Danger Zone
+                        </div>
+                        <div class="rv-side-card-body">
+                            <div style="background: #fff5f5; border-radius: 8px; padding: 0.85rem; text-align: center;">
+                                <button type="button" class="rv-delete-btn" onclick="confirmDelete()" style="width: 100%; justify-content: center;">
+                                    🗑️ Delete Review
+                                </button>
+                                <p style="font-size: 0.65rem; color: var(--rv-muted); margin-top: 0.6rem;">
+                                    This action cannot be undone.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                </div><!-- /sidebar -->
+
+            </div><!-- /grid -->
         </form>
-
-        <div class="action-buttons">
-            <a href="{% url 'destinations:place_detail' review.place.id %}" class="btn-cancel">Cancel</a>
-            <a href="{% url 'destinations:delete_review' review.id %}" class="btn-danger" 
-               onclick="return confirm('Are you sure you want to delete your review? This cannot be undone.')">🗑️ Delete Review</a>
-        </div>
-    </div>
+    </div><!-- /body -->
 </div>
 
-</body>
-</html>
+<!-- Delete Confirmation Form -->
+<form id="deleteForm" method="POST" action="{% url 'destinations:delete_review' review.id %}" style="display: none;">
+    {% csrf_token %}
+</form>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+(function(){
+    // Initialize rating feedback
+    const ratingData = {
+        5: { stars: '⭐⭐⭐⭐⭐', text: 'Excellent — you loved it!',   color: '#d97706' },
+        4: { stars: '⭐⭐⭐⭐☆',  text: 'Very Good — worth the visit', color: '#d97706' },
+        3: { stars: '⭐⭐⭐☆☆',  text: 'Good — a decent experience',  color: '#92400e' },
+        2: { stars: '⭐⭐☆☆☆',  text: 'Average — had some issues',    color: '#b45309' },
+        1: { stars: '⭐☆☆☆☆',  text: 'Poor — not recommended',       color: '#9b1c2e' },
+    };
+
+    const feedback = document.getElementById('rvFeedback');
+    const fbStars  = document.getElementById('rvFbStars');
+    const fbText   = document.getElementById('rvFbText');
+
+    // Set initial active state if rating exists
+    {% if review.rating %}
+    const initialRating = {{ review.rating }};
+    if (initialRating && ratingData[initialRating]) {
+        const d = ratingData[initialRating];
+        fbStars.textContent = d.stars;
+        fbText.textContent = d.text;
+        fbText.style.color = d.color;
+        feedback.classList.add('active');
+    }
+    {% endif %}
+
+    document.querySelectorAll('input[name="rating"]').forEach(radio => {
+        radio.addEventListener('change', function() {
+            const d = ratingData[parseInt(this.value)];
+            if (!d) return;
+            fbStars.textContent = d.stars;
+            fbText.textContent  = d.text;
+            fbText.style.color  = d.color;
+            feedback.classList.add('active');
+        });
+    });
+
+    /* ── Char counter ── */
+    const textarea  = document.getElementById('id_review');
+    const charCount = document.getElementById('rvCharCount');
+    const charFill  = document.getElementById('rvCharFill');
+    const minHint   = document.getElementById('rvMinHint');
+    const MAX = 2000;
+
+    function updateCharCounter() {
+        const len = textarea.value.length;
+        charCount.textContent = `${len} / ${MAX}`;
+        const pct = Math.min((len / MAX) * 100, 100);
+        charFill.style.width = pct + '%';
+
+        if (len > MAX) {
+            charFill.style.background = '#f43f5e';
+            charCount.className = 'rv-char-count over';
+        } else if (len > MAX * 0.85) {
+            charFill.style.background = '#f59e0b';
+            charCount.className = 'rv-char-count warn';
+        } else {
+            charFill.style.background = '#0e8a8a';
+            charCount.className = 'rv-char-count';
+        }
+
+        if (len >= 10) {
+            minHint.textContent = '✓ Minimum met';
+            minHint.style.color = '#16a34a';
+        } else {
+            minHint.textContent = `Min 10 characters (${10 - len} more)`;
+            minHint.style.color = '';
+        }
+    }
+
+    textarea.addEventListener('input', updateCharCounter);
+    updateCharCounter(); // Initialize
+
+    /* ── Submit validation ── */
+    document.getElementById('rvForm').addEventListener('submit', function(e) {
+        const rating = document.querySelector('input[name="rating"]:checked');
+        const review = textarea.value.trim();
+
+        if (!rating) {
+            e.preventDefault();
+            alert('Please select a star rating.');
+            return;
+        }
+        if (review.length < 10) {
+            e.preventDefault();
+            alert('Please write at least 10 characters in your review.');
+            return;
+        }
+        if (review.length > 2000) {
+            e.preventDefault();
+            alert('Review must be under 2000 characters.');
+            return;
+        }
+
+        const btn = document.getElementById('rvSubmitBtn');
+        btn.disabled = true;
+        btn.innerHTML = `<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="white" stroke-width="2"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4"/></svg> Updating…`;
+    });
+
+    /* ── Delete confirmation ── */
+    window.confirmDelete = function() {
+        if (confirm("⚠️ Are you sure you want to delete your review?\n\nThis action cannot be undone and your feedback will be permanently removed.")) {
+            document.getElementById('deleteForm').submit();
+        }
+    };
+})();
+</script>
+{% endblock %}

@@ -3,6 +3,7 @@ from django.conf import settings
 from django.utils import timezone
 from .services.ranking_engine import RankingEngine
 from datetime import datetime
+from django.db.models import Avg
 
 
 # =========================================================
@@ -11,18 +12,26 @@ from datetime import datetime
 
 class ApprovalMixin(models.Model):
 
-    is_approved = models.BooleanField(default=False)
+    is_approved = models.BooleanField(
+        default=False
+    )
 
     class Meta:
         abstract = True
 
     def auto_approve(self):
 
+        created_by = getattr(
+            self,
+            "created_by",
+            None
+        )
+
         if (
-            self.created_by and
+            created_by and
             (
-                self.created_by.is_staff or
-                self.created_by.is_superuser
+                created_by.is_staff or
+                created_by.is_superuser
             )
         ):
             self.is_approved = True
@@ -154,12 +163,16 @@ class Destination(ApprovalMixin):
     )
 
     # =====================================================
-    # TRENDING / AI SCORE
+    # AI RANKING SCORES
     # =====================================================
 
     manual_priority_score = models.FloatField(
         default=10,
-        help_text="Admin controlled priority score"
+        help_text="Admin/User controlled importance score (0-20)"
+    )
+
+    weather_score = models.FloatField(
+        default=10
     )
 
     seasonal_score = models.FloatField(
@@ -171,6 +184,10 @@ class Destination(ApprovalMixin):
     )
 
     usage_score = models.FloatField(
+        default=0
+    )
+
+    rating_score = models.FloatField(
         default=0
     )
 
@@ -231,34 +248,47 @@ class Destination(ApprovalMixin):
 
     def calculate_weather_score(self):
 
-        if not self.weather_condition:
+        if not self.current_temperature:
             return 10
 
-        weather = self.weather_condition.lower()
+        temp = self.current_temperature
 
-        if self.preferred_weather:
+        score = 0
 
-            preferred = self.preferred_weather.lower()
+        # Ideal tourism temperature
+        if 20 <= temp <= 30:
+            score += 20
 
-            if preferred in weather:
-                return 20
+        elif 15 <= temp < 20 or 30 < temp <= 35:
+            score += 14
+
+        else:
+            score += 6
+
+        # Weather condition bonus
+        weather = (self.weather_condition or "").lower()
 
         if "clear" in weather or "sunny" in weather:
-            return 18
+            score += 5
 
-        if "cloud" in weather:
-            return 14
+        elif "cloud" in weather:
+            score += 3
 
-        if "rain" in weather:
-            return 8
+        elif "rain" in weather:
+            score -= 4
 
-        if "storm" in weather:
-            return 3
+        elif "storm" in weather:
+            score -= 8
 
-        return 10
+        # Humidity penalty
+        if self.humidity and self.humidity > 85:
+            score -= 3
+
+        return max(score, 0)
+
 
     # =====================================================
-    # SEASON SCORE
+    # SEASONAL SCORE
     # =====================================================
 
     def calculate_season_score(self):
@@ -268,22 +298,18 @@ class Destination(ApprovalMixin):
         start = self.best_month_start
         end = self.best_month_end
 
-        # NORMAL RANGE
         if start <= end:
 
             if start <= current_month <= end:
                 return 20
 
-        # YEAR WRAP
         else:
 
-            if (
-                current_month >= start or
-                current_month <= end
-            ):
+            if current_month >= start or current_month <= end:
                 return 20
 
-        return 5
+        return 6
+
 
     # =====================================================
     # POPULARITY SCORE
@@ -293,28 +319,48 @@ class Destination(ApprovalMixin):
 
         score = 0
 
-        # REVIEWS
-        score += min(self.total_reviews * 0.2, 10)
+        # Reviews
+        score += min(self.total_reviews * 0.15, 10)
 
-        # RATING
-        score += self.average_rating * 2
+        # Average rating
+        score += self.average_rating * 3
 
-        # ITINERARY USAGE
-        score += min(
-            self.total_itinerary_usage * 0.05,
-            10
-        )
+        # Views
+        score += min(self.total_views * 0.003, 8)
 
-        # VIEWS
-        score += min(
-            self.total_views * 0.002,
-            10
-        )
+        # Itinerary usage
+        score += min(self.total_itinerary_usage * 0.05, 10)
 
-        return min(score, 30)
+        # Featured boost
+        if self.is_featured:
+            score += 5
+
+        return min(score, 35)
+
 
     # =====================================================
-    # FINAL TRENDING SCORE
+    # RATING SCORE
+    # =====================================================
+
+    def calculate_rating_score(self):
+
+        return self.average_rating * 4
+
+
+    # =====================================================
+    # USAGE SCORE
+    # =====================================================
+
+    def calculate_usage_score(self):
+
+        return min(
+            self.total_itinerary_usage * 0.1,
+            10
+        )
+
+
+    # =====================================================
+    # FINAL AI SCORE
     # =====================================================
 
     def update_scores(self):
@@ -323,11 +369,13 @@ class Destination(ApprovalMixin):
 
         self.seasonal_score = self.calculate_season_score()
 
-        self.popularity_score = (
-            self.calculate_popularity_score()
-        )
+        self.popularity_score = self.calculate_popularity_score()
 
-        self.final_trending_score = (
+        self.rating_score = self.calculate_rating_score()
+
+        self.usage_score = self.calculate_usage_score()
+
+        self.final_trending_score = round(
 
             self.manual_priority_score +
 
@@ -337,9 +385,25 @@ class Destination(ApprovalMixin):
 
             self.popularity_score +
 
-            self.usage_score
+            self.rating_score +
 
+            self.usage_score,
+
+            2
         )
+
+    def refresh_review_stats(self):
+
+        self.total_reviews = self.reviews.count()
+
+        self.average_rating = (
+            self.reviews.aggregate(
+                Avg("rating")
+            )["rating__avg"] or 0
+        )
+
+        self.save()
+
 
     # =====================================================
     # SAVE
@@ -347,13 +411,24 @@ class Destination(ApprovalMixin):
 
     def save(self, *args, **kwargs):
 
-        engine = RankingEngine()
+        # Auto weather sync
+        from .services.weather_service import WeatherService
 
-        self.popularity_score = engine.calculate(
-            city=self.city,
-            attractions_count=self.total_itinerary_usage,
-            rating=self.average_rating
+        weather = WeatherService.get_weather(
+            self.city or self.name
         )
+
+        if weather:
+
+            self.current_temperature = weather["temp"]
+
+            self.weather_condition = weather["description"]
+
+            self.humidity = weather["humidity"]
+
+            self.last_weather_updated = timezone.now()
+
+        self.update_scores()
 
         super().save(*args, **kwargs)
 
@@ -417,6 +492,12 @@ class DestinationImage(models.Model):
 # DESTINATION PLACE
 # =========================================================
 
+
+from django.db import models
+from django.conf import settings
+from django.db.models import Avg
+from datetime import datetime
+
 class DestinationPlace(ApprovalMixin):
 
     # =====================================================
@@ -460,9 +541,7 @@ class DestinationPlace(ApprovalMixin):
     # BASIC
     # =====================================================
 
-    name = models.CharField(
-        max_length=200
-    )
+    name = models.CharField(max_length=200)
 
     description = models.TextField()
 
@@ -471,9 +550,7 @@ class DestinationPlace(ApprovalMixin):
         blank=True
     )
 
-    is_hidden_gem = models.BooleanField(
-        default=False
-    )
+    is_hidden_gem = models.BooleanField(default=False)
 
     # =====================================================
     # LOCATION
@@ -499,18 +576,17 @@ class DestinationPlace(ApprovalMixin):
         blank=True
     )
 
-    weather_score = models.FloatField(
-        default=10
-    )
+    weather_score = models.FloatField(default=10)
+
+    seasonal_score = models.FloatField(default=10)
+
+    rating_score = models.FloatField(default=0)
 
     # =====================================================
     # TRAVEL INFO
     # =====================================================
 
-    how_to_reach = models.TextField(
-        blank=True
-    )
-
+    how_to_reach = models.TextField(blank=True)
 
     # =====================================================
     # TIMINGS
@@ -561,25 +637,17 @@ class DestinationPlace(ApprovalMixin):
         default="all"
     )
 
-    best_for_photography = models.BooleanField(
-        default=False
-    )
+    best_for_photography = models.BooleanField(default=False)
 
-    best_for_sunset = models.BooleanField(
-        default=False
-    )
+    best_for_sunset = models.BooleanField(default=False)
 
-    best_for_sunrise = models.BooleanField(
-        default=False
-    )
+    best_for_sunrise = models.BooleanField(default=False)
 
     # =====================================================
     # ACTIVITIES
     # =====================================================
 
-    things_to_do = models.TextField(
-        blank=True
-    )
+    things_to_do = models.TextField(blank=True)
 
     # =====================================================
     # COST
@@ -601,51 +669,31 @@ class DestinationPlace(ApprovalMixin):
     # TIPS
     # =====================================================
 
-    travel_tips = models.TextField(
-        blank=True
-    )
+    travel_tips = models.TextField(blank=True)
 
-    safety_tips = models.TextField(
-        blank=True
-    )
+    safety_tips = models.TextField(blank=True)
 
-    things_to_carry = models.TextField(
-        blank=True
-    )
+    things_to_carry = models.TextField(blank=True)
 
     # =====================================================
     # AI SCORING
     # =====================================================
 
-    manual_priority_score = models.FloatField(
-        default=10
-    )
+    manual_priority_score = models.FloatField(default=10)
 
-    popularity_score = models.FloatField(
-        default=0
-    )
+    popularity_score = models.FloatField(default=0)
 
-    priority_score = models.IntegerField(default=0, help_text="Higher score = higher priority (0-100)")
-
-    final_trending_score = models.FloatField(
-        default=0
-    )
+    final_trending_score = models.FloatField(default=0)
 
     # =====================================================
     # STATS
     # =====================================================
 
-    visit_count = models.PositiveIntegerField(
-        default=0
-    )
+    visit_count = models.PositiveIntegerField(default=0)
 
-    total_reviews = models.PositiveIntegerField(
-        default=0
-    )
+    total_reviews = models.PositiveIntegerField(default=0)
 
-    average_rating = models.FloatField(
-        default=0
-    )
+    average_rating = models.FloatField(default=0)
 
     # =====================================================
     # USER
@@ -658,12 +706,54 @@ class DestinationPlace(ApprovalMixin):
         blank=True
     )
 
-    created_at = models.DateTimeField(
-        auto_now_add=True
-    )
+    created_at = models.DateTimeField(auto_now_add=True)
 
     # =====================================================
-    # SCORE ENGINE
+    # WEATHER SCORE
+    # =====================================================
+
+    def calculate_weather_score(self):
+
+        score = 10
+
+        weather = (
+            getattr(self.destination, "weather_condition", "") or ""
+        ).lower()
+
+        preferred = (
+            self.preferred_weather or ""
+        ).lower()
+
+        if preferred and preferred in weather:
+            score += 10
+
+        if "clear" in weather:
+            score += 5
+
+        if "storm" in weather:
+            score -= 5
+
+        return max(score, 0)
+
+    # =====================================================
+    # SEASON SCORE
+    # =====================================================
+
+    def calculate_season_score(self):
+
+        current_month = datetime.now().strftime("%B").lower()
+
+        best_months = (
+            self.best_months_to_visit or ""
+        ).lower()
+
+        if current_month in best_months:
+            return 20
+
+        return 8
+
+    # =====================================================
+    # POPULARITY SCORE
     # =====================================================
 
     def calculate_popularity_score(self):
@@ -672,37 +762,73 @@ class DestinationPlace(ApprovalMixin):
 
         score += self.average_rating * 4
 
-        score += min(
-            self.total_reviews * 0.3,
-            10
-        )
+        score += min(self.total_reviews * 0.25, 10)
 
-        score += min(
-            self.visit_count * 0.01,
-            10
-        )
+        score += min(self.visit_count * 0.02, 10)
 
         if self.is_hidden_gem:
-            score += 5
+            score += 4
 
-        if self.entry_fee == 0:
-            score += 5
+        if self.best_for_photography:
+            score += 3
 
-        return min(score, 40)
+        if float(self.entry_fee) == 0:
+            score += 3
+
+        return round(min(score, 35), 2)
+
+    # =====================================================
+    # RATING SCORE
+    # =====================================================
+
+    def calculate_rating_score(self):
+
+        return round(self.average_rating * 4, 2)
+
+    # =====================================================
+    # FINAL SCORE
+    # =====================================================
 
     def update_scores(self):
 
-        self.popularity_score = (
-            self.calculate_popularity_score()
-        )
+        self.weather_score = self.calculate_weather_score()
 
-        self.final_trending_score = (
+        self.seasonal_score = self.calculate_season_score()
 
+        self.popularity_score = self.calculate_popularity_score()
+
+        self.rating_score = self.calculate_rating_score()
+
+        self.final_trending_score = round(
             self.manual_priority_score +
-
-            self.popularity_score
-
+            self.weather_score +
+            self.seasonal_score +
+            self.popularity_score +
+            self.rating_score,
+            2
         )
+
+    # =====================================================
+    # REFRESH REVIEW STATS
+    # =====================================================
+
+    def refresh_review_stats(self):
+
+        self.total_reviews = self.reviews.count()
+
+        self.average_rating = (
+            self.reviews.aggregate(
+                Avg("rating")
+            )["rating__avg"] or 0
+        )
+
+        self.update_scores()
+
+        self.save()
+
+    # =====================================================
+    # SAVE
+    # =====================================================
 
     def save(self, *args, **kwargs):
 
@@ -710,9 +836,14 @@ class DestinationPlace(ApprovalMixin):
 
         super().save(*args, **kwargs)
 
+    # =====================================================
+    # STRING
+    # =====================================================
+
     def __str__(self):
 
         return self.name
+
 
 
 # =========================================================
@@ -818,3 +949,24 @@ class PlaceReview(models.Model):
     def __str__(self):
 
         return f"{self.place.name} - {self.rating}"
+    
+
+class DestinationReview(models.Model):
+    destination = models.ForeignKey(
+        Destination,
+        on_delete=models.CASCADE,
+        related_name="reviews"
+    )
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE
+    )
+
+    rating = models.PositiveIntegerField()
+
+    review = models.TextField()
+
+    created_at = models.DateTimeField(
+        auto_now_add=True
+    )

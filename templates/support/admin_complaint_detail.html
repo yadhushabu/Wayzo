@@ -1,0 +1,485 @@
+{% extends "admin_app/base.html" %}
+{% load static %}
+
+{% block title %}Ticket #SR{{ complaint.id|stringformat:"09d" }} | Wayzo Admin{% endblock %}
+{% block nav_complaints %}active{% endblock %}
+
+{% block topbar_title %}Ticket Detail{% endblock %}
+{% block topbar_subtitle %}#SR{{ complaint.id|stringformat:"09d" }} — {{ complaint.title|truncatechars:50 }}{% endblock %}
+
+{% block extra_styles %}
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap');
+
+  /* ── PAGE HEADER ── */
+  .page-header {
+    display: flex; align-items: flex-start;
+    justify-content: space-between;
+    gap: 1.5rem; margin-bottom: 1.75rem; flex-wrap: wrap;
+  }
+  .page-breadcrumb {
+    display: flex; align-items: center; gap: 0.4rem;
+    font-size: 0.72rem; color: #9CA3AF; margin-bottom: 0.5rem;
+    font-family: 'DM Sans', sans-serif;
+  }
+  .page-breadcrumb a { color: #9CA3AF; text-decoration: none; }
+  .page-breadcrumb a:hover { color: #0E8A8A; }
+  .page-breadcrumb i { font-size: 0.55rem; }
+  .page-title {
+    font-family: 'Inter', sans-serif; font-size: 1.25rem;
+    font-weight: 700; color: #111827; letter-spacing: -0.025em;
+    margin-bottom: 0.2rem;
+  }
+  .page-desc { font-size: 0.8rem; color: #6B7280; font-family: 'DM Sans', sans-serif; }
+
+  /* ── LAYOUT ── */
+  .detail-layout {
+    display: grid;
+    grid-template-columns: 1fr 300px;
+    gap: 1.5rem;
+    align-items: start;
+  }
+
+  /* ── PANEL ── */
+  .panel {
+    background: #ffffff; border: 1px solid #E5E7EB;
+    border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+    overflow: hidden; margin-bottom: 1.25rem;
+  }
+  .panel-header {
+    padding: 0.9rem 1.4rem; border-bottom: 1px solid #F3F4F6;
+    display: flex; align-items: center; justify-content: space-between;
+    background: #FAFAFA; gap: 0.8rem;
+  }
+  .panel-header-left {
+    display: flex; align-items: center; gap: 0.6rem;
+    font-size: 0.82rem; font-weight: 700; color: #374151;
+    font-family: 'Inter', sans-serif;
+  }
+  .panel-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .panel-dot.teal    { background: #0E8A8A; }
+  .panel-dot.amber   { background: #F59E0B; }
+  .panel-dot.green   { background: #10B981; }
+  .panel-dot.slate   { background: #475569; }
+  .panel-body { padding: 1.4rem; }
+
+  /* ── STATUS BADGE ── */
+  .status-badge {
+    display: inline-flex; align-items: center; gap: 0.28rem;
+    padding: 0.24rem 0.75rem; border-radius: 99px;
+    font-size: 0.65rem; font-weight: 700;
+    font-family: 'DM Sans', sans-serif; white-space: nowrap;
+  }
+  .status-badge::before { content:""; width:5px; height:5px; border-radius:50%; flex-shrink:0; }
+  .status-open        { background: rgba(239,68,68,0.1); color: #dc2626; }
+  .status-open::before { background: #ef4444; }
+  .status-in_progress { background: rgba(245,158,11,0.1); color: #d97706; }
+  .status-in_progress::before { background: #f59e0b; }
+  .status-resolved    { background: rgba(16,185,129,0.1); color: #059669; }
+  .status-resolved::before { background: #10b981; }
+  .status-closed      { background: rgba(107,114,128,0.1); color: #4b5563; }
+  .status-closed::before { background: #9ca3af; }
+
+  /* ── USER CELL ── */
+  .user-cell { display: flex; align-items: center; gap: 0.75rem; }
+  .user-avatar {
+    width: 42px; height: 42px; border-radius: 50%;
+    background: linear-gradient(135deg, #0E8A8A, #1aafaf);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.75rem; font-weight: 700; color: white;
+    flex-shrink: 0; font-family: 'Inter', sans-serif;
+  }
+  .user-name { font-weight: 700; color: #111827; font-size: 0.85rem; }
+  .user-meta { font-size: 0.7rem; color: #9CA3AF; margin-top: 1px; }
+
+  /* role tag */
+  .role-tag {
+    display: inline-flex; align-items: center; gap: 0.25rem;
+    padding: 0.2rem 0.6rem; border-radius: 99px;
+    font-size: 0.65rem; font-weight: 700;
+    font-family: 'DM Sans', sans-serif;
+  }
+  .role-traveller  { background: #D1FAE5; color: #065F46; }
+  .role-agency     { background: #FEF3C7; color: #92400E; }
+  .role-restaurant { background: #EEF2FF; color: #3730A3; }
+
+  /* ── DESCRIPTION BLOCK ── */
+  .desc-block {
+    background: #F9FAFB; border: 1px solid #E5E7EB; border-radius: 10px;
+    padding: 1.1rem 1.3rem; font-size: 0.82rem; color: #4B5563;
+    line-height: 1.75; white-space: pre-line; margin-bottom: 1.2rem;
+    font-family: 'DM Sans', sans-serif;
+  }
+
+  /* ── META GRID ── */
+  .meta-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+  .meta-item { display: flex; flex-direction: column; gap: 0.15rem; }
+  .meta-label {
+    font-size: 0.64rem; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.08em; color: #9CA3AF; font-family: 'DM Sans', sans-serif;
+  }
+  .meta-value { font-size: 0.8rem; color: #374151; font-weight: 600; font-family: 'DM Sans', sans-serif; }
+
+  /* ── ATTACHMENT LINK ── */
+  .attachment-link {
+    display: inline-flex; align-items: center; gap: 0.45rem;
+    background: #E6F4F4; border: 1px solid rgba(14,138,138,0.2);
+    color: #0E8A8A; font-size: 0.77rem; font-weight: 600;
+    padding: 0.45rem 0.9rem; border-radius: 8px; text-decoration: none;
+    transition: all 0.2s; margin-top: 1rem; font-family: 'DM Sans', sans-serif;
+  }
+  .attachment-link:hover { background: rgba(14,138,138,0.15); }
+
+  /* ── EXISTING RESPONSE ── */
+  .response-block {
+    background: linear-gradient(135deg, rgba(14,138,138,0.05), rgba(93,197,197,0.03));
+    border: 1px solid rgba(14,138,138,0.18); border-left: 3px solid #0E8A8A;
+    border-radius: 10px; padding: 1.1rem 1.3rem;
+    font-size: 0.82rem; color: #4B5563; line-height: 1.75;
+    font-family: 'DM Sans', sans-serif;
+  }
+  .response-by {
+    display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.8rem;
+  }
+  .response-by-icon {
+    width: 28px; height: 28px; border-radius: 50%;
+    background: linear-gradient(135deg, #0E8A8A, #1aafaf);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.65rem; color: white; flex-shrink: 0;
+  }
+  .response-by strong { font-size: 0.78rem; color: #111827; }
+  .response-by span { font-size: 0.67rem; color: #9CA3AF; }
+
+  /* ── RESPONSE FORM ── */
+  .form-group { display: flex; flex-direction: column; gap: 0.45rem; margin-bottom: 1.1rem; }
+  .form-label {
+    font-size: 0.7rem; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.07em; color: #9CA3AF; font-family: 'DM Sans', sans-serif;
+  }
+  .form-control {
+    padding: 0.65rem 0.9rem; border: 1.5px solid #E5E7EB;
+    border-radius: 9px; font-size: 0.82rem; font-family: 'DM Sans', sans-serif;
+    color: #374151; background: #FAFAFA; transition: all 0.15s; width: 100%;
+    box-sizing: border-box;
+  }
+  .form-control:focus {
+    outline: none; border-color: #0E8A8A; background: white;
+    box-shadow: 0 0 0 3px rgba(14,138,138,0.08);
+  }
+  textarea.form-control { resize: vertical; min-height: 120px; }
+  select.form-control { cursor: pointer; }
+
+  .btn-submit {
+    display: inline-flex; align-items: center; gap: 0.4rem;
+    padding: 0.65rem 1.4rem; border-radius: 9px;
+    font-size: 0.82rem; font-weight: 700;
+    background: #0E8A8A; color: white; border: none;
+    cursor: pointer; font-family: 'DM Sans', sans-serif;
+    transition: all 0.18s;
+    box-shadow: 0 4px 14px rgba(14,138,138,0.25);
+  }
+  .btn-submit:hover { background: #0A6B6B; transform: translateY(-1px); box-shadow: 0 6px 20px rgba(14,138,138,0.3); }
+
+  /* ── SIDEBAR ── */
+  .sidebar-panels { display: flex; flex-direction: column; gap: 1.2rem; }
+
+  /* timeline */
+  .timeline-item {
+    display: flex; gap: 0.75rem; align-items: flex-start;
+    padding-bottom: 1rem; position: relative;
+  }
+  .timeline-item:not(:last-child)::after {
+    content: ""; position: absolute; left: 13px; top: 26px;
+    width: 1px; bottom: 0; background: #E5E7EB;
+  }
+  .tl-dot {
+    width: 26px; height: 26px; border-radius: 50%; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    border: 1.5px solid #E5E7EB; background: white;
+    font-size: 0.6rem; color: #D1D5DB;
+  }
+  .tl-dot.done  { background: rgba(16,185,129,0.1); border-color: #10b981; color: #10b981; }
+  .tl-dot.active { background: rgba(14,138,138,0.1); border-color: #0E8A8A; color: #0E8A8A; }
+  .tl-text strong { font-size: 0.78rem; color: #111827; font-weight: 600; display: block; font-family: 'Inter', sans-serif; }
+  .tl-text span { font-size: 0.67rem; color: #9CA3AF; font-family: 'DM Sans', sans-serif; }
+
+  /* info rows */
+  .info-row {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 0.6rem 0; border-bottom: 1px solid #F3F4F6;
+    font-family: 'DM Sans', sans-serif;
+  }
+  .info-row:last-child { border-bottom: none; }
+  .info-row-label { font-size: 0.73rem; color: #9CA3AF; }
+  .info-row-value { font-size: 0.76rem; font-weight: 600; color: #374151; }
+
+  .back-btn {
+    display: flex; align-items: center; justify-content: center; gap: 0.45rem;
+    background: #111827; color: white; padding: 0.65rem 1.2rem;
+    border-radius: 9px; text-decoration: none; font-size: 0.78rem;
+    font-weight: 600; font-family: 'DM Sans', sans-serif;
+    transition: all 0.18s; width: 100%; box-sizing: border-box;
+  }
+  .back-btn:hover { background: #0E8A8A; transform: translateY(-1px); }
+
+  @media (max-width: 960px) {
+    .detail-layout { grid-template-columns: 1fr; }
+    .meta-grid { grid-template-columns: 1fr; }
+    .page-header { flex-direction: column; gap: 0.75rem; }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- PAGE HEADER -->
+<div class="page-header">
+  <div>
+    <div class="page-breadcrumb">
+      <a href="{% url 'admin_app:admin_dashboard' %}">Dashboard</a>
+      <i class="fas fa-chevron-right"></i>
+      <a href="{% url 'support:admin_complaints' %}">Support Tickets</a>
+      <i class="fas fa-chevron-right"></i>
+      <span>#SR{{ complaint.id|stringformat:"09d" }}</span>
+    </div>
+    <div class="page-title">{{ complaint.title }}</div>
+    <div class="page-desc">Submitted by {{ complaint.user.username }} · {{ complaint.created_at|date:"d M Y, H:i" }}</div>
+  </div>
+  <span class="status-badge status-{{ complaint.status }}" style="align-self:flex-end;margin-bottom:0.15rem;font-size:0.72rem;padding:0.3rem 0.9rem;">
+    {% if complaint.status == 'open' %}Open
+    {% elif complaint.status == 'in_progress' %}In Progress
+    {% elif complaint.status == 'resolved' %}Resolved
+    {% else %}Closed{% endif %}
+  </span>
+</div>
+
+<div class="detail-layout">
+
+  <!-- LEFT COLUMN -->
+  <div>
+
+    <!-- USER PANEL -->
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-header-left"><div class="panel-dot teal"></div> Submitted By</div>
+      </div>
+      <div class="panel-body" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem;">
+        <div class="user-cell">
+          <div class="user-avatar">{{ complaint.user.username|slice:":2"|upper }}</div>
+          <div>
+            <div class="user-name">{{ complaint.user.username }}</div>
+            <div class="user-meta">{{ complaint.user.email|default:"No email" }}</div>
+          </div>
+        </div>
+        <span class="role-tag role-{{ complaint.user.role|default:'traveller' }}">
+          {% if complaint.user.role == 'traveller' %}🧳
+          {% elif complaint.user.role == 'agency' %}🏢
+          {% elif complaint.user.role == 'restaurant' %}🍽️
+          {% else %}👤{% endif %}
+          {{ complaint.user.role|title|default:"User" }}
+        </span>
+      </div>
+    </div>
+
+    <!-- COMPLAINT DETAILS PANEL -->
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-header-left"><div class="panel-dot amber"></div> Complaint Details</div>
+        <span class="status-badge status-{{ complaint.status }}" style="font-size:0.62rem;">
+          {% if complaint.status == 'open' %}Open
+          {% elif complaint.status == 'in_progress' %}In Progress
+          {% elif complaint.status == 'resolved' %}Resolved
+          {% else %}Closed{% endif %}
+        </span>
+      </div>
+      <div class="panel-body">
+        <p style="font-size:0.68rem;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;color:#9CA3AF;margin-bottom:0.5rem;font-family:'DM Sans',sans-serif;">Description</p>
+        <div class="desc-block">{{ complaint.description }}</div>
+
+        <div class="meta-grid">
+          <div class="meta-item">
+            <span class="meta-label">Ticket ID</span>
+            <span class="meta-value">#SR{{ complaint.id|stringformat:"09d" }}</span>
+          </div>
+          <div class="meta-item">
+            <span class="meta-label">Submitted</span>
+            <span class="meta-value">{{ complaint.created_at|date:"d M Y, H:i" }}</span>
+          </div>
+          <div class="meta-item">
+            <span class="meta-label">Last Updated</span>
+            <span class="meta-value">{{ complaint.updated_at|date:"d M Y, H:i" }}</span>
+          </div>
+          <div class="meta-item">
+            <span class="meta-label">Attachment</span>
+            <span class="meta-value">{% if complaint.attachment %}Yes{% else %}None{% endif %}</span>
+          </div>
+        </div>
+
+        {% if complaint.attachment %}
+          <a href="{{ complaint.attachment.url }}" target="_blank" class="attachment-link">
+            <i class="fas fa-paperclip"></i> View Attachment
+          </a>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- PREVIOUS RESPONSE (if any) -->
+    {% if complaint.admin_response %}
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-header-left"><div class="panel-dot green"></div> Previous Response</div>
+      </div>
+      <div class="panel-body">
+        <div class="response-block">
+          <div class="response-by">
+            <div class="response-by-icon"><i class="fas fa-shield-alt" style="font-size:0.65rem;"></i></div>
+            <div>
+              <strong>Wayzo Admin Team</strong>
+              <span>{{ complaint.updated_at|date:"d M Y" }}</span>
+            </div>
+          </div>
+          {{ complaint.admin_response|linebreaks }}
+        </div>
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- RESPOND & UPDATE PANEL -->
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-header-left">
+          <div class="panel-dot teal"></div>
+          {% if complaint.admin_response %}Update Response{% else %}Respond to Ticket{% endif %}
+        </div>
+      </div>
+      <div class="panel-body">
+        <form method="POST" action="{% url 'support:update_complaint' complaint.id %}">
+          {% csrf_token %}
+
+          <div class="form-group">
+            <label class="form-label"><i class="fas fa-dot-circle" style="margin-right:0.3rem;"></i>Update Status</label>
+            <select class="form-control" name="status">
+              <option value="open"        {% if complaint.status == 'open' %}selected{% endif %}>Open</option>
+              <option value="in_progress" {% if complaint.status == 'in_progress' %}selected{% endif %}>In Progress</option>
+              <option value="resolved"    {% if complaint.status == 'resolved' %}selected{% endif %}>Resolved</option>
+              <option value="closed"      {% if complaint.status == 'closed' %}selected{% endif %}>Closed</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label"><i class="fas fa-reply" style="margin-right:0.3rem;"></i>Admin Response</label>
+            <textarea class="form-control" name="admin_response"
+              placeholder="Type your response to the user here…">{{ complaint.admin_response|default:"" }}</textarea>
+          </div>
+
+          <button type="submit" class="btn-submit">
+            <i class="fas fa-paper-plane"></i>
+            {% if complaint.admin_response %}Update & Save{% else %}Send Response{% endif %}
+          </button>
+        </form>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- RIGHT SIDEBAR -->
+  <div class="sidebar-panels">
+
+    <!-- TICKET PROGRESS -->
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-header-left"><div class="panel-dot teal"></div> Ticket Progress</div>
+      </div>
+      <div class="panel-body">
+        <div class="timeline-item">
+          <div class="tl-dot done"><i class="fas fa-check"></i></div>
+          <div class="tl-text">
+            <strong>Ticket Submitted</strong>
+            <span>{{ complaint.created_at|date:"d M Y, H:i" }}</span>
+          </div>
+        </div>
+        <div class="timeline-item">
+          <div class="tl-dot {% if complaint.status == 'in_progress' or complaint.status == 'resolved' or complaint.status == 'closed' %}done{% elif complaint.status == 'open' %}active{% endif %}">
+            <i class="fas {% if complaint.status == 'in_progress' or complaint.status == 'resolved' or complaint.status == 'closed' %}fa-check{% else %}fa-clock{% endif %}"></i>
+          </div>
+          <div class="tl-text">
+            <strong>Under Review</strong>
+            <span>{% if complaint.status == 'open' %}Pending assignment{% else %}Being reviewed{% endif %}</span>
+          </div>
+        </div>
+        <div class="timeline-item">
+          <div class="tl-dot {% if complaint.admin_response %}done{% elif complaint.status == 'in_progress' %}active{% endif %}">
+            <i class="fas {% if complaint.admin_response %}fa-check{% else %}fa-comment{% endif %}"></i>
+          </div>
+          <div class="tl-text">
+            <strong>Response Sent</strong>
+            <span>{% if complaint.admin_response %}Response on record{% else %}Awaiting response{% endif %}</span>
+          </div>
+        </div>
+        <div class="timeline-item">
+          <div class="tl-dot {% if complaint.status == 'resolved' or complaint.status == 'closed' %}done{% endif %}">
+            <i class="fas {% if complaint.status == 'resolved' or complaint.status == 'closed' %}fa-check{% else %}fa-flag-checkered{% endif %}"></i>
+          </div>
+          <div class="tl-text">
+            <strong>Resolved / Closed</strong>
+            <span>{% if complaint.status == 'resolved' or complaint.status == 'closed' %}Issue closed{% else %}Pending resolution{% endif %}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TICKET INFO -->
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-header-left"><div class="panel-dot slate"></div> Ticket Info</div>
+      </div>
+      <div class="panel-body" style="padding-top:0.6rem;padding-bottom:0.4rem;">
+        <div class="info-row">
+          <span class="info-row-label">Ticket ID</span>
+          <span class="info-row-value">#SR{{ complaint.id|stringformat:"09d" }}</span>
+        </div>
+        <div class="info-row">
+          <span class="info-row-label">Status</span>
+          <span class="status-badge status-{{ complaint.status }}" style="font-size:0.6rem;padding:0.2rem 0.6rem;">
+            {% if complaint.status == 'open' %}Open
+            {% elif complaint.status == 'in_progress' %}In Progress
+            {% elif complaint.status == 'resolved' %}Resolved
+            {% else %}Closed{% endif %}
+          </span>
+        </div>
+        <div class="info-row">
+          <span class="info-row-label">User</span>
+          <span class="info-row-value">{{ complaint.user.username }}</span>
+        </div>
+        <div class="info-row">
+          <span class="info-row-label">Role</span>
+          <span class="info-row-value">{{ complaint.user.role|title|default:"User" }}</span>
+        </div>
+        <div class="info-row">
+          <span class="info-row-label">Opened</span>
+          <span class="info-row-value">{{ complaint.created_at|date:"d M Y" }}</span>
+        </div>
+        <div class="info-row">
+          <span class="info-row-label">Updated</span>
+          <span class="info-row-value">{{ complaint.updated_at|date:"d M Y" }}</span>
+        </div>
+        <div class="info-row">
+          <span class="info-row-label">Has Response</span>
+          <span class="info-row-value">{% if complaint.admin_response %}Yes{% else %}No{% endif %}</span>
+        </div>
+        <div class="info-row">
+          <span class="info-row-label">Attachment</span>
+          <span class="info-row-value">{% if complaint.attachment %}Yes{% else %}None{% endif %}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- BACK BUTTON -->
+    <a href="{% url 'support:admin_complaints' %}" class="back-btn">
+      <i class="fas fa-arrow-left"></i> Back to Tickets
+    </a>
+
+  </div>
+</div>
+
+{% endblock %}

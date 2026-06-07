@@ -29,5 +29,6 @@ urlpatterns = [
     path('community/', include('community.urls')),
     path('planner/', include('planner.urls')),
     path('destinations/', include('destinations.urls')),
+    path("support/",include("support.urls")),
     
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

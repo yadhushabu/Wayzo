@@ -1,0 +1,485 @@
+<!-- travellers/templates/travellers/change_email.html -->
+{% extends "travellers/base.html" %}
+{% load static %}
+
+{% block title %}Change Email | Wayzo{% endblock %}
+
+{% block extra_styles %}
+<style>
+    .change-email-container {
+        max-width: 550px;
+        margin: 2rem auto;
+        padding: 0 1rem;
+    }
+    
+    .email-card {
+        background: white;
+        border-radius: 24px;
+        border: 1px solid var(--gray-200);
+        overflow: hidden;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    }
+    
+    .card-header {
+        background: linear-gradient(135deg, var(--teal) 0%, var(--teal-dark) 100%);
+        padding: 1.5rem;
+        text-align: center;
+        color: white;
+    }
+    
+    .card-header h1 {
+        font-size: 1.5rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+    }
+    
+    .card-header p {
+        font-size: 0.85rem;
+        opacity: 0.9;
+    }
+    
+    .card-body {
+        padding: 2rem;
+    }
+    
+    .current-email-box {
+        background: var(--gray-100);
+        border-radius: 16px;
+        padding: 1rem 1.2rem;
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        border-left: 3px solid var(--teal);
+    }
+    
+    .current-email-icon {
+        width: 44px;
+        height: 44px;
+        background: var(--teal-pale);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .current-email-icon svg {
+        width: 22px;
+        height: 22px;
+        stroke: var(--teal);
+    }
+    
+    .current-email-info h4 {
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        color: var(--text-light);
+        margin-bottom: 0.25rem;
+    }
+    
+    .current-email-info p {
+        font-size: 1rem;
+        font-weight: 600;
+        color: var(--text-dark);
+        word-break: break-all;
+    }
+    
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+    
+    .form-group label {
+        display: block;
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: var(--text-soft);
+        margin-bottom: 0.5rem;
+    }
+    
+    .form-group label .required {
+        color: var(--red);
+        margin-left: 0.2rem;
+    }
+    
+    .form-group input {
+        width: 100%;
+        padding: 0.85rem 1rem;
+        border: 1.5px solid var(--gray-200);
+        border-radius: 12px;
+        font-size: 0.95rem;
+        transition: all 0.2s;
+        font-family: 'Inter', sans-serif;
+    }
+    
+    .form-group input:focus {
+        outline: none;
+        border-color: var(--teal);
+        box-shadow: 0 0 0 3px rgba(14,138,138,0.1);
+    }
+    
+    .form-group input.error {
+        border-color: var(--red);
+    }
+    
+    .help-text {
+        font-size: 0.7rem;
+        color: var(--text-light);
+        margin-top: 0.4rem;
+        display: flex;
+        align-items: center;
+        gap: 0.3rem;
+    }
+    
+    .help-text svg {
+        width: 14px;
+        height: 14px;
+        stroke: currentColor;
+    }
+    
+    .btn-change {
+        width: 100%;
+        background: var(--teal);
+        color: white;
+        border: none;
+        border-radius: 40px;
+        padding: 1rem;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+        margin-top: 0.5rem;
+    }
+    
+    .btn-change:hover {
+        background: var(--teal-dark);
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(14,138,138,0.3);
+    }
+    
+    .btn-change:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
+    
+    .btn-cancel {
+        width: 100%;
+        background: transparent;
+        border: 1.5px solid var(--gray-200);
+        color: var(--text-soft);
+        padding: 0.9rem;
+        border-radius: 40px;
+        font-size: 0.9rem;
+        font-weight: 500;
+        cursor: pointer;
+        text-decoration: none;
+        display: inline-block;
+        text-align: center;
+        margin-top: 1rem;
+        transition: all 0.2s;
+    }
+    
+    .btn-cancel:hover {
+        border-color: var(--teal);
+        color: var(--teal);
+    }
+    
+    .warning-box {
+        background: #FFF3E0;
+        border: 1px solid #FFE0B2;
+        border-radius: 12px;
+        padding: 1rem;
+        margin-bottom: 1.5rem;
+        display: flex;
+        gap: 0.8rem;
+    }
+    
+    .warning-icon {
+        width: 32px;
+        height: 32px;
+        background: rgba(245,158,11,0.15);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+    
+    .warning-icon svg {
+        width: 18px;
+        height: 18px;
+        stroke: var(--amber);
+    }
+    
+    .warning-text {
+        flex: 1;
+    }
+    
+    .warning-text h5 {
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: var(--amber);
+        margin-bottom: 0.25rem;
+    }
+    
+    .warning-text p {
+        font-size: 0.75rem;
+        color: var(--text-soft);
+        line-height: 1.5;
+    }
+    
+    .alert {
+        padding: 1rem;
+        border-radius: 12px;
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.8rem;
+    }
+    
+    .alert-success {
+        background: #DCFCE7;
+        border: 1px solid #BBF7D0;
+        color: #166534;
+    }
+    
+    .alert-error {
+        background: #FEE2E2;
+        border: 1px solid #FECACA;
+        color: #991B1B;
+    }
+    
+    .alert-warning {
+        background: #FEF3C7;
+        border: 1px solid #FDE68A;
+        color: #92400E;
+    }
+    
+    .alert svg {
+        width: 20px;
+        height: 20px;
+        stroke: currentColor;
+        flex-shrink: 0;
+    }
+    
+    .password-hint {
+        background: var(--gray-100);
+        border-radius: 10px;
+        padding: 0.6rem 0.8rem;
+        font-size: 0.7rem;
+        color: var(--text-light);
+        margin-top: 0.4rem;
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+    }
+    
+    @media (max-width: 640px) {
+        .change-email-container {
+            margin: 1rem auto;
+        }
+        
+        .card-body {
+            padding: 1.5rem;
+        }
+        
+        .current-email-box {
+            flex-direction: column;
+            text-align: center;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="change-email-container">
+    <div class="email-card">
+        <div class="card-header">
+            <h1>Change Email Address</h1>
+            <p>Update your account email address</p>
+        </div>
+        
+        <div class="card-body">
+            <!-- Current Email Display -->
+            <div class="current-email-box">
+                <div class="current-email-icon">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+                        <polyline points="22,6 12,13 2,6"/>
+                    </svg>
+                </div>
+                <div class="current-email-info">
+                    <h4>Current Email Address</h4>
+                    <p>{{ current_email }}</p>
+                </div>
+            </div>
+            
+            <!-- Warning Box -->
+            <div class="warning-box">
+                <div class="warning-icon">
+                    <svg viewBox="0 0 24 24">
+                        <circle cx="12" cy="12" r="10"/>
+                        <line x1="12" y1="8" x2="12" y2="12"/>
+                        <line x1="12" y1="16" x2="12.01" y2="16"/>
+                    </svg>
+                </div>
+                <div class="warning-text">
+                    <h5>Important Note</h5>
+                    <p>Changing your email will affect all future communications and notifications. You'll need to verify your new email address.</p>
+                </div>
+            </div>
+            
+            <!-- Messages -->
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-{% if message.tags == 'error' %}error{% elif message.tags == 'warning' %}warning{% else %}success{% endif %}">
+                        <svg viewBox="0 0 24 24">
+                            {% if message.tags == 'success' %}
+                                <polyline points="20 6 9 17 4 12"/>
+                            {% elif message.tags == 'error' %}
+                                <circle cx="12" cy="12" r="10"/>
+                                <line x1="12" y1="8" x2="12" y2="12"/>
+                                <line x1="12" y1="16" x2="12.01" y2="16"/>
+                            {% else %}
+                                <circle cx="12" cy="12" r="10"/>
+                                <line x1="12" y1="8" x2="12" y2="12"/>
+                                <line x1="12" y1="16" x2="12.01" y2="16"/>
+                            {% endif %}
+                        </svg>
+                        <span>{{ message }}</span>
+                    </div>
+                {% endfor %}
+            {% endif %}
+            
+            <!-- Change Email Form -->
+            <form method="POST" id="changeEmailForm">
+                {% csrf_token %}
+                
+                <div class="form-group">
+                    <label>New Email Address <span class="required">*</span></label>
+                    <input type="email" 
+                           name="new_email" 
+                           id="newEmail"
+                           placeholder="Enter your new email address"
+                           required
+                           autocomplete="off">
+                    <div class="help-text">
+                        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                        Enter a valid email address you have access to
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label>Confirm New Email <span class="required">*</span></label>
+                    <input type="email" 
+                           name="confirm_email" 
+                           id="confirmEmail"
+                           placeholder="Confirm your new email address"
+                           required>
+                    <div class="help-text" id="emailMatchHelp">
+                        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                        Both email addresses must match
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label>Current Password <span class="required">*</span></label>
+                    <input type="password" 
+                           name="current_password" 
+                           id="currentPassword"
+                           placeholder="Enter your current password"
+                           required>
+                    <div class="password-hint">
+                        <svg viewBox="0 0 24 24" width="14" height="14"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                        For security, please enter your current password
+                    </div>
+                </div>
+                
+                <button type="submit" class="btn-change" id="submitBtn">
+                    Update Email Address
+                </button>
+                
+                <a href="{% url 'travellers:dashboard' %}" class="btn-cancel">
+                    Cancel
+                </a>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Real-time email validation
+    const newEmail = document.getElementById('newEmail');
+    const confirmEmail = document.getElementById('confirmEmail');
+    const emailMatchHelp = document.getElementById('emailMatchHelp');
+    const submitBtn = document.getElementById('submitBtn');
+    const form = document.getElementById('changeEmailForm');
+    
+    function validateEmails() {
+        const newEmailVal = newEmail.value;
+        const confirmEmailVal = confirmEmail.value;
+        
+        if (newEmailVal && confirmEmailVal) {
+            if (newEmailVal === confirmEmailVal) {
+                emailMatchHelp.innerHTML = '<svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> ✓ Emails match';
+                emailMatchHelp.style.color = '#16a34a';
+                return true;
+            } else {
+                emailMatchHelp.innerHTML = '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg> ❌ Emails do not match';
+                emailMatchHelp.style.color = '#dc2626';
+                return false;
+            }
+        }
+        return false;
+    }
+    
+    function validateForm() {
+        const newEmailVal = newEmail.value;
+        const confirmEmailVal = confirmEmail.value;
+        const passwordVal = document.getElementById('currentPassword').value;
+        
+        if (newEmailVal && confirmEmailVal && newEmailVal === confirmEmailVal && passwordVal) {
+            submitBtn.disabled = false;
+        } else {
+            submitBtn.disabled = true;
+        }
+    }
+    
+    if (newEmail && confirmEmail) {
+        newEmail.addEventListener('input', function() {
+            validateEmails();
+            validateForm();
+        });
+        
+        confirmEmail.addEventListener('input', function() {
+            validateEmails();
+            validateForm();
+        });
+    }
+    
+    const passwordInput = document.getElementById('currentPassword');
+    if (passwordInput) {
+        passwordInput.addEventListener('input', validateForm);
+    }
+    
+    // Form submission validation
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            if (!validateEmails()) {
+                e.preventDefault();
+                alert('Please make sure both email addresses match.');
+                return false;
+            }
+            
+            if (!passwordInput.value) {
+                e.preventDefault();
+                alert('Please enter your current password.');
+                return false;
+            }
+            
+            return true;
+        });
+    }
+    
+    // Initial validation
+    validateForm();
+</script>
+{% endblock %}

@@ -1,351 +1,772 @@
+<!-- travellers/templates/travellers/book_package.html -->
+{% extends "travellers/base.html" %}
 {% load static %}
 {% load custom_filters %}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Book {{ package.title }} | Wayzo</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
-        body {
-            font-family: 'Inter', sans-serif;
-            background: #F8F9FC;
-            color: #1E242C;
-        }
-        
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 2rem;
-        }
-        
-        .booking-header {
-            margin-bottom: 2rem;
-        }
-        
-        .booking-header h1 {
-            font-family: 'Playfair Display', serif;
-            font-size: 2rem;
-            margin-bottom: 0.5rem;
-        }
-        
-        .booking-header .breadcrumb {
-            color: #6F7886;
-            font-size: 0.875rem;
-        }
-        
-        .booking-header .breadcrumb a {
-            color: #3A4A67;
-            text-decoration: none;
-        }
-        
+
+{% block title %}Book {{ package.title }} | Wayzo{% endblock %}
+
+{% block nav_packages %}active{% endblock %}
+
+{% block extra_styles %}
+<style>
+    /* Hero Section - EXACTLY matching all_packages template */
+    .hero-section {
+        position: relative;
+        height: 560px;
+        overflow: hidden;
+        flex-shrink: 0;
+    }
+    .hero-bg {
+        position: absolute; inset: 0;
+        background-image: url("{% static 'images/book.jpg' %}");
+        background-size: cover;
+        background-position: center 35%;
+        z-index: 0;
+    }
+    .hero-bg::after {
+        content: "";
+        position: absolute; inset: 0;
+        background: linear-gradient(160deg, rgba(6,16,24,0.78) 0%, rgba(10,50,50,0.62) 45%, rgba(6,16,24,0.42) 100%);
+    }
+    .hero-fade {
+        position: absolute; bottom: 0; left: 0; right: 0;
+        height: 140px;
+        background: linear-gradient(to bottom, transparent 0%, var(--gray-100) 100%);
+        z-index: 2;
+        pointer-events: none;
+    }
+    .hero-content {
+        position: relative; z-index: 3;
+        height: 100%;
+        display: flex; flex-direction: column;
+        align-items: flex-start; justify-content: center;
+        padding: 5rem 3rem 7rem;
+        max-width: 680px;
+    }
+    .hero-eyebrow {
+        display: inline-flex; align-items: center; gap: 0.5rem;
+        background: rgba(255,255,255,0.1); backdrop-filter: blur(10px);
+        border: 1px solid rgba(255,255,255,0.2);
+        color: rgba(255,255,255,0.9);
+        font-size: 0.68rem; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase;
+        padding: 0.38rem 1rem; border-radius: 40px; margin-bottom: 1.1rem;
+    }
+    .hero-eyebrow::before {
+        content: ""; display: inline-block; width: 6px; height: 6px; border-radius: 50%;
+        background: #5FC5C5; flex-shrink: 0;
+    }
+    .hero-section h1 {
+        font-family: 'Playfair Display', serif;
+        font-size: 3.4rem; font-weight: 600; line-height: 1.08;
+        color: white; margin-bottom: 0.7rem; letter-spacing: -0.01em;
+    }
+    .hero-section p {
+        font-size: 0.9rem; color: rgba(255,255,255,0.7);
+        margin-bottom: 1.8rem; line-height: 1.65; font-weight: 300;
+    }
+    
+    /* Page Body - matching all_packages */
+    .page-body {
+        position: relative;
+        z-index: 10;
+        margin-top: -70px;
+        padding: 0 2.5rem 2rem;
+    }
+    
+    /* Image Gallery - styled like package cards */
+    .gallery-section {
+        background: white;
+        border-radius: 18px;
+        border: 1px solid var(--gray-200);
+        overflow: hidden;
+        margin-bottom: 2rem;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    }
+    
+    .main-image-container {
+        width: 100%;
+        height: 450px;
+        overflow: hidden;
+        position: relative;
+        background: var(--gray-150);
+    }
+    
+    .main-image {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.4s ease;
+    }
+    
+    .main-image:hover {
+        transform: scale(1.02);
+    }
+    
+    .thumbnail-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 0.5rem;
+        padding: 1rem;
+        background: var(--gray-100);
+    }
+    
+    .thumbnail {
+        height: 100px;
+        object-fit: cover;
+        border-radius: 10px;
+        cursor: pointer;
+        transition: all 0.2s;
+        border: 2px solid transparent;
+    }
+    
+    .thumbnail:hover {
+        transform: scale(1.02);
+        border-color: var(--teal);
+    }
+    
+    .thumbnail.active {
+        border-color: var(--teal);
+        box-shadow: 0 0 0 2px rgba(14,138,138,0.3);
+    }
+    
+    /* Package Details Card - matching package card style */
+    .detail-card {
+        background: white;
+        border-radius: 18px;
+        border: 1px solid var(--gray-200);
+        overflow: hidden;
+        margin-bottom: 2rem;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        transition: transform 0.28s ease, box-shadow 0.28s ease;
+    }
+    
+    .detail-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+    }
+    
+    .detail-header {
+        padding: 1.5rem;
+        border-bottom: 1px solid var(--gray-200);
+    }
+    
+    .detail-header h2 {
+        font-family: 'Playfair Display', serif;
+        font-size: 1.3rem;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+        color: var(--gray-900);
+    }
+    
+    .detail-section {
+        padding: 1.5rem;
+        border-bottom: 1px solid var(--gray-100);
+    }
+    
+    .detail-section:last-child {
+        border-bottom: none;
+    }
+    
+    .section-title {
+        font-size: 0.9rem;
+        font-weight: 700;
+        margin-bottom: 1rem;
+        color: var(--gray-900);
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .section-title::before {
+        content: '';
+        width: 3px;
+        height: 18px;
+        background: var(--teal);
+        border-radius: 2px;
+    }
+    
+    .package-description {
+        color: var(--text-soft);
+        line-height: 1.7;
+        font-size: 0.9rem;
+    }
+    
+    /* Price Card */
+    .price-card {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: var(--teal-pale);
+        padding: 1rem 1.5rem;
+        border-radius: 12px;
+        margin: 1rem 1.5rem;
+    }
+    
+    .price-label {
+        font-size: 0.75rem;
+        color: var(--text-light);
+    }
+    
+    .price-amount {
+        font-size: 1.8rem;
+        font-weight: 700;
+        color: var(--teal);
+    }
+    
+    .price-original {
+        text-decoration: line-through;
+        color: var(--gray-400);
+        font-size: 0.9rem;
+        margin-left: 0.5rem;
+    }
+    
+    .discount-badge {
+        background: var(--green);
+        color: white;
+        padding: 0.2rem 0.5rem;
+        border-radius: 20px;
+        font-size: 0.7rem;
+        margin-left: 0.5rem;
+    }
+    
+    /* Highlights Grid */
+    .highlights-grid {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+    }
+    
+    .highlight-tag {
+        background: var(--teal-pale);
+        color: var(--teal);
+        padding: 0.4rem 1rem;
+        border-radius: 40px;
+        font-size: 0.8rem;
+        font-weight: 500;
+    }
+    
+    /* Lists Grid */
+    .lists-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1.5rem;
+    }
+    
+    .list-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.4rem 0;
+        font-size: 0.85rem;
+        color: var(--text-soft);
+    }
+    
+    .list-item.included::before {
+        content: "✓";
+        color: var(--green);
+        font-weight: bold;
+    }
+    
+    .list-item.excluded::before {
+        content: "✗";
+        color: var(--red);
+        font-weight: bold;
+    }
+    
+    /* Itinerary */
+    .itinerary-item {
+        display: flex;
+        gap: 1rem;
+        margin-bottom: 1rem;
+        padding: 0.75rem;
+        background: var(--gray-100);
+        border-radius: 12px;
+        transition: all 0.2s;
+    }
+    
+    .itinerary-item:hover {
+        background: var(--gray-150);
+    }
+    
+    .itinerary-day {
+        width: 40px;
+        height: 40px;
+        background: var(--teal);
+        color: white;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        flex-shrink: 0;
+    }
+    
+    .itinerary-text {
+        flex: 1;
+    }
+    
+    .itinerary-text strong {
+        display: block;
+        margin-bottom: 0.25rem;
+    }
+    
+    .itinerary-text p {
+        font-size: 0.8rem;
+        color: var(--text-light);
+    }
+    
+    /* Booking Card */
+    .booking-card {
+        background: white;
+        border-radius: 18px;
+        border: 1px solid var(--gray-200);
+        overflow: hidden;
+        position: sticky;
+        top: 100px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    }
+    
+    .booking-header {
+        background: var(--teal);
+        color: white;
+        padding: 1.2rem 1.5rem;
+        text-align: center;
+    }
+    
+    .booking-header h3 {
+        font-size: 1.1rem;
+        font-weight: 700;
+        margin-bottom: 0.25rem;
+    }
+    
+    .booking-header p {
+        font-size: 0.7rem;
+        opacity: 0.9;
+    }
+    
+    .booking-form {
+        padding: 1.5rem;
+    }
+    
+    .form-group {
+        margin-bottom: 1.2rem;
+    }
+    
+    .form-group label {
+        display: block;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        color: var(--text-light);
+        margin-bottom: 0.4rem;
+    }
+    
+    .form-group input, .form-group select, .form-group textarea {
+        width: 100%;
+        padding: 0.7rem 0.9rem;
+        border: 1.5px solid var(--gray-200);
+        border-radius: 10px;
+        font-size: 0.85rem;
+        font-family: 'Inter', sans-serif;
+        transition: all 0.2s;
+    }
+    
+    .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+        outline: none;
+        border-color: var(--teal);
+        box-shadow: 0 0 0 3px rgba(14,138,138,0.1);
+    }
+    
+    .price-breakdown {
+        background: var(--gray-100);
+        border-radius: 12px;
+        padding: 1rem;
+        margin: 1rem 0;
+    }
+    
+    .price-breakdown p {
+        display: flex;
+        justify-content: space-between;
+        font-size: 0.85rem;
+        margin-bottom: 0.5rem;
+    }
+    
+    .price-breakdown .total {
+        font-weight: 700;
+        font-size: 0.95rem;
+        margin-top: 0.5rem;
+        padding-top: 0.5rem;
+        border-top: 1px solid var(--gray-200);
+    }
+    
+    .btn-book {
+        width: 100%;
+        padding: 0.9rem;
+        background: var(--teal);
+        color: white;
+        border: none;
+        border-radius: 40px;
+        font-size: 0.9rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    
+    .btn-book:hover {
+        background: var(--teal-dark);
+        transform: translateY(-1px);
+    }
+    
+    .btn-cancel {
+        width: 100%;
+        background: transparent;
+        border: 1.5px solid var(--gray-200);
+        color: var(--text-soft);
+        padding: 0.7rem;
+        border-radius: 40px;
+        font-size: 0.85rem;
+        font-weight: 500;
+        cursor: pointer;
+        text-decoration: none;
+        display: inline-block;
+        text-align: center;
+        margin-top: 0.8rem;
+    }
+    
+    .btn-cancel:hover {
+        border-color: var(--teal);
+        color: var(--teal);
+    }
+    
+    .cancellation-box {
+        background: #FFF3E0;
+        border-radius: 12px;
+        padding: 1rem;
+        margin-top: 1rem;
+    }
+    
+    .cancellation-box h4 {
+        font-size: 0.8rem;
+        margin-bottom: 0.5rem;
+        color: var(--amber);
+    }
+    
+    .policy-item {
+        display: flex;
+        justify-content: space-between;
+        font-size: 0.7rem;
+        padding: 0.3rem 0;
+    }
+    
+    /* Layout Grid */
+    .booking-grid {
+        display: grid;
+        grid-template-columns: 1fr 380px;
+        gap: 2rem;
+    }
+    
+    .alert {
+        padding: 0.8rem 1rem;
+        border-radius: 12px;
+        margin-bottom: 1rem;
+        font-size: 0.85rem;
+    }
+    
+    .alert-error {
+        background: #FEE2E2;
+        color: #991B1B;
+        border: 1px solid #FECACA;
+    }
+    
+    .alert-success {
+        background: #DCFCE7;
+        color: #166534;
+        border: 1px solid #BBF7D0;
+    }
+    
+    .help-text {
+        font-size: 0.65rem;
+        color: var(--text-light);
+        margin-top: 0.2rem;
+    }
+    
+    @media (max-width: 1100px) {
         .booking-grid {
-            display: grid;
-            grid-template-columns: 1fr 1.5fr;
-            gap: 2rem;
+            gap: 1.5rem;
+        }
+    }
+    
+    @media (max-width: 992px) {
+        .booking-grid {
+            grid-template-columns: 1fr;
         }
         
-        .package-summary {
-            background: white;
-            border-radius: 20px;
-            padding: 1.5rem;
-            border: 1px solid #E9EDF2;
-            position: sticky;
-            top: 2rem;
+        .booking-card {
+            position: static;
         }
         
-        .package-summary h3 {
-            font-family: 'Playfair Display', serif;
-            margin-bottom: 1rem;
+        .hero-section h1 {
+            font-size: 2.6rem;
         }
         
-        .package-image {
-            width: 100%;
-            height: 200px;
-            object-fit: cover;
-            border-radius: 12px;
-            margin-bottom: 1rem;
+        .lists-grid {
+            grid-template-columns: 1fr;
         }
         
-        .price-tag {
+        .main-image-container {
+            height: 350px;
+        }
+    }
+    
+    @media (max-width: 860px) {
+        .hero-section {
+            height: 480px;
+        }
+        .hero-section h1 {
+            font-size: 2.6rem;
+        }
+        .page-body {
+            padding: 0 1.2rem 2rem;
+        }
+    }
+    
+    @media (max-width: 768px) {
+        .hero-content {
+            padding: 3rem 1.5rem 5rem;
+        }
+        
+        .hero-section h1 {
             font-size: 2rem;
-            font-weight: 700;
-            color: #3A4A67;
         }
         
-        .original-price {
-            text-decoration: line-through;
-            color: #9AA3AF;
-            font-size: 1rem;
-            margin-left: 0.5rem;
+        .thumbnail-grid {
+            grid-template-columns: repeat(3, 1fr);
         }
         
-        .discount-badge {
-            background: #22C55E;
-            color: white;
-            padding: 0.25rem 0.5rem;
-            border-radius: 8px;
-            font-size: 0.75rem;
-            margin-left: 0.5rem;
+        .detail-header h2 {
+            font-size: 1.2rem;
         }
         
-        .price-breakdown {
-            margin-top: 1rem;
-            padding-top: 1rem;
-            border-top: 1px solid #E9EDF2;
+        .price-amount {
+            font-size: 1.3rem;
         }
-        
-        .price-breakdown p {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 0.5rem;
-            font-size: 0.875rem;
+    }
+    
+    @media (max-width: 640px) {
+        .hero-section {
+            height: 420px;
         }
-        
-        .price-breakdown .total {
-            font-weight: 700;
-            font-size: 1rem;
-            margin-top: 0.5rem;
-            padding-top: 0.5rem;
-            border-top: 1px solid #E9EDF2;
+        .hero-content {
+            padding: 4rem 1.5rem 6rem;
         }
-        
-        .booking-form {
-            background: white;
-            border-radius: 20px;
-            padding: 1.5rem;
-            border: 1px solid #E9EDF2;
+        .hero-section h1 {
+            font-size: 2rem;
         }
-        
-        .form-group {
-            margin-bottom: 1.5rem;
-        }
-        
-        label {
-            display: block;
-            font-size: 0.75rem;
-            font-weight: 600;
-            text-transform: uppercase;
-            color: #6E7682;
-            margin-bottom: 0.5rem;
-        }
-        
-        label .required {
-            color: #EF4444;
-        }
-        
-        input, select {
-            width: 100%;
-            padding: 0.75rem 1rem;
-            font-size: 0.875rem;
-            font-family: 'Inter', sans-serif;
-            border: 1.5px solid #E9EDF2;
-            border-radius: 12px;
-            transition: all 0.2s;
-        }
-        
-        input:focus, select:focus {
-            outline: none;
-            border-color: #5B6E8C;
-            box-shadow: 0 0 0 3px rgba(91,110,140,0.1);
-        }
-        
-        .help-text {
-            font-size: 0.7rem;
-            color: #6F7886;
-            margin-top: 0.25rem;
-        }
-        
-        .info-box {
-            background: #F1F3F8;
-            border-radius: 12px;
-            padding: 1rem;
-            margin-bottom: 1.5rem;
-        }
-        
-        .info-box p {
-            font-size: 0.8rem;
-            margin-bottom: 0.5rem;
-        }
-        
-        .info-box p:last-child {
-            margin-bottom: 0;
-        }
-        
-        .info-box strong {
-            color: #3A4A67;
-        }
-        
-        .cancellation-policy {
-            background: #FFF3E0;
-            border-radius: 12px;
-            padding: 1rem;
-            margin-top: 1.5rem;
-        }
-        
-        .cancellation-policy h4 {
-            font-size: 0.85rem;
-            margin-bottom: 0.5rem;
-            color: #F59E0B;
-        }
-        
-        .policy-item {
-            display: flex;
-            justify-content: space-between;
-            font-size: 0.75rem;
-            padding: 0.25rem 0;
-        }
-        
-        .btn-primary {
-            width: 100%;
-            background: #3A4A67;
-            color: white;
-            padding: 1rem;
-            border: none;
-            border-radius: 40px;
-            font-size: 1rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-        
-        .btn-primary:hover {
-            background: #2E3A52;
-            transform: translateY(-1px);
-        }
-        
-        .btn-secondary {
-            width: 100%;
-            background: transparent;
-            border: 1.5px solid #E9EDF2;
-            color: #6E7682;
-            padding: 0.75rem;
-            border-radius: 40px;
-            font-size: 0.875rem;
-            font-weight: 500;
-            cursor: pointer;
-            text-decoration: none;
-            display: inline-block;
-            text-align: center;
-            margin-top: 1rem;
-        }
-        
-        .btn-secondary:hover {
-            border-color: #3A4A67;
-            color: #3A4A67;
-        }
-        
-        .alert {
-            padding: 1rem;
-            border-radius: 12px;
-            margin-bottom: 1rem;
-        }
-        
-        .alert-error {
-            background: #FEE2E2;
-            color: #991B1B;
-            border: 1px solid #FECACA;
-        }
-        
-        .alert-success {
-            background: #DCFCE7;
-            color: #166534;
-            border: 1px solid #BBF7D0;
-        }
-        
-        @media (max-width: 768px) {
-            .booking-grid {
-                grid-template-columns: 1fr;
-            }
-            
-            .package-summary {
-                position: static;
-            }
-            
-            .container {
-                padding: 1rem;
-            }
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <div class="booking-header">
-            <div class="breadcrumb">
-                <a href="{% url 'travellers:dashboard' %}">Dashboard</a> > 
-                <a href="{% url 'travellers:all_packages' %}">Packages</a> > 
-                <a href="{% url 'travellers:package_detail' package.id %}">{{ package.title|truncatechars:30 }}</a> > 
-                <span>Book Now</span>
+    }
+    
+    @keyframes fadeUp {
+        from { opacity:0; transform:translateY(12px); }
+        to { opacity:1; transform:translateY(0); }
+    }
+    .page-body > * {
+        animation: fadeUp 0.5s ease both;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Hero Section - EXACTLY matching all_packages template -->
+<div class="hero-section">
+    <div class="hero-bg"></div>
+    <div class="hero-fade"></div>
+    <div class="hero-content">
+        <div class="hero-eyebrow">Complete Your Booking</div>
+        <h1>{{ package.title }}</h1>
+        <p>Secure your spot for this amazing journey</p>
+    </div>
+</div>
+
+<div class="page-body">
+    <!-- Messages -->
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{% if message.tags == 'error' %}error{% else %}{{ message.tags }}{% endif %}">
+                {{ message }}
             </div>
-            <h1>Complete Your Booking</h1>
-            <p>Fill in the details below to confirm your travel plans</p>
+        {% endfor %}
+    {% endif %}
+    
+    <div class="booking-grid">
+        <!-- Left Column - Package Details -->
+        <div>
+            <!-- Image Gallery -->
+            {% if package.images.all %}
+            <div class="gallery-section">
+                <div class="main-image-container">
+                    <img src="{{ package.images.all.0.image.url }}" alt="{{ package.title }}" class="main-image" id="mainImage">
+                </div>
+                <div class="thumbnail-grid">
+                    {% for image in package.images.all %}
+                        <img src="{{ image.image.url }}" alt="{{ package.title }}" 
+                             class="thumbnail {% if forloop.first %}active{% endif %}"
+                             onclick="changeImage('{{ image.image.url }}', this)">
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+            
+            <!-- Package Overview -->
+            <div class="detail-card">
+                <div class="detail-header">
+                    <h2>About This Package</h2>
+                    <p class="package-description">{{ package.description }}</p>
+                </div>
+                
+                <!-- Price Card -->
+                <div class="price-card">
+                    <div>
+                        <div class="price-label">Price per person</div>
+                        <div>
+                            <span class="price-amount">₹{{ price_per_person|floatformat:0 }}</span>
+                            {% if has_discount %}
+                                <span class="price-original">₹{{ original_price|floatformat:0 }}</span>
+                                <span class="discount-badge">Save {{ discount_percentage }}%</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div style="text-align: right;">
+                        <div class="price-label">Availability</div>
+                        <div style="font-weight: 600; color: var(--green);">Limited Slots</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Trip Highlights -->
+            {% if package.highlights %}
+            <div class="detail-card">
+                <div class="detail-section">
+                    <div class="section-title">✨ Trip Highlights</div>
+                    <div class="highlights-grid">
+                        {% for highlight in package.highlights.split|slice:":8" %}
+                            <span class="highlight-tag">{{ highlight }}</span>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+            
+            <!-- What's Included & Not Included -->
+            <div class="detail-card">
+                <div class="detail-section">
+                    <div class="section-title">✅ What's Included</div>
+                    <div class="lists-grid">
+                        <div>
+                            <div class="list-item included">🏨 Premium hotel/resort accommodation</div>
+                            <div class="list-item included">🍽️ Daily breakfast & dinner</div>
+                            <div class="list-item included">🚗 All transfers in AC vehicle</div>
+                            <div class="list-item included">🗣️ Professional English guide</div>
+                        </div>
+                        <div>
+                            <div class="list-item included">🎟️ Sightseeing & entry fees</div>
+                            <div class="list-item included">💧 Complimentary water bottles</div>
+                            <div class="list-item included">🛡️ 24/7 Customer support</div>
+                            <div class="list-item included">📱 Travel assistance app</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="detail-section">
+                    <div class="section-title">❌ What's Not Included</div>
+                    <div class="lists-grid">
+                        <div>
+                            <div class="list-item excluded">✈️ International/domestic flights</div>
+                            <div class="list-item excluded">🛂 Visa fees & travel insurance</div>
+                        </div>
+                        <div>
+                            <div class="list-item excluded">🍺 Personal expenses & tips</div>
+                            <div class="list-item excluded">📱 Optional activities</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Itinerary -->
+            <div class="detail-card">
+                <div class="detail-section">
+                    <div class="section-title">🗓️ Daily Itinerary</div>
+                    {% for i in "12345"|make_list|slice:package.duration_days %}
+                    <div class="itinerary-item">
+                        <div class="itinerary-day">{{ forloop.counter }}</div>
+                        <div class="itinerary-text">
+                            <strong>Day {{ forloop.counter }}: Explore {{ package.places_covered|truncatechars:20 }}</strong>
+                            <p>Experience the beauty of {{ package.places_covered|truncatechars:30 }} with guided tours, local cuisine, and cultural immersion activities.</p>
+                        </div>
+                    </div>
+                    {% endfor %}
+                    <p class="help-text" style="margin-top: 0.5rem;">* Detailed itinerary will be shared after booking confirmation</p>
+                </div>
+            </div>
         </div>
         
-        {% if messages %}
-            {% for message in messages %}
-                <div class="alert alert-{% if message.tags == 'error' %}error{% else %}{{ message.tags }}{% endif %}">
-                    {{ message }}
-                </div>
-            {% endfor %}
-        {% endif %}
-        
-        <div class="booking-grid">
-            <!-- Left Column - Package Summary -->
-            <div class="package-summary">
-                <h3>{{ package.title }}</h3>
-                
-                {% with package.images.first as first_image %}
-                    {% if first_image %}
-                        <img src="{{ first_image.image.url }}" alt="{{ package.title }}" class="package-image">
-                    {% endif %}
-                {% endwith %}
-                
-                <div>
-                    <span class="price-tag">₹{{ price_per_person|floatformat:2 }}</span>
-                    {% if has_discount %}
-                        <span class="original-price">₹{{ original_price|floatformat:2 }}</span>
-                        <span class="discount-badge">{{ discount_percentage }}% OFF</span>
-                    {% endif %}
-                </div>
-                <p style="font-size: 0.8rem; color: #6F7886; margin-top: 0.25rem;">per person</p>
-                
-                <div class="price-breakdown" id="price-breakdown">
-                    <p><span>Price per person</span><span>₹{{ price_per_person|floatformat:2 }}</span></p>
-                    <p><span>Travellers</span><span id="traveller-count-display">1</span></p>
-                    <p class="total"><strong>Total Amount</strong><strong id="total-amount">₹0.00</strong></p>
-                    <p><span>Advance (30%)</span><span id="advance-amount">₹0.00</span></p>
-                    <p><span>Balance to pay</span><span id="balance-amount">₹0.00</span></p>
+        <!-- Right Column - Booking Card -->
+        <div>
+            <div class="booking-card">
+                <div class="booking-header">
+                    <h3>Complete Your Booking</h3>
+                    <p>Secure your spot with easy booking</p>
                 </div>
                 
-                <div class="info-box">
-                    <p>📅 <strong>Duration:</strong> {{ package.duration_days }} days / {{ package.duration_nights }} nights</p>
-                    <p>📍 <strong>Places Covered:</strong> {{ package.places_covered }}</p>
-                    <p>👥 <strong>Group Size:</strong> {{ min_travellers }} - {{ max_travellers }} people</p>
-                    <p>🗣️ <strong>Guide Language:</strong> {{ package.guide_language|default:"English" }}</p>
-                    {% if package.best_season %}
-                        <p>🌸 <strong>Best Season:</strong> {{ package.best_season }}</p>
-                    {% endif %}
-                    {% if package.difficulty_level %}
-                        <p>⛰️ <strong>Difficulty:</strong> {{ package.get_difficulty_level_display }}</p>
-                    {% endif %}
-                </div>
-                
-                <div class="info-box">
-                    <p>📅 <strong>Booking Window:</strong></p>
-                    <p>• Earliest booking: {{ earliest_date|date:"d M, Y" }}</p>
-                    <p>• Latest booking: {{ latest_date|date:"d M, Y" }}</p>
-                    <p class="help-text">Book at least {{ min_booking_days }} days in advance</p>
-                </div>
-                
-                {% if cancellation_policies %}
-                    <div class="cancellation-policy">
+                <div class="booking-form">
+                    <form method="POST" id="bookingForm">
+                        {% csrf_token %}
+                        
+                        <div class="form-group">
+                            <label>Number of Travellers *</label>
+                            <input type="number" 
+                                   name="travellers_count" 
+                                   id="travellers_count" 
+                                   min="{{ min_travellers }}" 
+                                   max="{{ max_travellers }}" 
+                                   value="{{ min_travellers }}"
+                                   required>
+                            <div class="help-text">Minimum {{ min_travellers }}, Maximum {{ max_travellers }} travellers</div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Preferred Travel Date *</label>
+                            <input type="date" 
+                                   name="travel_date" 
+                                   id="travel_date"
+                                   min="{{ earliest_date|date:'Y-m-d' }}" 
+                                   max="{{ latest_date|date:'Y-m-d' }}"
+                                   required>
+                            <div class="help-text">Earliest: {{ earliest_date|date:"d M Y" }} | Latest: {{ latest_date|date:"d M Y" }}</div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Special Requests (Optional)</label>
+                            <textarea name="special_requests" rows="2" placeholder="Any dietary restrictions, room preferences, or special requirements..."></textarea>
+                        </div>
+                        
+                        <div class="price-breakdown">
+                            <p><span>Price per person</span><span>₹{{ price_per_person|floatformat:2 }}</span></p>
+                            <p><span>Travellers</span><span id="traveller-count-display">1</span></p>
+                            <p class="total"><strong>Total Amount</strong><strong id="total-amount">₹0.00</strong></p>
+                            <p><span>Advance Payment (30%)</span><span id="advance-amount">₹0.00</span></p>
+                            <p><span>Balance to pay</span><span id="balance-amount">₹0.00</span></p>
+                        </div>
+                        
+                        <button type="submit" class="btn-book">Confirm Booking →</button>
+                        <a href="{% url 'travellers:package_detail' package.id %}" class="btn-cancel">Cancel</a>
+                        
+                        <div style="text-align: center; margin-top: 0.8rem; font-size: 0.65rem; color: var(--text-light);">
+                            🔒 Secure payment • Best price guaranteed
+                        </div>
+                    </form>
+                    
+                    <!-- Cancellation Policy -->
+                    {% if cancellation_policies %}
+                    <div class="cancellation-box">
                         <h4>🔔 Cancellation & Refund Policy</h4>
                         {% for policy in cancellation_policies %}
                             <div class="policy-item">
@@ -355,127 +776,93 @@
                         {% endfor %}
                         <p class="help-text" style="margin-top: 0.5rem;">* Refund calculated on total booking amount</p>
                     </div>
-                {% endif %}
-            </div>
-            
-            <!-- Right Column - Booking Form -->
-            <div class="booking-form">
-                <form method="POST" id="bookingForm">
-                    {% csrf_token %}
-                    
-                    <div class="form-group">
-                        <label>Travellers Count <span class="required">*</span></label>
-                        <input type="number" 
-                               name="travellers_count" 
-                               id="travellers_count" 
-                               min="{{ min_travellers }}" 
-                               max="{{ max_travellers }}" 
-                               value="{{ min_travellers }}"
-                               required>
-                        <div class="help-text">Minimum {{ min_travellers }}, Maximum {{ max_travellers }} travellers</div>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label>Travel Date <span class="required">*</span></label>
-                        <input type="date" 
-                               name="travel_date" 
-                               id="travel_date"
-                               min="{{ earliest_date|date:'Y-m-d' }}" 
-                               max="{{ latest_date|date:'Y-m-d' }}"
-                               required>
-                        <div class="help-text">Select your preferred travel date</div>
-                    </div>
-                    
-                    <div class="info-box">
-                        <p><strong>What happens next?</strong></p>
-                        <p>1️⃣ You'll receive a booking confirmation within 24 hours</p>
-                        <p>2️⃣ Pay 30% advance to confirm your slot</p>
-                        <p>3️⃣ Remaining 70% to be paid 15 days before travel</p>
-                        <p>4️⃣ Get ready for an amazing journey! ✈️</p>
-                    </div>
-                    
-                    <button type="submit" class="btn-primary">Proceed to Book</button>
-                    <a href="{% url 'travellers:package_detail' package.id %}" class="btn-secondary">Cancel</a>
-                </form>
+                    {% endif %}
+                </div>
             </div>
         </div>
     </div>
+</div>
+
+<script>
+    // Image gallery function
+    function changeImage(imageUrl, element) {
+        document.getElementById('mainImage').src = imageUrl;
+        
+        document.querySelectorAll('.thumbnail').forEach(thumb => {
+            thumb.classList.remove('active');
+        });
+        element.classList.add('active');
+    }
     
-    <script>
-        // Get DOM elements
-        const travellersCount = document.getElementById('travellers_count');
-        const travellerCountDisplay = document.getElementById('traveller-count-display');
-        const totalAmountSpan = document.getElementById('total-amount');
-        const advanceAmountSpan = document.getElementById('advance-amount');
-        const balanceAmountSpan = document.getElementById('balance-amount');
+    // Price calculation
+    const travellersCount = document.getElementById('travellers_count');
+    const travellerCountDisplay = document.getElementById('traveller-count-display');
+    const totalAmountSpan = document.getElementById('total-amount');
+    const advanceAmountSpan = document.getElementById('advance-amount');
+    const balanceAmountSpan = document.getElementById('balance-amount');
+    
+    const pricePerPerson = parseFloat("{{ price_per_person }}");
+    
+    function updatePriceBreakdown() {
+        let count = parseInt(travellersCount.value) || 1;
+        let total = pricePerPerson * count;
+        let advance = total * 0.3;
+        let balance = total - advance;
         
-        // Get price from backend
-        const pricePerPerson = parseFloat("{{ price_per_person }}");
+        travellerCountDisplay.textContent = count;
+        totalAmountSpan.textContent = '₹' + total.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        advanceAmountSpan.textContent = '₹' + advance.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        balanceAmountSpan.textContent = '₹' + balance.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+    
+    if (travellersCount) {
+        travellersCount.addEventListener('input', updatePriceBreakdown);
+        updatePriceBreakdown();
+    }
+    
+    // Travel date validation
+    const travelDateInput = document.getElementById('travel_date');
+    if (travelDateInput) {
+        const today = new Date();
+        const minDays = {{ min_booking_days }};
         
-        // Function to update price breakdown
-        function updatePriceBreakdown() {
-            let count = parseInt(travellersCount.value) || 1;
-            let total = pricePerPerson * count;
-            let advance = total * 0.3;
-            let balance = total - advance;
-            
-            travellerCountDisplay.textContent = count;
-            totalAmountSpan.textContent = '₹' + total.toFixed(2);
-            advanceAmountSpan.textContent = '₹' + advance.toFixed(2);
-            balanceAmountSpan.textContent = '₹' + balance.toFixed(2);
-        }
+        const minDate = new Date();
+        minDate.setDate(today.getDate() + minDays);
+        travelDateInput.min = minDate.toISOString().split('T')[0];
         
-        // Add event listener
-        if (travellersCount) {
-            travellersCount.addEventListener('input', updatePriceBreakdown);
-            updatePriceBreakdown();
-        }
-        
-        // Set minimum date for travel date picker
-        const travelDateInput = document.getElementById('travel_date');
-        if (travelDateInput) {
+        // Set default date
+        const defaultDate = new Date();
+        defaultDate.setDate(today.getDate() + minDays + 7);
+        travelDateInput.value = defaultDate.toISOString().split('T')[0];
+    }
+    
+    // Form validation
+    const bookingForm = document.getElementById('bookingForm');
+    if (bookingForm) {
+        bookingForm.addEventListener('submit', function(e) {
+            const travelDate = new Date(travelDateInput.value);
             const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            
             const minDays = {{ min_booking_days }};
-            const maxDays = {{ max_booking_days }};
+            const minAllowedDate = new Date();
+            minAllowedDate.setDate(today.getDate() + minDays);
             
-            const minDate = new Date();
-            minDate.setDate(today.getDate() + minDays);
+            if (travelDate < minAllowedDate) {
+                e.preventDefault();
+                alert(`Travel date must be at least ${minDays} days from today.`);
+                return false;
+            }
             
-            const maxDate = new Date();
-            maxDate.setDate(today.getDate() + maxDays);
+            const travellers = parseInt(travellersCount.value);
+            if (travellers < {{ min_travellers }} || travellers > {{ max_travellers }}) {
+                e.preventDefault();
+                alert(`Travellers count must be between {{ min_travellers }} and {{ max_travellers }}.`);
+                return false;
+            }
             
-            travelDateInput.min = minDate.toISOString().split('T')[0];
-            travelDateInput.max = maxDate.toISOString().split('T')[0];
-        }
-        
-        // Form validation
-        const bookingForm = document.getElementById('bookingForm');
-        if (bookingForm) {
-            bookingForm.addEventListener('submit', function(e) {
-                const travelDate = new Date(travelDateInput.value);
-                const today = new Date();
-                today.setHours(0, 0, 0, 0);
-                
-                const minDays = {{ min_booking_days }};
-                const minAllowedDate = new Date();
-                minAllowedDate.setDate(today.getDate() + minDays);
-                
-                if (travelDate < minAllowedDate) {
-                    e.preventDefault();
-                    alert(`Travel date must be at least ${minDays} days from today.`);
-                    return false;
-                }
-                
-                const travellers = parseInt(travellersCount.value);
-                if (travellers < {{ min_travellers }} || travellers > {{ max_travellers }}) {
-                    e.preventDefault();
-                    alert(`Travellers count must be between {{ min_travellers }} and {{ max_travellers }}.`);
-                    return false;
-                }
-                
-                return true;
-            });
-        }
-    </script>
-</body>
-</html>
+            return true;
+        });
+    }
+</script>
+{% endblock %}

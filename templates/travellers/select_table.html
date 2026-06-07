@@ -1,0 +1,529 @@
+<!-- travellers/templates/travellers/select_table.html -->
+{% extends 'travellers/base.html' %}
+{% load static %}
+
+{% block title %}Select Your Table - {{ property.restaurant_name }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .booking-container {
+        display: grid;
+        grid-template-columns: 1fr 400px;
+        gap: 2rem;
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 2rem;
+    }
+    
+    .floor-plan {
+        background: #f5f0e8;
+        border-radius: 24px;
+        padding: 1rem;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        position: relative;
+        overflow: auto;
+        min-height: 600px;
+    }
+    
+    .floor-canvas {
+        position: relative;
+        min-height: 600px;
+        background-image: 
+            linear-gradient(#d4d4d4 1px, transparent 1px),
+            linear-gradient(90deg, #d4d4d4 1px, transparent 1px);
+        background-size: 30px 30px;
+        border-radius: 16px;
+    }
+    
+    .table-selectable {
+        position: absolute;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        z-index: 10;
+    }
+    
+    .table-selectable:hover:not(.booked) {
+        transform: scale(1.08);
+        filter: drop-shadow(0 8px 20px rgba(0,0,0,0.2));
+        z-index: 20;
+    }
+    
+    .table-selectable.selected {
+        filter: drop-shadow(0 0 0 4px #0e8a8a);
+        z-index: 30;
+    }
+    
+    .table-selectable.booked {
+        opacity: 0.5;
+        cursor: not-allowed;
+        filter: grayscale(0.3);
+    }
+    
+    .table-card {
+        background: white;
+        border-radius: 8px;
+        padding: 8px;
+        text-align: center;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        width: 100%;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+    }
+    
+    .table-selectable.booked .table-card {
+        background: #f0f0f0;
+    }
+    
+    .table-number {
+        font-size: 1rem;
+        font-weight: 700;
+        color: #0e8a8a;
+    }
+    
+    .table-capacity {
+        font-size: 0.7rem;
+        color: #666;
+    }
+    
+    .legend {
+        display: flex;
+        gap: 1rem;
+        margin-bottom: 1rem;
+        padding: 1rem;
+        background: white;
+        border-radius: 12px;
+    }
+    
+    .legend-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.8rem;
+    }
+    
+    .legend-color {
+        width: 20px;
+        height: 20px;
+        border-radius: 4px;
+    }
+    
+    .booking-sidebar {
+        background: white;
+        border-radius: 24px;
+        padding: 1.5rem;
+        position: sticky;
+        top: 20px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    }
+    
+    .selected-table-info {
+        text-align: center;
+        padding: 1rem;
+        background: #e6f3f3;
+        border-radius: 16px;
+        margin: 1rem 0;
+    }
+    
+    .feature-badge {
+        display: inline-block;
+        padding: 0.2rem 0.6rem;
+        background: #f1f5f9;
+        border-radius: 20px;
+        font-size: 0.7rem;
+        margin: 0.2rem;
+    }
+    
+    .time-slots {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 0.5rem;
+        margin: 1rem 0;
+    }
+    
+    .time-slot {
+        padding: 0.5rem;
+        text-align: center;
+        background: #f1f5f9;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.2s;
+        font-size: 0.8rem;
+    }
+    
+    .time-slot:hover:not(.booked) {
+        background: #e6f3f3;
+        transform: translateY(-2px);
+    }
+    
+    .time-slot.selected {
+        background: #0e8a8a;
+        color: white;
+    }
+    
+    .time-slot.booked {
+        opacity: 0.5;
+        cursor: not-allowed;
+        text-decoration: line-through;
+    }
+    
+    .form-group {
+        margin-bottom: 1rem;
+    }
+    
+    .form-group label {
+        display: block;
+        font-size: 0.8rem;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+        color: #333;
+    }
+    
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+        width: 100%;
+        padding: 0.5rem;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        font-size: 0.9rem;
+    }
+    
+    .action-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.75rem 1.5rem;
+        background: #0e8a8a;
+        color: white;
+        border: none;
+        border-radius: 12px;
+        font-size: 0.9rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    
+    .action-btn:hover {
+        background: #0a6e6e;
+        transform: translateY(-1px);
+    }
+    
+    .action-btn:disabled {
+        background: #ccc;
+        cursor: not-allowed;
+        transform: none;
+    }
+    
+    @media (max-width: 768px) {
+        .booking-container {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="booking-container">
+    <!-- Floor Plan -->
+    <div>
+        <div class="legend">
+            <div class="legend-item">
+                <div class="legend-color" style="background: white; border: 2px solid #22C55E;"></div>
+                <span>Available</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: #EF4444; opacity: 0.5;"></div>
+                <span>Booked Today</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: #0e8a8a;"></div>
+                <span>Selected</span>
+            </div>
+        </div>
+        
+        <div class="floor-plan">
+            <div class="floor-canvas" id="floorCanvas" style="position: relative; min-height: 600px;">
+                {% for table in tables %}
+                <div class="table-selectable {% if table.is_booked %}booked{% endif %}" 
+                     data-table-id="{{ table.id }}"
+                     style="position: absolute; 
+                            left: {{ table.pos_x|default:50 }}px; 
+                            top: {{ table.pos_y|default:50 }}px; 
+                            width: {{ table.width|default:80 }}px; 
+                            height: {{ table.height|default:80 }}px;
+                            transform: rotate({{ table.rotation|default:0 }}deg);">
+                    <div class="table-card" style="border-radius: {% if table.shape == 'circle' %}50%{% elif table.shape == 'round' %}50%{% else %}8px{% endif %};">
+                        <div class="table-number">{{ table.table_number }}</div>
+                        <div class="table-capacity">👥 {{ table.capacity }}</div>
+                        {% if table.has_ac %}
+                        <div class="table-features" style="font-size: 0.6rem;">❄️</div>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Booking Sidebar -->
+    <div class="booking-sidebar">
+        <h3 style="margin-bottom: 1rem;">Book Your Table</h3>
+        
+        <div id="selectedTableInfo">
+            <div class="selected-table-info">
+                <p style="color: #666; margin: 0;">Select a table from the floor plan</p>
+            </div>
+        </div>
+        
+        <form id="bookingForm">
+            {% csrf_token %}
+            <input type="hidden" name="table_id" id="tableId">
+            <input type="hidden" name="start_time" id="startTime">
+            <input type="hidden" name="end_time" id="endTime">
+            
+            <div class="form-group">
+                <label>Number of Guests *</label>
+                <input type="number" name="guests" id="guests" min="1" max="20" required>
+            </div>
+            
+            <div class="form-group">
+                <label>Date *</label>
+                <input type="date" name="date" id="date" required>
+            </div>
+            
+            <div class="form-group">
+                <label>Select Time Slot *</label>
+                <div class="time-slots" id="timeSlots">
+                    <div style="grid-column: 1/-1; text-align: center; padding: 1rem; color: #666;">
+                        Please select a date and table first
+                    </div>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label>Special Request (Optional)</label>
+                <textarea name="special_request" rows="3" placeholder="Any special requests? e.g., anniversary, birthday, dietary requirements"></textarea>
+            </div>
+            
+            <button type="submit" class="action-btn" style="width: 100%; justify-content: center;" id="bookBtn" disabled>
+                Book Table
+            </button>
+        </form>
+    </div>
+</div>
+
+<script>
+    let selectedTable = null;
+    let selectedTimeSlot = null;
+    
+    // Get CSRF token
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+    
+    // Set minimum date to today
+    const today = new Date().toISOString().split('T')[0];
+    const dateInput = document.getElementById('date');
+    dateInput.min = today;
+    dateInput.value = today;
+    
+    // Table selection
+    document.querySelectorAll('.table-selectable').forEach(table => {
+        if (!table.classList.contains('booked')) {
+            table.addEventListener('click', () => selectTable(table));
+        }
+    });
+    
+    function selectTable(tableElement) {
+        // Remove previous selection
+        document.querySelectorAll('.table-selectable').forEach(t => {
+            t.classList.remove('selected');
+        });
+        
+        // Add selection
+        tableElement.classList.add('selected');
+        selectedTable = {
+            id: parseInt(tableElement.dataset.tableId),
+            element: tableElement
+        };
+        
+        // Set table ID in form
+        document.getElementById('tableId').value = selectedTable.id;
+        
+        // Fetch table details
+        fetch(`/api/table/${selectedTable.id}/details/`)
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('selectedTableInfo').innerHTML = `
+                    <div class="selected-table-info">
+                        <h4 style="margin-bottom: 0.5rem;">Table ${data.table_number}</h4>
+                        <p style="margin: 0.25rem 0;">👥 Capacity: ${data.capacity} guests</p>
+                        ${data.zone ? `<p style="margin: 0.25rem 0;">📍 Zone: ${data.zone}</p>` : ''}
+                        <div style="margin-top: 0.5rem;">
+                            ${data.has_ac ? '<span class="feature-badge">❄️ AC</span>' : ''}
+                            ${data.has_view ? '<span class="feature-badge">🌅 View</span>' : ''}
+                            ${data.has_music ? '<span class="feature-badge">🎵 Music</span>' : ''}
+                            ${data.smoking_allowed ? '<span class="feature-badge">🚬 Smoking Allowed</span>' : ''}
+                        </div>
+                    </div>
+                `;
+                
+                // Set max guests
+                document.getElementById('guests').max = data.capacity;
+                document.getElementById('guests').value = Math.min(2, data.capacity);
+                
+                // Enable book button if time slot is also selected
+                if (selectedTimeSlot) {
+                    document.getElementById('bookBtn').disabled = false;
+                }
+                
+                // Load time slots for this table
+                loadTimeSlots();
+            });
+    }
+    
+    function loadTimeSlots() {
+        const date = document.getElementById('date').value;
+        if (!date || !selectedTable) return;
+        
+        fetch(`/api/table-slots/?date=${date}&table_id=${selectedTable.id}`)
+            .then(response => response.json())
+            .then(data => {
+                const slotsContainer = document.getElementById('timeSlots');
+                slotsContainer.innerHTML = '';
+                
+                if (data.slots && data.slots.length > 0) {
+                    data.slots.forEach(slot => {
+                        const slotBtn = document.createElement('div');
+                        slotBtn.className = `time-slot ${slot.is_booked ? 'booked' : ''}`;
+                        slotBtn.textContent = slot.time;
+                        slotBtn.dataset.start = slot.start;
+                        slotBtn.dataset.end = slot.end;
+                        
+                        if (!slot.is_booked) {
+                            slotBtn.addEventListener('click', () => selectTimeSlot(slotBtn, slot));
+                        }
+                        
+                        slotsContainer.appendChild(slotBtn);
+                    });
+                } else {
+                    slotsContainer.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 1rem;">No time slots available</div>';
+                }
+            })
+            .catch(error => {
+                console.error('Error loading slots:', error);
+                document.getElementById('timeSlots').innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 1rem; color: red;">Error loading time slots</div>';
+            });
+    }
+    
+    function selectTimeSlot(element, slot) {
+        // Remove previous selection
+        document.querySelectorAll('.time-slot').forEach(s => {
+            s.classList.remove('selected');
+        });
+        
+        element.classList.add('selected');
+        selectedTimeSlot = slot;
+        
+        document.getElementById('startTime').value = slot.start;
+        document.getElementById('endTime').value = slot.end;
+        
+        // Enable book button if table is also selected
+        if (selectedTable) {
+            document.getElementById('bookBtn').disabled = false;
+        }
+    }
+    
+    // Date change handler
+    document.getElementById('date').addEventListener('change', () => {
+        selectedTimeSlot = null;
+        if (selectedTable) {
+            loadTimeSlots();
+        }
+    });
+    
+    // Guest validation
+    document.getElementById('guests').addEventListener('change', (e) => {
+        const max = parseInt(e.target.max);
+        const value = parseInt(e.target.value);
+        if (value > max) {
+            alert(`Maximum ${max} guests allowed for this table`);
+            e.target.value = max;
+        }
+    });
+    
+    // Form submission
+    document.getElementById('bookingForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        if (!selectedTable) {
+            alert('Please select a table');
+            return;
+        }
+        
+        if (!selectedTimeSlot) {
+            alert('Please select a time slot');
+            return;
+        }
+        
+        const formData = new FormData(e.target);
+        
+        const bookBtn = document.getElementById('bookBtn');
+        bookBtn.disabled = true;
+        bookBtn.innerHTML = 'Processing...';
+        
+        try {
+            const response = await fetch('/api/table/book/', {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: formData
+            });
+            
+            const result = await response.json();
+            
+            if (result.success) {
+                if (result.redirect_url) {
+                    window.location.href = result.redirect_url;
+                } else {
+                    alert('Table booked successfully!');
+                    window.location.href = '/my-bookings/';
+                }
+            } else {
+                alert(result.error || 'Booking failed');
+                bookBtn.disabled = false;
+                bookBtn.innerHTML = 'Book Table';
+            }
+        } catch (error) {
+            alert('An error occurred. Please try again.');
+            bookBtn.disabled = false;
+            bookBtn.innerHTML = 'Book Table';
+        }
+    });
+    
+    // Initialize any pre-selected table (from URL param)
+    const urlParams = new URLSearchParams(window.location.search);
+    const preSelectedTable = urlParams.get('table');
+    if (preSelectedTable) {
+        const tableElement = document.querySelector(`.table-selectable[data-table-id="${preSelectedTable}"]`);
+        if (tableElement && !tableElement.classList.contains('booked')) {
+            selectTable(tableElement);
+        }
+    }
+</script>
+{% endblock %}

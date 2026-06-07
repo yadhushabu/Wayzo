@@ -1,0 +1,986 @@
+{% extends 'restaurants/base_restaurant.html' %}
+{% load static %}
+
+{% block title %}Table Layout Designer{% endblock %}
+{% block page_title %}Table Layout Designer{% endblock %}
+{% block breadcrumb %}Table Layout{% endblock %}
+
+{% block extra_css %}
+<style>
+    :root {
+        --canvas-bg: #f7f4ee;
+        --canvas-grid: #e0dbd0;
+        --table-available: #22C55E;
+        --table-occupied: #EF4444;
+        --table-reserved: #F59E0B;
+        --accent: #4F46E5;
+        --accent-light: #EEF2FF;
+        --accent-border: #C7D2FE;
+        --panel-bg: var(--white, #fff);
+        --toolbar-h: 56px;
+    }
+
+    .layout-wrapper {
+        display: flex;
+        flex-direction: column;
+        height: calc(100vh - 140px);
+        min-height: 600px;
+        gap: 0;
+        background: var(--gray-100, #f5f5f5);
+        border-radius: 16px;
+        overflow: hidden;
+        border: 1px solid var(--gray-200, #e5e7eb);
+    }
+
+    /* ── Toolbar ── */
+    .layout-toolbar {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0 1rem;
+        height: var(--toolbar-h);
+        background: #fff;
+        border-bottom: 1px solid var(--gray-200, #e5e7eb);
+        flex-shrink: 0;
+        z-index: 50;
+    }
+
+    .toolbar-group {
+        display: flex;
+        gap: 0.25rem;
+        align-items: center;
+    }
+
+    .toolbar-divider {
+        width: 1px;
+        height: 24px;
+        background: var(--gray-200, #e5e7eb);
+        margin: 0 0.25rem;
+    }
+
+    .tbtn {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 0.4rem 0.75rem;
+        border: 1px solid var(--gray-200, #e5e7eb);
+        border-radius: 8px;
+        background: transparent;
+        font-size: 0.8rem;
+        font-weight: 500;
+        cursor: pointer;
+        color: var(--text-secondary, #6b7280);
+        transition: all 0.15s;
+        white-space: nowrap;
+    }
+    .tbtn:hover { background: var(--gray-100, #f5f5f5); border-color: var(--gray-300, #d1d5db); color: var(--text-primary, #111); }
+    .tbtn.active { background: var(--accent-light, #EEF2FF); border-color: var(--accent-border, #C7D2FE); color: var(--accent, #4F46E5); font-weight: 600; }
+    .tbtn.primary { background: var(--accent, #4F46E5); border-color: var(--accent, #4F46E5); color: #fff; }
+    .tbtn.primary:hover { background: #4338CA; }
+
+    .tbtn-icon { font-size: 1rem; line-height: 1; }
+
+    .toolbar-spacer { flex: 1; }
+
+    .zoom-display {
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: var(--text-secondary, #6b7280);
+        min-width: 38px;
+        text-align: center;
+    }
+
+    /* ── Main area ── */
+    .layout-main {
+        display: grid;
+        grid-template-columns: 1fr 320px;
+        flex: 1;
+        overflow: hidden;
+    }
+
+    /* ── Canvas ── */
+    .canvas-wrap {
+        position: relative;
+        overflow: auto;
+        background: var(--canvas-bg);
+        cursor: default;
+    }
+
+    .canvas-wrap.mode-add { cursor: crosshair; }
+
+    .floor-canvas {
+        position: relative;
+        background-color: var(--canvas-bg);
+        background-image:
+            linear-gradient(var(--canvas-grid) 1px, transparent 1px),
+            linear-gradient(90deg, var(--canvas-grid) 1px, transparent 1px);
+        background-size: 24px 24px;
+        width: 1200px;
+        min-height: 700px;
+        transform-origin: 0 0;
+    }
+
+    /* Zone labels */
+    .zone-label {
+        position: absolute;
+        font-size: 0.65rem;
+        font-weight: 700;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+        color: var(--canvas-grid);
+        pointer-events: none;
+        user-select: none;
+    }
+
+    /* ── Table objects ── */
+    .table-obj {
+        position: absolute;
+        cursor: move;
+        user-select: none;
+        z-index: 10;
+        transition: filter 0.15s;
+    }
+    .table-obj:hover { z-index: 20; }
+    .table-obj:hover .t-shell { box-shadow: 0 4px 16px rgba(0,0,0,0.15); }
+    .table-obj.selected .t-shell { outline: 2.5px solid var(--accent, #4F46E5); outline-offset: 2px; }
+
+    .t-shell {
+        width: 100%;
+        height: 100%;
+        background: #fff;
+        border: 1.5px solid #d1d5db;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+        transition: box-shadow 0.15s, border-color 0.15s;
+    }
+    .t-shell.circle { border-radius: 50%; }
+    .t-shell.square { border-radius: 10px; }
+    .t-shell.rectangle { border-radius: 10px; }
+
+    /* Seat dots */
+    .t-shell::before { content: ''; }
+
+    .t-inner { text-align: center; pointer-events: none; }
+    .t-num { font-size: 0.85rem; font-weight: 700; color: #1e293b; line-height: 1.1; }
+    .t-cap { font-size: 0.62rem; color: #94a3b8; margin-top: 1px; }
+    .t-zone { font-size: 0.6rem; color: #94a3b8; }
+
+    .t-badge {
+        position: absolute;
+        top: -6px;
+        right: -6px;
+        width: 13px;
+        height: 13px;
+        border-radius: 50%;
+        border: 2px solid #fff;
+        background: var(--table-available);
+    }
+    .t-badge.inactive { background: var(--table-occupied); }
+
+    /* Chair indicators around tables */
+    .chair-indicator {
+        position: absolute;
+        background: #cbd5e1;
+        border-radius: 3px;
+        pointer-events: none;
+    }
+
+    /* ── Coords overlay ── */
+    .coord-tag {
+        position: sticky;
+        bottom: 8px;
+        left: calc(100% - 120px);
+        width: fit-content;
+        background: rgba(15,23,42,0.75);
+        color: rgba(255,255,255,0.9);
+        padding: 3px 10px;
+        border-radius: 6px;
+        font-size: 0.7rem;
+        font-family: monospace;
+        pointer-events: none;
+        z-index: 100;
+        margin: 0 8px 8px auto;
+    }
+
+    /* ── Legend ── */
+    .canvas-legend {
+        position: sticky;
+        bottom: 8px;
+        left: 8px;
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        background: rgba(255,255,255,0.9);
+        padding: 5px 12px;
+        border-radius: 8px;
+        border: 1px solid #e5e7eb;
+        font-size: 0.72rem;
+        pointer-events: none;
+        width: fit-content;
+        margin: -28px 0 8px 8px;
+    }
+
+    .legend-dot {
+        width: 9px;
+        height: 9px;
+        border-radius: 50%;
+        display: inline-block;
+        margin-right: 4px;
+    }
+
+    /* ── Right panel ── */
+    .props-panel {
+        background: #fff;
+        border-left: 1px solid var(--gray-200, #e5e7eb);
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+    }
+
+    .panel-tabs {
+        display: flex;
+        border-bottom: 1px solid var(--gray-200, #e5e7eb);
+        flex-shrink: 0;
+    }
+    .ptab {
+        flex: 1;
+        padding: 0.65rem 0;
+        text-align: center;
+        font-size: 0.78rem;
+        font-weight: 500;
+        color: var(--text-secondary, #6b7280);
+        cursor: pointer;
+        border-bottom: 2px solid transparent;
+        transition: all 0.15s;
+        background: transparent;
+        border-left: none; border-right: none; border-top: none;
+    }
+    .ptab.active { color: var(--accent, #4F46E5); border-bottom-color: var(--accent, #4F46E5); }
+
+    .panel-content { flex: 1; overflow-y: auto; }
+    .tab-pane { display: none; }
+    .tab-pane.active { display: block; }
+
+    /* Properties form */
+    .empty-state {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 280px;
+        color: var(--text-secondary, #6b7280);
+        text-align: center;
+        padding: 1.5rem;
+    }
+    .empty-state-icon { font-size: 2.5rem; opacity: 0.3; margin-bottom: 0.5rem; }
+    .empty-state h4 { font-size: 0.9rem; font-weight: 600; margin: 0 0 0.25rem; }
+    .empty-state p { font-size: 0.78rem; margin: 0; }
+
+    .props-form { padding: 1rem; display: none; }
+    .props-form.visible { display: block; }
+
+    .pf-header {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+        padding-bottom: 0.75rem;
+        border-bottom: 1px solid var(--gray-100, #f5f5f5);
+    }
+    .pf-title { font-size: 1rem; font-weight: 700; color: #1e293b; flex: 1; }
+    .pf-badge {
+        font-size: 0.68rem;
+        font-weight: 600;
+        padding: 2px 8px;
+        border-radius: 99px;
+    }
+    .pf-badge.active { background: #DCFCE7; color: #166534; }
+    .pf-badge.inactive { background: #FEE2E2; color: #991b1b; }
+
+    .fg { margin-bottom: 0.75rem; }
+    .fg label {
+        display: block;
+        font-size: 0.68rem;
+        font-weight: 600;
+        color: var(--text-secondary, #6b7280);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 0.3rem;
+    }
+    .fg input, .fg select {
+        width: 100%;
+        padding: 0.45rem 0.6rem;
+        border: 1px solid var(--gray-200, #e5e7eb);
+        border-radius: 7px;
+        font-size: 0.82rem;
+        box-sizing: border-box;
+        background: #fff;
+        color: #1e293b;
+        transition: border-color 0.15s;
+    }
+    .fg input:focus, .fg select:focus { outline: none; border-color: var(--accent, #4F46E5); }
+    .fg input[readonly] { background: var(--gray-50, #fafafa); color: var(--text-secondary, #6b7280); }
+    .fg-row { display: flex; gap: 0.5rem; }
+    .fg-row .fg { flex: 1; }
+
+    .shape-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 0.5rem;
+    }
+    .shape-btn {
+        border: 1.5px solid var(--gray-200, #e5e7eb);
+        border-radius: 8px;
+        padding: 0.5rem;
+        background: transparent;
+        cursor: pointer;
+        text-align: center;
+        font-size: 0.72rem;
+        color: var(--text-secondary, #6b7280);
+        transition: all 0.15s;
+    }
+    .shape-btn:hover { border-color: var(--accent-border, #C7D2FE); color: var(--accent, #4F46E5); }
+    .shape-btn.active { border-color: var(--accent, #4F46E5); background: var(--accent-light, #EEF2FF); color: var(--accent, #4F46E5); font-weight: 600; }
+    .shape-preview { width: 28px; height: 28px; border: 2px solid currentColor; margin: 0 auto 4px; }
+    .shape-preview.circle { border-radius: 50%; }
+    .shape-preview.square { border-radius: 5px; }
+    .shape-preview.rectangle { border-radius: 4px; width: 36px; height: 22px; margin-top: 3px; }
+
+    .pf-actions {
+        display: flex;
+        gap: 0.5rem;
+        margin-top: 1rem;
+        padding-top: 0.75rem;
+        border-top: 1px solid var(--gray-100, #f5f5f5);
+    }
+    .btn-update {
+        flex: 1;
+        padding: 0.55rem;
+        background: var(--accent, #4F46E5);
+        color: #fff;
+        border: none;
+        border-radius: 8px;
+        font-size: 0.82rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background 0.15s;
+    }
+    .btn-update:hover { background: #4338CA; }
+    .btn-delete {
+        padding: 0.55rem 0.75rem;
+        background: transparent;
+        border: 1px solid #FCA5A5;
+        color: #EF4444;
+        border-radius: 8px;
+        font-size: 0.82rem;
+        cursor: pointer;
+        transition: all 0.15s;
+    }
+    .btn-delete:hover { background: #FEE2E2; }
+
+    /* Tables list tab */
+    .tables-list-scroll { padding: 0.75rem; }
+    .tlist-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.55rem 0.65rem;
+        border-radius: 8px;
+        cursor: pointer;
+        margin-bottom: 0.3rem;
+        border: 1px solid transparent;
+        transition: all 0.15s;
+    }
+    .tlist-item:hover { background: var(--gray-50, #fafafa); border-color: var(--gray-200, #e5e7eb); }
+    .tlist-item.selected { background: var(--accent-light, #EEF2FF); border-color: var(--accent-border, #C7D2FE); }
+    .tlist-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+    .tlist-info { flex: 1; min-width: 0; }
+    .tlist-name { font-size: 0.82rem; font-weight: 600; color: #1e293b; }
+    .tlist-meta { font-size: 0.7rem; color: var(--text-secondary, #6b7280); }
+    .tlist-edit {
+        width: 26px; height: 26px;
+        border-radius: 6px;
+        border: 1px solid var(--gray-200, #e5e7eb);
+        background: transparent;
+        cursor: pointer;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 0.75rem;
+        color: var(--text-secondary, #6b7280);
+        flex-shrink: 0;
+        transition: all 0.15s;
+    }
+    .tlist-edit:hover { background: var(--gray-100, #f5f5f5); color: var(--accent, #4F46E5); border-color: var(--accent-border, #C7D2FE); }
+
+    .stats-bar {
+        display: flex;
+        gap: 0;
+        border-bottom: 1px solid var(--gray-100, #f5f5f5);
+        flex-shrink: 0;
+    }
+    .stat-cell {
+        flex: 1;
+        text-align: center;
+        padding: 0.6rem 0.25rem;
+        border-right: 1px solid var(--gray-100, #f5f5f5);
+    }
+    .stat-cell:last-child { border-right: none; }
+    .stat-val { font-size: 1.1rem; font-weight: 700; color: #1e293b; }
+    .stat-lbl { font-size: 0.62rem; color: var(--text-secondary, #6b7280); text-transform: uppercase; letter-spacing: 0.5px; }
+
+    /* Toast */
+    .toast {
+        position: fixed;
+        bottom: 2rem;
+        left: 50%;
+        transform: translateX(-50%) translateY(80px);
+        background: #1e293b;
+        color: #fff;
+        padding: 0.6rem 1.2rem;
+        border-radius: 8px;
+        font-size: 0.82rem;
+        z-index: 9999;
+        opacity: 0;
+        transition: transform 0.3s, opacity 0.3s;
+        pointer-events: none;
+    }
+    .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+    .toast.success { background: #166534; }
+    .toast.error { background: #991b1b; }
+
+    @media (max-width: 768px) {
+        .layout-main { grid-template-columns: 1fr; }
+        .props-panel { max-height: 380px; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div class="layout-wrapper">
+
+    <!-- ── Toolbar ── -->
+    <div class="layout-toolbar">
+        <div class="toolbar-group">
+            <button class="tbtn active" id="btn-select" onclick="setMode('select')">
+                <span class="tbtn-icon">↖</span> Select
+            </button>
+            <button class="tbtn" id="btn-add" onclick="setMode('add')">
+                <span class="tbtn-icon">＋</span> Add Table
+            </button>
+        </div>
+
+        <div class="toolbar-divider"></div>
+
+        <div class="toolbar-group">
+            <button class="tbtn" onclick="changeZoom(-0.1)">−</button>
+            <span class="zoom-display" id="zoomDisplay">100%</span>
+            <button class="tbtn" onclick="changeZoom(0.1)">＋</button>
+            <button class="tbtn" onclick="resetView()">⟳ Reset</button>
+        </div>
+
+        <div class="toolbar-spacer"></div>
+
+        <button class="tbtn" onclick="autoArrange()">⊞ Auto Arrange</button>
+        <button class="tbtn primary" onclick="saveLayout()">💾 Save Layout</button>
+    </div>
+
+    <!-- ── Main ── -->
+    <div class="layout-main">
+
+        <!-- Canvas -->
+        <div class="canvas-wrap" id="canvasWrap">
+            <div class="floor-canvas" id="floorCanvas">
+                {% for table in tables %}
+                <div class="table-obj"
+                     data-id="{{ table.id }}"
+                     data-number="{{ table.table_number }}"
+                     data-capacity="{{ table.capacity }}"
+                     data-shape="{{ table.shape }}"
+                     data-section="{{ table.section_name|default:'' }}"
+                     data-active="{{ table.is_active|yesno:'true,false' }}"
+                     data-width="{{ table.width }}"
+                     data-height="{{ table.height }}"
+                     style="left:{{ table.pos_x }}px;top:{{ table.pos_y }}px;width:{{ table.width }}px;height:{{ table.height }}px;">
+                    <div class="t-shell {{ table.shape }}">
+                        <div class="t-inner">
+                            <div class="t-num">{{ table.table_number }}</div>
+                            <div class="t-cap">👥 {{ table.capacity }}</div>
+                            {% if table.section_name %}<div class="t-zone">{{ table.section_name }}</div>{% endif %}
+                        </div>
+                        <div class="t-badge {% if not table.is_active %}inactive{% endif %}"></div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            <div class="canvas-legend">
+                <span><span class="legend-dot" style="background:var(--table-available)"></span>Active</span>
+                <span><span class="legend-dot" style="background:var(--table-occupied)"></span>Inactive</span>
+                <span id="coordInfo" style="margin-left:8px;font-family:monospace;color:#94a3b8">x:0 y:0</span>
+            </div>
+        </div>
+
+        <!-- Right panel -->
+        <div class="props-panel">
+
+            <!-- Stats bar -->
+            <div class="stats-bar">
+                <div class="stat-cell">
+                    <div class="stat-val" id="statTotal">{{ tables|length }}</div>
+                    <div class="stat-lbl">Total</div>
+                </div>
+                <div class="stat-cell">
+                    <div class="stat-val" id="statActive" style="color:var(--table-available)">{{ tables|dictsort:"is_active"|length }}</div>
+                    <div class="stat-lbl">Active</div>
+                </div>
+                <div class="stat-cell">
+                    <div class="stat-val" id="statCap">{% with total=0 %}{{ tables|length }}{% endwith %}</div>
+                    <div class="stat-lbl">Seats</div>
+                </div>
+            </div>
+
+            <!-- Tabs -->
+            <div class="panel-tabs">
+                <button class="ptab active" onclick="switchTab('props')">Properties</button>
+                <button class="ptab" onclick="switchTab('list')">Tables List</button>
+            </div>
+
+            <!-- Properties tab -->
+            <div class="panel-content">
+                <div class="tab-pane active" id="tab-props">
+
+                    <div class="empty-state" id="emptyState">
+                        <div class="empty-state-icon">🪑</div>
+                        <h4>No table selected</h4>
+                        <p>Click a table on the canvas to edit its properties, or use Add Table mode to place a new one.</p>
+                    </div>
+
+                    <div class="props-form" id="propsForm">
+                        <div class="pf-header">
+                            <span class="pf-title" id="pfTitle">Table —</span>
+                            <span class="pf-badge active" id="pfBadge">Active</span>
+                        </div>
+
+                        <div class="fg">
+                            <label>Table Number</label>
+                            <input type="text" id="fTableNumber" placeholder="e.g. T-01">
+                        </div>
+
+                        <div class="fg-row">
+                            <div class="fg">
+                                <label>Capacity</label>
+                                <input type="number" id="fCapacity" min="1" max="20">
+                            </div>
+                            <div class="fg">
+                                <label>Section / Zone</label>
+                                <input type="text" id="fSection" placeholder="e.g. Window">
+                            </div>
+                        </div>
+
+                        <div class="fg">
+                            <label>Shape</label>
+                            <div class="shape-grid">
+                                <button class="shape-btn" data-shape="square" onclick="selectShape('square')">
+                                    <div class="shape-preview square"></div>
+                                    Square
+                                </button>
+                                <button class="shape-btn" data-shape="circle" onclick="selectShape('circle')">
+                                    <div class="shape-preview circle"></div>
+                                    Round
+                                </button>
+                                <button class="shape-btn" data-shape="rectangle" onclick="selectShape('rectangle')">
+                                    <div class="shape-preview rectangle"></div>
+                                    Rect
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="fg-row">
+                            <div class="fg">
+                                <label>Width (px)</label>
+                                <input type="number" id="fWidth" min="40" max="200">
+                            </div>
+                            <div class="fg">
+                                <label>Height (px)</label>
+                                <input type="number" id="fHeight" min="40" max="200">
+                            </div>
+                        </div>
+
+                        <div class="fg-row">
+                            <div class="fg">
+                                <label>Position X</label>
+                                <input type="number" id="fX">
+                            </div>
+                            <div class="fg">
+                                <label>Position Y</label>
+                                <input type="number" id="fY">
+                            </div>
+                        </div>
+
+                        <div class="fg">
+                            <label>Status</label>
+                            <select id="fStatus" onchange="updateBadgePreview()">
+                                <option value="active">Active</option>
+                                <option value="inactive">Inactive</option>
+                            </select>
+                        </div>
+
+                        <div class="pf-actions">
+                            <button class="btn-update" onclick="applyTableUpdate()">Apply Changes</button>
+                            <button class="btn-delete" onclick="deleteSelectedTable()">🗑</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="tab-pane" id="tab-list">
+                    <div class="tables-list-scroll" id="tablesList">
+                        {% for table in tables %}
+                        <div class="tlist-item" data-id="{{ table.id }}" onclick="selectTableById({{ table.id }})">
+                            <div class="tlist-dot" style="background:{% if table.is_active %}var(--table-available){% else %}var(--table-occupied){% endif %}"></div>
+                            <div class="tlist-info">
+                                <div class="tlist-name">Table {{ table.table_number }}</div>
+                                <div class="tlist-meta">{{ table.capacity }} seats · {{ table.get_table_type_display }}{% if table.section_name %} · {{ table.section_name }}{% endif %}</div>
+                            </div>
+                            <button class="tlist-edit" onclick="event.stopPropagation();focusTable({{ table.id }})" title="Focus on canvas">⊙</button>
+                        </div>
+                        {% empty %}
+                        <div style="text-align:center;padding:2rem 1rem;color:var(--text-secondary,#6b7280);font-size:0.82rem;">No tables yet. Switch to Add Table mode and click the canvas.</div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+    let mode = 'select';
+    let selectedId = null;
+    let zoom = 1;
+    let dragging = false;
+    let dragOffX = 0, dragOffY = 0;
+
+    const canvas = document.getElementById('floorCanvas');
+    const wrap   = document.getElementById('canvasWrap');
+    const coordEl = document.getElementById('coordInfo');
+
+    // ── Mode ──
+    function setMode(m) {
+        mode = m;
+        document.getElementById('btn-select').classList.toggle('active', m === 'select');
+        document.getElementById('btn-add').classList.toggle('active', m === 'add');
+        wrap.className = 'canvas-wrap' + (m === 'add' ? ' mode-add' : '');
+    }
+
+    // ── Zoom ──
+    function changeZoom(delta) {
+        zoom = Math.min(2, Math.max(0.4, zoom + delta));
+        canvas.style.transform = `scale(${zoom})`;
+        document.getElementById('zoomDisplay').textContent = Math.round(zoom * 100) + '%';
+    }
+    function resetView() {
+        zoom = 1;
+        canvas.style.transform = 'scale(1)';
+        document.getElementById('zoomDisplay').textContent = '100%';
+        wrap.scrollTop = 0; wrap.scrollLeft = 0;
+    }
+
+    // ── Coords ──
+    wrap.addEventListener('mousemove', e => {
+        const r = canvas.getBoundingClientRect();
+        const x = Math.round((e.clientX - r.left) / zoom);
+        const y = Math.round((e.clientY - r.top) / zoom);
+        coordEl.textContent = `x:${Math.max(0,x)} y:${Math.max(0,y)}`;
+    });
+
+    // ── Canvas click → add table ──
+    canvas.addEventListener('click', e => {
+        if (mode !== 'add') return;
+        if (e.target.closest('.table-obj')) return;
+        const r = canvas.getBoundingClientRect();
+        const x = Math.round((e.clientX - r.left) / zoom);
+        const y = Math.round((e.clientY - r.top) / zoom);
+        addTable(x, y);
+    });
+
+    // ── Click canvas bg → deselect ──
+    canvas.addEventListener('mousedown', e => {
+        if (!e.target.closest('.table-obj')) deselect();
+    });
+
+    // ── Drag ──
+    function initDrag(el) {
+        el.addEventListener('mousedown', e => {
+            if (mode !== 'select') return;
+            e.stopPropagation();
+            dragging = true;
+            const rect = el.getBoundingClientRect();
+            dragOffX = e.clientX - rect.left;
+            dragOffY = e.clientY - rect.top;
+
+            const id = parseInt(el.dataset.id);
+            selectTableById(id);
+
+            const move = ev => {
+                if (!dragging) return;
+                const cr = canvas.getBoundingClientRect();
+                let nx = Math.round((ev.clientX - cr.left - dragOffX) / zoom);
+                let ny = Math.round((ev.clientY - cr.top - dragOffY) / zoom);
+                nx = Math.max(0, Math.min(nx, canvas.offsetWidth - el.offsetWidth));
+                ny = Math.max(0, Math.min(ny, canvas.offsetHeight - el.offsetHeight));
+                el.style.left = nx + 'px';
+                el.style.top  = ny + 'px';
+                el.dataset.x = nx; el.dataset.y = ny;
+                if (selectedId === id) {
+                    document.getElementById('fX').value = nx;
+                    document.getElementById('fY').value = ny;
+                }
+            };
+            const up = () => {
+                dragging = false;
+                document.removeEventListener('mousemove', move);
+                document.removeEventListener('mouseup', up);
+            };
+            document.addEventListener('mousemove', move);
+            document.addEventListener('mouseup', up);
+            e.preventDefault();
+        });
+    }
+
+    // ── Select ──
+    function selectTableById(id) {
+        // deselect old
+        document.querySelectorAll('.table-obj.selected').forEach(t => t.classList.remove('selected'));
+        document.querySelectorAll('.tlist-item.selected').forEach(i => i.classList.remove('selected'));
+
+        selectedId = id;
+        const el = document.querySelector(`.table-obj[data-id="${id}"]`);
+        const li = document.querySelector(`.tlist-item[data-id="${id}"]`);
+        if (el) el.classList.add('selected');
+        if (li) { li.classList.add('selected'); li.scrollIntoView({ block: 'nearest' }); }
+
+        // Populate form from data attributes (instant, no fetch needed)
+        if (el) {
+            const d = el.dataset;
+            document.getElementById('pfTitle').textContent = 'Table ' + d.number;
+            document.getElementById('fTableNumber').value  = d.number;
+            document.getElementById('fCapacity').value     = d.capacity;
+            document.getElementById('fSection').value      = d.section || '';
+            document.getElementById('fStatus').value       = d.active === 'true' ? 'active' : 'inactive';
+            document.getElementById('fX').value            = parseInt(el.style.left);
+            document.getElementById('fY').value            = parseInt(el.style.top);
+            document.getElementById('fWidth').value        = d.width;
+            document.getElementById('fHeight').value       = d.height;
+            selectShape(d.shape || 'square');
+            updateBadgePreview();
+            showForm(true);
+
+            // Switch to props tab
+            switchTab('props');
+        }
+    }
+
+    function deselect() {
+        selectedId = null;
+        document.querySelectorAll('.table-obj.selected').forEach(t => t.classList.remove('selected'));
+        document.querySelectorAll('.tlist-item.selected').forEach(i => i.classList.remove('selected'));
+        showForm(false);
+    }
+
+    function showForm(show) {
+        document.getElementById('emptyState').style.display = show ? 'none' : 'flex';
+        document.getElementById('propsForm').className = 'props-form' + (show ? ' visible' : '');
+    }
+
+    function selectShape(shape) {
+        document.querySelectorAll('.shape-btn').forEach(b => b.classList.toggle('active', b.dataset.shape === shape));
+    }
+
+    function updateBadgePreview() {
+        const isActive = document.getElementById('fStatus').value === 'active';
+        const badge = document.getElementById('pfBadge');
+        badge.textContent = isActive ? 'Active' : 'Inactive';
+        badge.className = 'pf-badge ' + (isActive ? 'active' : 'inactive');
+    }
+
+    // ── Apply changes (local preview first, then persist) ──
+    function applyTableUpdate() {
+        if (!selectedId) return;
+        const el = document.querySelector(`.table-obj[data-id="${selectedId}"]`);
+        if (!el) return;
+
+        const num      = document.getElementById('fTableNumber').value;
+        const cap      = parseInt(document.getElementById('fCapacity').value);
+        const shape    = document.querySelector('.shape-btn.active')?.dataset.shape || 'square';
+        const section  = document.getElementById('fSection').value;
+        const status   = document.getElementById('fStatus').value;
+        const px       = parseInt(document.getElementById('fX').value);
+        const py       = parseInt(document.getElementById('fY').value);
+        const pw       = parseInt(document.getElementById('fWidth').value);
+        const ph       = parseInt(document.getElementById('fHeight').value);
+        const isActive = status === 'active';
+
+        // Update DOM immediately
+        el.style.left   = px + 'px';
+        el.style.top    = py + 'px';
+        el.style.width  = pw + 'px';
+        el.style.height = ph + 'px';
+        el.dataset.number   = num;
+        el.dataset.capacity = cap;
+        el.dataset.shape    = shape;
+        el.dataset.section  = section;
+        el.dataset.active   = isActive;
+        el.dataset.width    = pw;
+        el.dataset.height   = ph;
+
+        const shell = el.querySelector('.t-shell');
+        shell.className = 't-shell ' + shape;
+        el.querySelector('.t-num').textContent = num;
+        el.querySelector('.t-cap').textContent = '👥 ' + cap;
+        const zoneEl = el.querySelector('.t-zone');
+        if (zoneEl) zoneEl.textContent = section;
+        const badge = el.querySelector('.t-badge');
+        badge.className = 't-badge' + (isActive ? '' : ' inactive');
+
+        document.getElementById('pfTitle').textContent = 'Table ' + num;
+        updateBadgePreview();
+
+        // Also update list item
+        const li = document.querySelector(`.tlist-item[data-id="${selectedId}"]`);
+        if (li) {
+            li.querySelector('.tlist-name').textContent = 'Table ' + num;
+            li.querySelector('.tlist-meta').textContent = cap + ' seats' + (section ? ' · ' + section : '');
+            li.querySelector('.tlist-dot').style.background = isActive ? 'var(--table-available)' : 'var(--table-occupied)';
+        }
+
+        // Persist to server
+        fetch(`/restaurant/api/table/${selectedId}/update/`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
+            body: JSON.stringify({ table_number: num, capacity: cap, shape, section_name: section, is_active: isActive, pos_x: px, pos_y: py, width: pw, height: ph })
+        })
+        .then(r => r.json())
+        .then(d => showToast(d.success ? 'Changes saved!' : ('Error: ' + d.error), d.success ? 'success' : 'error'));
+    }
+
+    // ── Delete ──
+    function deleteSelectedTable() {
+        if (!selectedId || !confirm('Delete this table permanently?')) return;
+        fetch(`/restaurant/api/table/${selectedId}/delete/`, {
+            method: 'DELETE',
+            headers: { 'X-CSRFToken': getCookie('csrftoken') }
+        })
+        .then(r => r.json())
+        .then(d => {
+            if (d.success) {
+                document.querySelector(`.table-obj[data-id="${selectedId}"]`)?.remove();
+                document.querySelector(`.tlist-item[data-id="${selectedId}"]`)?.remove();
+                deselect();
+                showToast('Table deleted', 'success');
+                updateStats();
+            } else {
+                showToast('Error: ' + d.error, 'error');
+            }
+        });
+    }
+
+    // ── Add table ──
+    function addTable(x, y) {
+        fetch('/restaurant/api/table/add/', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
+            body: JSON.stringify({ pos_x: x, pos_y: y })
+        })
+        .then(r => r.json())
+        .then(d => {
+            if (d.success) {
+                showToast('Table added!', 'success');
+                location.reload();
+            } else {
+                showToast('Error: ' + d.error, 'error');
+            }
+        });
+    }
+
+    // ── Save entire layout ──
+    function saveLayout() {
+        const tables = [];
+        document.querySelectorAll('.table-obj').forEach(el => {
+            tables.push({ id: parseInt(el.dataset.id), left: parseInt(el.style.left), top: parseInt(el.style.top), width: parseInt(el.style.width), height: parseInt(el.style.height) });
+        });
+        fetch('/restaurant/api/layout/bulk-update/', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
+            body: JSON.stringify({ tables })
+        })
+        .then(r => r.json())
+        .then(d => showToast(d.success ? '✓ Layout saved!' : ('Error: ' + d.error), d.success ? 'success' : 'error'));
+    }
+
+    // ── Auto arrange ──
+    function autoArrange() {
+        const tables = document.querySelectorAll('.table-obj');
+        const cols = Math.ceil(Math.sqrt(tables.length));
+        let col = 0, row = 0;
+        tables.forEach(el => {
+            const w = parseInt(el.style.width) || 80;
+            const h = parseInt(el.style.height) || 80;
+            const nx = 40 + col * (w + 24);
+            const ny = 40 + row * (h + 24);
+            el.style.left = nx + 'px';
+            el.style.top  = ny + 'px';
+            col++;
+            if (col >= cols) { col = 0; row++; }
+        });
+        showToast('Tables arranged', 'success');
+    }
+
+    // ── Focus (scroll to) table on canvas ──
+    function focusTable(id) {
+        const el = document.querySelector(`.table-obj[data-id="${id}"]`);
+        if (!el) return;
+        const x = parseInt(el.style.left);
+        const y = parseInt(el.style.top);
+        wrap.scrollTo({ left: x * zoom - 80, top: y * zoom - 80, behavior: 'smooth' });
+        selectTableById(id);
+    }
+
+    // ── Tabs ──
+    function switchTab(name) {
+        document.querySelectorAll('.ptab').forEach((t, i) => t.classList.toggle('active', ['props','list'][i] === name));
+        document.getElementById('tab-props').classList.toggle('active', name === 'props');
+        document.getElementById('tab-list').classList.toggle('active', name === 'list');
+    }
+
+    // ── Stats ──
+    function updateStats() {
+        const all = document.querySelectorAll('.table-obj');
+        const active = [...all].filter(el => el.dataset.active === 'true').length;
+        const seats = [...all].reduce((s, el) => s + (parseInt(el.dataset.capacity) || 0), 0);
+        document.getElementById('statTotal').textContent = all.length;
+        document.getElementById('statActive').textContent = active;
+        document.getElementById('statCap').textContent = seats;
+    }
+
+    // ── Toast ──
+    function showToast(msg, type = '') {
+        const t = document.getElementById('toast');
+        t.textContent = msg;
+        t.className = 'toast ' + type + ' show';
+        setTimeout(() => t.className = 'toast ' + type, 2200);
+    }
+
+    // ── Cookie ──
+    function getCookie(name) {
+        return document.cookie.split(';').map(c => c.trim()).find(c => c.startsWith(name + '='))?.split('=')[1] || null;
+    }
+
+    // ── Init ──
+    document.querySelectorAll('.table-obj').forEach(initDrag);
+    setMode('select');
+    updateStats();
+</script>
+{% endblock %}

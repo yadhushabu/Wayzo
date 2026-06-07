@@ -166,93 +166,305 @@ class DestinationImageForm(forms.ModelForm):
         return image
 
 
-# forms.py
 class DestinationPlaceForm(forms.ModelForm):
+
+    manual_priority_score = forms.IntegerField(
+        required=False,
+        min_value=0,
+        max_value=100,
+        initial=10,
+        widget=forms.NumberInput(attrs={
+            'class': 'form-control',
+            'min': 0,
+            'max': 100,
+            'placeholder': '0 - 100'
+        })
+    )
+
     class Meta:
         model = DestinationPlace
+
         fields = [
-            'name', 'description', 'category', 'latitude', 'longitude',
-            'opening_time', 'closing_time', 'entry_fee', 'parking_fee',
-            'avg_visit_duration', 'best_time_of_day', 'best_months_to_visit',
-            'difficulty_level', 'suitable_for', 'best_for_photography',
-            'best_for_sunset', 'best_for_sunrise', 'how_to_reach', 'things_to_do',
-            'travel_tips', 'safety_tips', 'things_to_carry', 'preferred_weather',
-            'priority_score', 'is_hidden_gem'
+            'name',
+            'description',
+            'category',
+
+            'latitude',
+            'longitude',
+
+            'opening_time',
+            'closing_time',
+
+            'entry_fee',
+            'parking_fee',
+
+            'avg_visit_duration',
+
+            'best_time_of_day',
+            'best_months_to_visit',
+
+            'difficulty_level',
+            'suitable_for',
+            'crowd_level',
+
+            'best_for_photography',
+            'best_for_sunset',
+            'best_for_sunrise',
+
+            'how_to_reach',
+            'things_to_do',
+
+            'travel_tips',
+            'safety_tips',
+            'things_to_carry',
+
+            'preferred_weather',
+
+            'manual_priority_score',
+
+            'is_hidden_gem'
         ]
+
         widgets = {
-            'name': forms.TextInput(attrs={'class': 'form-control'}),
-            'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 4}),
-            'category': forms.Select(attrs={'class': 'form-control'}),
-            'latitude': forms.NumberInput(attrs={'class': 'form-control', 'step': 'any'}),
-            'longitude': forms.NumberInput(attrs={'class': 'form-control', 'step': 'any'}),
-            'opening_time': forms.TimeInput(attrs={'class': 'form-control', 'type': 'time'}),
-            'closing_time': forms.TimeInput(attrs={'class': 'form-control', 'type': 'time'}),
-            'entry_fee': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
-            'parking_fee': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
-            'avg_visit_duration': forms.NumberInput(attrs={'class': 'form-control'}),
-            'best_time_of_day': forms.Select(attrs={'class': 'form-control'}),
-            'best_months_to_visit': forms.TextInput(attrs={'class': 'form-control'}),
-            'difficulty_level': forms.Select(attrs={'class': 'form-control'}),
-            'suitable_for': forms.Select(attrs={'class': 'form-control'}),
-            'best_for_photography': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
-            'best_for_sunset': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
-            'best_for_sunrise': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
-            'how_to_reach': forms.Textarea(attrs={'class': 'form-control', 'rows': 2}),
-            'things_to_do': forms.Textarea(attrs={'class': 'form-control', 'rows': 2}),
-            'travel_tips': forms.Textarea(attrs={'class': 'form-control', 'rows': 2}),
-            'safety_tips': forms.Textarea(attrs={'class': 'form-control', 'rows': 2}),
-            'things_to_carry': forms.Textarea(attrs={'class': 'form-control', 'rows': 2}),
-            'preferred_weather': forms.Select(attrs={'class': 'form-control'}),
-            'priority_score': forms.NumberInput(attrs={'class': 'form-control', 'min': 0, 'max': 100}),
-            'is_hidden_gem': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+
+            'name': forms.TextInput(attrs={
+                'class': 'form-control'
+            }),
+
+            'description': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 4
+            }),
+
+            'category': forms.TextInput(attrs={
+                'class': 'form-control'
+            }),
+
+            'latitude': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'step': 'any'
+            }),
+
+            'longitude': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'step': 'any'
+            }),
+
+            'opening_time': forms.TimeInput(attrs={
+                'class': 'form-control',
+                'type': 'time'
+            }),
+
+            'closing_time': forms.TimeInput(attrs={
+                'class': 'form-control',
+                'type': 'time'
+            }),
+
+            'entry_fee': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'step': '0.01'
+            }),
+
+            'parking_fee': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'step': '0.01'
+            }),
+
+            'avg_visit_duration': forms.NumberInput(attrs={
+                'class': 'form-control'
+            }),
+
+            'best_time_of_day': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Morning / Evening'
+            }),
+
+            'best_months_to_visit': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'October to March'
+            }),
+
+            'difficulty_level': forms.Select(attrs={
+                'class': 'form-control'
+            }),
+
+            'suitable_for': forms.Select(attrs={
+                'class': 'form-control'
+            }),
+
+            'crowd_level': forms.Select(attrs={
+                'class': 'form-control'
+            }),
+
+            'best_for_photography': forms.CheckboxInput(attrs={
+                'class': 'form-check-input'
+            }),
+
+            'best_for_sunset': forms.CheckboxInput(attrs={
+                'class': 'form-check-input'
+            }),
+
+            'best_for_sunrise': forms.CheckboxInput(attrs={
+                'class': 'form-check-input'
+            }),
+
+            'how_to_reach': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 2
+            }),
+
+            'things_to_do': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 2
+            }),
+
+            'travel_tips': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 2
+            }),
+
+            'safety_tips': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 2
+            }),
+
+            'things_to_carry': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 2
+            }),
+
+            'preferred_weather': forms.Select(attrs={
+                'class': 'form-control'
+            }),
+
+            'is_hidden_gem': forms.CheckboxInput(attrs={
+                'class': 'form-check-input'
+            }),
         }
-        
+
         help_texts = {
-            'avg_visit_duration': 'Time in minutes (e.g., 120 for 2 hours)',
-            'entry_fee': 'Entry fee in local currency',
-            'parking_fee': 'Parking fee if applicable',
-            'is_hidden_gem': 'Check if this is an offbeat/less-known location',
-            'best_for_photography': 'Good for photography',
-            'best_for_sunset': 'Famous for sunset views',
-            'best_for_sunrise': 'Famous for sunrise views',
+            'avg_visit_duration': 'Time in minutes',
+            'entry_fee': 'Entry fee amount',
+            'parking_fee': 'Parking fee amount',
+
+            'manual_priority_score':
+                'Admin controlled score (0-100). '
+                'Higher score increases ranking.',
+
+            'is_hidden_gem':
+                'Check if this is a less-known hidden attraction.',
         }
-    
+
+    # =====================================================
+    # INIT
+    # =====================================================
+
+    def __init__(self, *args, **kwargs):
+
+        self.user = kwargs.pop('user', None)
+
+        super().__init__(*args, **kwargs)
+
+        # only staff can edit manual score
+        if not (self.user and self.user.is_staff):
+
+            self.fields['manual_priority_score'].required = False
+            self.fields['manual_priority_score'].widget = forms.HiddenInput()
+            self.fields['manual_priority_score'].initial = 10
+
+    # =====================================================
+    # VALIDATIONS
+    # =====================================================
+
     def clean_name(self):
+
         name = self.cleaned_data.get('name')
+
         if name:
+
             name = ' '.join(name.split())
+
             if len(name) < 3:
-                raise forms.ValidationError("Place name must be at least 3 characters long.")
+                raise forms.ValidationError(
+                    "Place name must be at least 3 characters long."
+                )
+
         return name
-    
+
     def clean_avg_visit_duration(self):
+
         duration = self.cleaned_data.get('avg_visit_duration')
+
         if duration and duration < 0:
-            raise forms.ValidationError("Duration cannot be negative.")
-        if duration and duration > 1440:  # 24 hours max
-            raise forms.ValidationError("Duration cannot exceed 24 hours (1440 minutes).")
+            raise forms.ValidationError(
+                "Duration cannot be negative."
+            )
+
+        if duration and duration > 1440:
+            raise forms.ValidationError(
+                "Duration cannot exceed 1440 minutes."
+            )
+
         return duration
-    
+
     def clean_entry_fee(self):
+
         fee = self.cleaned_data.get('entry_fee')
+
         if fee and fee < 0:
-            raise forms.ValidationError("Entry fee cannot be negative.")
+            raise forms.ValidationError(
+                "Entry fee cannot be negative."
+            )
+
         return fee
-    
+
     def clean_parking_fee(self):
+
         fee = self.cleaned_data.get('parking_fee')
+
         if fee and fee < 0:
-            raise forms.ValidationError("Parking fee cannot be negative.")
+            raise forms.ValidationError(
+                "Parking fee cannot be negative."
+            )
+
         return fee
-    
+
+    def clean_manual_priority_score(self):
+
+        score = self.cleaned_data.get('manual_priority_score')
+
+        if score is None:
+            return 10
+
+        if score < 0 or score > 100:
+            raise forms.ValidationError(
+                "Priority score must be between 0 and 100."
+            )
+
+        return score
+
     def clean(self):
+
         cleaned_data = super().clean()
+
         opening = cleaned_data.get('opening_time')
         closing = cleaned_data.get('closing_time')
-        
+
         if opening and closing and opening >= closing:
-            raise forms.ValidationError("Closing time must be after opening time.")
-        
+
+            raise forms.ValidationError(
+                "Closing time must be after opening time."
+            )
+
+        latitude = cleaned_data.get('latitude')
+        longitude = cleaned_data.get('longitude')
+
+        if (latitude and not longitude) or (longitude and not latitude):
+
+            raise forms.ValidationError(
+                "Both latitude and longitude are required."
+            )
+
         return cleaned_data
 
 

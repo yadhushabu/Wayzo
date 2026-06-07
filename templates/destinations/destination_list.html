@@ -1,52 +1,781 @@
-<h1>🌍 Destinations</h1>
+{% extends base_template %}
+{% load static %}
 
-<!-- ADD DESTINATION BUTTON -->
-<div style="margin-bottom: 20px;">
-    <a href="{% url 'destinations:add_destination' %}">
-        <button style="
-            padding: 10px 18px;
-            background: #ff5a5f;
-            color: white;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: bold;
-        ">
-            ➕ Add Destination
-        </button>
-    </a>
+{% block title %}Wayzo | Destinations{% endblock %}
+{% block nav_dashboard %}{% endblock %}
+
+{% block extra_styles %}
+@import url('https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,500;0,600;1,400&display=swap');
+
+/* ═══════════════════════════════════════════
+   DESTINATION LIST — full stylesheet
+═══════════════════════════════════════════ */
+:root {
+    --dl-teal:      #0e8a8a;
+    --dl-teal-d:    #0a6b6b;
+    --dl-teal-p:    #e6f4f4;
+    --dl-amber:     #d97706;
+    --dl-amber-p:   #fef3c7;
+    --dl-green:     #16a34a;
+    --dl-green-p:   #dcfce7;
+    --dl-rose:      #f43f5e;
+    --dl-indigo:    #4f46e5;
+    --dl-gold:      #f59e0b;
+    --dl-border:    #e1e4e8;
+    --dl-s2:        #f6f8fa;
+    --dl-s3:        #f0f3f6;
+    --dl-ink:       #0d1117;
+    --dl-muted:     #586069;
+}
+
+/* ── HERO ── */
+.dl-hero {
+    position: relative; height: 500px; overflow: hidden; flex-shrink: 0;
+    background: linear-gradient(160deg, #0a1e3d 0%, #0e3a4a 40%, #0a3d2a 80%, #061a12 100%);
+}
+
+.dl-hero { background-image: url("{% static 'images/char.jpg' %}"); background-size: cover; }
+
+.dl-hero-art { position: absolute; inset: 0; z-index: 1; overflow: hidden; pointer-events: none; }
+.dl-hero-art svg { position: absolute; bottom: 0; left: 0; width: 100%; height: 100%; }
+.dl-hero::after {
+    content: ""; position: absolute; inset: 0; z-index: 2;
+    background: linear-gradient(160deg, rgba(6,16,24,.72) 0%, rgba(10,40,30,.55) 45%, rgba(6,14,10,.35) 100%);
+}
+.dl-hero-fade {
+    position: absolute; bottom: 0; left: 0; right: 0; height: 160px; z-index: 4;
+    background: linear-gradient(to bottom, transparent 0%, var(--gray-100, #f6f8fa) 100%);
+    pointer-events: none;
+}
+.dl-hero-content {
+    position: relative; z-index: 5; height: 100%;
+    display: flex; flex-direction: column; align-items: flex-start; justify-content: center;
+    padding: 5rem 3rem 7rem; max-width: 720px;
+    font-family: 'Sora', sans-serif;
+}
+.dl-hero-eyebrow {
+    display: inline-flex; align-items: center; gap: .5rem;
+    background: rgba(255,255,255,.1); backdrop-filter: blur(10px);
+    border: 1px solid rgba(255,255,255,.2); color: rgba(255,255,255,.9);
+    font-size: .68rem; font-weight: 500; letter-spacing: .1em; text-transform: uppercase;
+    padding: .38rem 1rem; border-radius: 40px; margin-bottom: 1.1rem;
+}
+.dl-hero-eyebrow::before { content: ""; display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: #5FC5C5; flex-shrink: 0; }
+.dl-hero-content h1 {
+    font-family: 'Playfair Display', serif; font-size: 3.4rem; font-weight: 600; line-height: 1.08;
+    color: white; margin-bottom: .7rem; letter-spacing: -.01em;
+}
+.dl-hero-content h1 em { font-style: italic; color: #8DE8E8; }
+.dl-hero-content p { font-size: .9rem; color: rgba(255,255,255,.7); margin-bottom: 1.8rem; line-height: 1.65; font-weight: 300; }
+
+/* live stats bar inside hero */
+.dl-hero-stats {
+    display: flex; gap: 1.5rem; flex-wrap: wrap; margin-bottom: 1.6rem;
+}
+.dl-hero-stat {
+    display: flex; align-items: center; gap: .45rem;
+    font-size: .78rem; color: rgba(255,255,255,.75);
+}
+.dl-hero-stat strong { color: #5FC5C5; font-weight: 700; }
+
+/* search bar */
+.dl-search { width: 100%; max-width: 560px; }
+.dl-search-inner {
+    display: flex; align-items: center; background: white;
+    border-radius: 14px; overflow: hidden;
+    box-shadow: 0 24px 60px rgba(0,0,0,.28), 0 4px 12px rgba(0,0,0,.12);
+}
+.dl-search-inner svg { width: 17px; height: 17px; stroke: #bec7d1; fill: none; margin-left: 1.1rem; flex-shrink: 0; }
+.dl-search-inner input {
+    flex: 1; padding: .9rem .8rem; border: none; font-size: .86rem;
+    background: transparent; color: var(--dl-ink); font-family: 'Sora', sans-serif;
+}
+.dl-search-inner input:focus { outline: none; }
+.dl-search-inner input::placeholder { color: #bec7d1; }
+.dl-search-inner button {
+    margin: 6px; padding: .68rem 1.4rem; background: var(--dl-teal);
+    border: none; border-radius: 10px; color: white; cursor: pointer;
+    font-weight: 600; font-size: .82rem; font-family: 'Sora', sans-serif;
+    transition: background .2s; white-space: nowrap;
+}
+.dl-search-inner button:hover { background: var(--dl-teal-d); }
+
+/* ── PAGE BODY ── */
+.dl-body {
+    position: relative; z-index: 10;
+    margin-top: -70px;
+    padding: 0 2.5rem 3rem;
+    font-family: 'Sora', sans-serif;
+}
+
+/* ── FILTER PANEL ── */
+.dl-filter-panel {
+    background: white; border-radius: 18px;
+    box-shadow: 0 8px 32px rgba(0,0,0,.08), 0 1px 4px rgba(0,0,0,.04);
+    border: 1px solid var(--dl-border); overflow: hidden; margin-bottom: 1.5rem;
+}
+
+/* category tab row */
+.dl-cat-row {
+    display: flex; align-items: center; padding: 0 1.2rem; gap: .3rem;
+    border-bottom: 1px solid var(--dl-border); overflow-x: auto; scrollbar-width: none;
+}
+.dl-cat-row::-webkit-scrollbar { display: none; }
+.dl-cat-tab {
+    display: flex; align-items: center; gap: .45rem;
+    padding: .82rem .85rem; border-bottom: 2px solid transparent;
+    color: var(--dl-muted); font-size: .76rem; font-weight: 500;
+    cursor: pointer; transition: all .2s; text-decoration: none;
+    white-space: nowrap; flex-shrink: 0; background: none; margin-bottom: -1px;
+}
+.dl-cat-tab .ci {
+    width: 22px; height: 22px; display: flex; align-items: center; justify-content: center;
+    background: var(--dl-s3); border-radius: 7px; flex-shrink: 0; transition: all .2s; font-size: .85rem;
+}
+.dl-cat-tab:hover { color: var(--dl-teal); border-bottom-color: rgba(14,138,138,.3); }
+.dl-cat-tab:hover .ci { background: var(--dl-teal-p); }
+.dl-cat-tab.active { color: var(--dl-teal); border-bottom-color: var(--dl-teal); font-weight: 700; }
+.dl-cat-tab.active .ci { background: rgba(14,138,138,.12); }
+
+/* filter body */
+.dl-filter-body { padding: 1.1rem 1.4rem 1.2rem; background: var(--dl-s2); }
+.dl-filter-row { display: flex; align-items: flex-end; gap: .85rem; flex-wrap: wrap; }
+.dl-filter-group { display: flex; flex-direction: column; gap: .3rem; flex: 1; min-width: 130px; }
+.dl-filter-group label { font-size: .64rem; font-weight: 700; color: var(--dl-muted); text-transform: uppercase; letter-spacing: .05em; }
+.dl-filter-select, .dl-filter-input {
+    padding: .52rem .8rem; border: 1.5px solid var(--dl-border); border-radius: 9px;
+    font-size: .78rem; font-family: 'Sora', sans-serif; color: var(--dl-ink); background: white;
+    transition: border-color .2s; appearance: none; cursor: pointer;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23586069' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-position: right .7rem center; padding-right: 2rem;
+}
+.dl-filter-select:focus, .dl-filter-input:focus { outline: none; border-color: var(--dl-teal); box-shadow: 0 0 0 3px rgba(14,138,138,.1); }
+.dl-filter-input { background-image: none; padding-right: .8rem; }
+.dl-filter-actions { display: flex; gap: .5rem; align-items: flex-end; flex-shrink: 0; }
+.dl-apply-btn {
+    padding: .54rem 1.3rem; background: var(--dl-teal); color: white; border: none;
+    border-radius: 9px; cursor: pointer; font-weight: 700; font-size: .76rem;
+    font-family: 'Sora', sans-serif; transition: background .2s; white-space: nowrap;
+}
+.dl-apply-btn:hover { background: var(--dl-teal-d); }
+.dl-clear-btn {
+    padding: .52rem 1rem; background: transparent; color: var(--dl-muted);
+    border: 1.5px solid var(--dl-border); border-radius: 9px; cursor: pointer;
+    font-size: .76rem; font-family: 'Sora', sans-serif; text-decoration: none;
+    transition: all .2s; white-space: nowrap; display: inline-flex; align-items: center;
+}
+.dl-clear-btn:hover { border-color: var(--dl-rose); color: var(--dl-rose); }
+
+/* results + sort bar */
+.dl-results-bar {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: .75rem 1.4rem; border-top: 1px solid var(--dl-border);
+    gap: 1rem; flex-wrap: wrap; background: white;
+}
+.dl-results-info { display: flex; align-items: center; gap: .8rem; flex-wrap: wrap; }
+.dl-results-count { font-size: .76rem; color: var(--dl-muted); }
+.dl-results-count strong { color: var(--dl-ink); font-weight: 700; }
+.dl-active-filters { display: flex; gap: .4rem; flex-wrap: wrap; }
+.dl-filter-tag {
+    display: inline-flex; align-items: center; gap: .3rem;
+    background: var(--dl-teal-p); color: var(--dl-teal-d);
+    font-size: .68rem; font-weight: 600; padding: .22rem .65rem; border-radius: 99px;
+    border: 1px solid rgba(14,138,138,.2);
+}
+.dl-filter-tag a { color: var(--dl-teal-d); text-decoration: none; font-weight: 700; margin-left: .2rem; opacity: .7; }
+.dl-filter-tag a:hover { opacity: 1; }
+.dl-sort-select {
+    padding: .48rem .9rem; border: 1.5px solid var(--dl-border); border-radius: 9px;
+    font-size: .76rem; background: var(--dl-s2); cursor: pointer;
+    font-family: 'Sora', sans-serif; color: var(--dl-ink); transition: border-color .2s;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='11' viewBox='0 0 24 24' fill='none' stroke='%23586069' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-position: right .7rem center; padding-right: 2rem;
+}
+.dl-sort-select:focus { outline: none; border-color: var(--dl-teal); }
+
+/* ── SECTION HEADER ── */
+.dl-section-head {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 1.3rem; gap: 1rem; flex-wrap: wrap;
+}
+.dl-section-head-left { display: flex; align-items: baseline; gap: .6rem; }
+.dl-section-head h2 { font-family: 'Playfair Display', serif; font-size: 1.5rem; font-weight: 600; color: var(--dl-ink); }
+.dl-section-head-sub { font-size: .73rem; color: var(--dl-muted); }
+.dl-add-btn {
+    display: inline-flex; align-items: center; gap: .45rem;
+    padding: .58rem 1.2rem; background: var(--dl-teal); color: white;
+    border: none; border-radius: 99px; font-size: .8rem; font-weight: 700;
+    text-decoration: none; transition: all .2s; cursor: pointer;
+    font-family: 'Sora', sans-serif; box-shadow: 0 4px 14px rgba(14,138,138,.3);
+}
+.dl-add-btn:hover { background: var(--dl-teal-d); transform: translateY(-1px); color: white; }
+
+/* ── DESTINATION GRID ── */
+.dl-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.4rem; margin-bottom: 2rem;
+}
+
+/* ── DESTINATION CARD ── */
+.dl-card {
+    background: white; border: 1px solid var(--dl-border); border-radius: 18px;
+    overflow: hidden; transition: transform .28s ease, box-shadow .28s ease, border-color .28s;
+    cursor: pointer; text-decoration: none; display: flex; flex-direction: column;
+    position: relative;
+}
+.dl-card:hover { transform: translateY(-6px); box-shadow: 0 20px 48px rgba(0,0,0,.1); border-color: rgba(14,138,138,.25); }
+
+/* thumb */
+.dl-card-thumb {
+    height: 210px; background: var(--dl-s3); position: relative; overflow: hidden;
+}
+.dl-card-thumb img { width: 100%; height: 100%; object-fit: cover; transition: transform .4s ease; display: block; }
+.dl-card:hover .dl-card-thumb img { transform: scale(1.07); }
+.dl-card-thumb-placeholder {
+    height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: .5rem; background: linear-gradient(135deg, #0e3a4a, #0a3d2a);
+}
+.dl-card-thumb-placeholder span { font-size: .72rem; color: rgba(255,255,255,.35); }
+
+/* thumb overlay badges */
+.dl-thumb-tl {
+    position: absolute; top: .7rem; left: .7rem; z-index: 3;
+    display: flex; flex-direction: column; gap: .35rem;
+}
+.dl-score-badge {
+    display: inline-flex; align-items: center; gap: .3rem;
+    background: rgba(12,16,22,.78); backdrop-filter: blur(8px);
+    color: white; font-size: .65rem; font-weight: 700;
+    padding: .26rem .65rem; border-radius: 99px; letter-spacing: .03em;
+}
+.dl-score-badge.trending { background: linear-gradient(135deg, #d97706, #b45309); }
+.dl-score-badge svg { width: 10px; height: 10px; flex-shrink: 0; }
+.dl-best-time-badge {
+    display: inline-flex; align-items: center; gap: .3rem;
+    background: rgba(22,163,74,.85); backdrop-filter: blur(8px);
+    color: white; font-size: .62rem; font-weight: 700;
+    padding: .24rem .62rem; border-radius: 99px;
+}
+.dl-weather-badge {
+    display: inline-flex; align-items: center; gap: .3rem;
+    background: rgba(255,255,255,.18); backdrop-filter: blur(10px);
+    border: 1px solid rgba(255,255,255,.22);
+    color: white; font-size: .62rem; font-weight: 600;
+    padding: .24rem .62rem; border-radius: 99px;
+}
+.dl-thumb-tr {
+    position: absolute; top: .7rem; right: .7rem; z-index: 3;
+    display: flex; flex-direction: column; align-items: flex-end; gap: .35rem;
+}
+.dl-season-badge {
+    background: rgba(14,138,138,.85); backdrop-filter: blur(8px);
+    color: white; font-size: .6rem; font-weight: 600;
+    padding: .24rem .65rem; border-radius: 99px;
+}
+.dl-featured-badge {
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    color: white; font-size: .6rem; font-weight: 700;
+    padding: .22rem .6rem; border-radius: 99px;
+}
+.dl-rank {
+    position: absolute; bottom: .65rem; left: .7rem; z-index: 3;
+    width: 26px; height: 26px; border-radius: 50%;
+    background: rgba(255,255,255,.15); backdrop-filter: blur(8px);
+    border: 1px solid rgba(255,255,255,.25);
+    color: white; font-size: .7rem; font-weight: 800;
+    display: flex; align-items: center; justify-content: center;
+}
+.dl-rank.r1 { background: #d97706; border-color: #d97706; }
+.dl-rank.r2 { background: #6b7280; border-color: #6b7280; }
+.dl-rank.r3 { background: #92400e; border-color: #92400e; }
+
+/* AI score pill overlaid bottom-right of thumb */
+.dl-ai-score-overlay {
+    position: absolute; bottom: .65rem; right: .7rem; z-index: 3;
+    background: rgba(0,0,0,.62); backdrop-filter: blur(10px);
+    border: 1px solid rgba(255,255,255,.15); border-radius: 10px;
+    padding: .3rem .6rem; text-align: center;
+}
+.dl-ai-score-overlay .val { font-size: .95rem; font-weight: 800; color: #5FC5C5; line-height: 1; }
+.dl-ai-score-overlay .lbl { font-size: .52rem; color: rgba(255,255,255,.5); text-transform: uppercase; letter-spacing: .05em; }
+
+/* card body */
+.dl-card-body { padding: .9rem 1.1rem .5rem; flex: 1; }
+.dl-card-name { font-size: .95rem; font-weight: 700; color: var(--dl-ink); margin-bottom: .2rem; line-height: 1.3; }
+.dl-card-location {
+    font-size: .71rem; color: var(--dl-muted); margin-bottom: .5rem;
+    display: flex; align-items: center; gap: .28rem;
+}
+.dl-card-location svg { width: 11px; height: 11px; stroke: var(--dl-teal); fill: none; stroke-width: 2; flex-shrink: 0; }
+.dl-card-desc { font-size: .71rem; color: var(--dl-muted); line-height: 1.55; margin-bottom: .55rem; }
+
+/* weather row */
+.dl-card-weather {
+    display: flex; align-items: center; gap: .5rem;
+    font-size: .73rem; color: var(--dl-ink); margin-bottom: .5rem;
+    padding: .38rem .65rem; background: var(--dl-s2); border-radius: 8px;
+    border: 1px solid var(--dl-border);
+}
+.dl-card-weather-temp { font-weight: 700; color: var(--dl-teal); }
+.dl-card-weather-cond { color: var(--dl-muted); font-size: .68rem; }
+
+/* category tags */
+.dl-card-tags { display: flex; gap: .35rem; flex-wrap: wrap; margin-bottom: .5rem; }
+.dl-card-tag {
+    font-size: .62rem; padding: .18rem .55rem; border-radius: 99px;
+    background: var(--dl-teal-p); color: var(--dl-teal-d); font-weight: 600;
+    border: 1px solid rgba(14,138,138,.15);
+}
+.dl-card-tag.gem { background: rgba(79,70,229,.1); color: var(--dl-indigo); border-color: rgba(79,70,229,.15); }
+
+/* card footer */
+.dl-card-footer {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: .6rem 1.1rem .85rem; border-top: 1px solid var(--dl-s3);
+    margin-top: .3rem; gap: .5rem; flex-wrap: wrap;
+}
+.dl-card-stats { display: flex; align-items: center; gap: .75rem; flex-wrap: wrap; }
+.dl-card-stat {
+    display: flex; align-items: center; gap: .28rem;
+    font-size: .68rem; color: var(--dl-muted);
+}
+.dl-card-stat svg { width: 11px; height: 11px; stroke: currentColor; fill: none; stroke-width: 2; }
+.dl-card-stat strong { color: var(--dl-ink); font-weight: 700; font-size: .72rem; }
+
+/* AI score pill in footer */
+.dl-score-pill {
+    display: flex; flex-direction: column; align-items: center;
+    background: var(--dl-teal-p); border: 1px solid rgba(14,138,138,.2);
+    border-radius: 10px; padding: .3rem .7rem; flex-shrink: 0;
+}
+.dl-score-pill .num { font-size: .95rem; font-weight: 800; color: var(--dl-teal); line-height: 1; }
+.dl-score-pill .txt { font-size: .55rem; color: var(--dl-teal-d); text-transform: uppercase; letter-spacing: .05em; font-weight: 600; }
+
+/* suitable for pills */
+.dl-suitable-row { display: flex; gap: .3rem; flex-wrap: wrap; margin-bottom: .45rem; }
+.dl-suitable-pill {
+    font-size: .6rem; padding: .15rem .5rem; border-radius: 99px;
+    background: var(--dl-amber-p); color: #78350f; border: 1px solid rgba(217,119,6,.15);
+    font-weight: 600;
+}
+
+/* empty state */
+.dl-empty {
+    text-align: center; padding: 4rem 2rem; background: white;
+    border-radius: 18px; grid-column: 1/-1; border: 1px dashed var(--dl-border);
+}
+.dl-empty-icon { font-size: 2.5rem; opacity: .25; margin-bottom: .75rem; }
+.dl-empty h4 { font-size: 1rem; color: var(--dl-ink); margin-bottom: .4rem; }
+.dl-empty p { font-size: .8rem; color: var(--dl-muted); }
+
+/* ── RESPONSIVE ── */
+@media (max-width: 1100px) { .dl-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 860px) {
+    .dl-hero { height: 480px; }
+    .dl-hero-content h1 { font-size: 2.4rem; }
+    .dl-grid { grid-template-columns: 1fr; }
+    .dl-body { padding: 0 1.2rem 2rem; }
+    .dl-filter-row { flex-direction: column; }
+    .dl-filter-group { min-width: 100%; }
+}
+@media (max-width: 640px) {
+    .dl-hero { height: 420px; }
+    .dl-hero-content { padding: 4rem 1.5rem 6rem; }
+    .dl-hero-content h1 { font-size: 1.9rem; }
+    .dl-hero-stats { display: none; }
+}
+@keyframes dlFadeUp { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
+.dl-body > * { animation: dlFadeUp .45s ease both; }
+{% endblock %}
+
+{% block topbar_title %}Destinations{% endblock %}
+{% block topbar_subtitle %}AI-ranked travel destinations{% endblock %}
+
+{% block content %}
+
+<!-- ══ HERO ══ -->
+<div class="dl-hero">
+    <div class="dl-hero-art">
+        <svg viewBox="0 0 1440 500" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+                <radialGradient id="dlGA" cx="25%" cy="55%" r="45%">
+                    <stop offset="0%" stop-color="#1aa8a8" stop-opacity=".15"/>
+                    <stop offset="100%" stop-color="transparent" stop-opacity="0"/>
+                </radialGradient>
+                <filter id="dlBlur"><feGaussianBlur stdDeviation="3"/></filter>
+            </defs>
+            <rect width="1440" height="500" fill="url(#dlGA)"/>
+            <g opacity=".3" fill="#fff">
+                <circle cx="90" cy="50" r="1.2"/><circle cx="300" cy="32" r=".9"/><circle cx="560" cy="68" r="1"/>
+                <circle cx="800" cy="25" r="1.3"/><circle cx="1060" cy="55" r=".8"/><circle cx="1310" cy="40" r="1.1"/>
+                <circle cx="170" cy="100" r=".7"/><circle cx="700" cy="90" r=".9"/><circle cx="1150" cy="80" r=".75"/>
+            </g>
+            <circle cx="1330" cy="75" r="30" fill="#fef3c7" opacity=".14" filter="url(#dlBlur)"/>
+            <circle cx="1330" cy="75" r="16" fill="#fef9e7" opacity=".28"/>
+            <ellipse cx="200" cy="500" rx="320" ry="180" fill="#071810" opacity=".6"/>
+            <ellipse cx="1240" cy="500" rx="280" ry="160" fill="#071810" opacity=".55"/>
+            <ellipse cx="720" cy="500" rx="500" ry="110" fill="#040f09" opacity=".7"/>
+            <g fill="#071810" opacity=".8">
+                <rect x="55" y="290" width="7" height="110" rx="3.5"/>
+                <ellipse cx="58" cy="280" rx="28" ry="38"/>
+                <rect x="105" y="310" width="6" height="90" rx="3"/>
+                <ellipse cx="108" cy="300" rx="22" ry="30"/>
+            </g>
+            <g fill="#071810" opacity=".75">
+                <rect x="1295" y="295" width="7" height="105" rx="3.5"/>
+                <ellipse cx="1298" cy="285" rx="29" ry="39"/>
+                <rect x="1338" y="312" width="6" height="88" rx="3"/>
+                <ellipse cx="1341" cy="302" rx="22" ry="30"/>
+            </g>
+        </svg>
+    </div>
+    <div class="dl-hero-fade"></div>
+    <div class="dl-hero-content">
+        <div class="dl-hero-eyebrow">AI-Powered Travel Discovery</div>
+        <h1>Where do you want<br><em>to wander?</em></h1>
+        <div class="dl-hero-stats">
+            <div class="dl-hero-stat"><strong>{{ destinations|length }}</strong> destinations</div>
+            <div class="dl-hero-stat">• Ranked by AI score</div>
+            <div class="dl-hero-stat">• Live weather data</div>
+        </div>
+        <p>Destinations ranked by season, live weather, ratings<br>and traveller scores — tailored for right now.</p>
+        <form method="GET" action="" class="dl-search" id="dlSearchForm">
+            {% for k, v in request.GET.items %}{% if k != 'search' %}<input type="hidden" name="{{ k }}" value="{{ v }}">{% endif %}{% endfor %}
+            <div class="dl-search-inner">
+                <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                <input type="text" name="search" placeholder="Search destinations, cities, countries..." value="{{ request.GET.search|default:'' }}">
+                <button type="submit">Search</button>
+            </div>
+        </form>
+    </div>
 </div>
 
-<!-- DESTINATION GRID -->
-<div class="grid">
+<!-- ══ BODY ══ -->
+<div class="dl-body">
 
-    {% for destination in destinations %}
+    <!-- ── FILTER PANEL ── -->
+    <form method="GET" action="" id="dlFilterForm">
+        <!-- preserve search -->
+        {% if request.GET.search %}<input type="hidden" name="search" value="{{ request.GET.search }}">{% endif %}
 
-        <div class="card">
+        <div class="dl-filter-panel">
 
-            <a href="{% url 'destinations:destination_detail' destination.id %}">
+            <!-- Category tabs — maps to best_season / category type -->
+            <div class="dl-cat-row">
+                <a href="?{% if request.GET.search %}search={{ request.GET.search }}&{% endif %}sort={{ request.GET.sort|default:'trending' }}"
+                   class="dl-cat-tab {% if not request.GET.category %}active{% endif %}">
+                    <span class="ci">🌍</span> All
+                </a>
+                <a href="?{% if request.GET.search %}search={{ request.GET.search }}&{% endif %}category=beach&sort={{ request.GET.sort|default:'trending' }}"
+                   class="dl-cat-tab {% if request.GET.category == 'beach' %}active{% endif %}">
+                    <span class="ci">🏖️</span> Beach
+                </a>
+                <a href="?{% if request.GET.search %}search={{ request.GET.search }}&{% endif %}category=mountain&sort={{ request.GET.sort|default:'trending' }}"
+                   class="dl-cat-tab {% if request.GET.category == 'mountain' %}active{% endif %}">
+                    <span class="ci">⛰️</span> Mountains
+                </a>
+                <a href="?{% if request.GET.search %}search={{ request.GET.search }}&{% endif %}category=city&sort={{ request.GET.sort|default:'trending' }}"
+                   class="dl-cat-tab {% if request.GET.category == 'city' %}active{% endif %}">
+                    <span class="ci">🏙️</span> Cities
+                </a>
+                <a href="?{% if request.GET.search %}search={{ request.GET.search }}&{% endif %}category=heritage&sort={{ request.GET.sort|default:'trending' }}"
+                   class="dl-cat-tab {% if request.GET.category == 'heritage' %}active{% endif %}">
+                    <span class="ci">🏛️</span> Heritage
+                </a>
+                <a href="?{% if request.GET.search %}search={{ request.GET.search }}&{% endif %}category=wildlife&sort={{ request.GET.sort|default:'trending' }}"
+                   class="dl-cat-tab {% if request.GET.category == 'wildlife' %}active{% endif %}">
+                    <span class="ci">🦁</span> Wildlife
+                </a>
+                <a href="?{% if request.GET.search %}search={{ request.GET.search }}&{% endif %}category=adventure&sort={{ request.GET.sort|default:'trending' }}"
+                   class="dl-cat-tab {% if request.GET.category == 'adventure' %}active{% endif %}">
+                    <span class="ci">🧗</span> Adventure
+                </a>
+                <a href="?{% if request.GET.search %}search={{ request.GET.search }}&{% endif %}category=trekking&sort={{ request.GET.sort|default:'trending' }}"
+                   class="dl-cat-tab {% if request.GET.category == 'trekking' %}active{% endif %}">
+                    <span class="ci">🥾</span> Trekking
+                </a>
+            </div>
 
-                {% if destination.images.first %}
-                    <img src="{{ destination.images.first.image.url }}"
-                         style="width:100%; height:180px; object-fit:cover;">
-                {% endif %}
+            <!-- Deep filter row -->
+            <div class="dl-filter-body">
+                <div class="dl-filter-row">
+                    <div class="dl-filter-group">
+                        <label>Best Season</label>
+                        <select class="dl-filter-select" name="season">
+                            <option value="">Any Season</option>
+                            <option value="spring"     {% if request.GET.season == 'spring'     %}selected{% endif %}>🌸 Spring</option>
+                            <option value="summer"     {% if request.GET.season == 'summer'     %}selected{% endif %}>☀️ Summer</option>
+                            <option value="autumn"     {% if request.GET.season == 'autumn'     %}selected{% endif %}>🍂 Autumn</option>
+                            <option value="winter"     {% if request.GET.season == 'winter'     %}selected{% endif %}>❄️ Winter</option>
+                            <option value="year_round" {% if request.GET.season == 'year_round' %}selected{% endif %}>🌍 Year Round</option>
+                        </select>
+                    </div>
+                    <div class="dl-filter-group">
+                        <label>Weather</label>
+                        <select class="dl-filter-select" name="weather">
+                            <option value="">Any Weather</option>
+                            <option value="sunny"  {% if request.GET.weather == 'sunny'  %}selected{% endif %}>☀️ Sunny</option>
+                            <option value="cold"   {% if request.GET.weather == 'cold'   %}selected{% endif %}>❄️ Cold</option>
+                            <option value="rainy"  {% if request.GET.weather == 'rainy'  %}selected{% endif %}>🌧️ Rainy</option>
+                            <option value="snow"   {% if request.GET.weather == 'snow'   %}selected{% endif %}>⛄ Snow</option>
+                            <option value="cloudy" {% if request.GET.weather == 'cloudy' %}selected{% endif %}>☁️ Cloudy</option>
+                        </select>
+                    </div>
+                    <div class="dl-filter-group">
+                        <label>Suitable For</label>
+                        <select class="dl-filter-select" name="suitable_for">
+                            <option value="">Everyone</option>
+                            <option value="family"    {% if request.GET.suitable_for == 'family'    %}selected{% endif %}>👨‍👩‍👧 Family</option>
+                            <option value="couples"   {% if request.GET.suitable_for == 'couples'   %}selected{% endif %}>💑 Couples</option>
+                            <option value="solo"      {% if request.GET.suitable_for == 'solo'      %}selected{% endif %}>🚶 Solo</option>
+                            <option value="friends"   {% if request.GET.suitable_for == 'friends'   %}selected{% endif %}>👯 Friends</option>
+                            <option value="adventure" {% if request.GET.suitable_for == 'adventure' %}selected{% endif %}>🏔️ Adventure</option>
+                        </select>
+                    </div>
+                    <div class="dl-filter-group">
+                        <label>Min Rating</label>
+                        <select class="dl-filter-select" name="min_rating">
+                            <option value="">Any Rating</option>
+                            <option value="3" {% if request.GET.min_rating == '3' %}selected{% endif %}>⭐ 3+ Stars</option>
+                            <option value="4" {% if request.GET.min_rating == '4' %}selected{% endif %}>⭐ 4+ Stars</option>
+                            <option value="4.5" {% if request.GET.min_rating == '4.5' %}selected{% endif %}>⭐ 4.5+ Stars</option>
+                        </select>
+                    </div>
+                    <div class="dl-filter-group">
+                        <label>Trending</label>
+                        <select class="dl-filter-select" name="trending">
+                            <option value="">All</option>
+                            <option value="top10"  {% if request.GET.trending == 'top10'  %}selected{% endif %}>🔥 Top 10</option>
+                            <option value="top25"  {% if request.GET.trending == 'top25'  %}selected{% endif %}>⚡ Top 25</option>
+                            <option value="rising" {% if request.GET.trending == 'rising' %}selected{% endif %}>📈 Rising</option>
+                        </select>
+                    </div>
+                    <div class="dl-filter-group">
+                        <label>Special</label>
+                        <select class="dl-filter-select" name="special">
+                            <option value="">None</option>
+                            <option value="featured"  {% if request.GET.special == 'featured'  %}selected{% endif %}>✦ Featured</option>
+                            <option value="best_now"  {% if request.GET.special == 'best_now'  %}selected{% endif %}>🔥 Best Time Now</option>
+                            <option value="gems"      {% if request.GET.special == 'gems'      %}selected{% endif %}>💎 Has Hidden Gems</option>
+                        </select>
+                    </div>
 
-                <h2>{{ destination.name }}</h2>
+                    <!-- hidden: preserve category -->
+                    {% if request.GET.category %}<input type="hidden" name="category" value="{{ request.GET.category }}">{% endif %}
 
-                <p>📍 {{ destination.city }}, {{ destination.country }}</p>
+                    <div class="dl-filter-actions">
+                        <button type="submit" class="dl-apply-btn">Apply Filters</button>
+                        <a href="{% url 'destinations:destination_list' %}" class="dl-clear-btn">Clear</a>
+                    </div>
+                </div>
+            </div>
 
-                <p>⭐ Rating: {{ destination.average_rating }}</p>
-
-                <p>🔥 Score: {{ destination.trending_score|floatformat:2 }}</p>
-
-            </a>
+            <!-- Results + sort bar -->
+            <div class="dl-results-bar">
+                <div class="dl-results-info">
+                    <span class="dl-results-count">
+                        <strong>{{ destinations|length }}</strong> destination{{ destinations|length|pluralize }} found
+                    </span>
+                    <!-- Active filter tags -->
+                    <div class="dl-active-filters">
+                        {% if request.GET.season %}<span class="dl-filter-tag">Season: {{ request.GET.season }} <a href="?{% for k,v in request.GET.items %}{% if k != 'season' %}{{ k }}={{ v }}&{% endif %}{% endfor %}">×</a></span>{% endif %}
+                        {% if request.GET.weather %}<span class="dl-filter-tag">Weather: {{ request.GET.weather }} <a href="?{% for k,v in request.GET.items %}{% if k != 'weather' %}{{ k }}={{ v }}&{% endif %}{% endfor %}">×</a></span>{% endif %}
+                        {% if request.GET.suitable_for %}<span class="dl-filter-tag">For: {{ request.GET.suitable_for }} <a href="?{% for k,v in request.GET.items %}{% if k != 'suitable_for' %}{{ k }}={{ v }}&{% endif %}{% endfor %}">×</a></span>{% endif %}
+                        {% if request.GET.min_rating %}<span class="dl-filter-tag">{{ request.GET.min_rating }}+ ⭐ <a href="?{% for k,v in request.GET.items %}{% if k != 'min_rating' %}{{ k }}={{ v }}&{% endif %}{% endfor %}">×</a></span>{% endif %}
+                        {% if request.GET.special %}<span class="dl-filter-tag">{{ request.GET.special }} <a href="?{% for k,v in request.GET.items %}{% if k != 'special' %}{{ k }}={{ v }}&{% endif %}{% endfor %}">×</a></span>{% endif %}
+                        {% if request.GET.trending %}<span class="dl-filter-tag">{{ request.GET.trending }} <a href="?{% for k,v in request.GET.items %}{% if k != 'trending' %}{{ k }}={{ v }}&{% endif %}{% endfor %}">×</a></span>{% endif %}
+                        {% if request.GET.search %}<span class="dl-filter-tag">🔍 "{{ request.GET.search }}" <a href="?{% for k,v in request.GET.items %}{% if k != 'search' %}{{ k }}={{ v }}&{% endif %}{% endfor %}">×</a></span>{% endif %}
+                    </div>
+                </div>
+                <select class="dl-sort-select" onchange="dlApplySort(this.value)">
+                    <option value="trending"   {% if request.GET.sort == 'trending'   or not request.GET.sort %}selected{% endif %}>🔥 Trending</option>
+                    <option value="rating"     {% if request.GET.sort == 'rating'     %}selected{% endif %}>⭐ Highest Rated</option>
+                    <option value="popular"    {% if request.GET.sort == 'popular'    %}selected{% endif %}>👁️ Most Popular</option>
+                    <option value="newest"     {% if request.GET.sort == 'newest'     %}selected{% endif %}>🆕 Newest</option>
+                    <option value="weather"    {% if request.GET.sort == 'weather'    %}selected{% endif %}>🌤️ Best Weather</option>
+                    <option value="ai"         {% if request.GET.sort == 'ai'         %}selected{% endif %}>🤖 Recommended by AI</option>
+                </select>
+            </div>
 
         </div>
+    </form>
 
-    {% empty %}
+    <!-- ── GRID HEADER ── -->
+    <div class="dl-section-head">
+        <div class="dl-section-head-left">
+            <h2>Explore Destinations</h2>
+            <span class="dl-section-head-sub">Ranked by AI score · live weather · traveller ratings</span>
+        </div>
+        {% if request.user.is_authenticated %}
+        <a href="{% url 'destinations:add_destination' %}" class="dl-add-btn">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
+            Add Destination
+        </a>
+        {% endif %}
+    </div>
 
-        <p>No destinations added yet.</p>
+    <!-- ── DESTINATION CARDS ── -->
+    <div class="dl-grid">
+        {% for destination in destinations %}
+        {% with rank=forloop.counter %}
+        <a class="dl-card" href="{% url 'destinations:destination_detail' destination.id %}">
 
-    {% endfor %}
+            <!-- THUMB -->
+            <div class="dl-card-thumb">
+                {% if destination.images.first %}
+                    <img src="{{ destination.images.first.image.url }}" alt="{{ destination.name }}" loading="lazy">
+                {% else %}
+                    <div class="dl-card-thumb-placeholder">
+                        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="1.5"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                        <span>{{ destination.name }}</span>
+                    </div>
+                {% endif %}
 
-</div>
+                <!-- TOP LEFT badges -->
+                <div class="dl-thumb-tl">
+                    <!-- Trending / AI score badge -->
+                    <div class="dl-score-badge {% if rank <= 3 %}trending{% endif %}">
+                        <svg viewBox="0 0 24 24" width="10" height="10" fill="#fbbf24" stroke="#fbbf24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                        {% if rank <= 3 %}🔥 Trending{% else %}⭐ {{ destination.final_trending_score|floatformat:0 }} pts{% endif %}
+                    </div>
+
+                    <!-- Best Time Now badge — your AI feature -->
+                    {% if destination.is_best_time_now %}
+                    <div class="dl-best-time-badge">🔥 Best Time To Visit</div>
+                    {% endif %}
+
+                    <!-- Live weather -->
+                    {% if destination.current_temperature %}
+                    <div class="dl-weather-badge">
+                        🌡️ {{ destination.current_temperature|floatformat:0 }}°C
+                        {% if destination.weather_condition %}· {{ destination.weather_condition|truncatewords:2 }}{% endif %}
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- TOP RIGHT badges -->
+                <div class="dl-thumb-tr">
+                    {% if destination.best_season %}
+                    <div class="dl-season-badge">
+                        {% if destination.best_season == 'winter' %}❄️{% elif destination.best_season == 'summer' %}☀️{% elif destination.best_season == 'spring' %}🌸{% elif destination.best_season == 'autumn' %}🍂{% else %}🌍{% endif %}
+                        {{ destination.get_best_season_display }}
+                    </div>
+                    {% endif %}
+                    {% if destination.is_featured %}
+                    <div class="dl-featured-badge">✦ Featured</div>
+                    {% endif %}
+                </div>
+
+                <!-- Rank circle -->
+                <div class="dl-rank {% if rank == 1 %}r1{% elif rank == 2 %}r2{% elif rank == 3 %}r3{% endif %}">#{{ rank }}</div>
+
+                <!-- AI score overlay bottom-right -->
+                <div class="dl-ai-score-overlay">
+                    <div class="val">{{ destination.final_trending_score|floatformat:0 }}</div>
+                    <div class="lbl">AI Score</div>
+                </div>
+
+            </div><!-- /thumb -->
+
+            <!-- BODY -->
+            <div class="dl-card-body">
+                <div class="dl-card-name">{{ destination.name }}</div>
+                <div class="dl-card-location">
+                    <svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                    {{ destination.city }}{% if destination.city and destination.country %}, {% endif %}{{ destination.country }}
+                </div>
+
+                <!-- Live weather row -->
+                {% if destination.current_temperature %}
+                <div class="dl-card-weather">
+                    <span>
+                        {% if destination.preferred_weather == 'sunny' %}☀️
+                        {% elif destination.preferred_weather == 'cold' %}❄️
+                        {% elif destination.preferred_weather == 'rainy' %}🌧️
+                        {% elif destination.preferred_weather == 'snow' %}⛄
+                        {% else %}🌤️{% endif %}
+                    </span>
+                    <span class="dl-card-weather-temp">{{ destination.current_temperature|floatformat:0 }}°C</span>
+                    {% if destination.weather_condition %}
+                    <span class="dl-card-weather-cond">{{ destination.weather_condition|truncatewords:3 }}</span>
+                    {% endif %}
+                    {% if destination.humidity %}
+                    <span style="margin-left:auto;font-size:.65rem;color:var(--dl-muted);">💧 {{ destination.humidity|floatformat:0 }}%</span>
+                    {% endif %}
+                </div>
+                {% endif %}
+
+                <p class="dl-card-desc">{{ destination.description|truncatewords:16 }}</p>
+
+                <!-- Category + hidden gem tags -->
+                {% with gem_count=destination.places.filter_hidden_gem %}
+                <div class="dl-card-tags">
+                    {% if destination.best_season %}
+                    <span class="dl-card-tag">
+                        {% if destination.best_season == 'winter' %}❄️{% elif destination.best_season == 'summer' %}☀️{% elif destination.best_season == 'spring' %}🌸{% elif destination.best_season == 'autumn' %}🍂{% else %}🌍{% endif %}
+                        {{ destination.get_best_season_display }}
+                    </span>
+                    {% endif %}
+                    {% if destination.places.count > 0 %}
+                    <span class="dl-card-tag">📍 {{ destination.places.count }} places</span>
+                    {% endif %}
+                    {% with gems=destination.places.all %}
+                    {% for p in gems %}{% if p.is_hidden_gem and forloop.first %}<span class="dl-card-tag gem">💎 Hidden Gems</span>{% endif %}{% endfor %}
+                    {% endwith %}
+                    {% if destination.is_featured %}
+                    <span class="dl-card-tag" style="background:var(--dl-amber-p);color:#92400e;border-color:rgba(217,119,6,.2);">✦ Featured</span>
+                    {% endif %}
+                </div>
+                {% endwith %}
+
+            </div><!-- /body -->
+
+            <!-- FOOTER -->
+            <div class="dl-card-footer">
+                <div class="dl-card-stats">
+                    <div class="dl-card-stat">
+                        <svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                        <strong>{{ destination.average_rating|floatformat:1|default:"0.0" }}</strong>
+                    </div>
+                    <div class="dl-card-stat">
+                        <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                        <strong>{{ destination.total_reviews }}</strong> reviews
+                    </div>
+                    <div class="dl-card-stat">
+                        <svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                        <strong>{{ destination.total_views }}</strong>
+                    </div>
+                </div>
+
+                <!-- THE AI SCORE PILL — final_trending_score prominently displayed -->
+                <div class="dl-score-pill">
+                    <span class="num">{{ destination.final_trending_score|floatformat:0 }}</span>
+                    <span class="txt">AI Score</span>
+                </div>
+            </div>
+
+        </a>
+        {% endwith %}
+        {% empty %}
+        <div class="dl-empty">
+            <div class="dl-empty-icon">🌍</div>
+            <h4>No destinations found</h4>
+            <p>Try adjusting your filters or search — or be the first to add a destination!</p>
+        </div>
+        {% endfor %}
+    </div>
+
+</div><!-- /body -->
+
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+/* Sort — appends sort param preserving all other params */
+function dlApplySort(val) {
+    const url = new URL(window.location.href);
+    url.searchParams.set('sort', val);
+    window.location.href = url.toString();
+}
+</script>
+{% endblock %}

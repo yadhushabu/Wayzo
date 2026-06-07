@@ -1,9 +1,11 @@
 from django import forms
 
 from agencies.models import CancellationPolicy, TourPackage
-from .models import PropertyBooking, TravellerProfile, ProfilePost
+from .models import TravellerProfile, ProfilePost
 
 class TravellerProfileEditForm(forms.ModelForm):
+
+    profile_picture = forms.ImageField(required=False)
 
     class Meta:
         model = TravellerProfile
@@ -16,34 +18,32 @@ class TravellerProfileEditForm(forms.ModelForm):
             "address",
             "city",
             "state",
-            "profile_picture",  
+            "cover_image",
         ]
+
+    def __init__(self, *args, **kwargs):
+        self.user = kwargs.pop("user", None)
+        super().__init__(*args, **kwargs)
+
+    def save(self, commit=True):
+
+        profile = super().save(commit=False)
+
+        picture = self.cleaned_data.get("profile_picture")
+
+        if picture:
+            self.user.profile_picture = picture
+
+            if commit:
+                self.user.save()
+
+        if commit:
+            profile.save()
+
+        return profile
 
 
 class NewPostForm(forms.ModelForm):
     class Meta:
         model = ProfilePost
         fields = ['caption', 'image', 'location']
-
-
-
-from django import forms
-
-class PropertyBookingForm(forms.ModelForm):
-    class Meta:
-        model = PropertyBooking
-        fields = [
-            "booking_type",
-            "booking_date",
-            "time",
-            "guests",
-            "check_in",
-            "check_out",
-            "rooms",
-            "special_request"
-        ]
-        exclude = ['user', 'property', 'booking_type']
-        widgets = {
-    'check_in': forms.DateInput(attrs={'type': 'date'}),
-    'check_out': forms.DateInput(attrs={'type': 'date'}),
-}

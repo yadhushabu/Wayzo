@@ -1,778 +1,1098 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Edit {{ destination.name }} - Destination</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background: #f6f7fb;
-            margin: 0;
-            padding: 0;
-        }
+{% extends base_template %}
+{% load static %}
 
-        .container {
-            width: 900px;
-            margin: 40px auto;
-            background: white;
-            padding: 25px;
-            border-radius: 12px;
-            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
-        }
+{% block title %}Edit {{ destination.name }} | Wayzo{% endblock %}
 
-        h1 {
-            text-align: center;
-            margin-bottom: 20px;
-            color: #333;
-        }
+{% block head_extra %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://maps.googleapis.com/maps/api/js?key={{ google_api_key }}&libraries=places&callback=initAutocomplete" async defer></script>
+{% endblock %}
 
-        h2, h3 {
-            margin: 20px 0 15px;
-            color: #555;
-            border-left: 4px solid #007bff;
-            padding-left: 15px;
-        }
+{% block extra_styles %}
+@import url('https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,500;0,600;1,400&display=swap');
 
-        label {
-            font-weight: bold;
-            display: block;
-            margin-top: 12px;
-            color: #555;
-        }
+:root {
+    --ed-teal:      #0e8a8a;
+    --ed-teal-d:    #0a6b6b;
+    --ed-teal-pale: #e6f4f4;
+    --ed-ink:       #0d1117;
+    --ed-ink2:      #1c2333;
+    --ed-muted:     #586069;
+    --ed-border:    #e1e4e8;
+    --ed-surface:   #ffffff;
+    --ed-s2:        #f6f8fa;
+    --ed-s3:        #f0f3f6;
+    --ed-amber:     #d97706;
+    --ed-amber-p:   #fef3c7;
+    --ed-green:     #16a34a;
+    --ed-green-p:   #dcfce7;
+    --ed-rose:      #f43f5e;
+    --ed-r:         14px;
+    --ed-sh:        0 1px 8px rgba(0,0,0,.06), 0 4px 16px rgba(0,0,0,.04);
+    --ed-sh-lg:     0 8px 32px rgba(0,0,0,.10), 0 2px 8px rgba(0,0,0,.06);
+}
 
-        input, textarea, select {
-            width: 100%;
-            padding: 10px;
-            margin-top: 5px;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            font-size: 14px;
-        }
+.ed-page {
+    font-family: 'Sora', sans-serif;
+    background: var(--ed-s2);
+    min-height: 100vh;
+    padding-bottom: 5rem;
+}
 
-        input:focus, textarea:focus, select:focus {
-            outline: none;
-            border-color: #007bff;
-            box-shadow: 0 0 5px rgba(0,123,255,0.3);
-        }
+/* ── HERO STRIP ── */
+.ed-hero-strip {
+    background: linear-gradient(135deg, #0d1117 0%, #0e3a4a 50%, #0a3d2a 100%);
+    padding: 2.5rem 2.5rem 4rem;
+    position: relative; overflow: hidden;
+}
+.ed-hero-strip::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.02'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+}
+.ed-hero-art { position: absolute; inset: 0; z-index: 1; overflow: hidden; pointer-events: none; }
+.ed-hero-art svg { position: absolute; bottom: 0; left: 0; width: 100%; height: 100%; }
 
-        textarea {
-            height: 100px;
-            resize: vertical;
-        }
+.ed-hero-strip-inner {
+    max-width: 1200px; margin: 0 auto;
+    position: relative; z-index: 2;
+    display: flex; align-items: flex-end; justify-content: space-between;
+    flex-wrap: wrap; gap: 1rem;
+}
+.ed-breadcrumb {
+    display: flex; align-items: center; gap: .4rem;
+    font-size: .7rem; color: rgba(255,255,255,.5); margin-bottom: .8rem;
+}
+.ed-breadcrumb a { color: rgba(255,255,255,.6); text-decoration: none; transition: color .2s; }
+.ed-breadcrumb a:hover { color: #5FC5C5; }
+.ed-breadcrumb svg { width: 10px; height: 10px; stroke: rgba(255,255,255,.3); fill: none; stroke-width: 2; }
 
-        .btn {
-            margin-top: 20px;
-            width: 100%;
-            padding: 12px;
-            background: #007bff;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 16px;
-            font-weight: bold;
-        }
+.ed-hero-eyebrow {
+    display: inline-flex; align-items: center; gap: .4rem;
+    background: rgba(255,255,255,.1); backdrop-filter: blur(8px);
+    border: 1px solid rgba(255,255,255,.18); border-radius: 99px;
+    padding: .26rem .85rem; font-size: .66rem; font-weight: 600;
+    color: rgba(255,255,255,.85); margin-bottom: .65rem;
+    text-transform: uppercase; letter-spacing: .06em;
+}
+.ed-hero-eyebrow span { width: 6px; height: 6px; border-radius: 50%; background: #5FC5C5; }
+.ed-hero-title {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(1.6rem, 3vw, 2.4rem);
+    font-weight: 600; color: white; line-height: 1.15;
+    text-shadow: 0 2px 16px rgba(0,0,0,.3);
+}
+.ed-hero-title em { font-style: italic; color: #8DE8E8; }
+.ed-hero-sub { font-size: .82rem; color: rgba(255,255,255,.6); margin-top: .35rem; }
 
-        .btn:hover {
-            background: #0056b3;
-        }
+/* Edit mode badge */
+.ed-edit-badge {
+    display: inline-flex; align-items: center; gap: .45rem;
+    background: rgba(217,119,6,.2); border: 1px solid rgba(217,119,6,.35);
+    border-radius: 99px; padding: .38rem .9rem;
+    font-size: .7rem; font-weight: 600; color: #fbbf24;
+}
+.ed-edit-badge svg { width: 12px; height: 12px; stroke: #fbbf24; fill: none; stroke-width: 2; }
 
-        .btn-danger {
-            background: #dc3545;
-        }
+/* ── BODY ── */
+.ed-body {
+    max-width: 1200px; margin: -2rem auto 0;
+    padding: 0 2.5rem 3rem;
+    position: relative; z-index: 5;
+}
 
-        .btn-danger:hover {
-            background: #c82333;
-        }
+/* ── LAYOUT GRID ── */
+.ed-grid {
+    display: grid;
+    grid-template-columns: 1fr 300px;
+    gap: 1.5rem;
+    align-items: start;
+}
+.ed-main { min-width: 0; }
+.ed-side { position: sticky; top: 90px; display: flex; flex-direction: column; gap: 1.2rem; }
 
-        .btn-secondary {
-            background: #6c757d;
-        }
+/* ── SECTION CARDS ── */
+.ed-section {
+    background: var(--ed-surface); border: 1px solid var(--ed-border);
+    border-radius: var(--ed-r); margin-bottom: 1.4rem;
+    overflow: hidden; box-shadow: var(--ed-sh);
+    animation: edFadeUp .4s ease both;
+}
+.ed-section:nth-child(2) { animation-delay: .05s; }
+.ed-section:nth-child(3) { animation-delay: .10s; }
+.ed-section:nth-child(4) { animation-delay: .15s; }
+.ed-section:nth-child(5) { animation-delay: .20s; }
 
-        .btn-secondary:hover {
-            background: #5a6268;
-        }
+@keyframes edFadeUp {
+    from { opacity: 0; transform: translateY(10px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
 
-        .note {
-            font-size: 12px;
-            color: gray;
-            margin-top: 5px;
-        }
+.ed-section-head {
+    display: flex; align-items: center; gap: .6rem;
+    padding: 1rem 1.4rem; border-bottom: 1px solid var(--ed-border);
+    background: var(--ed-s2);
+}
+.ed-section-icon {
+    width: 32px; height: 32px; border-radius: 8px;
+    background: var(--ed-teal-pale); display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+}
+.ed-section-icon svg { width: 16px; height: 16px; stroke: var(--ed-teal); fill: none; stroke-width: 2; }
+.ed-section-head h3 { font-size: .9rem; font-weight: 700; color: var(--ed-ink); margin: 0; }
+.ed-section-head p  { font-size: .72rem; color: var(--ed-muted); margin: .1rem 0 0; }
+.ed-step-pill {
+    margin-left: auto; font-size: .68rem; flex-shrink: 0;
+    background: var(--ed-teal-pale); color: var(--ed-teal);
+    padding: .22rem .7rem; border-radius: 99px; font-weight: 700;
+}
+.ed-section-body { padding: 1.4rem; }
 
-        .coordinates-row {
-            display: flex;
-            gap: 15px;
-        }
+/* ── FIELDS ── */
+.ed-field { margin-bottom: 1.1rem; }
+.ed-field:last-child { margin-bottom: 0; }
 
-        .coordinates-row > div {
-            flex: 1;
-        }
+.ed-label {
+    display: flex; align-items: center; gap: .4rem;
+    font-size: .76rem; font-weight: 700; color: var(--ed-ink2);
+    margin-bottom: .45rem;
+}
+.ed-label-req { color: var(--ed-rose); font-size: .75rem; }
+.ed-label-hint { font-size: .68rem; color: var(--ed-muted); font-weight: 400; margin-left: auto; }
 
-        .fetch-status {
-            margin-top: 5px;
-            font-size: 12px;
-        }
+.ed-input, .ed-textarea, .ed-select {
+    width: 100%; padding: .68rem .9rem;
+    border: 1.5px solid var(--ed-border); border-radius: 10px;
+    font-size: .84rem; font-family: 'Sora', sans-serif;
+    color: var(--ed-ink); background: var(--ed-surface);
+    transition: border-color .2s, box-shadow .2s;
+    appearance: none;
+}
+.ed-input:focus, .ed-textarea:focus, .ed-select:focus {
+    outline: none; border-color: var(--ed-teal);
+    box-shadow: 0 0 0 3px rgba(14,138,138,.12);
+}
+.ed-input::placeholder, .ed-textarea::placeholder { color: #b8bec6; }
+.ed-textarea { min-height: 110px; resize: vertical; line-height: 1.65; }
+.ed-select {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23586069' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-position: right .9rem center; padding-right: 2.2rem;
+}
 
-        .fetch-status.loading {
-            color: #007bff;
-        }
+/* Input with icon */
+.ed-input-wrap { position: relative; }
+.ed-input-wrap .ed-input { padding-left: 2.5rem; }
+.ed-input-icon {
+    position: absolute; left: .75rem; top: 50%; transform: translateY(-50%);
+    width: 16px; height: 16px; stroke: var(--ed-muted); fill: none; stroke-width: 2;
+    pointer-events: none;
+}
+.ed-input-status {
+    position: absolute; right: .75rem; top: 50%; transform: translateY(-50%);
+    font-size: .7rem; font-weight: 600; pointer-events: none;
+}
+.ed-input-status.loading { color: var(--ed-teal); }
+.ed-input-status.success { color: var(--ed-green); }
+.ed-input-status.error   { color: var(--ed-rose); }
 
-        .fetch-status.success {
-            color: #28a745;
-        }
+/* Field grids */
+.ed-field-grid   { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+.ed-field-grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; }
 
-        .fetch-status.error {
-            color: #dc3545;
-        }
+/* Month range */
+.ed-month-wrap {
+    display: grid; grid-template-columns: 1fr auto 1fr; gap: .75rem; align-items: center;
+}
+.ed-month-sep { text-align: center; font-size: .72rem; color: var(--ed-muted); font-weight: 600; padding-top: 1.5rem; }
 
-        #map {
-            height: 400px;
-            margin-top: 15px;
-            border-radius: 8px;
-            border: 1px solid #ddd;
-        }
+/* Coord row */
+.ed-coord-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+.ed-coord-input {
+    display: flex; align-items: center; gap: .5rem;
+    background: var(--ed-s2); border: 1.5px solid var(--ed-border);
+    border-radius: 10px; padding: .55rem .8rem; transition: border-color .2s;
+}
+.ed-coord-input:focus-within { border-color: var(--ed-teal); box-shadow: 0 0 0 3px rgba(14,138,138,.12); }
+.ed-coord-icon { font-size: .85rem; flex-shrink: 0; }
+.ed-coord-input input {
+    border: none; background: transparent; width: 100%;
+    font-size: .83rem; font-family: 'Sora', sans-serif; color: var(--ed-ink); outline: none;
+}
+.ed-coord-input input::placeholder { color: #b8bec6; }
+.ed-coord-lbl { font-size: .62rem; color: var(--ed-muted); font-weight: 600; text-transform: uppercase; letter-spacing: .04em; white-space: nowrap; }
 
-        .map-container {
-            margin-top: 15px;
-        }
+/* ── TOGGLE ── */
+.ed-toggle-row {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: .85rem 1rem; background: var(--ed-s2);
+    border: 1.5px solid var(--ed-border); border-radius: 10px;
+}
+.ed-toggle-info h4 { font-size: .82rem; font-weight: 700; color: var(--ed-ink); margin-bottom: .1rem; }
+.ed-toggle-info p  { font-size: .7rem; color: var(--ed-muted); }
+.ed-toggle { position: relative; width: 42px; height: 24px; flex-shrink: 0; }
+.ed-toggle input { opacity: 0; width: 0; height: 0; position: absolute; }
+.ed-toggle-slider {
+    position: absolute; inset: 0; background: var(--ed-border);
+    border-radius: 99px; cursor: pointer; transition: background .2s;
+}
+.ed-toggle-slider::before {
+    content: ''; position: absolute; width: 18px; height: 18px; border-radius: 50%;
+    background: white; top: 3px; left: 3px; transition: transform .2s;
+    box-shadow: 0 1px 4px rgba(0,0,0,.2);
+}
+.ed-toggle input:checked + .ed-toggle-slider { background: var(--ed-teal); }
+.ed-toggle input:checked + .ed-toggle-slider::before { transform: translateX(18px); }
 
-        .map-container label {
-            margin-top: 0;
-        }
+/* ── MAP ── */
+.ed-map-wrapper { border-radius: 12px; overflow: hidden; border: 1.5px solid var(--ed-border); box-shadow: var(--ed-sh); }
+#ed-map { height: 360px; }
+.ed-map-hint {
+    display: flex; align-items: center; gap: .5rem;
+    padding: .65rem 1rem; background: var(--ed-s2);
+    border-top: 1px solid var(--ed-border);
+    font-size: .72rem; color: var(--ed-muted);
+}
+.ed-map-hint svg { width: 13px; height: 13px; stroke: var(--ed-teal); fill: none; flex-shrink: 0; }
 
-        .image-preview {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            margin-top: 10px;
-        }
+/* ── EXISTING IMAGES ── */
+.ed-img-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+    gap: .75rem; margin-bottom: .75rem;
+}
+.ed-img-item {
+    border-radius: 10px; overflow: hidden;
+    border: 1.5px solid var(--ed-border); position: relative;
+    background: var(--ed-s3); aspect-ratio: 1;
+    transition: border-color .2s;
+}
+.ed-img-item img { width: 100%; height: 100%; object-fit: cover; display: block; transition: opacity .2s; }
+.ed-img-item.marked-delete { border-color: var(--ed-rose); }
+.ed-img-item.marked-delete img { opacity: .4; }
 
-        .image-preview-item {
-            position: relative;
-            width: 100px;
-            height: 100px;
-            border-radius: 8px;
-            overflow: hidden;
-            border: 2px solid #ddd;
-        }
+.ed-img-delete-overlay {
+    position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+    background: rgba(244,63,94,.15); opacity: 0; transition: opacity .2s;
+}
+.ed-img-item.marked-delete .ed-img-delete-overlay { opacity: 1; }
+.ed-img-delete-overlay svg { width: 28px; height: 28px; stroke: var(--ed-rose); fill: none; stroke-width: 2; }
 
-        .image-preview-item img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
+.ed-img-actions {
+    position: absolute; top: 5px; right: 5px;
+    display: flex; flex-direction: column; gap: 4px;
+}
+.ed-img-del-btn {
+    width: 24px; height: 24px; border-radius: 50%; border: none; cursor: pointer;
+    display: flex; align-items: center; justify-content: center; font-size: .7rem;
+    background: rgba(0,0,0,.6); color: white; transition: background .15s;
+}
+.ed-img-del-btn:hover { background: var(--ed-rose); }
+.ed-img-del-btn.active { background: var(--ed-rose); }
 
-        .remove-image {
-            position: absolute;
-            top: 5px;
-            right: 5px;
-            background: rgba(220,53,69,0.9);
-            color: white;
-            border: none;
-            border-radius: 50%;
-            width: 20px;
-            height: 20px;
-            cursor: pointer;
-            font-size: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
+/* New upload zone */
+.ed-upload-zone {
+    border: 2px dashed var(--ed-border); border-radius: 12px;
+    padding: 1.75rem; text-align: center; transition: all .2s;
+    cursor: pointer; background: var(--ed-s2); position: relative;
+}
+.ed-upload-zone:hover, .ed-upload-zone.drag-over { border-color: var(--ed-teal); background: var(--ed-teal-pale); }
+.ed-upload-zone input[type="file"] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
+.ed-upload-icon { font-size: 1.8rem; margin-bottom: .4rem; }
+.ed-upload-title { font-size: .84rem; font-weight: 700; color: var(--ed-ink); margin-bottom: .15rem; }
+.ed-upload-sub { font-size: .7rem; color: var(--ed-muted); }
+.ed-upload-sub strong { color: var(--ed-teal); }
+.ed-new-preview { display: grid; grid-template-columns: repeat(auto-fill, minmax(88px, 1fr)); gap: .65rem; margin-top: 1rem; }
+.ed-preview-item { aspect-ratio: 1; border-radius: 10px; overflow: hidden; border: 1.5px solid var(--ed-border); position: relative; }
+.ed-preview-item img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.ed-preview-remove {
+    position: absolute; top: 4px; right: 4px; width: 20px; height: 20px; border-radius: 50%;
+    background: rgba(0,0,0,.65); color: white; border: none; font-size: .75rem;
+    cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background .15s;
+}
+.ed-preview-remove:hover { background: var(--ed-rose); }
 
-        .existing-images {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 15px;
-            margin-top: 15px;
-        }
+/* ── ALERTS ── */
+.ed-alert {
+    border-radius: 10px; padding: .85rem 1.1rem; margin-bottom: 1.4rem;
+    display: flex; align-items: flex-start; gap: .7rem; font-size: .8rem;
+}
+.ed-alert.error   { background: #fff5f5; border: 1px solid rgba(244,63,94,.2); color: #9b1c2e; }
+.ed-alert.success { background: var(--ed-green-p); border: 1px solid rgba(22,163,74,.2); color: #14532d; }
+.ed-alert.warning { background: var(--ed-amber-p); border: 1px solid rgba(217,119,6,.2); color: #78350f; }
+.ed-alert svg { width: 16px; height: 16px; flex-shrink: 0; margin-top: 1px; fill: none; stroke-width: 2; stroke: currentColor; }
 
-        .existing-image {
-            position: relative;
-            width: 120px;
-            border: 2px solid #ddd;
-            border-radius: 8px;
-            overflow: hidden;
-            background: #f8f9fa;
-        }
+.ed-form-errors {
+    background: #fff5f5; border: 1px solid rgba(244,63,94,.25);
+    border-radius: 10px; padding: .85rem 1.1rem; margin-bottom: 1.4rem;
+}
+.ed-form-errors strong { font-size: .8rem; color: var(--ed-rose); display: block; margin-bottom: .5rem; }
+.ed-form-errors li { font-size: .75rem; color: #9b1c2e; margin-left: 1rem; margin-bottom: .2rem; }
+.ed-field-err li { font-size: .72rem; color: var(--ed-rose); font-weight: 500; list-style: none; margin-top: .35rem; }
 
-        .existing-image img {
-            width: 100%;
-            height: 100px;
-            object-fit: cover;
-        }
+/* Callout */
+.ed-callout {
+    display: flex; align-items: flex-start; gap: .55rem;
+    padding: .75rem .9rem; border-radius: 8px; font-size: .73rem; line-height: 1.6; margin-top: .6rem;
+}
+.ed-callout.amber { background: var(--ed-amber-p); border: 1px solid rgba(217,119,6,.2); color: #78350f; }
+.ed-callout.teal  { background: var(--ed-teal-pale); border: 1px solid rgba(14,138,138,.2); color: #134e4a; }
 
-        .existing-image .image-info {
-            padding: 5px;
-            font-size: 11px;
-            text-align: center;
-            background: #f8f9fa;
-        }
+/* ── SUBMIT BAR ── */
+.ed-submit-bar {
+    background: var(--ed-surface); border: 1px solid var(--ed-border);
+    border-radius: var(--ed-r); padding: 1.2rem 1.4rem;
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 1rem; flex-wrap: wrap; box-shadow: var(--ed-sh);
+}
+.ed-submit-info { font-size: .78rem; color: var(--ed-muted); }
+.ed-submit-info strong { color: var(--ed-ink); display: block; font-size: .86rem; margin-bottom: .15rem; }
+.ed-submit-btn {
+    display: inline-flex; align-items: center; gap: .55rem;
+    padding: .82rem 2rem; background: var(--ed-teal); color: white;
+    border: none; border-radius: 99px; font-size: .88rem; font-weight: 700;
+    cursor: pointer; font-family: 'Sora', sans-serif; transition: all .25s;
+    box-shadow: 0 4px 16px rgba(14,138,138,.35);
+}
+.ed-submit-btn:hover { background: var(--ed-teal-d); transform: translateY(-2px); box-shadow: 0 8px 24px rgba(14,138,138,.4); }
+.ed-submit-btn:disabled { background: var(--ed-border); color: var(--ed-muted); box-shadow: none; transform: none; cursor: not-allowed; }
+.ed-submit-btn svg { width: 17px; height: 17px; stroke: white; fill: none; stroke-width: 2; }
+.ed-cancel-btn {
+    display: inline-flex; align-items: center; gap: .45rem;
+    padding: .78rem 1.4rem; background: transparent; color: var(--ed-muted);
+    border: 1.5px solid var(--ed-border); border-radius: 99px;
+    font-size: .84rem; font-weight: 600; cursor: pointer;
+    font-family: 'Sora', sans-serif; transition: all .2s; text-decoration: none;
+}
+.ed-cancel-btn:hover { border-color: var(--ed-rose); color: var(--ed-rose); }
+.ed-delete-btn {
+    display: inline-flex; align-items: center; gap: .45rem;
+    padding: .78rem 1.4rem; background: transparent; color: var(--ed-rose);
+    border: 1.5px solid rgba(244,63,94,.35); border-radius: 99px;
+    font-size: .84rem; font-weight: 600; cursor: pointer;
+    font-family: 'Sora', sans-serif; transition: all .2s;
+}
+.ed-delete-btn:hover { background: var(--ed-rose); color: white; border-color: var(--ed-rose); }
+.ed-delete-btn svg { width: 15px; height: 15px; stroke: currentColor; fill: none; stroke-width: 2; }
 
-        .delete-checkbox {
-            position: absolute;
-            top: 5px;
-            right: 5px;
-            background: rgba(220,53,69,0.9);
-            padding: 3px 6px;
-            border-radius: 5px;
-        }
+/* ── SIDEBAR ── */
+.ed-side-card {
+    background: var(--ed-surface); border: 1px solid var(--ed-border);
+    border-radius: var(--ed-r); overflow: hidden; box-shadow: var(--ed-sh);
+}
+.ed-side-card-head {
+    display: flex; align-items: center; gap: .5rem;
+    padding: .85rem 1.1rem; border-bottom: 1px solid var(--ed-border);
+    background: var(--ed-s2); font-size: .8rem; font-weight: 700; color: var(--ed-ink);
+}
+.ed-side-card-head svg { width: 14px; height: 14px; stroke: var(--ed-teal); fill: none; stroke-width: 2; }
+.ed-side-card-body { padding: 1rem 1.1rem; }
 
-        .delete-checkbox input {
-            width: auto;
-            margin: 0;
-        }
+/* Destination preview card */
+.ed-dest-preview {
+    background: linear-gradient(135deg, var(--ed-teal) 0%, var(--ed-teal-d) 100%);
+    border-radius: var(--ed-r); overflow: hidden;
+    box-shadow: 0 6px 20px rgba(14,138,138,.3);
+}
+.ed-dest-preview-thumb {
+    height: 90px; background: rgba(0,0,0,.2); position: relative; overflow: hidden;
+}
+.ed-dest-preview-thumb img { width: 100%; height: 100%; object-fit: cover; opacity: .7; display: block; }
+.ed-dest-preview-thumb-placeholder {
+    height: 100%; display: flex; align-items: center; justify-content: center;
+    background: linear-gradient(135deg, #0a3d2a, #0e3a4a); opacity: .6;
+}
+.ed-dest-preview-body { padding: 1rem 1.1rem; }
+.ed-dest-preview-label { font-size: .62rem; opacity: .7; text-transform: uppercase; letter-spacing: .08em; color: white; margin-bottom: .35rem; }
+.ed-dest-preview-name { font-family: 'Playfair Display', serif; font-size: 1.2rem; font-weight: 600; color: #8DE8E8; line-height: 1.2; margin-bottom: .35rem; }
+.ed-dest-preview-meta { font-size: .72rem; color: rgba(255,255,255,.65); display: flex; align-items: center; gap: .3rem; }
+.ed-dest-preview-meta svg { width: 10px; height: 10px; stroke: rgba(255,255,255,.5); fill: none; }
+.ed-dest-stat-row { display: flex; gap: .5rem; flex-wrap: wrap; margin-top: .75rem; padding-top: .75rem; border-top: 1px solid rgba(255,255,255,.15); }
+.ed-dest-stat {
+    flex: 1; min-width: 0;
+    background: rgba(255,255,255,.1); border-radius: 8px; padding: .5rem .6rem; text-align: center;
+}
+.ed-dest-stat-val { font-size: .9rem; font-weight: 800; color: white; display: block; }
+.ed-dest-stat-lbl { font-size: .58rem; color: rgba(255,255,255,.6); text-transform: uppercase; letter-spacing: .05em; }
 
-        .form-group {
-            margin-bottom: 15px;
-        }
+/* Quick nav */
+.ed-nav-link {
+    display: flex; align-items: center; gap: .55rem; padding: .55rem .7rem;
+    border-radius: 8px; text-decoration: none; font-size: .78rem; color: var(--ed-muted);
+    transition: all .15s;
+}
+.ed-nav-link:hover { background: var(--ed-s2); color: var(--ed-teal); }
 
-        .errorlist {
-            color: #dc3545;
-            font-size: 12px;
-            margin-top: 5px;
-            list-style: none;
-            padding: 0;
-        }
+/* Tips */
+.ed-tips-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: .65rem; }
+.ed-tips-list li { display: flex; align-items: flex-start; gap: .55rem; font-size: .75rem; color: var(--ed-muted); line-height: 1.55; }
+.ed-tip-dot { width: 18px; height: 18px; border-radius: 50%; flex-shrink: 0; margin-top: 1px; background: var(--ed-teal-pale); display: flex; align-items: center; justify-content: center; font-size: .62rem; }
 
-        .form-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 15px;
-        }
+/* Delete danger zone */
+.ed-danger-zone {
+    background: #fff5f5; border: 1px solid rgba(244,63,94,.2);
+    border-radius: var(--ed-r); overflow: hidden;
+}
+.ed-danger-head {
+    display: flex; align-items: center; gap: .5rem;
+    padding: .85rem 1.1rem; border-bottom: 1px solid rgba(244,63,94,.15);
+    background: rgba(244,63,94,.04); font-size: .8rem; font-weight: 700; color: var(--ed-rose);
+}
+.ed-danger-head svg { width: 14px; height: 14px; stroke: var(--ed-rose); fill: none; stroke-width: 2; }
+.ed-danger-body { padding: 1rem 1.1rem; }
+.ed-danger-body p { font-size: .75rem; color: #9b1c2e; line-height: 1.6; margin-bottom: .85rem; }
+.ed-danger-btn {
+    display: flex; align-items: center; justify-content: center; gap: .5rem;
+    width: 100%; padding: .7rem; background: transparent; color: var(--ed-rose);
+    border: 1.5px solid rgba(244,63,94,.35); border-radius: 8px;
+    font-size: .78rem; font-weight: 700; cursor: pointer;
+    font-family: 'Sora', sans-serif; transition: all .2s;
+}
+.ed-danger-btn:hover { background: var(--ed-rose); color: white; border-color: var(--ed-rose); }
+.ed-danger-btn svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2; }
 
-        .full-width {
-            grid-column: span 2;
-        }
+/* ── RESPONSIVE ── */
+@media (max-width: 1024px) {
+    .ed-grid { grid-template-columns: 1fr; }
+    .ed-side { position: static; }
+    .ed-body { padding: 0 1.5rem 3rem; }
+}
+@media (max-width: 768px) {
+    .ed-hero-strip { padding: 2rem 1.2rem 3.5rem; }
+    .ed-body { padding: 0 1rem 2rem; }
+    .ed-field-grid, .ed-field-grid-3, .ed-coord-row { grid-template-columns: 1fr; }
+    .ed-month-wrap { grid-template-columns: 1fr; }
+    .ed-month-sep { display: none; }
+}
+{% endblock %}
 
-        .month-range {
-            display: flex;
-            gap: 15px;
-            align-items: center;
-        }
-        
-        .month-range input {
-            width: 100px;
-        }
+{% block content %}
+<div class="ed-page">
 
-        .action-buttons {
-            display: flex;
-            gap: 15px;
-            margin-top: 20px;
-        }
-
-        .action-buttons .btn {
-            flex: 1;
-            margin-top: 0;
-        }
-
-        @media (max-width: 768px) {
-            .container {
-                width: 95%;
-                margin: 20px auto;
-                padding: 15px;
-            }
-            
-            .coordinates-row {
-                flex-direction: column;
-                gap: 0;
-            }
-            
-            .form-grid {
-                grid-template-columns: 1fr;
-            }
-            
-            .full-width {
-                grid-column: span 1;
-            }
-            
-            #map {
-                height: 300px;
-            }
-        }
-    </style>
-    
-    <!-- Leaflet CSS -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    
-    <!-- Google Places API -->
-    <script src="https://maps.googleapis.com/maps/api/js?key={{ google_api_key }}&libraries=places"></script>
-</head>
-
-<body>
-
-<div class="container">
-    <h1>✏️ Edit Destination: {{ destination.name }}</h1>
-
-    <form method="POST" enctype="multipart/form-data" id="editForm">
-        {% csrf_token %}
-
-        <!-- Destination Name -->
-        <div class="form-group">
-            <label for="id_name">Destination Name *</label>
-            <input type="text" name="name" id="id_name" required 
-                   placeholder="e.g., Goa, India" autocomplete="off" 
-                   value="{{ form.name.value|default:destination.name }}">
-            {% if form.name.errors %}
-                <div class="errorlist">{{ form.name.errors }}</div>
-            {% endif %}
-            <div id="fetch-status" class="fetch-status"></div>
+    <!-- ══ HERO STRIP ══ -->
+    <div class="ed-hero-strip">
+        <div class="ed-hero-art">
+            <svg viewBox="0 0 1440 300" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                    <radialGradient id="edGA" cx="25%" cy="55%" r="45%">
+                        <stop offset="0%" stop-color="#1aa8a8" stop-opacity=".12"/>
+                        <stop offset="100%" stop-color="transparent" stop-opacity="0"/>
+                    </radialGradient>
+                </defs>
+                <rect width="1440" height="300" fill="url(#edGA)"/>
+                <g opacity=".2" fill="#fff">
+                    <circle cx="90" cy="50" r="1.2"/><circle cx="300" cy="32" r=".9"/><circle cx="560" cy="68" r="1"/>
+                    <circle cx="800" cy="25" r="1.3"/><circle cx="1060" cy="55" r=".8"/><circle cx="1310" cy="40" r="1.1"/>
+                </g>
+                <circle cx="1310" cy="65" r="30" fill="#fef3c7" opacity=".07"/>
+                <circle cx="1310" cy="65" r="16" fill="#fef9e7" opacity=".14"/>
+            </svg>
         </div>
 
-        <!-- Coordinates Row -->
-        <div class="coordinates-row">
-            <div class="form-group">
-                <label for="id_latitude">Latitude</label>
-                <input type="number" step="any" name="latitude" id="id_latitude" 
-                       placeholder="Auto-fetched" value="{{ form.latitude.value|default:destination.latitude }}">
-                {% if form.latitude.errors %}
-                    <div class="errorlist">{{ form.latitude.errors }}</div>
-                {% endif %}
-            </div>
-            <div class="form-group">
-                <label for="id_longitude">Longitude</label>
-                <input type="number" step="any" name="longitude" id="id_longitude" 
-                       placeholder="Auto-fetched" value="{{ form.longitude.value|default:destination.longitude }}">
-                {% if form.longitude.errors %}
-                    <div class="errorlist">{{ form.longitude.errors }}</div>
-                {% endif %}
-            </div>
-        </div>
-
-        <!-- Description -->
-        <div class="form-group">
-            <label for="id_description">Description</label>
-            <textarea name="description" id="id_description" 
-                      placeholder="Describe the destination, its history, culture, attractions...">{{ form.description.value|default:destination.description }}</textarea>
-            {% if form.description.errors %}
-                <div class="errorlist">{{ form.description.errors }}</div>
-            {% endif %}
-        </div>
-
-        <!-- Form Fields Grid -->
-        <div class="form-grid">
-            <div class="form-group">
-                <label for="id_country">Country</label>
-                <input type="text" name="country" id="id_country" 
-                       placeholder="e.g., India" value="{{ form.country.value|default:destination.country }}">
-                {% if form.country.errors %}
-                    <div class="errorlist">{{ form.country.errors }}</div>
-                {% endif %}
-            </div>
-
-            <div class="form-group">
-                <label for="id_state">State/Province</label>
-                <input type="text" name="state" id="id_state" 
-                       placeholder="e.g., Goa (optional)" value="{{ form.state.value|default:destination.state }}">
-                {% if form.state.errors %}
-                    <div class="errorlist">{{ form.state.errors }}</div>
-                {% endif %}
-            </div>
-
-            <div class="form-group">
-                <label for="id_city">City</label>
-                <input type="text" name="city" id="id_city" 
-                       placeholder="e.g., Panaji" value="{{ form.city.value|default:destination.city }}">
-                {% if form.city.errors %}
-                    <div class="errorlist">{{ form.city.errors }}</div>
-                {% endif %}
-            </div>
-
-            <div class="form-group">
-                <label for="id_best_season">Best Season</label>
-                <select name="best_season" id="id_best_season">
-                    <option value="">Select Season</option>
-                    <option value="spring" {% if form.best_season.value == 'spring' or destination.best_season == 'spring' %}selected{% endif %}>Spring</option>
-                    <option value="summer" {% if form.best_season.value == 'summer' or destination.best_season == 'summer' %}selected{% endif %}>Summer</option>
-                    <option value="autumn" {% if form.best_season.value == 'autumn' or destination.best_season == 'autumn' %}selected{% endif %}>Autumn</option>
-                    <option value="winter" {% if form.best_season.value == 'winter' or destination.best_season == 'winter' %}selected{% endif %}>Winter</option>
-                    <option value="year_round" {% if form.best_season.value == 'year_round' or destination.best_season == 'year_round' %}selected{% endif %}>Year Round</option>
-                </select>
-                {% if form.best_season.errors %}
-                    <div class="errorlist">{{ form.best_season.errors }}</div>
-                {% endif %}
-            </div>
-
-            <!-- Best Month Range -->
-            <div class="form-group full-width">
-                <label>📅 Best Months to Visit</label>
-                <div class="month-range">
-                    <div>
-                        <label style="font-weight: normal; font-size: 12px;">From Month</label>
-                        <input type="number" name="best_month_start" id="id_best_month_start" 
-                               min="1" max="12" placeholder="1-12" 
-                               value="{{ form.best_month_start.value|default:destination.best_month_start }}">
-                    </div>
-                    <div>
-                        <label style="font-weight: normal; font-size: 12px;">To Month</label>
-                        <input type="number" name="best_month_end" id="id_best_month_end" 
-                               min="1" max="12" placeholder="1-12" 
-                               value="{{ form.best_month_end.value|default:destination.best_month_end }}">
-                    </div>
+        <div class="ed-hero-strip-inner">
+            <div>
+                <div class="ed-breadcrumb">
+                    <a href="{% url 'destinations:destination_list' %}">Destinations</a>
+                    <svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
+                    <a href="{% url 'destinations:destination_detail' destination.id %}">{{ destination.name }}</a>
+                    <svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
+                    <span style="color:rgba(255,255,255,.4)">Edit</span>
                 </div>
-                <div class="note">
-                    💡 <strong>Examples:</strong> 
-                    November to February = Start: 11, End: 2 (wraps around year)<br>
-                    Summer months = Start: 6, End: 8
+                <div class="ed-hero-eyebrow"><span></span> Destinations</div>
+                <h1 class="ed-hero-title">Editing<br><em>{{ destination.name }}</em></h1>
+                <p class="ed-hero-sub">Update details, images, and location for this destination</p>
+            </div>
+            <div>
+                <div class="ed-edit-badge">
+                    <svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                    Edit Mode
                 </div>
-                {% if form.best_month_start.errors %}
-                    <div class="errorlist">{{ form.best_month_start.errors }}</div>
-                {% endif %}
-                {% if form.best_month_end.errors %}
-                    <div class="errorlist">{{ form.best_month_end.errors }}</div>
-                {% endif %}
-            </div>
-
-            <div class="form-group">
-                <label for="id_preferred_weather">Preferred Weather</label>
-                <select name="preferred_weather" id="id_preferred_weather">
-                    <option value="">Select Weather</option>
-                    <option value="sunny" {% if form.preferred_weather.value == 'sunny' or destination.preferred_weather == 'sunny' %}selected{% endif %}>☀️ Sunny</option>
-                    <option value="cold" {% if form.preferred_weather.value == 'cold' or destination.preferred_weather == 'cold' %}selected{% endif %}>❄️ Cold</option>
-                    <option value="rainy" {% if form.preferred_weather.value == 'rainy' or destination.preferred_weather == 'rainy' %}selected{% endif %}>🌧️ Rainy</option>
-                    <option value="snow" {% if form.preferred_weather.value == 'snow' or destination.preferred_weather == 'snow' %}selected{% endif %}>⛄ Snow</option>
-                    <option value="cloudy" {% if form.preferred_weather.value == 'cloudy' or destination.preferred_weather == 'cloudy' %}selected{% endif %}>☁️ Cloudy</option>
-                </select>
-                {% if form.preferred_weather.errors %}
-                    <div class="errorlist">{{ form.preferred_weather.errors }}</div>
-                {% endif %}
-            </div>
-
-            <div class="form-group">
-                <label for="id_is_featured">✨ Featured Destination</label>
-                <input type="checkbox" name="is_featured" id="id_is_featured" 
-                       {% if form.is_featured.value or destination.is_featured %}checked{% endif %}>
-                <div class="note">Featured destinations appear on the homepage</div>
-                {% if form.is_featured.errors %}
-                    <div class="errorlist">{{ form.is_featured.errors }}</div>
-                {% endif %}
             </div>
         </div>
+    </div>
 
-        <!-- Existing Images Section -->
-        {% if destination.images.all %}
-            <h3>📸 Existing Images</h3>
-            <div class="existing-images">
-                {% for img in destination.images.all %}
-                    <div class="existing-image">
-                        <img src="{{ img.image.url }}" alt="Destination image">
-                        <div class="image-info">
-                            <label class="delete-checkbox">
-                                <input type="checkbox" name="delete_images" value="{{ img.id }}">
-                                Delete
-                            </label>
-                        </div>
-                    </div>
-                {% endfor %}
-            </div>
-            <div class="note">Check the box to delete unwanted images</div>
+    <!-- ══ BODY ══ -->
+    <div class="ed-body">
+
+        {% if messages %}
+        {% for message in messages %}
+        <div class="ed-alert {% if message.tags == 'error' %}error{% elif message.tags == 'warning' %}warning{% else %}success{% endif %}">
+            {% if message.tags == 'error' %}
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            {% elif message.tags == 'warning' %}
+            <svg viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            {% else %}
+            <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+            {% endif %}
+            <span>{{ message }}</span>
+        </div>
+        {% endfor %}
         {% endif %}
 
-        <!-- Add New Images -->
-        <h3>➕ Add New Images</h3>
-        <div class="form-group">
-            <input type="file" name="images" id="imageInput" multiple accept="image/*">
-            <div class="note">You can upload multiple images (Max: 10MB each, recommended size: 1200x800px)</div>
-            <div id="imagePreview" class="image-preview"></div>
+        {% if form.errors %}
+        <div class="ed-form-errors">
+            <strong>Please fix the following errors:</strong>
+            <ul>
+                {% for field, errors in form.errors.items %}
+                    {% for error in errors %}<li>{{ field }}: {{ error }}</li>{% endfor %}
+                {% endfor %}
+            </ul>
         </div>
+        {% endif %}
 
-        <!-- Leaflet Map -->
-        <div class="map-container">
-            <label>📍 Location Map</label>
-            <div id="map"></div>
-            <div class="note">Click on the map to set exact location coordinates</div>
-        </div>
+        <form method="POST" enctype="multipart/form-data" id="edForm">
+            {% csrf_token %}
 
-        <!-- Action Buttons -->
-        <div class="action-buttons">
-            <button type="submit" class="btn" id="submitBtn">
-                💾 Update Destination
-            </button>
-            <a href="{% url 'destinations:destination_detail' destination.id %}" class="btn btn-secondary">
-                ❌ Cancel
-            </a>
-            {% if request.user.is_staff %}
-            <button type="button" class="btn btn-danger" onclick="confirmDelete()">
-                🗑️ Delete Destination
-            </button>
-            {% endif %}
-        </div>
-    </form>
+            <div class="ed-grid">
+
+                <!-- ══ MAIN COLUMN ══ -->
+                <div class="ed-main">
+
+                    <!-- ── SECTION 1: Basic Info ── -->
+                    <div class="ed-section" id="step-1">
+                        <div class="ed-section-head">
+                            <div class="ed-section-icon">
+                                <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                            </div>
+                            <div><h3>Basic Information</h3><p>Name, description and location details</p></div>
+                            <span class="ed-step-pill">Step 1</span>
+                        </div>
+                        <div class="ed-section-body">
+
+                            <!-- Name -->
+                            <div class="ed-field">
+                                <label class="ed-label" for="id_name">
+                                    Destination Name <span class="ed-label-req">*</span>
+                                    <span class="ed-label-hint">Coordinates auto-update on change</span>
+                                </label>
+                                <div class="ed-input-wrap">
+                                    <svg class="ed-input-icon" viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                                    <input class="ed-input" type="text" name="name" id="id_name"
+                                           placeholder="e.g., Goa, Munnar, Paris…" autocomplete="off" required
+                                           value="{{ form.name.value|default:destination.name }}">
+                                    <span class="ed-input-status" id="edFetchStatus"></span>
+                                </div>
+                                {% if form.name.errors %}<ul class="ed-field-err">{% for e in form.name.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+                            </div>
+
+                            <!-- Description -->
+                            <div class="ed-field">
+                                <label class="ed-label" for="id_description">Description</label>
+                                <textarea class="ed-textarea" name="description" id="id_description"
+                                          placeholder="Describe the destination — its culture, history, what makes it special…">{{ form.description.value|default:destination.description }}</textarea>
+                                {% if form.description.errors %}<ul class="ed-field-err">{% for e in form.description.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+                            </div>
+
+                            <!-- Country / State / City -->
+                            <div class="ed-field-grid-3">
+                                <div class="ed-field">
+                                    <label class="ed-label" for="id_country">Country</label>
+                                    <input class="ed-input" type="text" name="country" id="id_country"
+                                           placeholder="e.g., India"
+                                           value="{{ form.country.value|default:destination.country }}">
+                                    {% if form.country.errors %}<ul class="ed-field-err">{% for e in form.country.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+                                </div>
+                                <div class="ed-field">
+                                    <label class="ed-label" for="id_state">State / Province</label>
+                                    <input class="ed-input" type="text" name="state" id="id_state"
+                                           placeholder="e.g., Kerala"
+                                           value="{{ form.state.value|default:destination.state }}">
+                                </div>
+                                <div class="ed-field">
+                                    <label class="ed-label" for="id_city">City</label>
+                                    <input class="ed-input" type="text" name="city" id="id_city"
+                                           placeholder="e.g., Kochi"
+                                           value="{{ form.city.value|default:destination.city }}">
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+
+                    <!-- ── SECTION 2: Location & Map ── -->
+                    <div class="ed-section" id="step-2">
+                        <div class="ed-section-head">
+                            <div class="ed-section-icon">
+                                <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                            </div>
+                            <div><h3>Coordinates &amp; Map</h3><p>Auto-updated from name, or click the map to repin</p></div>
+                            <span class="ed-step-pill">Step 2</span>
+                        </div>
+                        <div class="ed-section-body">
+                            <div class="ed-coord-row" style="margin-bottom:1.1rem;">
+                                <div class="ed-field">
+                                    <label class="ed-label">Latitude</label>
+                                    <div class="ed-coord-input">
+                                        <span class="ed-coord-icon">🌐</span>
+                                        <div>
+                                            <div class="ed-coord-lbl">LAT</div>
+                                            <input type="number" step="any" name="latitude" id="id_latitude"
+                                                   placeholder="Auto-fetched"
+                                                   value="{{ form.latitude.value|default:destination.latitude }}">
+                                        </div>
+                                    </div>
+                                    {% if form.latitude.errors %}<ul class="ed-field-err">{% for e in form.latitude.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+                                </div>
+                                <div class="ed-field">
+                                    <label class="ed-label">Longitude</label>
+                                    <div class="ed-coord-input">
+                                        <span class="ed-coord-icon">🌐</span>
+                                        <div>
+                                            <div class="ed-coord-lbl">LNG</div>
+                                            <input type="number" step="any" name="longitude" id="id_longitude"
+                                                   placeholder="Auto-fetched"
+                                                   value="{{ form.longitude.value|default:destination.longitude }}">
+                                        </div>
+                                    </div>
+                                    {% if form.longitude.errors %}<ul class="ed-field-err">{% for e in form.longitude.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+                                </div>
+                            </div>
+                            <div class="ed-map-wrapper">
+                                <div id="ed-map"></div>
+                                <div class="ed-map-hint">
+                                    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                                    Click anywhere on the map to update the pinned location
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ── SECTION 3: Season & Weather ── -->
+                    <div class="ed-section" id="step-3">
+                        <div class="ed-section-head">
+                            <div class="ed-section-icon">
+                                <svg viewBox="0 0 24 24"><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/><circle cx="12" cy="12" r="5"/></svg>
+                            </div>
+                            <div><h3>Season &amp; Weather</h3><p>Helps our AI rank this destination at the right time</p></div>
+                            <span class="ed-step-pill">Step 3</span>
+                        </div>
+                        <div class="ed-section-body">
+
+                            <div class="ed-field-grid" style="margin-bottom:1.1rem;">
+                                <div class="ed-field">
+                                    <label class="ed-label" for="id_best_season">Best Season</label>
+                                    <select class="ed-select" name="best_season" id="id_best_season">
+                                        <option value="">Select season…</option>
+                                        <option value="spring"     {% if form.best_season.value == 'spring'     or destination.best_season == 'spring'     %}selected{% endif %}>🌸 Spring</option>
+                                        <option value="summer"     {% if form.best_season.value == 'summer'     or destination.best_season == 'summer'     %}selected{% endif %}>☀️ Summer</option>
+                                        <option value="autumn"     {% if form.best_season.value == 'autumn'     or destination.best_season == 'autumn'     %}selected{% endif %}>🍂 Autumn</option>
+                                        <option value="winter"     {% if form.best_season.value == 'winter'     or destination.best_season == 'winter'     %}selected{% endif %}>❄️ Winter</option>
+                                        <option value="year_round" {% if form.best_season.value == 'year_round' or destination.best_season == 'year_round' %}selected{% endif %}>🌍 Year Round</option>
+                                    </select>
+                                    {% if form.best_season.errors %}<ul class="ed-field-err">{% for e in form.best_season.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+                                </div>
+                                <div class="ed-field">
+                                    <label class="ed-label" for="id_preferred_weather">Preferred Weather</label>
+                                    <select class="ed-select" name="preferred_weather" id="id_preferred_weather">
+                                        <option value="">Select weather…</option>
+                                        <option value="sunny"  {% if form.preferred_weather.value == 'sunny'  or destination.preferred_weather == 'sunny'  %}selected{% endif %}>☀️ Sunny</option>
+                                        <option value="cold"   {% if form.preferred_weather.value == 'cold'   or destination.preferred_weather == 'cold'   %}selected{% endif %}>❄️ Cold</option>
+                                        <option value="rainy"  {% if form.preferred_weather.value == 'rainy'  or destination.preferred_weather == 'rainy'  %}selected{% endif %}>🌧️ Rainy</option>
+                                        <option value="snow"   {% if form.preferred_weather.value == 'snow'   or destination.preferred_weather == 'snow'   %}selected{% endif %}>⛄ Snow</option>
+                                        <option value="cloudy" {% if form.preferred_weather.value == 'cloudy' or destination.preferred_weather == 'cloudy' %}selected{% endif %}>☁️ Cloudy</option>
+                                    </select>
+                                    {% if form.preferred_weather.errors %}<ul class="ed-field-err">{% for e in form.preferred_weather.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+                                </div>
+                            </div>
+
+                            <!-- Best Month Range -->
+                            <div class="ed-field">
+                                <label class="ed-label">
+                                    📅 Best Months to Visit
+                                    <span class="ed-label-hint">Month numbers 1–12</span>
+                                </label>
+                                <div class="ed-month-wrap">
+                                    <div>
+                                        <div style="font-size:.68rem;color:var(--ed-muted);font-weight:600;margin-bottom:.3rem;text-transform:uppercase;letter-spacing:.04em;">From Month</div>
+                                        <input class="ed-input" type="number" name="best_month_start" id="id_best_month_start"
+                                               min="1" max="12" placeholder="1"
+                                               value="{{ form.best_month_start.value|default:destination.best_month_start }}">
+                                    </div>
+                                    <div class="ed-month-sep">→</div>
+                                    <div>
+                                        <div style="font-size:.68rem;color:var(--ed-muted);font-weight:600;margin-bottom:.3rem;text-transform:uppercase;letter-spacing:.04em;">To Month</div>
+                                        <input class="ed-input" type="number" name="best_month_end" id="id_best_month_end"
+                                               min="1" max="12" placeholder="12"
+                                               value="{{ form.best_month_end.value|default:destination.best_month_end }}">
+                                    </div>
+                                </div>
+                                <div class="ed-callout amber" style="margin-top:.6rem;">
+                                    <span>💡</span>
+                                    <span><strong>Examples:</strong> Nov–Feb (winter) → Start: 11, End: 2 &nbsp;·&nbsp; Jun–Aug (summer) → Start: 6, End: 8</span>
+                                </div>
+                                {% if form.best_month_start.errors %}<ul class="ed-field-err">{% for e in form.best_month_start.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+                            </div>
+
+                            <!-- Featured toggle -->
+                            {% if request.user.is_staff %}
+                            <div class="ed-field">
+                                <div class="ed-toggle-row">
+                                    <div class="ed-toggle-info">
+                                        <h4>✦ Featured Destination</h4>
+                                        <p>Appears in featured sections and homepage highlights</p>
+                                    </div>
+                                    <label class="ed-toggle">
+                                        <input type="checkbox" name="is_featured" id="id_is_featured"
+                                               {% if form.is_featured.value or destination.is_featured %}checked{% endif %}>
+                                        <span class="ed-toggle-slider"></span>
+                                    </label>
+                                </div>
+                            </div>
+                            {% endif %}
+
+                        </div>
+                    </div>
+
+                    <!-- ── SECTION 4: Images ── -->
+                    <div class="ed-section" id="step-4">
+                        <div class="ed-section-head">
+                            <div class="ed-section-icon">
+                                <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                            </div>
+                            <div><h3>Destination Images</h3><p>Manage existing photos and add new ones</p></div>
+                            <span class="ed-step-pill">Step 4</span>
+                        </div>
+                        <div class="ed-section-body">
+
+                            {% if destination.images.all %}
+                            <!-- Existing images -->
+                            <div style="margin-bottom:1.2rem;">
+                                <div style="font-size:.76rem;font-weight:700;color:var(--ed-ink2);margin-bottom:.6rem;">
+                                    Current Images
+                                    <span style="font-size:.68rem;color:var(--ed-muted);font-weight:400;margin-left:.4rem;">Click the × to mark for deletion</span>
+                                </div>
+                                <div class="ed-img-grid">
+                                    {% for img in destination.images.all %}
+                                    <div class="ed-img-item" id="img-item-{{ img.id }}">
+                                        <img src="{{ img.image.url }}" alt="Image {{ forloop.counter }}">
+                                        <div class="ed-img-delete-overlay">
+                                            <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+                                        </div>
+                                        <div class="ed-img-actions">
+                                            <button type="button" class="ed-img-del-btn"
+                                                    id="del-btn-{{ img.id }}"
+                                                    onclick="toggleDeleteImage({{ img.id }})"
+                                                    title="Mark for deletion">×</button>
+                                        </div>
+                                        <input type="checkbox" name="delete_images" value="{{ img.id }}"
+                                               id="del-chk-{{ img.id }}" style="display:none;">
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                                <div class="ed-callout teal">
+                                    <span>ℹ️</span>
+                                    <span>Images marked for deletion will be removed when you save. This cannot be undone.</span>
+                                </div>
+                            </div>
+                            {% endif %}
+
+                            <!-- New images upload -->
+                            <div style="font-size:.76rem;font-weight:700;color:var(--ed-ink2);margin-bottom:.6rem;">
+                                Add New Images
+                            </div>
+                            <div class="ed-upload-zone" id="edUploadZone">
+                                <input type="file" name="images" id="edImageInput" multiple accept="image/*">
+                                <div class="ed-upload-icon">🖼️</div>
+                                <div class="ed-upload-title">Drop images here or click to browse</div>
+                                <div class="ed-upload-sub">JPG, PNG, WEBP · Max <strong>10MB</strong> each · Multiple allowed</div>
+                            </div>
+                            <div class="ed-new-preview" id="edPreviewGrid"></div>
+
+                        </div>
+                    </div>
+
+                    <!-- ── SUBMIT BAR ── -->
+                    <div class="ed-submit-bar">
+                        <div class="ed-submit-info">
+                            <strong>Save your changes?</strong>
+                            Updates will go live immediately after saving.
+                        </div>
+                        <div style="display:flex;align-items:center;gap:.75rem;flex-wrap:wrap;">
+                            <a href="{% url 'destinations:destination_detail' destination.id %}" class="ed-cancel-btn">
+                                Discard
+                            </a>
+                            <button type="submit" class="ed-submit-btn" id="edSubmitBtn">
+                                <svg viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+                                Update Destination
+                            </button>
+                        </div>
+                    </div>
+
+                </div><!-- /main -->
+
+                <!-- ══ SIDEBAR ══ -->
+                <div class="ed-side">
+
+                    <!-- Destination preview card -->
+                    <div class="ed-dest-preview">
+                        {% if destination.images.first %}
+                        <div class="ed-dest-preview-thumb">
+                            <img src="{{ destination.images.first.image.url }}" alt="{{ destination.name }}">
+                        </div>
+                        {% else %}
+                        <div class="ed-dest-preview-thumb">
+                            <div class="ed-dest-preview-thumb-placeholder"></div>
+                        </div>
+                        {% endif %}
+                        <div class="ed-dest-preview-body">
+                            <div class="ed-dest-preview-label">Editing destination</div>
+                            <div class="ed-dest-preview-name">{{ destination.name }}</div>
+                            <div class="ed-dest-preview-meta">
+                                <svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                                {{ destination.city }}{% if destination.city and destination.country %}, {% endif %}{{ destination.country }}
+                            </div>
+                            <div class="ed-dest-stat-row">
+                                <div class="ed-dest-stat">
+                                    <span class="ed-dest-stat-val">{{ destination.places.count }}</span>
+                                    <span class="ed-dest-stat-lbl">Places</span>
+                                </div>
+                                <div class="ed-dest-stat">
+                                    <span class="ed-dest-stat-val">{{ destination.average_rating|floatformat:1|default:"—" }}</span>
+                                    <span class="ed-dest-stat-lbl">Rating</span>
+                                </div>
+                                <div class="ed-dest-stat">
+                                    <span class="ed-dest-stat-val">{{ destination.images.count }}</span>
+                                    <span class="ed-dest-stat-lbl">Images</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Quick nav -->
+                    <div class="ed-side-card">
+                        <div class="ed-side-card-head">
+                            <svg viewBox="0 0 24 24"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+                            Jump to Section
+                        </div>
+                        <div class="ed-side-card-body" style="padding:.6rem;">
+                            <a href="#step-1" class="ed-nav-link">📄 Basic Info</a>
+                            <a href="#step-2" class="ed-nav-link">🗺️ Map &amp; Location</a>
+                            <a href="#step-3" class="ed-nav-link">🌤️ Season &amp; Weather</a>
+                            <a href="#step-4" class="ed-nav-link">🖼️ Images</a>
+                        </div>
+                    </div>
+
+                    <!-- Tips -->
+                    <div class="ed-side-card">
+                        <div class="ed-side-card-head">
+                            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                            Edit Tips
+                        </div>
+                        <div class="ed-side-card-body">
+                            <ul class="ed-tips-list">
+                                <li><div class="ed-tip-dot">📍</div> Changing the name auto-updates coordinates and city.</li>
+                                <li><div class="ed-tip-dot">🗺️</div> Click the map to fine-tune the exact pin position.</li>
+                                <li><div class="ed-tip-dot">🖼️</div> Mark images with × to delete, then upload replacements.</li>
+                                <li><div class="ed-tip-dot">📅</div> Accurate best months improves seasonal search ranking.</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- Danger zone (staff only) -->
+                    {% if request.user.is_staff %}
+                    <div class="ed-danger-zone">
+                        <div class="ed-danger-head">
+                            <svg viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                            Danger Zone
+                        </div>
+                        <div class="ed-danger-body">
+                            <p>Permanently deletes this destination along with all associated places, images, and reviews. This cannot be undone.</p>
+                            <button type="button" class="ed-danger-btn" onclick="confirmDelete()">
+                                <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+                                Delete Destination
+                            </button>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                </div><!-- /sidebar -->
+
+            </div><!-- /grid -->
+        </form>
+    </div><!-- /body -->
 </div>
+{% endblock %}
 
+{% block extra_scripts %}
 <script>
-// Initialize variables
-let map;
-let marker;
-let debounceTimer;
-const API_KEYS = {
-    google: '{{ google_api_key }}',
-    openweather: '{{ openweather_api_key }}'
-};
+(function(){
+    /* ── Leaflet Map ── */
+    let map, marker;
+    const initLat = {{ destination.latitude|default:"20" }};
+    const initLng = {{ destination.longitude|default:"78" }};
+    const hasCoords = (initLat !== 20 || initLng !== 78);
 
-// Get form elements
-const destinationNameInput = document.getElementById('id_name');
-const latitudeInput = document.getElementById('id_latitude');
-const longitudeInput = document.getElementById('id_longitude');
-const fetchStatus = document.getElementById('fetch-status');
-const imageInput = document.getElementById('imageInput');
-const imagePreview = document.getElementById('imagePreview');
+    const pinIcon = () => L.divIcon({
+        html: `<div style="width:28px;height:28px;background:#0e8a8a;border-radius:50% 50% 50% 0;transform:rotate(-45deg);border:3px solid white;box-shadow:0 2px 10px rgba(14,138,138,.5);"></div>`,
+        iconSize: [28, 28], iconAnchor: [14, 28], className: ''
+    });
 
-// Set initial map location
-let initialLat = {{ destination.latitude|default:"20" }};
-let initialLng = {{ destination.longitude|default:"0" }};
+    function initMap() {
+        map = L.map('ed-map').setView([initLat, initLng], hasCoords ? 10 : 4);
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+            attribution: '© OSM contributors © CARTO', maxZoom: 19
+        }).addTo(map);
 
-// Initialize Google Places Autocomplete
-function initAutocomplete() {
-    if (destinationNameInput && window.google) {
-        const autocomplete = new google.maps.places.Autocomplete(destinationNameInput, {
-            types: ['geocode', 'establishment'],
-            componentRestrictions: { country: [] }
-        });
-        
-        autocomplete.addListener('place_changed', function() {
-            const place = autocomplete.getPlace();
-            if (place.geometry) {
-                updateCoordinates(place.geometry.location.lat(), place.geometry.location.lng());
-                updateMapLocation(place.geometry.location.lat(), place.geometry.location.lng());
-                showFetchStatus('success', '✓ Location updated successfully!');
-                
-                // Auto-fill country, state, and city
-                let country = '', state = '', city = '';
-                for (const component of place.address_components) {
-                    if (component.types.includes('country')) {
-                        country = component.long_name;
-                        document.getElementById('id_country').value = country;
-                    }
-                    if (component.types.includes('administrative_area_level_1')) {
-                        state = component.long_name;
-                        document.getElementById('id_state').value = state;
-                    }
-                    if (component.types.includes('locality') || component.types.includes('administrative_area_level_2')) {
-                        city = component.long_name;
-                        document.getElementById('id_city').value = city;
-                    }
-                }
-            }
+        if (hasCoords) {
+            marker = L.marker([initLat, initLng], {icon: pinIcon()}).addTo(map);
+        }
+
+        map.on('click', function(e) {
+            const lat = e.latlng.lat.toFixed(6);
+            const lng = e.latlng.lng.toFixed(6);
+            document.getElementById('id_latitude').value  = lat;
+            document.getElementById('id_longitude').value = lng;
+            if (marker) marker.setLatLng([lat, lng]);
+            else marker = L.marker([lat, lng], {icon: pinIcon()}).addTo(map);
+            showStatus('success', `✓ ${lat}, ${lng}`);
         });
     }
-}
 
-// Fetch coordinates using Google Geocoding API
-async function fetchCoordinatesFromGoogle(placeName) {
-    if (!API_KEYS.google) {
-        showFetchStatus('error', 'Google API key not configured');
-        return null;
-    }
-    
-    const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(placeName)}&key=${API_KEYS.google}`;
-    
-    try {
-        const response = await fetch(url);
-        const data = await response.json();
-        
-        if (data.status === 'OK' && data.results.length > 0) {
-            const location = data.results[0].geometry.location;
-            
-            // Auto-fill country, state, and city
-            let country = '', state = '', city = '';
-            for (const component of data.results[0].address_components) {
-                if (component.types.includes('country')) {
-                    country = component.long_name;
-                    document.getElementById('id_country').value = country;
-                }
-                if (component.types.includes('administrative_area_level_1')) {
-                    state = component.long_name;
-                    document.getElementById('id_state').value = state;
-                }
-                if (component.types.includes('locality')) {
-                    city = component.long_name;
-                    document.getElementById('id_city').value = city;
-                }
-            }
-            
-            return { lat: location.lat, lng: location.lng };
-        } else {
-            console.error('Geocoding error:', data.status);
-            return null;
-        }
-    } catch (error) {
-        console.error('Error fetching coordinates:', error);
-        return null;
-    }
-}
-
-// Update coordinate inputs
-function updateCoordinates(lat, lng) {
-    latitudeInput.value = lat;
-    longitudeInput.value = lng;
-}
-
-// Show fetch status message
-function showFetchStatus(type, message) {
-    fetchStatus.textContent = message;
-    fetchStatus.className = `fetch-status ${type}`;
-    
-    setTimeout(() => {
-        if (fetchStatus.className === `fetch-status ${type}`) {
-            fetchStatus.textContent = '';
-            fetchStatus.className = 'fetch-status';
-        }
-    }, 3000);
-}
-
-// Update map location
-function updateMapLocation(lat, lng) {
-    if (map) {
-        const newLocation = [lat, lng];
-        map.setView(newLocation, 13);
-        if (marker) {
-            marker.setLatLng(newLocation);
-        } else {
-            marker = L.marker(newLocation).addTo(map);
-        }
-    }
-}
-
-// Initialize Leaflet map
-function initMap() {
-    const defaultLocation = [initialLat, initialLng];
-    const zoom = (initialLat !== 20 || initialLng !== 0) ? 10 : 2;
-    
-    map = L.map('map').setView(defaultLocation, zoom);
-    
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> contributors',
-        subdomains: 'abcd',
-        maxZoom: 19
-    }).addTo(map);
-    
-    // Add marker if coordinates exist
-    if (initialLat !== 20 || initialLng !== 0) {
-        marker = L.marker([initialLat, initialLng]).addTo(map);
-    }
-    
-    map.on('click', function(e) {
-        const lat = e.latlng.lat;
-        const lng = e.latlng.lng;
-        updateCoordinates(lat, lng);
-        
-        if (marker) {
-            marker.setLatLng([lat, lng]);
-        } else {
-            marker = L.marker([lat, lng]).addTo(map);
-        }
-        showFetchStatus('success', '✓ Location set from map click');
-    });
-}
-
-// Handle destination name input with debouncing
-if (destinationNameInput) {
-    destinationNameInput.addEventListener('input', function(e) {
-        const destinationName = e.target.value.trim();
-        
-        if (debounceTimer) {
-            clearTimeout(debounceTimer);
-        }
-        
-        if (destinationName === '') {
-            return;
-        }
-        
-        showFetchStatus('loading', '🔍 Fetching location coordinates...');
-        
-        debounceTimer = setTimeout(async () => {
-            let coordinates = await fetchCoordinatesFromGoogle(destinationName);
-            
-            if (coordinates) {
-                updateCoordinates(coordinates.lat, coordinates.lng);
-                updateMapLocation(coordinates.lat, coordinates.lng);
-                showFetchStatus('success', `✓ Location updated! (${coordinates.lat.toFixed(4)}, ${coordinates.lng.toFixed(4)})`);
-            } else {
-                showFetchStatus('error', '⚠ Could not fetch coordinates. Please enter manually or click on map.');
-            }
-        }, 800);
-    });
-}
-
-// Image preview functionality
-if (imageInput) {
-    imageInput.addEventListener('change', function(e) {
-        imagePreview.innerHTML = '';
-        const files = Array.from(e.target.files);
-        
-        files.forEach((file, index) => {
-            if (file.type.startsWith('image/')) {
-                const reader = new FileReader();
-                const previewItem = document.createElement('div');
-                previewItem.className = 'image-preview-item';
-                
-                reader.onload = function(e) {
-                    const img = document.createElement('img');
-                    img.src = e.target.result;
-                    const removeBtn = document.createElement('button');
-                    removeBtn.innerHTML = '×';
-                    removeBtn.className = 'remove-image';
-                    removeBtn.onclick = function() {
-                        previewItem.remove();
-                        const dt = new DataTransfer();
-                        const remainingFiles = files.filter((_, i) => i !== index);
-                        remainingFiles.forEach(f => dt.items.add(f));
-                        imageInput.files = dt.files;
-                    };
-                    
-                    previewItem.appendChild(img);
-                    previewItem.appendChild(removeBtn);
-                    imagePreview.appendChild(previewItem);
-                };
-                reader.readAsDataURL(file);
+    /* ── Google Places Autocomplete ── */
+    window.initAutocomplete = function() {
+        const input = document.getElementById('id_name');
+        if (!input || !window.google) return;
+        const ac = new google.maps.places.Autocomplete(input, { types: ['geocode', 'establishment'] });
+        ac.addListener('place_changed', function() {
+            const place = ac.getPlace();
+            if (!place.geometry) return;
+            setCoords(place.geometry.location.lat(), place.geometry.location.lng());
+            showStatus('success', '✓ Updated!');
+            for (const comp of (place.address_components || [])) {
+                if (comp.types.includes('country'))
+                    document.getElementById('id_country').value = comp.long_name;
+                if (comp.types.includes('administrative_area_level_1'))
+                    document.getElementById('id_state').value = comp.long_name;
+                if (comp.types.includes('locality') || comp.types.includes('administrative_area_level_2'))
+                    document.getElementById('id_city').value = comp.long_name;
             }
         });
+    };
+
+    /* ── Debounced geocode fallback ── */
+    let debounce;
+    document.getElementById('id_name').addEventListener('input', function() {
+        clearTimeout(debounce);
+        const val = this.value.trim();
+        if (!val) return;
+        showStatus('loading', '🔍');
+        debounce = setTimeout(async () => {
+            const key = '{{ google_api_key }}';
+            if (!key) { showStatus('error', '⚠'); return; }
+            try {
+                const r = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(val)}&key=${key}`);
+                const d = await r.json();
+                if (d.status === 'OK') {
+                    setCoords(d.results[0].geometry.location.lat, d.results[0].geometry.location.lng);
+                    for (const comp of (d.results[0].address_components || [])) {
+                        if (comp.types.includes('country') && !document.getElementById('id_country').value)
+                            document.getElementById('id_country').value = comp.long_name;
+                        if (comp.types.includes('administrative_area_level_1') && !document.getElementById('id_state').value)
+                            document.getElementById('id_state').value = comp.long_name;
+                        if (comp.types.includes('locality') && !document.getElementById('id_city').value)
+                            document.getElementById('id_city').value = comp.long_name;
+                    }
+                    showStatus('success', '✓');
+                } else { showStatus('error', '⚠'); }
+            } catch(e) { showStatus('error', '⚠'); }
+        }, 900);
     });
-}
 
-// Form validation before submit
-document.getElementById('editForm').addEventListener('submit', function(e) {
-    const name = destinationNameInput.value.trim();
-    if (!name) {
-        e.preventDefault();
-        alert('❌ Please enter destination name');
-        return false;
-    }
-    
-    const submitBtn = document.getElementById('submitBtn');
-    submitBtn.disabled = true;
-    submitBtn.textContent = '💾 Saving...';
-});
-
-// Confirm delete function
-function confirmDelete() {
-    if (confirm('⚠️ Are you sure you want to delete this destination?\n\nThis will also delete all places, images, and reviews associated with it.\n\nThis action cannot be undone!')) {
-        window.location.href = "{% url 'destinations:delete_destination' destination.id %}";
-    }
-}
-
-// Initialize everything when page loads
-document.addEventListener('DOMContentLoaded', function() {
-    initMap();
-    
-    setTimeout(() => {
-        if (window.google && window.google.maps) {
-            initAutocomplete();
+    function setCoords(lat, lng) {
+        document.getElementById('id_latitude').value  = parseFloat(lat).toFixed(6);
+        document.getElementById('id_longitude').value = parseFloat(lng).toFixed(6);
+        if (map) {
+            map.setView([lat, lng], 11);
+            if (marker) marker.setLatLng([lat, lng]);
+            else marker = L.marker([lat, lng], {icon: pinIcon()}).addTo(map);
         }
-    }, 500);
-    
-    // Add helpful tips
-    const helpText = document.createElement('div');
-    helpText.className = 'note';
-    helpText.style.marginTop = '20px';
-    helpText.style.padding = '10px';
-    helpText.style.background = '#e8f4f8';
-    helpText.style.borderRadius = '8px';
-    helpText.style.textAlign = 'center';
-    helpText.innerHTML = '💡 <strong>Pro Tips:</strong> Start typing to update coordinates, country, and city automatically! You can also click on the map to set exact location.';
-    document.querySelector('.container').appendChild(helpText);
-});
+    }
+
+    function showStatus(type, msg) {
+        const el = document.getElementById('edFetchStatus');
+        el.textContent = msg; el.className = 'ed-input-status ' + type;
+        if (type !== 'loading') setTimeout(() => { el.textContent = ''; el.className = 'ed-input-status'; }, 3000);
+    }
+
+    /* ── Image delete toggle ── */
+    window.toggleDeleteImage = function(id) {
+        const item = document.getElementById('img-item-' + id);
+        const chk  = document.getElementById('del-chk-' + id);
+        const btn  = document.getElementById('del-btn-' + id);
+        const isMarked = item.classList.toggle('marked-delete');
+        chk.checked  = isMarked;
+        btn.classList.toggle('active', isMarked);
+        btn.title = isMarked ? 'Undo deletion' : 'Mark for deletion';
+    };
+
+    /* ── New image upload & preview ── */
+    const uploadZone  = document.getElementById('edUploadZone');
+    const fileInput   = document.getElementById('edImageInput');
+    const previewGrid = document.getElementById('edPreviewGrid');
+    let selectedFiles = [];
+
+    uploadZone.addEventListener('dragover',  e => { e.preventDefault(); uploadZone.classList.add('drag-over'); });
+    uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('drag-over'));
+    uploadZone.addEventListener('drop', e => {
+        e.preventDefault(); uploadZone.classList.remove('drag-over');
+        handleFiles(Array.from(e.dataTransfer.files));
+    });
+    fileInput.addEventListener('change', function() { handleFiles(Array.from(this.files)); });
+
+    function handleFiles(files) {
+        files.forEach(file => {
+            if (!file.type.startsWith('image/')) return;
+            if (file.size > 10 * 1024 * 1024) { alert(`${file.name} exceeds 10MB`); return; }
+            selectedFiles.push(file);
+            renderPreview(file, selectedFiles.length - 1);
+        });
+        syncFilesToInput();
+    }
+
+    function renderPreview(file, idx) {
+        const reader = new FileReader();
+        reader.onload = e => {
+            const item = document.createElement('div');
+            item.className = 'ed-preview-item';
+            item.innerHTML = `
+                <img src="${e.target.result}" alt="">
+                <button class="ed-preview-remove" type="button" onclick="removePreview(${idx})">×</button>`;
+            previewGrid.appendChild(item);
+        };
+        reader.readAsDataURL(file);
+    }
+
+    window.removePreview = function(idx) {
+        selectedFiles.splice(idx, 1);
+        previewGrid.innerHTML = '';
+        selectedFiles.forEach((f, i) => renderPreview(f, i));
+        syncFilesToInput();
+    };
+
+    function syncFilesToInput() {
+        const dt = new DataTransfer();
+        selectedFiles.forEach(f => dt.items.add(f));
+        fileInput.files = dt.files;
+    }
+
+    /* ── Delete confirmation ── */
+    window.confirmDelete = function() {
+        if (confirm('⚠️ Delete "{{ destination.name }}"?\n\nThis will permanently remove all places, images, and reviews. This cannot be undone.')) {
+            window.location.href = "{% url 'destinations:delete_destination' destination.id %}";
+        }
+    };
+
+    /* ── Form submit ── */
+    document.getElementById('edForm').addEventListener('submit', function(e) {
+        if (!document.getElementById('id_name').value.trim()) {
+            e.preventDefault(); alert('Please enter a destination name.'); return;
+        }
+        const btn = document.getElementById('edSubmitBtn');
+        btn.disabled = true;
+        btn.innerHTML = `<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="white" stroke-width="2"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4"/></svg> Saving…`;
+    });
+
+    /* ── Init ── */
+    document.addEventListener('DOMContentLoaded', initMap);
+})();
 </script>
-
-</body>
-</html>
+{% endblock %}

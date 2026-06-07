@@ -1,726 +1,710 @@
+{% extends base_template %}
 {% load static %}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>{{ destination.name }} | Wayzo - Destination Details</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
-    <style>
-        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
-        :root {
-            --gray-100:     #F8F9FC;
-            --gray-150:     #F1F3F8;
-            --gray-200:     #E9EDF2;
-            --gray-300:     #DCE2EA;
-            --gray-400:     #BEC7D1;
-            --gray-500:     #9AA3AF;
-            --gray-600:     #6E7682;
-            --gray-700:     #4A515C;
-            --gray-800:     #2E343D;
-            --gray-850:     #21262E;
-            --gray-900:     #191E24;
-            --gray-950:     #0F1217;
-            --teal:         #0E8A8A;
-            --teal-dark:    #0A6B6B;
-            --teal-pale:    #EAF4F4;
-            --white:        #FFFFFF;
-            --text-dark:    #1E242C;
-            --text-soft:    #3C4350;
-            --text-light:   #6F7886;
-            --amber:        #F59E0B;
-            --rose:         #F43F5E;
-            --sidebar-w:    260px;
-        }
+{% block title %}{{ destination.name }} | Wayzo{% endblock %}
+{% block nav_packages %}active{% endblock %}
 
-        html { height: 100%; scroll-behavior: smooth; }
-        body {
-            font-family: 'Inter', sans-serif;
-            background: var(--gray-100);
-            color: var(--text-dark);
-            display: flex;
-            min-height: 100vh;
-            overflow-x: hidden;
-        }
+{% block head_extra %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+{% endblock %}
 
-        /* Sidebar */
-        .sidebar {
-            width: var(--sidebar-w);
-            background: var(--gray-950);
-            height: 100vh;
-            position: fixed; top: 0; left: 0;
-            display: flex; flex-direction: column;
-            z-index: 300;
-            border-right: 1px solid rgba(255,255,255,0.06);
-            transform: translateX(0);
-            transition: transform 0.32s cubic-bezier(0.4,0,0.2,1);
-            overflow-y: auto; overflow-x: hidden;
-        }
-        .sidebar.collapsed { transform: translateX(calc(-1 * var(--sidebar-w))); }
-        .sidebar-overlay {
-            display: none; position: fixed; inset: 0;
-            background: rgba(0,0,0,0.45); z-index: 290;
-            opacity: 0; transition: opacity 0.3s ease;
-        }
-        .sidebar-overlay.visible { display: block; opacity: 1; }
-        .sidebar-brand { padding: 1.8rem 1.6rem 1.4rem; border-bottom: 1px solid rgba(255,255,255,0.06); }
-        .sidebar-logo { font-family: 'Playfair Display', serif; font-size: 1.5rem; font-weight: 600; color: white; text-decoration: none; display: block; }
-        .sidebar-sub { font-size: 0.68rem; color: rgba(255,255,255,0.3); text-transform: uppercase; }
-        .sidebar-profile { padding: 1.2rem 1.6rem; border-bottom: 1px solid rgba(255,255,255,0.06); display: flex; align-items: center; gap: 0.85rem; }
-        .sidebar-avatar { width: 38px; height: 38px; border-radius: 50%; background: var(--teal); display: flex; align-items: center; justify-content: center; font-weight: 600; color: white; }
-        .sidebar-profile-name { font-size: 0.82rem; font-weight: 600; color: white; }
-        .sidebar-profile-role { font-size: 0.68rem; color: rgba(255,255,255,0.35); }
-        .sidebar-nav { flex: 1; padding: 1rem 0.8rem; }
-        .nav-group-label { font-size: 0.62rem; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: rgba(255,255,255,0.22); padding: 0.6rem 0.8rem 0.4rem; }
-        .nav-item { display: flex; align-items: center; gap: 0.75rem; padding: 0.65rem 0.8rem; border-radius: 8px; text-decoration: none; color: rgba(255,255,255,0.5); font-size: 0.82rem; font-weight: 500; transition: all 0.2s; }
-        .nav-item svg { width: 16px; height: 16px; stroke: currentColor; stroke-width: 1.8; fill: none; }
-        .nav-item:hover { background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.85); }
-        .nav-item.active { background: rgba(14,138,138,0.18); color: #5FC5C5; }
-        .sidebar-footer { padding: 0.8rem; border-top: 1px solid rgba(255,255,255,0.06); }
-        .logout-btn { display: flex; align-items: center; gap: 0.75rem; padding: 0.65rem 0.8rem; border-radius: 8px; text-decoration: none; color: rgba(255,255,255,0.5); font-size: 0.82rem; }
-        .logout-btn:hover { background: rgba(239,68,68,0.1); color: #F87171; }
+{% block content %}
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,500;0,600;1,400&display=swap');
 
-        /* Main Layout */
-        .main {
-            margin-left: var(--sidebar-w);
-            flex: 1;
-            transition: margin-left 0.32s cubic-bezier(0.4,0,0.2,1);
-            background: var(--gray-100);
-        }
-        .main.sidebar-collapsed { margin-left: 0; }
+:root {
+    --ink:#0d1117; --ink2:#1c2333; --muted:#586069;
+    --border:#e1e4e8; --surface:#ffffff; --s2:#f6f8fa; --s3:#f0f3f6;
+    --teal:#0e8a8a; --teal-d:#0a6b6b; --teal-pale:#e6f4f4;
+    --amber:#d97706; --amber-p:#fef3c7;
+    --green:#16a34a; --green-p:#dcfce7;
+    --rose:#f43f5e; --indigo:#4f46e5; --gold:#f59e0b;
+    --r:14px;
+    --sh:0 1px 8px rgba(0,0,0,.06), 0 4px 16px rgba(0,0,0,.04);
+    --sh-lg:0 8px 32px rgba(0,0,0,.10), 0 2px 8px rgba(0,0,0,.06);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+.dd-wrap{font-family:'Sora',sans-serif;color:var(--ink);background:var(--s2);}
 
-        /* Topbar */
-        .topbar {
-            background: transparent;
-            padding: 0 2rem;
-            height: 70px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            z-index: 200;
-            background: rgba(255,255,255,0.95);
-            backdrop-filter: blur(10px);
-            border-bottom: 1px solid var(--gray-200);
-        }
-        .main.sidebar-collapsed .topbar { left: 0; }
-        .topbar-left { display: flex; align-items: center; gap: 1rem; }
-        .hamburger {
-            width: 36px; height: 36px;
-            display: flex; flex-direction: column;
-            align-items: center; justify-content: center; gap: 5px;
-            background: var(--gray-100);
-            border: 1px solid var(--gray-200);
-            cursor: pointer; border-radius: 9px;
-        }
-        .hamburger span { display: block; width: 18px; height: 2px; background: var(--gray-700); border-radius: 2px; }
-        .topbar-right { display: flex; align-items: center; gap: 1rem; }
-        .notification-btn {
-            background: var(--gray-100);
-            border: 1px solid var(--gray-200);
-            border-radius: 50%; width: 38px; height: 38px;
-            display: flex; align-items: center; justify-content: center;
-            cursor: pointer;
-        }
-        .avatar-menu { position: relative; cursor: pointer; }
-        .avatar-trigger {
-            display: flex; align-items: center; gap: 0.5rem;
-            background: var(--gray-100);
-            border: 1px solid var(--gray-200);
-            padding: 0.3rem 0.8rem 0.3rem 0.35rem;
-            border-radius: 40px;
-        }
-        .avatar-img { width: 30px; height: 30px; border-radius: 50%; background: var(--teal); display: flex; align-items: center; justify-content: center; color: white; font-weight: 600; }
-        .avatar-name { font-size: 0.79rem; font-weight: 500; color: var(--text-dark); }
-        .dropdown-popup {
-            position: absolute; top: 50px; right: 0;
-            background: white; border-radius: 14px; box-shadow: 0 16px 40px -8px rgba(0,0,0,0.18);
-            width: 200px; padding: 0.5rem 0; z-index: 400;
-            border: 1px solid var(--gray-200);
-            opacity: 0; visibility: hidden; transform: translateY(-6px); transition: all 0.2s;
-        }
-        .dropdown-popup.show { opacity: 1; visibility: visible; transform: translateY(0); }
-        .dropdown-item { display: block; padding: 0.6rem 1rem; color: var(--gray-700); text-decoration: none; font-size: 0.8rem; }
-        .dropdown-item:hover { background: var(--gray-100); }
+/* ══ HERO ══ */
+.dd-hero{position:relative;height:480px;overflow:hidden;background:#0a1628;}
+.dd-slide{position:absolute;inset:0;background-size:cover;background-position:center;opacity:0;transition:opacity 1.2s ease;z-index:0;}
+.dd-slide.active{opacity:1;z-index:1;}
+.dd-slide::after{content:'';position:absolute;inset:0;background:linear-gradient(to bottom,rgba(0,0,0,.12) 0%,rgba(0,0,0,.28) 40%,rgba(0,0,0,.72) 100%);}
+.dd-hero-fade{position:absolute;bottom:0;left:0;right:0;height:140px;z-index:3;background:linear-gradient(to bottom,transparent,var(--s2));pointer-events:none;}
+.dd-hero-content{position:absolute;bottom:0;left:0;right:0;z-index:5;padding:0 2.5rem 3.5rem;}
+.dd-hero-eyebrow{display:inline-flex;align-items:center;gap:.45rem;background:rgba(255,255,255,.14);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.22);border-radius:99px;padding:.28rem .9rem;font-size:.68rem;font-weight:600;color:rgba(255,255,255,.9);margin-bottom:.75rem;letter-spacing:.04em;text-transform:uppercase;}
+.dd-hero-eyebrow span{width:6px;height:6px;border-radius:50%;background:#5FC5C5;flex-shrink:0;display:inline-block;}
+.dd-hero-title{font-family:'Playfair Display',serif;font-size:clamp(2rem,4.5vw,3.2rem);font-weight:600;color:#fff;line-height:1.1;text-shadow:0 2px 20px rgba(0,0,0,.3);margin-bottom:.4rem;}
+.dd-hero-sub{font-size:.85rem;color:rgba(255,255,255,.75);}
+.dd-hero-score{position:absolute;top:5rem;right:1.5rem;z-index:6;width:68px;height:68px;background:rgba(0,0,0,.55);backdrop-filter:blur(12px);border:2px solid rgba(255,255,255,.2);border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;color:white;}
+.dd-hero-score-val{font-size:1.2rem;font-weight:700;line-height:1;color:#5FC5C5;}
+.dd-hero-score-lbl{font-size:.52rem;opacity:.7;text-transform:uppercase;letter-spacing:.05em;margin-top:2px;}
 
-        /* Hero Section */
-        .hero-section {
-            margin-top: 70px;
-            position: relative;
-            height: 500px;
-            overflow: hidden;
-        }
-        .hero-bg {
-            position: absolute; inset: 0;
-            background-size: cover;
-            background-position: center;
-            transition: background-image 0.5s ease-in-out;
-        }
-        .hero-bg::after {
-            content: ""; position: absolute; inset: 0;
-            background: linear-gradient(to bottom, rgba(0,0,0,0.3), rgba(0,0,0,0.6));
-        }
-        .hero-content {
-            position: relative; z-index: 2;
-            height: 100%;
-            display: flex; flex-direction: column;
-            justify-content: center;
-            padding: 0 3rem;
-            color: white;
-        }
-        .hero-content h1 { font-size: 3.5rem; font-family: 'Playfair Display', serif; margin-bottom: 0.5rem; }
-        .carousel-controls {
-            position: absolute; bottom: 20px; right: 20px;
-            display: flex; gap: 10px; z-index: 3;
-        }
-        .carousel-btn {
-            background: rgba(0,0,0,0.6); color: white; border: none;
-            padding: 8px 15px; border-radius: 20px; cursor: pointer;
-        }
-        .carousel-dots {
-            position: absolute; bottom: 20px; left: 50%;
-            transform: translateX(-50%); display: flex; gap: 10px; z-index: 3;
-        }
-        .dot { width: 10px; height: 10px; border-radius: 50%; background: rgba(255,255,255,0.5); cursor: pointer; }
-        .dot.active { background: white; width: 20px; border-radius: 10px; }
+/* ══ PILL NAV ══ */
+.dd-pill-nav{position:absolute;top:50px;left:50%;transform:translateX(-50%);z-index:10;display:flex;gap:.3rem;background:rgba(255,255,255,.14);backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,.22);border-radius:99px;padding:.32rem .38rem;white-space:nowrap;box-shadow:0 4px 20px rgba(0,0,0,.2);}
+.dd-pill-tab{padding:.42rem 1.1rem;border-radius:99px;font-size:.74rem;font-weight:600;color:rgba(255,255,255,.8);background:transparent;border:none;cursor:pointer;transition:all .2s;font-family:'Sora',sans-serif;letter-spacing:.01em;}
+.dd-pill-tab:hover{color:#fff;background:rgba(255,255,255,.14);}
+.dd-pill-tab.active{background:#fff;color:var(--ink);box-shadow:0 2px 10px rgba(0,0,0,.2);}
+.dd-slide-dots{position:absolute;bottom:3.8rem;right:2.5rem;z-index:6;display:flex;gap:.5rem;align-items:center;}
+.dd-sdot{width:7px;height:7px;border-radius:99px;background:rgba(255,255,255,.35);border:none;cursor:pointer;padding:0;transition:all .3s;}
+.dd-sdot.active{width:20px;background:#fff;}
+.dd-arrow{position:absolute;top:50%;transform:translateY(-50%);z-index:6;width:38px;height:38px;background:rgba(0,0,0,.5);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.2);border-radius:50%;color:#fff;font-size:1rem;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:background .2s;border:none;}
+.dd-arrow:hover{background:rgba(0,0,0,.75);}
+.dd-arrow-prev{left:1rem;}
+.dd-arrow-next{right:1rem;}
 
-        /* Content */
-        .content-wrapper {
-            max-width: 1400px;
-            margin: 0 auto;
-            padding: 2rem;
-        }
+/* ══ STATS BAR ══ */
+.dd-stats-bar{background:var(--surface);border-bottom:1px solid var(--border);padding:0;}
+.dd-stats-inner{max-width:1400px;margin:0 auto;padding:0 2.5rem;display:flex;align-items:stretch;overflow-x:auto;scrollbar-width:none;}
+.dd-stats-inner::-webkit-scrollbar{display:none;}
+.dd-stat-item{flex:1;min-width:110px;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:1rem .5rem;border-right:1px solid var(--border);text-align:center;}
+.dd-stat-item:last-child{border-right:none;}
+.dd-stat-val{font-size:1.4rem;font-weight:700;color:var(--teal);line-height:1;margin-bottom:.2rem;}
+.dd-stat-lbl{font-size:.62rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;font-weight:500;}
 
-        /* Info Cards */
-        .info-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 1rem;
-            margin-bottom: 2rem;
-        }
-        .info-card {
-            background: white;
-            padding: 1.2rem;
-            border-radius: 16px;
-            text-align: center;
-            border: 1px solid var(--gray-200);
-        }
-        .info-card h4 { font-size: 0.7rem; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem; }
-        .info-card .value { font-size: 1.5rem; font-weight: 700; color: var(--teal); }
+/* ══ BODY ══ */
+.dd-body{max-width:1400px;margin:0 auto;padding:2rem 2.5rem 5rem;}
+.dd-grid{display:grid;grid-template-columns:1fr 340px;gap:2rem;align-items:start;}
+.dd-main{min-width:0;}
+.dd-side{position:sticky;top:24px;display:flex;flex-direction:column;gap:1.2rem;}
+.dd-section-head{display:flex;align-items:center;justify-content:space-between;margin:2rem 0 1.2rem;}
+.dd-section-title{font-family:'Playfair Display',serif;font-size:1.5rem;font-weight:600;color:var(--ink);display:flex;align-items:center;gap:.5rem;}
+.dd-section-count{font-size:.72rem;color:var(--muted);background:var(--s3);padding:.25rem .7rem;border-radius:99px;font-weight:500;}
+.dd-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);margin-bottom:1.5rem;overflow:hidden;box-shadow:var(--sh);}
+.dd-card-head{display:flex;align-items:center;gap:.55rem;padding:.9rem 1.3rem;border-bottom:1px solid var(--border);background:var(--s2);}
+.dd-card-head svg{width:16px;height:16px;stroke:var(--teal);fill:none;stroke-width:2;flex-shrink:0;}
+.dd-card-head h3{font-size:.92rem;font-weight:700;color:var(--ink);}
+.dd-card-body{padding:1.3rem;}
+.dd-weather{background:linear-gradient(135deg,#0e3a6b 0%,#0e6b6b 60%,#0a5a4a 100%);border-radius:var(--r);padding:1.4rem;color:white;margin-bottom:1.5rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem;box-shadow:0 8px 24px rgba(14,58,107,.25);}
+.dd-weather-temp{font-size:3rem;font-weight:700;line-height:1;}
+.dd-weather-desc{font-size:.82rem;opacity:.8;margin-top:.2rem;}
+.dd-weather-icon{width:56px;height:56px;filter:drop-shadow(0 2px 6px rgba(0,0,0,.2));}
+.dd-weather-meta{display:flex;flex-direction:column;gap:.35rem;font-size:.8rem;opacity:.85;}
+.dd-weather-meta span{display:flex;align-items:center;gap:.4rem;}
+.dd-score-grid{display:grid;grid-template-columns:1fr 1fr;gap:.75rem;}
+.dd-score-item{background:var(--s2);border:1px solid var(--border);border-radius:10px;padding:.85rem 1rem;}
+.dd-score-item-lbl{font-size:.62rem;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);font-weight:600;margin-bottom:.3rem;}
+.dd-score-item-val{font-size:1.1rem;font-weight:700;color:var(--teal);}
+.dd-score-bar{height:4px;background:var(--border);border-radius:99px;margin-top:.5rem;overflow:hidden;}
+.dd-score-fill{height:100%;background:linear-gradient(90deg,var(--teal),#5FC5C5);border-radius:99px;transition:width .8s ease;}
+.dd-season-banner{border-radius:var(--r);padding:1rem 1.3rem;margin-bottom:1.5rem;display:flex;align-items:center;gap:.85rem;font-size:.84rem;font-weight:500;}
+.dd-season-banner.best{background:var(--green-p);border:1px solid rgba(22,163,74,.2);color:#14532d;}
+.dd-season-banner.off{background:var(--amber-p);border:1px solid rgba(217,119,6,.2);color:#78350f;}
+.dd-season-icon{font-size:1.6rem;flex-shrink:0;}
+.dd-sort-bar{display:flex;align-items:center;gap:.6rem;margin-bottom:1.2rem;flex-wrap:wrap;}
+.dd-sort-label{font-size:.72rem;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.05em;}
+.dd-sort-btn{padding:.38rem .85rem;border-radius:99px;font-size:.73rem;font-weight:600;cursor:pointer;font-family:'Sora',sans-serif;transition:all .2s;background:var(--s3);border:1px solid var(--border);color:var(--muted);}
+.dd-sort-btn:hover{border-color:var(--teal);color:var(--teal);}
+.dd-sort-btn.active{background:var(--teal);border-color:var(--teal);color:white;}
+.dd-places-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:1.2rem;margin-bottom:2rem;}
+.dd-place-card{background:var(--surface);border-radius:16px;border:1px solid var(--border);overflow:hidden;box-shadow:var(--sh);transition:all .3s;cursor:pointer;text-decoration:none;display:flex;flex-direction:column;position:relative;}
+.dd-place-card:hover{transform:translateY(-5px);box-shadow:var(--sh-lg);border-color:rgba(14,138,138,.25);}
+.dd-place-rank{position:absolute;top:.65rem;left:.65rem;z-index:3;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.72rem;font-weight:800;color:white;background:rgba(0,0,0,.55);backdrop-filter:blur(8px);}
+.dd-place-rank.r1{background:#d97706;}
+.dd-place-rank.r2{background:#6b7280;}
+.dd-place-rank.r3{background:#92400e;}
+.dd-place-thumb{height:185px;background:var(--s3);position:relative;overflow:hidden;}
+.dd-place-thumb img{width:100%;height:100%;object-fit:cover;transition:transform .4s;display:block;}
+.dd-place-card:hover .dd-place-thumb img{transform:scale(1.06);}
+.dd-place-thumb-placeholder{height:100%;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#0e3a4a,#0a3d2a);color:rgba(255,255,255,.25);font-size:2.5rem;}
+.dd-place-badge{position:absolute;top:.65rem;right:.65rem;z-index:3;padding:.26rem .75rem;border-radius:99px;font-size:.64rem;font-weight:700;}
+.dd-place-badge.famous{background:rgba(245,158,11,.9);color:white;}
+.dd-place-badge.gem{background:rgba(79,70,229,.9);color:white;}
+.dd-place-score-chip{position:absolute;bottom:.65rem;left:.65rem;z-index:3;background:rgba(0,0,0,.6);backdrop-filter:blur(8px);color:#5FC5C5;font-size:.67rem;font-weight:700;padding:.25rem .6rem;border-radius:99px;display:flex;align-items:center;gap:.3rem;}
+.dd-place-score-chip svg{width:10px;height:10px;stroke:#f59e0b;fill:#f59e0b;}
+.dd-place-body{padding:.9rem 1rem .5rem;flex:1;}
+.dd-place-name{font-size:.94rem;font-weight:700;color:var(--ink);margin-bottom:.25rem;line-height:1.3;}
+.dd-place-desc{font-size:.74rem;color:var(--muted);line-height:1.55;}
+.dd-place-footer{display:flex;align-items:center;justify-content:space-between;padding:.65rem 1rem .85rem;gap:.5rem;flex-wrap:wrap;border-top:1px solid var(--s3);margin-top:.5rem;}
+.dd-place-meta{display:flex;gap:.85rem;flex-wrap:wrap;}
+.dd-place-meta-item{display:flex;align-items:center;gap:.3rem;font-size:.69rem;color:var(--muted);}
+.dd-place-meta-item svg{width:12px;height:12px;stroke:currentColor;fill:none;stroke-width:2;}
+.dd-place-meta-item strong{color:var(--ink2);font-weight:600;}
+.dd-place-fee{font-size:.72rem;font-weight:700;padding:.22rem .6rem;border-radius:99px;}
+.dd-place-fee.free{background:var(--green-p);color:var(--green);}
+.dd-place-fee.paid{background:var(--amber-p);color:var(--amber);}
+.dd-place-tags{display:flex;gap:.35rem;flex-wrap:wrap;margin-top:.5rem;}
+.dd-place-tag{font-size:.62rem;padding:.18rem .5rem;border-radius:99px;background:var(--teal-pale);color:var(--teal-d);font-weight:500;}
 
-        /* Weather Widget */
-        .weather-widget {
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            color: white;
-            padding: 1.5rem;
-            border-radius: 20px;
-            margin-bottom: 2rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-        }
-        .weather-temp { font-size: 3rem; font-weight: bold; }
-        .weather-icon { width: 60px; height: 60px; }
+/* ══ REVIEWS with edit/delete icons ══ */
+.dd-review{background:var(--s2);border:1px solid var(--border);border-radius:12px;padding:1rem 1.2rem;margin-bottom:.85rem;transition:box-shadow .2s;}
+.dd-review:hover{box-shadow:var(--sh);}
+.dd-review-header{display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:.5rem;margin-bottom:.5rem;}
+.dd-review-user-section{display:flex;align-items:center;gap:.75rem;flex-wrap:wrap;}
+.dd-review-avatar{width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,var(--teal) 0%,var(--teal-d) 100%);display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:1rem;flex-shrink:0;}
+.dd-review-avatar img{width:100%;height:100%;border-radius:50%;object-fit:cover;}
+.dd-review-user-info{display:flex;flex-direction:column;}
+.dd-review-username{font-size:.85rem;font-weight:700;color:var(--teal);}
+.dd-review-role{font-size:.65rem;color:var(--muted);margin-top:2px;}
+.dd-review-actions{display:flex;align-items:center;gap:.5rem;}
+.dd-review-edit-btn,.dd-review-delete-btn{display:inline-flex;align-items:center;gap:.35rem;padding:.4rem .8rem;border-radius:8px;font-size:.7rem;font-weight:600;text-decoration:none;transition:all .2s;cursor:pointer;border:none;font-family:'Sora',sans-serif;}
+.dd-review-edit-btn{background:var(--teal-pale);color:var(--teal);border:1px solid rgba(14,138,138,0.2);}
+.dd-review-edit-btn:hover{background:var(--teal);color:white;transform:translateY(-1px);}
+.dd-review-delete-btn{background:#fff5f5;color:var(--rose);border:1px solid rgba(244,63,94,0.2);}
+.dd-review-delete-btn:hover{background:var(--rose);color:white;transform:translateY(-1px);}
+.dd-review-stars{display:flex;align-items:center;gap:.2rem;margin-top:.25rem;}
+.dd-review-star{font-size:.8rem;color:var(--gold);}
+.dd-review-star.empty{color:var(--border);}
+.dd-review-place-badge{display:inline-block;font-size:.65rem;padding:.2rem .55rem;background:var(--s3);border-radius:99px;color:var(--muted);margin-top:.3rem;}
+.dd-review-body{font-size:.82rem;color:var(--muted);line-height:1.65;margin-top:.5rem;}
+.dd-review-footer{display:flex;justify-content:space-between;align-items:center;margin-top:.75rem;padding-top:.5rem;border-top:1px solid var(--s3);}
+.dd-review-date{font-size:.7rem;color:var(--muted);}
 
-        /* Details Grid */
-        .details-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 1.5rem;
-            margin-bottom: 2rem;
-        }
-        .detail-card {
-            background: white;
-            padding: 1.5rem;
-            border-radius: 16px;
-            border: 1px solid var(--gray-200);
-        }
-        .detail-card h3 { font-size: 1rem; margin-bottom: 1rem; color: var(--teal); }
-        .detail-card p { margin-bottom: 0.5rem; font-size: 0.85rem; }
+/* Modal */
+.dd-modal{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);backdrop-filter:blur(4px);z-index:1000;align-items:center;justify-content:center;}
+.dd-modal.show{display:flex;}
+.dd-modal-content{background:white;border-radius:16px;max-width:400px;width:90%;overflow:hidden;box-shadow:0 20px 40px rgba(0,0,0,0.2);animation:modalSlideIn 0.3s ease;}
+@keyframes modalSlideIn{from{opacity:0;transform:translateY(-20px);}to{opacity:1;transform:translateY(0);}}
+.dd-modal-header{padding:1.25rem 1.5rem;background:linear-gradient(135deg,#fff5f5 0%,#ffe4e6 100%);border-bottom:1px solid rgba(244,63,94,0.2);}
+.dd-modal-header h3{font-size:1.1rem;font-weight:700;color:var(--rose);display:flex;align-items:center;gap:.5rem;}
+.dd-modal-body{padding:1.5rem;font-size:.9rem;color:var(--ink2);line-height:1.6;}
+.dd-modal-footer{padding:1rem 1.5rem;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:.75rem;}
+.dd-modal-btn{padding:.6rem 1.2rem;border-radius:8px;font-size:.8rem;font-weight:600;cursor:pointer;border:none;font-family:'Sora',sans-serif;transition:all .2s;}
+.dd-modal-btn-cancel{background:var(--s3);color:var(--muted);}
+.dd-modal-btn-cancel:hover{background:var(--border);}
+.dd-modal-btn-confirm{background:var(--rose);color:white;}
+.dd-modal-btn-confirm:hover{background:#e11d48;transform:translateY(-1px);}
 
-        /* Section Header */
-        .section-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin: 2rem 0 1.5rem;
-        }
-        .section-header h2 {
-            font-family: 'Playfair Display', serif;
-            font-size: 1.8rem;
-            color: var(--text-dark);
-        }
+.dd-info-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;box-shadow:var(--sh);}
+.dd-info-card-head{display:flex;align-items:center;gap:.5rem;padding:.85rem 1.2rem;border-bottom:1px solid var(--border);background:var(--s2);font-size:.82rem;font-weight:700;color:var(--ink);}
+.dd-info-card-head svg{width:15px;height:15px;stroke:var(--teal);fill:none;stroke-width:2;}
+.dd-info-card-body{padding:1rem 1.2rem;}
+.dd-info-row{display:flex;justify-content:space-between;align-items:center;padding:.5rem 0;border-bottom:1px solid var(--s3);font-size:.82rem;}
+.dd-info-row:last-child{border-bottom:none;}
+.dd-info-row span{color:var(--muted);}
+.dd-info-row strong{color:var(--ink);font-weight:600;text-align:right;max-width:55%;}
+.dd-cta-card{background:linear-gradient(135deg,var(--teal) 0%,var(--teal-d) 100%);border-radius:var(--r);padding:1.4rem;color:white;box-shadow:0 8px 24px rgba(14,138,138,.3);text-align:center;}
+.dd-cta-card h4{font-size:1rem;font-weight:700;margin-bottom:.4rem;}
+.dd-cta-card p{font-size:.78rem;opacity:.85;margin-bottom:1rem;line-height:1.55;}
+.dd-cta-btn{display:block;padding:.72rem;text-align:center;background:white;color:var(--teal);border-radius:99px;font-size:.86rem;font-weight:700;text-decoration:none;transition:all .2s;font-family:'Sora',sans-serif;}
+.dd-cta-btn:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(0,0,0,.15);color:var(--teal-d);}
+.dd-cta-btn-outline{display:block;padding:.68rem;text-align:center;background:transparent;color:white;border:2px solid rgba(255,255,255,.4);border-radius:99px;font-size:.84rem;font-weight:600;text-decoration:none;transition:all .2s;margin-top:.7rem;font-family:'Sora',sans-serif;}
+.dd-cta-btn-outline:hover{border-color:white;background:rgba(255,255,255,.1);color:white;}
+.dd-featured-badge{display:inline-flex;align-items:center;gap:.4rem;background:linear-gradient(135deg,#d97706,#b45309);color:white;font-size:.72rem;font-weight:700;padding:.32rem .9rem;border-radius:99px;margin-bottom:1rem;}
+.dd-empty{text-align:center;padding:3rem 1.5rem;background:var(--surface);border-radius:16px;border:1px dashed var(--border);grid-column:1/-1;}
+.dd-empty-icon{font-size:2.5rem;opacity:.25;margin-bottom:.5rem;}
+.dd-empty p{font-size:.82rem;color:var(--muted);}
+.dd-actions{display:flex;gap:.85rem;justify-content:center;flex-wrap:wrap;margin-top:2rem;padding-top:2rem;border-top:1px solid var(--border);}
+.dd-btn{display:inline-flex;align-items:center;gap:.45rem;padding:.72rem 1.6rem;border-radius:99px;font-size:.84rem;font-weight:600;text-decoration:none;font-family:'Sora',sans-serif;transition:all .2s;cursor:pointer;}
+.dd-btn-primary{background:var(--teal);color:white;border:none;box-shadow:0 4px 14px rgba(14,138,138,.3);}
+.dd-btn-primary:hover{background:var(--teal-d);transform:translateY(-2px);color:white;}
+.dd-btn-outline{background:transparent;color:var(--teal);border:2px solid var(--teal);}
+.dd-btn-outline:hover{background:var(--teal);color:white;}
 
-        /* Places Grid */
-        .places-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-            gap: 1.5rem;
-            margin-bottom: 2rem;
-        }
-        .place-card {
-            background: white;
-            border-radius: 16px;
-            overflow: hidden;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-            transition: all 0.3s;
-            cursor: pointer;
-            border: 1px solid var(--gray-200);
-        }
-        .place-card:hover { transform: translateY(-4px); box-shadow: 0 12px 24px rgba(0,0,0,0.1); }
-        .place-image { width: 100%; height: 200px; object-fit: cover; position: relative; }
-        .place-badge {
-            position: absolute; top: 10px; right: 10px;
-            padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: bold;
-        }
-        .famous-badge { background: #ff9800; color: white; }
-        .gem-badge { background: #9c27b0; color: white; }
-        .place-content { padding: 1rem; }
-        .place-content h3 { font-size: 1.1rem; margin-bottom: 0.5rem; }
-        .place-meta { display: flex; gap: 1rem; font-size: 0.75rem; color: var(--text-light); margin-top: 0.5rem; }
+@media(max-width:1024px){.dd-grid{grid-template-columns:1fr;}.dd-side{position:static;}.dd-body{padding:1.5rem 1.5rem 4rem;}}
+@media(max-width:768px){.dd-pill-nav{top:78px;max-width:calc(100vw - 2rem);overflow-x:auto;border-radius:14px;}.dd-hero{height:380px;}.dd-hero-content{padding:0 1.5rem 3rem;}.dd-hero-title{font-size:1.8rem;}.dd-places-grid{grid-template-columns:1fr;}.dd-body{padding:1.2rem 1rem 3rem;}.dd-score-grid{grid-template-columns:1fr;}}
+@media(max-width:480px){.dd-stats-inner{gap:0;}.dd-stat-item{min-width:90px;padding:.9rem .3rem;}.dd-stat-val{font-size:1.1rem;}}
+</style>
 
-        /* Map */
-        .map-container { margin-bottom: 2rem; }
-        #map { height: 400px; border-radius: 20px; overflow: hidden; }
+<div class="dd-wrap">
 
-        /* Reviews */
-        .reviews-section {
-            background: white;
-            border-radius: 20px;
-            padding: 2rem;
-            margin-bottom: 2rem;
-            border: 1px solid var(--gray-200);
-        }
-        .review-card {
-            border-bottom: 1px solid var(--gray-200);
-            padding: 1rem 0;
-        }
-        .review-card:last-child { border-bottom: none; }
-        .review-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 0.5rem;
-        }
-        .review-user { font-weight: 600; color: var(--teal); }
-        .stars { color: #ffc107; font-size: 0.8rem; }
+<!-- ══ HERO ══ -->
+<div class="dd-hero" id="ddHero">
+    {% if destination.images.all %}
+        {% for img in destination.images.all %}
+        <div class="dd-slide {% if forloop.first %}active{% endif %}"
+             style="background-image:url('{{ img.image.url }}');"
+             data-index="{{ forloop.counter0 }}"></div>
+        {% endfor %}
+    {% else %}
+        <div class="dd-slide active" style="background:linear-gradient(160deg,#0a1e3d,#0e3a4a,#0a3d2a);"></div>
+    {% endif %}
 
-        /* Buttons */
-        .btn {
-            display: inline-block;
-            padding: 0.75rem 1.5rem;
-            background: var(--teal);
-            color: white;
-            text-decoration: none;
-            border-radius: 12px;
-            font-weight: 500;
-            transition: all 0.2s;
-        }
-        .btn-outline {
-            background: transparent;
-            border: 2px solid var(--teal);
-            color: var(--teal);
-        }
-        .btn-outline:hover { background: var(--teal); color: white; }
-        .btn:hover { background: var(--teal-dark); transform: translateY(-2px); }
+    <div class="dd-hero-fade"></div>
 
-        /* Footer */
-        .site-footer {
-            background: var(--gray-950);
-            color: rgba(255,255,255,0.5);
-            padding: 3rem 5% 2rem;
-            margin-top: 2rem;
-        }
-        .footer-grid { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 2.5rem; margin-bottom: 2.8rem; }
-        .footer-logo { font-family: 'Playfair Display', serif; font-size: 1.6rem; font-weight: 600; color: white; text-decoration: none; display: block; margin-bottom: 1rem; }
-        .footer-desc { font-size: 0.83rem; line-height: 1.75; max-width: 240px; }
-        .footer-col h5 { font-size: 0.63rem; letter-spacing: 0.12em; text-transform: uppercase; color: rgba(255,255,255,0.45); margin-bottom: 1.2rem; }
-        .footer-col ul { list-style: none; }
-        .footer-col ul li { margin-bottom: 0.65rem; }
-        .footer-col ul a { font-size: 0.82rem; color: rgba(255,255,255,0.38); text-decoration: none; }
-        .footer-col ul a:hover { color: white; }
-        .footer-bottom { border-top: 1px solid rgba(255,255,255,0.07); padding-top: 1.8rem; display: flex; justify-content: space-between; font-size: 0.72rem; }
-
-        @media (max-width: 860px) {
-            .sidebar { transform: translateX(calc(-1 * var(--sidebar-w))); }
-            .sidebar.open { transform: translateX(0); }
-            .main { margin-left: 0 !important; }
-            .hero-content h1 { font-size: 2rem; }
-            .places-grid { grid-template-columns: 1fr; }
-            .footer-grid { grid-template-columns: 1fr; }
-        }
-    </style>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-</head>
-<body>
-
-<div class="sidebar-overlay" id="sidebarOverlay"></div>
-
-<aside class="sidebar" id="sidebar">
-    <div class="sidebar-brand">
-        <a class="sidebar-logo" href="{% url 'index' %}">Wayzo</a>
-        <span class="sidebar-sub">Destination Explorer</span>
+    <div class="dd-hero-score">
+        <div class="dd-hero-score-val">{{ destination.final_trending_score|floatformat:0 }}</div>
+        <div class="dd-hero-score-lbl">AI Score</div>
     </div>
-    <div class="sidebar-profile">
-        <div class="sidebar-avatar">{{ request.user.username|first|upper }}</div>
-        <div>
-            <div class="sidebar-profile-name">{{ request.user.username }}</div>
-            <div class="sidebar-profile-role">Explorer</div>
-        </div>
-    </div>
-    <nav class="sidebar-nav">
-        <span class="nav-group-label">Explore</span>
-        <a href="{% url 'destinations:destination_list' %}" class="nav-item active">
-            <svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-            Destinations
-        </a>
-        <a href="{% url 'travellers:all_packages' %}" class="nav-item">
-            <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/></svg>
-            Packages
-        </a>
+
+    <nav class="dd-pill-nav" id="ddPillNav">
+        <button class="dd-pill-tab active" data-target="dd-overview">Overview</button>
+        <button class="dd-pill-tab" data-target="dd-famous">Famous</button>
+        <button class="dd-pill-tab" data-target="dd-gems">Hidden Gems</button>
+        <button class="dd-pill-tab" data-target="dd-map-section">Map</button>
+        <button class="dd-pill-tab" data-target="dd-reviews">Reviews</button>
     </nav>
-    <div class="sidebar-footer">
-        <a href="{% url 'logout' %}" class="logout-btn">
-            <svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-            Sign Out
-        </a>
+
+    <div class="dd-slide-dots" id="ddSlideDots"></div>
+
+    <button class="dd-arrow dd-arrow-prev" onclick="ddSlide(-1)">&#8592;</button>
+    <button class="dd-arrow dd-arrow-next" onclick="ddSlide(1)">&#8594;</button>
+
+    <div class="dd-hero-content">
+        {% if destination.is_featured %}
+        <div class="dd-featured-badge">✦ Featured Destination</div>
+        {% endif %}
+        <div class="dd-hero-eyebrow"><span></span> Destination Guide</div>
+        <h1 class="dd-hero-title">{{ destination.name }}</h1>
+        <p class="dd-hero-sub">
+            {% if destination.city %}{{ destination.city }}{% if destination.country %}, {% endif %}{% endif %}{{ destination.country }}
+            {% if destination.is_best_time_now %} · <span style="color:#5FC5C5;font-weight:600;">✦ Best time to visit now</span>{% endif %}
+        </p>
     </div>
-</aside>
+</div>
 
-<div class="main">
-    <div class="topbar">
-        <div class="topbar-left">
-            <button class="hamburger" id="hamburgerBtn"><span></span><span></span><span></span></button>
-        </div>
-        <div class="topbar-right">
-            <button class="notification-btn" id="notificationBtn">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
-            </button>
-            <div class="avatar-menu" id="avatarMenu">
-                <div class="avatar-trigger" id="avatarTrigger">
-                    <div class="avatar-img">{{ request.user.username|first|upper }}</div>
-                    <span class="avatar-name">{{ request.user.username }}</span>
-                </div>
-                <div class="dropdown-popup" id="dropdownPopup">
-                    <a href="#" class="dropdown-item">Profile</a>
-                    <a href="{% url 'logout' %}" class="dropdown-item">Sign Out</a>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Hero Section -->
-    <div class="hero-section">
-        <div class="hero-bg" id="heroBg"></div>
-        <div class="hero-content">
-            <h1>{{ destination.name }}</h1>
-            <p>{{ destination.city }}{% if destination.city and destination.country %}, {% endif %}{{ destination.country }}</p>
-        </div>
-        <div class="carousel-controls">
-            <button class="carousel-btn" onclick="prevImage()">◀ Prev</button>
-            <button class="carousel-btn" onclick="nextImage()">Next ▶</button>
-        </div>
-        <div class="carousel-dots" id="carouselDots"></div>
-    </div>
-
-    <div class="content-wrapper">
-        <!-- Quick Stats -->
-        <div class="info-grid">
-            <div class="info-card"><h4>🔥 AI Score</h4><div class="value">{{ destination.final_trending_score|floatformat:0 }}/100</div></div>
-            <div class="info-card"><h4>⭐ Rating</h4><div class="value">{{ destination.average_rating|floatformat:1|default:0 }}</div></div>
-            <div class="info-card"><h4>📝 Reviews</h4><div class="value">{{ destination.total_reviews|default:0 }}</div></div>
-            <div class="info-card"><h4>👀 Views</h4><div class="value">{{ destination.total_views|default:0 }}</div></div>
-            {% if destination.is_featured %}
-            <div class="info-card"><h4>✨ Featured</h4><div class="value">Yes</div></div>
-            {% endif %}
-        </div>
-
-        <!-- Weather Widget -->
+<!-- ══ STATS BAR ══ -->
+<div class="dd-stats-bar" id="ddStatsBar">
+    <div class="dd-stats-inner">
+        <div class="dd-stat-item"><div class="dd-stat-val">{{ destination.final_trending_score|floatformat:0 }}</div><div class="dd-stat-lbl">🔥 AI Score</div></div>
+        <div class="dd-stat-item"><div class="dd-stat-val">{{ destination.average_rating|floatformat:1|default:"0" }}</div><div class="dd-stat-lbl">⭐ Rating</div></div>
+        <div class="dd-stat-item"><div class="dd-stat-val">{{ destination.total_reviews|default:0 }}</div><div class="dd-stat-lbl">📝 Reviews</div></div>
+        <div class="dd-stat-item"><div class="dd-stat-val">{{ destination.total_views|default:0 }}</div><div class="dd-stat-lbl">👀 Views</div></div>
+        <div class="dd-stat-item"><div class="dd-stat-val">{{ all_places|length }}</div><div class="dd-stat-lbl">📍 Places</div></div>
+        <div class="dd-stat-item"><div class="dd-stat-val">{{ hidden_gems|length }}</div><div class="dd-stat-lbl">💎 Gems</div></div>
         {% if weather_data %}
-        <div class="weather-widget">
-            <div>
-                <div class="weather-temp">{{ weather_data.temp }}°C</div>
-                <div>{{ weather_data.description|title }}</div>
-            </div>
-            <img class="weather-icon" src="https://openweathermap.org/img/w/{{ weather_data.icon }}.png" alt="Weather">
-            <div>
-                <div>💧 Humidity: {{ weather_data.humidity }}%</div>
-                <div>💨 Wind: {{ weather_data.wind }} km/h</div>
-            </div>
-        </div>
+        <div class="dd-stat-item"><div class="dd-stat-val">{{ weather_data.temp }}°C</div><div class="dd-stat-lbl">🌡️ Now</div></div>
         {% endif %}
+    </div>
+</div>
 
-        <!-- Description -->
-        <div class="detail-card">
-            <h3>📖 About {{ destination.name }}</h3>
-            <p>{{ destination.description|linebreaks }}</p>
-        </div>
+<!-- ══ BODY ══ -->
+<div class="dd-body">
+    <div class="dd-grid">
 
-        <!-- Best Time & Weather Info -->
-        <div class="details-grid">
-            <div class="detail-card">
-                <h3>📅 Best Time to Visit</h3>
-                <p><strong>Months:</strong> 
-                    {% if destination.best_month_start <= destination.best_month_end %}
-                        Month {{ destination.best_month_start }} to {{ destination.best_month_end }}
-                    {% else %}
-                        Month {{ destination.best_month_start }} to {{ destination.best_month_end }} (wraps around year)
-                    {% endif %}
-                </p>
-                <p><strong>Season:</strong> {{ destination.get_best_season_display|default:"Not specified" }}</p>
-                {% if destination.is_best_time_now %}
-                    <p style="color: #4caf50; font-weight: bold; margin-top: 10px;">✅ Currently BEST time to visit!</p>
-                {% else %}
-                    <p style="color: #ff9800; margin-top: 10px;">📅 Currently off-season</p>
-                {% endif %}
+        <!-- MAIN -->
+        <div class="dd-main">
+
+            <div class="dd-card" id="dd-overview">
+                <div class="dd-card-head"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg><h3>About {{ destination.name }}</h3></div>
+                <div class="dd-card-body"><p style="font-size:.88rem;line-height:1.8;color:var(--muted);">{{ destination.description }}</p></div>
             </div>
-            <div class="detail-card">
-                <h3>🌤️ Weather Preferences</h3>
-                <p><strong>Preferred Weather:</strong> {{ destination.get_preferred_weather_display|default:"Not specified" }}</p>
-                {% if destination.current_temperature %}
-                    <p><strong>Current Temp:</strong> {{ destination.current_temperature }}°C</p>
-                    <p><strong>Condition:</strong> {{ destination.weather_condition }}</p>
-                    <p><strong>Humidity:</strong> {{ destination.humidity }}%</p>
-                {% endif %}
-                <p><strong>Weather Score:</strong> {{ destination.weather_score|floatformat:0 }}/20</p>
-            </div>
-            <div class="detail-card">
-                <h3>📊 Trending Scores</h3>
-                <p><strong>Popularity Score:</strong> {{ destination.popularity_score|floatformat:0 }}/30</p>
-                <p><strong>Seasonal Score:</strong> {{ destination.seasonal_score|floatformat:0 }}/20</p>
-                <p><strong>Manual Priority:</strong> {{ destination.manual_priority_score|floatformat:0 }}/20</p>
-                <p><strong>Usage Score:</strong> {{ destination.usage_score|floatformat:0 }}/10</p>
-            </div>
-        </div>
 
-        <!-- Location Info -->
-        {% if destination.latitude and destination.longitude %}
-        <div class="detail-card">
-            <h3>📍 Location</h3>
-            <p><strong>Coordinates:</strong> {{ destination.latitude|floatformat:4 }}, {{ destination.longitude|floatformat:4 }}</p>
-        </div>
-        {% endif %}
-
-        <!-- Famous Places -->
-        <div class="section-header">
-            <h2>⭐ Famous Places to Visit</h2>
-            <span>{{ famous_places|length }} places</span>
-        </div>
-        <div class="places-grid">
-            {% for place in famous_places %}
-            <div class="place-card" onclick="window.location.href='{% url 'destinations:place_detail' place.id %}'">
-                <div style="position: relative;">
-                    <img class="place-image" src="{% if place.images.first %}{{ place.images.first.image.url }}{% else %}https://via.placeholder.com/400x200?text=No+Image{% endif %}" alt="{{ place.name }}">
-                    <span class="place-badge famous-badge">⭐ Famous</span>
-                </div>
-                <div class="place-content">
-                    <h3>{{ place.name }}</h3>
-                    <p style="font-size: 0.8rem; color: var(--text-light);">{{ place.description|truncatewords:20 }}</p>
-                    <div class="place-meta">
-                        <span>⭐ {{ place.average_rating|floatformat:1|default:"0" }}</span>
-                        <span>📝 {{ place.total_reviews }} reviews</span>
-                        <span>💰 {% if place.entry_fee == 0 %}Free{% else %}₹{{ place.entry_fee }}{% endif %}</span>
-                    </div>
-                </div>
-            </div>
-            {% empty %}
-            <div style="text-align: center; padding: 2rem; background: white; border-radius: 16px;">No famous places added yet.</div>
-            {% endfor %}
-        </div>
-
-        <!-- Hidden Gems -->
-        <div class="section-header">
-            <h2>💎 Hidden Gems</h2>
-            <span>{{ hidden_gems|length }} places</span>
-        </div>
-        <div class="places-grid">
-            {% for place in hidden_gems %}
-            <div class="place-card" onclick="window.location.href='{% url 'destinations:place_detail' place.id %}'">
-                <div style="position: relative;">
-                    <img class="place-image" src="{% if place.images.first %}{{ place.images.first.image.url }}{% else %}https://via.placeholder.com/400x200?text=No+Image{% endif %}" alt="{{ place.name }}">
-                    <span class="place-badge gem-badge">💎 Hidden Gem</span>
-                </div>
-                <div class="place-content">
-                    <h3>{{ place.name }}</h3>
-                    <p style="font-size: 0.8rem; color: var(--text-light);">{{ place.description|truncatewords:20 }}</p>
-                    <div class="place-meta">
-                        <span>⭐ {{ place.average_rating|floatformat:1|default:"0" }}</span>
-                        <span>📝 {{ place.total_reviews }} reviews</span>
-                    </div>
-                </div>
-            </div>
-            {% empty %}
-            <div style="text-align: center; padding: 2rem; background: white; border-radius: 16px;">No hidden gems discovered yet.</div>
-            {% endfor %}
-        </div>
-
-        <!-- Map -->
-        <div class="map-container">
-            <h2 class="section-header" style="margin-bottom: 1rem;">🗺️ Explore on Map</h2>
-            <div id="map"></div>
-        </div>
-
-        <!-- Reviews -->
-        <div class="reviews-section">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-                <h3>⭐ Traveler Reviews ({{ reviews|length }})</h3>
-                <a href="{% url 'destinations:add_review' destination.id %}" class="btn" style="padding: 0.5rem 1rem;">Write a Review</a>
-            </div>
-            {% if reviews %}
-                {% for review in reviews|slice:":10" %}
-                <div class="review-card">
-                    <div class="review-header">
-                        <span class="review-user">{{ review.user.username }}</span>
-                        <div class="stars">{% for i in "12345"|make_list %}{% if forloop.counter <= review.rating %}★{% else %}☆{% endif %}{% endfor %} ({{ review.rating }}/5)</div>
-                    </div>
-                    <div style="font-size: 0.75rem; color: var(--text-light); margin-bottom: 0.5rem;">{{ review.created_at|date:"F j, Y" }}</div>
-                    <div>{{ review.review|linebreaks }}</div>
-                </div>
-                {% endfor %}
+            {% if destination.is_best_time_now %}
+            <div class="dd-season-banner best"><div class="dd-season-icon">✅</div><div><strong>Right now is the best time to visit {{ destination.name }}!</strong><br><span style="font-size:.8rem;opacity:.8;">Season: {{ destination.get_best_season_display|default:"N/A" }} · Month {{ destination.best_month_start }}–{{ destination.best_month_end }}</span></div></div>
             {% else %}
-                <p>No reviews yet. Be the first to share your experience!</p>
+            <div class="dd-season-banner off"><div class="dd-season-icon">📅</div><div><strong>Currently off-season</strong><br><span style="font-size:.8rem;opacity:.8;">Best time: {{ destination.get_best_season_display|default:"N/A" }} · Month {{ destination.best_month_start }}–{{ destination.best_month_end }}</span></div></div>
             {% endif %}
+
+            {% if weather_data %}
+            <div class="dd-weather">
+                <div><div class="dd-weather-temp">{{ weather_data.temp }}°C</div><div class="dd-weather-desc">{{ weather_data.description|title }}</div></div>
+                <img class="dd-weather-icon" src="https://openweathermap.org/img/w/{{ weather_data.icon }}.png" alt="weather">
+                <div class="dd-weather-meta">
+                    <span>💧 Humidity: {{ weather_data.humidity }}%</span>
+                    <span>💨 Wind: {{ weather_data.wind }} km/h</span>
+                    <span>🌡️ Weather Score: {{ destination.weather_score|floatformat:0 }}/20</span>
+                </div>
+            </div>
+            {% endif %}
+
+            <div class="dd-card">
+                <div class="dd-card-head"><svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg><h3>AI Trending Score Breakdown</h3></div>
+                <div class="dd-card-body">
+                    <div class="dd-score-grid">
+                        <div class="dd-score-item"><div class="dd-score-item-lbl">Popularity Score</div><div class="dd-score-item-val">{{ destination.popularity_score|floatformat:1 }}/30</div><div class="dd-score-bar"><div class="dd-score-fill" style="width:{% widthratio destination.popularity_score 30 100 %}%"></div></div></div>
+                        <div class="dd-score-item"><div class="dd-score-item-lbl">Weather Score</div><div class="dd-score-item-val">{{ destination.weather_score|floatformat:1 }}/20</div><div class="dd-score-bar"><div class="dd-score-fill" style="width:{% widthratio destination.weather_score 20 100 %}%"></div></div></div>
+                        <div class="dd-score-item"><div class="dd-score-item-lbl">Seasonal Score</div><div class="dd-score-item-val">{{ destination.seasonal_score|floatformat:1 }}/20</div><div class="dd-score-bar"><div class="dd-score-fill" style="width:{% widthratio destination.seasonal_score 20 100 %}%"></div></div></div>
+                        <div class="dd-score-item"><div class="dd-score-item-lbl">Manual Priority</div><div class="dd-score-item-val">{{ destination.manual_priority_score|floatformat:1 }}/20</div><div class="dd-score-bar"><div class="dd-score-fill" style="width:{% widthratio destination.manual_priority_score 20 100 %}%"></div></div></div>
+                        <div class="dd-score-item"><div class="dd-score-item-lbl">Usage Score</div><div class="dd-score-item-val">{{ destination.usage_score|floatformat:1 }}/10</div><div class="dd-score-bar"><div class="dd-score-fill" style="width:{% widthratio destination.usage_score 10 100 %}%"></div></div></div>
+                        <div class="dd-score-item" style="background:var(--teal-pale);border-color:rgba(14,138,138,.25);"><div class="dd-score-item-lbl" style="color:var(--teal-d);">Final AI Score</div><div class="dd-score-item-val" style="font-size:1.4rem;">{{ destination.final_trending_score|floatformat:0 }}/100</div><div class="dd-score-bar"><div class="dd-score-fill" style="width:{{ destination.final_trending_score }}%"></div></div></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Famous Places -->
+            <div id="dd-famous">
+                <div class="dd-section-head">
+                    <div class="dd-section-title">⭐ Famous Places</div>
+                    <div class="dd-section-count">{{ famous_places|length }} places</div>
+                </div>
+                <div class="dd-sort-bar" id="famousSortBar">
+                    <span class="dd-sort-label">Sort by:</span>
+                    <button class="dd-sort-btn active" data-sort="score" data-target="famous">⚡ Score</button>
+                    <button class="dd-sort-btn" data-sort="rating" data-target="famous">⭐ Rating</button>
+                    <button class="dd-sort-btn" data-sort="reviews" data-target="famous">📝 Reviews</button>
+                    <button class="dd-sort-btn" data-sort="free" data-target="famous">🎟️ Free Entry</button>
+                </div>
+                <div class="dd-places-grid" id="famousGrid">
+                    {% for place in famous_places|dictsortreversed:"final_trending_score" %}
+                    <a class="dd-place-card" href="{% url 'destinations:place_detail' place.destination.id place.id %}" data-score="{{ place.final_trending_score }}" data-rating="{{ place.average_rating }}" data-reviews="{{ place.total_reviews }}" data-fee="{{ place.entry_fee }}">
+                        <div class="dd-place-rank {% if forloop.counter == 1 %}r1{% elif forloop.counter == 2 %}r2{% elif forloop.counter == 3 %}r3{% endif %}">#{{ forloop.counter }}</div>
+                        <div class="dd-place-thumb">
+                            {% if place.images.first %}<img src="{{ place.images.first.image.url }}" alt="{{ place.name }}" loading="lazy">{% else %}<div class="dd-place-thumb-placeholder">📍</div>{% endif %}
+                            <span class="dd-place-badge famous">⭐ Famous</span>
+                            <div class="dd-place-score-chip"><svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>{{ place.final_trending_score|floatformat:0 }}</div>
+                        </div>
+                        <div class="dd-place-body">
+                            <div class="dd-place-name">{{ place.name }}</div>
+                            <div class="dd-place-desc">{{ place.description|truncatewords:18 }}</div>
+                            {% if place.best_for_photography or place.best_for_sunset or place.best_for_sunrise %}
+                            <div class="dd-place-tags">
+                                {% if place.best_for_photography %}<span class="dd-place-tag">📷 Photography</span>{% endif %}
+                                {% if place.best_for_sunset %}<span class="dd-place-tag">🌇 Sunset</span>{% endif %}
+                                {% if place.best_for_sunrise %}<span class="dd-place-tag">🌅 Sunrise</span>{% endif %}
+                            </div>
+                            {% endif %}
+                        </div>
+                        <div class="dd-place-footer">
+                            <div class="dd-place-meta">
+                                <div class="dd-place-meta-item"><svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg><strong>{{ place.average_rating|floatformat:1|default:"0" }}</strong></div>
+                                <div class="dd-place-meta-item"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg><strong>{{ place.total_reviews }}</strong> reviews</div>
+                                {% if place.avg_visit_duration %}<div class="dd-place-meta-item"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>{{ place.avg_visit_duration }}m</div>{% endif %}
+                            </div>
+                            {% if place.entry_fee == 0 %}<span class="dd-place-fee free">Free</span>{% else %}<span class="dd-place-fee paid">₹{{ place.entry_fee }}</span>{% endif %}
+                        </div>
+                    </a>
+                    {% empty %}
+                    <div class="dd-empty"><div class="dd-empty-icon">🗺️</div><p>No famous places added yet.</p></div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Hidden Gems -->
+            <div id="dd-gems">
+                <div class="dd-section-head">
+                    <div class="dd-section-title">💎 Hidden Gems</div>
+                    <div class="dd-section-count">{{ hidden_gems|length }} offbeat spots</div>
+                </div>
+                <div class="dd-sort-bar" id="gemsSortBar">
+                    <span class="dd-sort-label">Sort by:</span>
+                    <button class="dd-sort-btn active" data-sort="score" data-target="gems">⚡ Score</button>
+                    <button class="dd-sort-btn" data-sort="rating" data-target="gems">⭐ Rating</button>
+                    <button class="dd-sort-btn" data-sort="reviews" data-target="gems">📝 Reviews</button>
+                    <button class="dd-sort-btn" data-sort="free" data-target="gems">🎟️ Free Entry</button>
+                </div>
+                <div class="dd-places-grid" id="gemsGrid">
+                    {% for place in hidden_gems|dictsortreversed:"final_trending_score" %}
+                    <a class="dd-place-card" href="{% url 'destinations:place_detail' place.destination.id place.id %}" data-score="{{ place.final_trending_score }}" data-rating="{{ place.average_rating }}" data-reviews="{{ place.total_reviews }}" data-fee="{{ place.entry_fee }}">
+                        <div class="dd-place-rank {% if forloop.counter == 1 %}r1{% elif forloop.counter == 2 %}r2{% elif forloop.counter == 3 %}r3{% endif %}">#{{ forloop.counter }}</div>
+                        <div class="dd-place-thumb">
+                            {% if place.images.first %}<img src="{{ place.images.first.image.url }}" alt="{{ place.name }}" loading="lazy">{% else %}<div class="dd-place-thumb-placeholder">💎</div>{% endif %}
+                            <span class="dd-place-badge gem">💎 Gem</span>
+                            <div class="dd-place-score-chip"><svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>{{ place.final_trending_score|floatformat:0 }}</div>
+                        </div>
+                        <div class="dd-place-body">
+                            <div class="dd-place-name">{{ place.name }}</div>
+                            <div class="dd-place-desc">{{ place.description|truncatewords:18 }}</div>
+                            {% if place.best_for_photography or place.best_for_sunset or place.best_for_sunrise %}
+                            <div class="dd-place-tags">
+                                {% if place.best_for_photography %}<span class="dd-place-tag">📷 Photography</span>{% endif %}
+                                {% if place.best_for_sunset %}<span class="dd-place-tag">🌇 Sunset</span>{% endif %}
+                                {% if place.best_for_sunrise %}<span class="dd-place-tag">🌅 Sunrise</span>{% endif %}
+                            </div>
+                            {% endif %}
+                        </div>
+                        <div class="dd-place-footer">
+                            <div class="dd-place-meta">
+                                <div class="dd-place-meta-item"><svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg><strong>{{ place.average_rating|floatformat:1|default:"0" }}</strong></div>
+                                <div class="dd-place-meta-item"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg><strong>{{ place.total_reviews }}</strong> reviews</div>
+                                {% if place.avg_visit_duration %}<div class="dd-place-meta-item"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>{{ place.avg_visit_duration }}m</div>{% endif %}
+                            </div>
+                            {% if place.entry_fee == 0 %}<span class="dd-place-fee free">Free</span>{% else %}<span class="dd-place-fee paid">₹{{ place.entry_fee }}</span>{% endif %}
+                        </div>
+                    </a>
+                    {% empty %}
+                    <div class="dd-empty"><div class="dd-empty-icon">💎</div><p>No hidden gems discovered yet.</p></div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Map -->
+            <div id="dd-map-section" style="margin-bottom:1.5rem;">
+                <div class="dd-section-head"><div class="dd-section-title">🗺️ Explore on Map</div></div>
+                <div id="dd-map-container" style="height:380px;border-radius:14px;overflow:hidden;border:1px solid var(--border);box-shadow:var(--sh);"></div>
+            </div>
+
+            <!-- Reviews with Edit/Delete Icons -->
+            <div id="dd-reviews">
+                <div class="dd-section-head">
+                    <div class="dd-section-title">💬 Traveller Reviews</div>
+                    <div style="display:flex;align-items:center;gap:.75rem;">
+                        <span class="dd-section-count">{{ reviews|length }} reviews</span>
+                        <a href="{% url 'destinations:add_destination_review' destination.id %}" class="dd-btn dd-btn-primary" style="padding:.5rem 1.2rem;font-size:.78rem;">✍️ Write a Review</a>
+                    </div>
+                </div>
+                {% if reviews %}
+                    {% for review in reviews|slice:":10" %}
+                    <div class="dd-review" id="review-{{ review.id }}">
+                        <div class="dd-review-header">
+                            <div class="dd-review-user-section">
+                                <div class="dd-review-avatar">
+                                    {{ review.user.username|first|upper }}
+                                </div>
+                                <div class="dd-review-user-info">
+                                    <div class="dd-review-username">{{ review.user.username }}</div>
+                                    <div class="dd-review-role">Traveller</div>
+                                </div>
+                                <div class="dd-review-stars">
+                                    {% for i in "12345"|make_list %}
+                                        {% if forloop.counter <= review.rating %}
+                                            <span class="dd-review-star">★</span>
+                                        {% else %}
+                                            <span class="dd-review-star empty">☆</span>
+                                        {% endif %}
+                                    {% endfor %}
+                                    <span style="font-size:.7rem;color:var(--muted);margin-left:.25rem;">({{ review.rating }}/5)</span>
+                                </div>
+                            </div>
+                            {% if request.user == review.user or request.user.is_staff %}
+                            <div class="dd-review-actions">
+                                <a href="{% url 'destinations:edit_destination_review' review.id %}" class="dd-review-edit-btn">
+                                    ✏️ Edit
+                                </a>
+                                <button type="button" class="dd-review-delete-btn" onclick="showDeleteModal('{{ review.id }}')">
+                                    🗑️ Delete
+                                </button>
+                            </div>
+                            {% endif %}
+                        </div>
+                        <div class="dd-review-body">{{ review.review|linebreaks }}</div>
+                        <div class="dd-review-footer">
+                            <div class="dd-review-date">{{ review.created_at|date:"M j, Y" }}</div>
+                            {% if review.updated_at != review.created_at %}
+                            <div class="dd-review-date" style="font-style:italic;">Edited: {{ review.updated_at|date:"M j, Y" }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                    {% if reviews|length > 10 %}<p style="text-align:center;font-size:.8rem;color:var(--muted);margin-top:.5rem;">Showing 10 of {{ reviews|length }} reviews</p>{% endif %}
+                {% else %}
+                    <div class="dd-empty"><div class="dd-empty-icon">💬</div><p>No reviews yet. Be the first to share your experience!</p></div>
+                {% endif %}
+            </div>
+
+            <div class="dd-actions">
+                <a href="{% url 'destinations:add_place' destination.id %}" class="dd-btn dd-btn-primary">➕ Add a Place</a>
+                {% if request.user == destination.created_by or request.user.is_staff %}
+                <a href="{% url 'destinations:edit_destination' destination.id %}" class="dd-btn dd-btn-outline">✏️ Edit Destination</a>
+                {% endif %}
+            </div>
+
+        </div><!-- /main -->
+
+        <!-- SIDEBAR -->
+        <div class="dd-side">
+            <div class="dd-cta-card">
+                <h4>Ready to Explore?</h4>
+                <p>Find the perfect tour package for {{ destination.name }} and book your adventure.</p>
+                <a href="{% url 'travellers:all_packages' %}" class="dd-cta-btn">Browse Tour Packages →</a>
+                <a href="{% url 'destinations:add_place' destination.id %}" class="dd-cta-btn-outline">➕ Add a Place</a>
+            </div>
+            <div class="dd-info-card">
+                <div class="dd-info-card-head"><svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>Location Details</div>
+                <div class="dd-info-card-body">
+                    {% if destination.city %}<div class="dd-info-row"><span>City</span><strong>{{ destination.city }}</strong></div>{% endif %}
+                    {% if destination.state %}<div class="dd-info-row"><span>State</span><strong>{{ destination.state }}</strong></div>{% endif %}
+                    {% if destination.country %}<div class="dd-info-row"><span>Country</span><strong>{{ destination.country }}</strong></div>{% endif %}
+                    {% if destination.latitude and destination.longitude %}<div class="dd-info-row"><span>Coordinates</span><strong>{{ destination.latitude|floatformat:4 }}, {{ destination.longitude|floatformat:4 }}</strong></div>{% endif %}
+                </div>
+            </div>
+            <div class="dd-info-card">
+                <div class="dd-info-card-head"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>Best Time to Visit</div>
+                <div class="dd-info-card-body">
+                    <div class="dd-info-row"><span>Season</span><strong>{{ destination.get_best_season_display|default:"Not specified" }}</strong></div>
+                    <div class="dd-info-row"><span>Best Months</span><strong>Month {{ destination.best_month_start }}–{{ destination.best_month_end }}</strong></div>
+                    <div class="dd-info-row"><span>Weather Pref.</span><strong>{{ destination.get_preferred_weather_display|default:"Any" }}</strong></div>
+                    <div class="dd-info-row"><span>Now</span><strong style="color:{% if destination.is_best_time_now %}var(--green){% else %}var(--amber){% endif %};">{% if destination.is_best_time_now %}✅ Best time{% else %}📅 Off-season{% endif %}</strong></div>
+                </div>
+            </div>
+            <div class="dd-info-card">
+                <div class="dd-info-card-head"><svg viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>Quick Stats</div>
+                <div class="dd-info-card-body">
+                    <div class="dd-info-row"><span>Famous Places</span><strong>{{ famous_places|length }}</strong></div>
+                    <div class="dd-info-row"><span>Hidden Gems</span><strong>{{ hidden_gems|length }}</strong></div>
+                    <div class="dd-info-row"><span>Total Reviews</span><strong>{{ destination.total_reviews }}</strong></div>
+                    <div class="dd-info-row"><span>Avg Rating</span><strong>{{ destination.average_rating|floatformat:1 }} / 5</strong></div>
+                    <div class="dd-info-row"><span>Total Views</span><strong>{{ destination.total_views }}</strong></div>
+                    {% if destination.is_featured %}<div class="dd-info-row"><span>Status</span><strong style="color:var(--amber);">✦ Featured</strong></div>{% endif %}
+                </div>
+            </div>
         </div>
 
-        <!-- Action Buttons -->
-        <div style="text-align: center; display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
-            <a href="{% url 'destinations:add_place' destination.id %}" class="btn">➕ Add a New Place</a>
-            {% if request.user == destination.created_by or request.user.is_staff %}
-                <a href="{% url 'destinations:edit_destination' destination.id %}" class="btn btn-outline">✏️ Edit Destination</a>
-            {% endif %}
+    </div>
+</div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="dd-modal" id="deleteModal">
+    <div class="dd-modal-content">
+        <div class="dd-modal-header">
+            <h3>🗑️ Delete Review</h3>
+        </div>
+        <div class="dd-modal-body">
+            <p>Are you sure you want to delete this review?</p>
+            <p style="font-size:0.8rem; color:var(--muted); margin-top:0.5rem;">This action cannot be undone.</p>
+        </div>
+        <div class="dd-modal-footer">
+            <button class="dd-modal-btn dd-modal-btn-cancel" onclick="closeDeleteModal()">Cancel</button>
+            <form id="deleteReviewForm" method="POST" action="" style="display: inline;">
+                {% csrf_token %}
+                <button type="submit" class="dd-modal-btn dd-modal-btn-confirm">Delete Review</button>
+            </form>
         </div>
     </div>
-
-    <footer class="site-footer">
-        <div class="footer-grid">
-            <div>
-                <a class="footer-logo" href="{% url 'index' %}">Wayzo</a>
-                <p class="footer-desc">Your smart travel companion. Discover, plan, and experience the world beautifully.</p>
-            </div>
-            <div class="footer-col">
-                <h5>Explore</h5>
-                <ul><li><a href="{% url 'destinations:destination_list' %}">Destinations</a></li><li><a href="{% url 'travellers:all_packages' %}">Tour Packages</a></li></ul>
-            </div>
-            <div class="footer-col">
-                <h5>Support</h5>
-                <ul><li><a href="#">Help Center</a></li><li><a href="#">Contact Us</a></li></ul>
-            </div>
-            <div class="footer-col">
-                <h5>Legal</h5>
-                <ul><li><a href="#">Privacy Policy</a></li><li><a href="#">Terms of Service</a></li></ul>
-            </div>
-        </div>
-        <div class="footer-bottom"><span>© 2025 Wayzo. All rights reserved.</span><span>Made for explorers everywhere</span></div>
-    </footer>
 </div>
 
 <script>
-// Images carousel
-let images = [];
-{% for img in destination.images.all %}
-    images.push("{{ img.image.url }}");
-{% endfor %}
+(function(){
 
-let currentIndex = 0;
-let autoInterval;
+/* Hero Slideshow */
+const slides = document.querySelectorAll('.dd-slide');
+const dotsWrap = document.getElementById('ddSlideDots');
+let cur = 0, timer;
+const dots = [];
 
-function updateHeroImage() {
-    if (images.length) {
-        document.querySelector('.hero-bg').style.backgroundImage = `url('${images[currentIndex]}')`;
-        updateDots();
+if (slides.length) {
+    slides.forEach((_, i) => {
+        const b = document.createElement('button');
+        b.className = 'dd-sdot' + (i === 0 ? ' active' : '');
+        b.addEventListener('click', () => { goTo(i); resetTimer(); });
+        dotsWrap.appendChild(b);
+        dots.push(b);
+    });
+    if (slides.length <= 1) dotsWrap.style.display = 'none';
+
+    function goTo(n) {
+        slides[cur].classList.remove('active');
+        if (dots[cur]) dots[cur].classList.remove('active');
+        cur = (n + slides.length) % slides.length;
+        slides[cur].classList.add('active');
+        if (dots[cur]) dots[cur].classList.add('active');
     }
+    function resetTimer() {
+        clearInterval(timer);
+        if (slides.length > 1) timer = setInterval(() => goTo(cur + 1), 5000);
+    }
+    window.ddSlide = function(dir) { goTo(cur + dir); resetTimer(); };
+    resetTimer();
 }
 
-function nextImage() { if (images.length) { currentIndex = (currentIndex + 1) % images.length; updateHeroImage(); resetAuto(); } }
-function prevImage() { if (images.length) { currentIndex = (currentIndex - 1 + images.length) % images.length; updateHeroImage(); resetAuto(); } }
-
-function updateDots() {
-    const container = document.getElementById('carouselDots');
-    if (!container) return;
-    container.innerHTML = '';
-    for (let i = 0; i < images.length; i++) {
-        const dot = document.createElement('div');
-        dot.className = 'dot' + (i === currentIndex ? ' active' : '');
-        dot.onclick = (function(idx) { return function() { currentIndex = idx; updateHeroImage(); resetAuto(); }; })(i);
-        container.appendChild(dot);
-    }
+/* Pill nav */
+function getScrollOffset() {
+    const statsBar = document.getElementById('ddStatsBar');
+    const statsH = statsBar ? statsBar.offsetHeight : 50;
+    return statsH + 16;
 }
 
-function startAuto() { if (images.length > 1) autoInterval = setInterval(nextImage, 5000); }
-function resetAuto() { if (autoInterval) { clearInterval(autoInterval); startAuto(); } }
+document.querySelectorAll('.dd-pill-tab[data-target]').forEach(btn => {
+    btn.addEventListener('click', function () {
+        const targetId = this.dataset.target;
+        const el = document.getElementById(targetId);
+        if (!el) return;
+        const offset = getScrollOffset();
+        const top = el.getBoundingClientRect().top + window.pageYOffset - offset;
+        window.scrollTo({ top, behavior: 'smooth' });
+        document.querySelectorAll('.dd-pill-tab').forEach(t => t.classList.remove('active'));
+        this.classList.add('active');
+    });
+});
 
-// Map with all places
-function initMap() {
-    const centerLat = {{ destination.latitude|default:"20" }};
-    const centerLng = {{ destination.longitude|default:"0" }};
-    
-    const map = L.map('map').setView([centerLat, centerLng], 10);
-    
+const spySections = ['dd-overview','dd-famous','dd-gems','dd-map-section','dd-reviews'];
+const allPills = document.querySelectorAll('.dd-pill-tab[data-target]');
+
+window.addEventListener('scroll', () => {
+    const offset = getScrollOffset() + 40;
+    let current = spySections[0];
+    spySections.forEach(id => {
+        const el = document.getElementById(id);
+        if (el && el.getBoundingClientRect().top < offset) current = id;
+    });
+    allPills.forEach(t => t.classList.toggle('active', t.dataset.target === current));
+}, { passive: true });
+
+/* Sort cards */
+document.querySelectorAll('.dd-sort-btn').forEach(btn => {
+    btn.addEventListener('click', function () {
+        const target = this.dataset.target;
+        const sortBy = this.dataset.sort;
+        const grid = document.getElementById(target === 'famous' ? 'famousGrid' : 'gemsGrid');
+        const bar = document.getElementById(target === 'famous' ? 'famousSortBar' : 'gemsSortBar');
+
+        bar.querySelectorAll('.dd-sort-btn').forEach(b => b.classList.remove('active'));
+        this.classList.add('active');
+
+        const cards = Array.from(grid.querySelectorAll('.dd-place-card'));
+        cards.sort((a, b) => {
+            if (sortBy === 'score') return parseFloat(b.dataset.score) - parseFloat(a.dataset.score);
+            if (sortBy === 'rating') return parseFloat(b.dataset.rating) - parseFloat(a.dataset.rating);
+            if (sortBy === 'reviews') return parseFloat(b.dataset.reviews) - parseFloat(a.dataset.reviews);
+            if (sortBy === 'free') return parseFloat(a.dataset.fee) - parseFloat(b.dataset.fee);
+            return 0;
+        });
+
+        cards.forEach((card, i) => {
+            grid.appendChild(card);
+            const rankEl = card.querySelector('.dd-place-rank');
+            if (rankEl) {
+                rankEl.textContent = '#' + (i + 1);
+                rankEl.className = 'dd-place-rank' + (i===0?' r1':i===1?' r2':i===2?' r3':'');
+            }
+        });
+    });
+});
+
+/* Leaflet Map */
+const mapEl = document.getElementById('dd-map-container');
+if (mapEl && typeof L !== 'undefined') {
+    const lat = {{ destination.latitude|default:"20" }};
+    const lng = {{ destination.longitude|default:"0" }};
+
+    const map = L.map('dd-map-container').setView([lat, lng], 11);
     L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> contributors'
+        attribution: '© OSM contributors'
     }).addTo(map);
-    
-    // Add destination marker
-    if (centerLat !== 20 || centerLng !== 0) {
-        L.marker([centerLat, centerLng]).addTo(map)
-            .bindPopup('<b>{{ destination.name }}</b><br>📍 Destination')
-            .openPopup();
+
+    const tealIcon = L.divIcon({
+        html: `<div style="width:30px;height:30px;background:#0e8a8a;border-radius:50% 50% 50% 0;transform:rotate(-45deg);border:3px solid white;box-shadow:0 2px 8px rgba(0,0,0,.3);"></div>`,
+        iconSize: [30, 30], iconAnchor: [15, 30], className: ''
+    });
+    const gemIcon = L.divIcon({
+        html: `<div style="width:26px;height:26px;background:#4f46e5;border-radius:50% 50% 50% 0;transform:rotate(-45deg);border:3px solid white;box-shadow:0 2px 8px rgba(0,0,0,.3);"></div>`,
+        iconSize: [26, 26], iconAnchor: [13, 26], className: ''
+    });
+    const destIcon = L.divIcon({
+        html: `<div style="width:36px;height:36px;background:#d97706;border-radius:50% 50% 50% 0;transform:rotate(-45deg);border:3px solid white;box-shadow:0 2px 10px rgba(0,0,0,.35);"></div>`,
+        iconSize: [36, 36], iconAnchor: [18, 36], className: ''
+    });
+
+    if (lat !== 20 || lng !== 0) {
+        L.marker([lat, lng], { icon: destIcon })
+         .addTo(map)
+         .bindPopup(`<div style="font-family:sans-serif;min-width:140px;"><div style="font-weight:700;font-size:.9rem;color:#0a6b6b;margin-bottom:3px;">📍 {{ destination.name }}</div><div style="font-size:.75rem;color:#666;">{{ destination.city }}{% if destination.city and destination.country %}, {% endif %}{{ destination.country }}</div></div>`)
+         .openPopup();
     }
-    
-    // Add markers for all places
+
     {% for place in all_places %}
-        {% if place.latitude and place.longitude %}
-            L.marker([{{ place.latitude }}, {{ place.longitude }}]).addTo(map)
-                .bindPopup('<b>{{ place.name }}</b><br>{% if place.is_hidden_gem %}💎 Hidden Gem{% else %}⭐ Famous Place{% endif %}<br><a href="{% url 'destinations:place_detail' place.id %}">View Details →</a>');
-        {% endif %}
+    {% if place.latitude and place.longitude %}
+    (function(){
+        const name = "{{ place.name|escapejs }}";
+        const isGem = {% if place.is_hidden_gem %}true{% else %}false{% endif %};
+        const detailUrl = "{% url 'destinations:place_detail' place.destination.id place.id %}";
+        const rating = "{{ place.average_rating|floatformat:1|default:'—' }}";
+        const fee = {% if place.entry_fee == 0 %}"Free"{% else %}"₹{{ place.entry_fee }}"{% endif %};
+
+        L.marker([{{ place.latitude }}, {{ place.longitude }}], { icon: isGem ? gemIcon : tealIcon })
+         .addTo(map)
+         .bindPopup(`<div style="font-family:sans-serif;min-width:160px;"><div style="font-weight:700;font-size:.88rem;color:#0d1117;margin-bottom:4px;">${isGem ? '💎' : '⭐'} ${name}</div><div style="font-size:.73rem;color:#586069;margin-bottom:6px;">⭐ ${rating} &nbsp;|&nbsp; ${fee}</div><a href="${detailUrl}" style="display:block;text-align:center;padding:5px 10px;background:#0e8a8a;color:white;border-radius:6px;font-size:.75rem;font-weight:600;text-decoration:none;">View Place →</a></div>`);
+    })();
+    {% endif %}
     {% endfor %}
 }
 
-// Sidebar toggle
-const sidebar = document.getElementById('sidebar');
-const hamburger = document.getElementById('hamburgerBtn');
-const overlay = document.getElementById('sidebarOverlay');
-const main = document.querySelector('.main');
-
-function isMobile() { return window.innerWidth <= 860; }
-function toggleSidebar() {
-    if (isMobile()) {
-        sidebar.classList.toggle('open');
-        overlay.classList.toggle('visible');
-    } else {
-        sidebar.classList.toggle('collapsed');
-        main.classList.toggle('sidebar-collapsed');
-    }
+/* Delete Modal Functions */
+function showDeleteModal(reviewId) {
+    const modal = document.getElementById('deleteModal');
+    const form = document.getElementById('deleteReviewForm');
+    form.action = `/destinations/destination/review/${reviewId}/delete/`;
+    modal.classList.add('show');
 }
 
-hamburger.addEventListener('click', toggleSidebar);
-overlay.addEventListener('click', () => {
-    sidebar.classList.remove('open');
-    overlay.classList.remove('visible');
+function closeDeleteModal() {
+    const modal = document.getElementById('deleteModal');
+    modal.classList.remove('show');
+}
+
+window.showDeleteModal = showDeleteModal;
+window.closeDeleteModal = closeDeleteModal;
+
+// Close modal when clicking outside
+document.getElementById('deleteModal').addEventListener('click', function(e) {
+    if (e.target === this) {
+        closeDeleteModal();
+    }
 });
 
-// Avatar dropdown
-const avatarTrigger = document.getElementById('avatarTrigger');
-const dropdown = document.getElementById('dropdownPopup');
-avatarTrigger.addEventListener('click', (e) => { e.stopPropagation(); dropdown.classList.toggle('show'); });
-document.addEventListener('click', () => dropdown.classList.remove('show'));
-
-// Notification
-document.getElementById('notificationBtn').addEventListener('click', () => alert('🔔 New features coming soon!'));
-
-// Initialize
-document.addEventListener('DOMContentLoaded', () => {
-    updateHeroImage();
-    startAuto();
-    initMap();
-});
+})();
 </script>
-</body>
-</html>
+{% endblock %}

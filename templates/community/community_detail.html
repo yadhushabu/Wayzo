@@ -1,204 +1,1053 @@
+{% extends "travellers/base.html" %}
 {% load static %}
-{% if community.cover_image %}
-    <img src="{{ community.cover_image.url}" width="100%" height="200">
-{% endif %}
 
-<h2>{{ community.name }}</h2>
-<p>{{ community.description }}</p>
+{% block title %}{{ community.name }} | Wayzo Community{% endblock %}
+{% block nav_community %}active{% endblock %}
 
-<!-- ACTION BUTTONS -->
-<a href="{% url 'create_post' community.id %}">➕ Create Post</a>
-<a href="{% url 'create_trip' community.id %}">✈️ Create Trip</a>
-<a href="{% url 'create_poll' community.id %}">📊 Create Poll</a>
+{% block extra_styles %}
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,400&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap');
 
+:root {
+    --teal:#0e8a8a; --teal-dark:#0a6e6e; --teal-pale:#eaf4f4;
+    --amber:#f59e0b; --amber-pale:#fef3c7;
+    --green:#10b981; --green-pale:#d1fae5;
+    --red:#ef4444; --red-pale:#fee2e2;
+    --rose:#f43f5e;
+    --ink:#1e242c; --ink2:#334155; --muted:#64748b;
+    --border:#e9edf2; --border2:#f1f3f8;
+    --surface:#fff; --s2:#f8f9fc; --s3:#f1f3f8;
+    --gray-100:#f8f9fc; --gray-150:#f1f3f8; --gray-200:#e9edf2;
+    --gray-300:#dce2ea; --gray-400:#bec7d1; --gray-500:#9aa3af;
+    --gray-700:#4a515c; --gray-800:#2e343d; --gray-900:#191e24;
+    --text-dark:#1e242c; --text-soft:#3c4350; --text-light:#6f7886;
+    --radius:18px; --radius-sm:10px;
+    --sh:0 4px 16px rgba(0,0,0,.06);
+    --sh-lg:0 12px 40px rgba(0,0,0,.1);
+    --white:#fff;
+}
 
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'DM Sans',sans-serif;background:var(--gray-100);color:var(--text-dark);-webkit-font-smoothing:antialiased;}
 
-{% if request.user == community.creator %}
-    <a href="{% url 'edit_community' community.id %}">Edit Community</a>
-{% endif %}
-<hr>
+/* ══════════════════════════════
+   HERO — increased height to 320px
+══════════════════════════════ */
+.community-hero {
+    position:relative; height:320px; overflow:hidden;
+    background:linear-gradient(135deg,#0a3d3d,#0d2b2a);
+    flex-shrink:0;
+}
+.community-hero-bg {
+    position:absolute; inset:0;
+    background-size:cover; background-position:center;
+    z-index:0;
+}
+.community-hero-bg::after {
+    content:''; position:absolute; inset:0;
+    background:linear-gradient(160deg,rgba(6,16,24,.78) 0%,rgba(10,50,50,.62) 45%,rgba(6,16,24,.45) 100%);
+}
+.hero-fade-bottom {
+    position:absolute; bottom:0; left:0; right:0; height:100px;
+    background:linear-gradient(to bottom,transparent,var(--gray-100));
+    z-index:3; pointer-events:none;
+}
+.community-hero-content {
+    position:relative; z-index:4;
+    height:100%; display:flex; flex-direction:column;
+    justify-content:flex-end; padding:2rem 3rem 2.5rem;
+    max-width:1000px;
+}
+.hero-eyebrow {
+    display:inline-flex; align-items:center; gap:.45rem;
+    background:rgba(255,255,255,.1); backdrop-filter:blur(10px);
+    border:1px solid rgba(255,255,255,.2); border-radius:40px;
+    padding:.28rem .85rem; font-size:.65rem; font-weight:500;
+    letter-spacing:.08em; text-transform:uppercase;
+    color:rgba(255,255,255,.85); margin-bottom:.6rem; width:fit-content;
+}
+.hero-eyebrow::before {
+    content:''; width:5px; height:5px; border-radius:50%;
+    background:#5FC5C5; flex-shrink:0; display:inline-block;
+}
+.community-hero-content h1 {
+    font-family:'Playfair Display',serif;
+    font-size:clamp(1.8rem,3.5vw,2.4rem); font-weight:700;
+    color:white; line-height:1.15; margin-bottom:.6rem;
+    text-shadow:0 2px 16px rgba(0,0,0,.35);
+}
+.community-hero-content p {
+    font-size:.88rem; color:rgba(255,255,255,.7);
+    line-height:1.55; max-width:580px; font-weight:300;
+}
+.community-meta-chips {
+    display:flex; flex-wrap:wrap; gap:.5rem; margin-top:.8rem;
+}
+.meta-chip {
+    display:inline-flex; align-items:center; gap:.3rem;
+    background:rgba(255,255,255,.12); backdrop-filter:blur(8px);
+    border:1px solid rgba(255,255,255,.18); border-radius:99px;
+    padding:.3rem .85rem; font-size:.75rem; color:rgba(255,255,255,.82);
+    font-weight:500;
+}
 
-{% for post in posts %}
-    <div style="border:1px solid #ddd; padding:15px; border-radius:10px; margin-bottom:20px;">
+/* ══════════════════════════════
+   PAGE BODY — with max-width and auto margins
+══════════════════════════════ */
+.page-body {
+    position:relative; z-index:10;
+    padding:2rem 3rem 4rem;
+    max-width:1400px; margin:0 auto;
+    width:100%;
+}
 
-    <!-- USER -->
-     
-    <div style="display:flex; align-items:center; gap:10px;">
-        <a href="{% url 'travellers:user_profile' post.user.id %}">
-        {% if post.user.travellerprofile.profile_picture %}
-    <img src="{{ post.user.travellerprofile.profile_picture.url }}"
-         width="40" height="40" style="border-radius:50%;">
-{% else %}
-    <img src="/static/default-user.png"
-         width="40" height="40" style="border-radius:50%;">
-{% endif %}
-        <b>{{ post.user.travellerprofile.first_name }}</b>
-        </a>
-    </div>
+/* ══════════════════════════════
+   ACTION BAR — matches all_packages control-bar
+══════════════════════════════ */
+.action-bar {
+    background:white; border-radius:var(--radius);
+    box-shadow:0 8px 32px rgba(0,0,0,.08),0 1px 4px rgba(0,0,0,.04);
+    border:1px solid var(--gray-200);
+    padding:.85rem 1.5rem;
+    margin-bottom:2rem;
+    display:flex; align-items:center; justify-content:space-between;
+    gap:.75rem; flex-wrap:wrap;
+}
+.action-btns-left { display:flex; gap:.5rem; flex-wrap:wrap; }
+.action-btn {
+    display:inline-flex; align-items:center; gap:.4rem;
+    padding:.5rem 1.2rem; border-radius:40px;
+    font-size:.78rem; font-weight:600; text-decoration:none;
+    transition:all .2s; cursor:pointer; border:none;
+    font-family:'DM Sans',sans-serif; white-space:nowrap;
+}
+.action-btn svg { width:14px; height:14px; stroke:currentColor; fill:none; stroke-width:2; }
+.action-btn-primary { background:var(--teal); color:white; }
+.action-btn-primary:hover { background:var(--teal-dark); color:white; transform:translateY(-1px); }
+.action-btn-secondary { background:var(--s2); color:var(--text-soft); border:1px solid var(--gray-200); }
+.action-btn-secondary:hover { border-color:var(--teal); color:var(--teal); }
+.action-btn-ghost { background:transparent; color:var(--text-light); border:1px solid var(--gray-200); }
+.action-btn-ghost:hover { background:var(--s2); border-color:var(--gray-300); color:var(--ink); }
 
-    <!-- CONTENT -->
-    <h3>{{ post.title }}</h3>
-    <p>{{ post.content }}</p>
+/* Join/leave button styles */
+.join-btn { background:var(--teal); color:white; }
+.join-btn:hover { background:var(--teal-dark); color:white; }
+.leave-btn { background:var(--red-pale); color:var(--red); border:1px solid #fca5a5; }
+.leave-btn:hover { background:var(--red); color:white; }
+.pending-request {
+    background:var(--amber-pale); color:#92400e; border:1px solid #fcd34d;
+    cursor:default;
+}
+.pending-request:hover { transform:none; background:var(--amber-pale); }
 
-    <!-- IMAGES -->
-    {% for img in post.images.all %}
-        <img src="{{ img.image.url }}" width="100%" style="border-radius:10px;">
-    {% endfor %}
+/* ══════════════════════════════
+   MAIN LAYOUT GRID
+══════════════════════════════ */
+.content-grid {
+    display:grid;
+    grid-template-columns:1fr 340px;
+    gap:2rem; align-items:start;
+}
+.main-col { min-width:0; }
+.right-sidebar { position:sticky; top:90px; display:flex; flex-direction:column; gap:1.5rem; }
 
+/* ══════════════════════════════
+   REQUEST SECTION (Admin Only)
+══════════════════════════════ */
+.request-section {
+    background:var(--amber-pale);
+    border:1px solid #fcd34d;
+    border-radius:var(--radius);
+    margin-bottom:1.5rem;
+    overflow:hidden;
+}
+.request-header {
+    background:rgba(245,158,11,.15);
+    padding:.9rem 1.2rem;
+    border-bottom:1px solid rgba(245,158,11,.2);
+    font-weight:700;
+    font-size:.85rem;
+    color:#92400e;
+    display:flex;
+    align-items:center;
+    gap:.5rem;
+}
+.request-list {
+    padding:.5rem 0;
+}
+.request-item {
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:.8rem 1.2rem;
+    border-bottom:1px solid rgba(245,158,11,.2);
+    transition:background .15s;
+}
+.request-item:hover {
+    background:rgba(245,158,11,.08);
+}
+.request-info {
+    display:flex;
+    align-items:center;
+    gap:.75rem;
+    flex:1;
+}
+.request-avatar {
+    width:40px;
+    height:40px;
+    border-radius:50%;
+    background:white;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-weight:700;
+    color:var(--teal);
+    overflow:hidden;
+    box-shadow:0 2px 8px rgba(0,0,0,.05);
+}
+.request-avatar img {
+    width:100%;
+    height:100%;
+    object-fit:cover;
+}
+.request-user {
+    font-weight:600;
+    font-size:.85rem;
+    color:var(--ink);
+    margin-bottom:.1rem;
+}
+.request-date {
+    font-size:.65rem;
+    color:var(--muted);
+}
+.request-actions {
+    display:flex;
+    gap:.5rem;
+}
+.accept-req-btn, .reject-req-btn {
+    padding:.4rem 1rem;
+    border-radius:40px;
+    font-size:.72rem;
+    font-weight:600;
+    border:none;
+    cursor:pointer;
+    transition:all .2s;
+    font-family:'DM Sans',sans-serif;
+}
+.accept-req-btn {
+    background:var(--green);
+    color:white;
+}
+.accept-req-btn:hover {
+    background:#0ea37a;
+    transform:translateY(-1px);
+}
+.reject-req-btn {
+    background:white;
+    color:var(--red);
+    border:1px solid var(--red-pale);
+}
+.reject-req-btn:hover {
+    background:var(--red-pale);
+    transform:translateY(-1px);
+}
+.no-requests {
+    padding:1.5rem;
+    text-align:center;
+    color:var(--muted);
+    font-size:.8rem;
+}
 
-  <!-- ACTION BAR -->
-<div style="display:flex; gap:15px; align-items:center;">
+/* ══════════════════════════════
+   FEED SORT BAR
+══════════════════════════════ */
+.feed-sort-bar {
+    display:flex; align-items:center; justify-content:space-between;
+    background:white; border:1px solid var(--gray-200);
+    border-radius:var(--radius); padding:.7rem 1.2rem;
+    margin-bottom:1.25rem; box-shadow:var(--sh);
+}
+.feed-sort-label { font-size:.78rem; font-weight:600; color:var(--ink); }
+.feed-sort-tabs { display:flex; gap:.3rem; }
+.feed-sort-tab {
+    padding:.3rem .8rem; border-radius:99px; font-size:.72rem; font-weight:600;
+    cursor:pointer; border:none; background:transparent; color:var(--muted);
+    font-family:'DM Sans',sans-serif; transition:all .15s;
+}
+.feed-sort-tab:hover { background:var(--s2); color:var(--ink); }
+.feed-sort-tab.active { background:var(--teal-pale); color:var(--teal-dark); }
 
-    <!-- LIKE -->
-    <form method="POST" action="{% url 'like_post' post.id %}">
-        {% csrf_token %}
-        <button style="border:none; background:none; cursor:pointer;">
-            ❤️ {{ post.likes.count }}
-        </button>
-    </form>
+/* ══════════════════════════════
+   FEED CARDS — Reddit style
+══════════════════════════════ */
+.feed { display:flex; flex-direction:column; gap:1rem; }
 
-    <!-- COMMENT TOGGLE -->
-    <button onclick="toggleComments({{ post.id }})"
-            style="border:none; background:none; cursor:pointer;">
-        💬 {{ post.comments.count }}
-    </button>
+.feed-card {
+    background:white; border:1px solid var(--gray-200);
+    border-radius:var(--radius); overflow:hidden;
+    transition:box-shadow .2s,transform .2s;
+    box-shadow:var(--sh);
+}
+.feed-card:hover {
+    box-shadow:var(--sh-lg); transform:translateY(-2px);
+}
 
-</div>
+/* Left vote/type column */
+.feed-card-inner { display:flex; }
+.feed-vote-col {
+    width:44px; flex-shrink:0; display:flex; flex-direction:column;
+    align-items:center; padding:.85rem .4rem;
+    background:var(--gray-150); border-right:1px solid var(--gray-200);
+    gap:.3rem;
+}
+.feed-type-icon { font-size:1rem; }
+.vote-count {
+    font-size:.7rem; font-weight:800; color:var(--ink);
+    line-height:1;
+}
+.vote-label { font-size:.55rem; color:var(--muted); text-transform:uppercase; letter-spacing:.04em; }
 
-<!-- COMMENTS (HIDDEN) -->
-<div id="comments-{{ post.id }}" style="display:none; margin-top:10px;">
+/* Type badge pill */
+.type-pill {
+    display:inline-flex; align-items:center; gap:.3rem;
+    padding:.18rem .6rem; border-radius:99px; font-size:.63rem;
+    font-weight:700; text-transform:uppercase; letter-spacing:.05em;
+    flex-shrink:0;
+}
+.type-pill.post { background:var(--teal-pale); color:var(--teal-dark); }
+.type-pill.poll { background:var(--amber-pale); color:#92400e; }
 
-    {% for comment in post.comments.all %}
-        <div>
-            <a href="{% url 'travellers:user_profile' post.user.id %}"><b>{{ comment.user.username }}</b></a>: {{ comment.text }}
-        </div>
-    {% endfor %}
+/* Feed card body */
+.feed-card-body { flex:1; padding:.9rem 1.2rem; min-width:0; }
 
-    <form method="POST" action="{% url 'add_comment' post.id %}">
-        {% csrf_token %}
-        <input type="text" name="text" placeholder="Add comment">
-        <button type="submit">Post</button>
-    </form>
-</div>
-{% if request.user == post.user or request.user == community.creator %}
-<form method="POST" action="{% url 'delete_item' 'post' post.id %}">
-    {% csrf_token %}
-    <button type="submit">🗑 Delete</button>
-</form>
-{% endif %}
-{% endfor %}
+.feed-card-meta {
+    display:flex; align-items:center; gap:.5rem;
+    font-size:.7rem; color:var(--text-light);
+    margin-bottom:.45rem; flex-wrap:wrap;
+}
+.feed-card-meta .author-link {
+    font-weight:600; color:var(--teal); text-decoration:none;
+}
+.feed-card-meta .author-link:hover { text-decoration:underline; }
+.feed-card-meta .dot { opacity:.4; }
+.feed-card-meta .post-av {
+    width:20px; height:20px; border-radius:50%;
+    background:var(--teal-pale); display:inline-flex; align-items:center;
+    justify-content:center; font-size:.6rem; font-weight:700;
+    color:var(--teal); overflow:hidden; flex-shrink:0;
+}
+.feed-card-meta .post-av img { width:100%; height:100%; object-fit:cover; }
 
+.feed-card-title {
+    font-family:'Playfair Display',serif;
+    font-size:1rem; font-weight:600; color:var(--gray-900);
+    margin-bottom:.4rem; line-height:1.3;
+}
+.feed-card-content {
+    font-size:.82rem; color:var(--text-soft); line-height:1.6;
+    margin-bottom:.65rem;
+}
 
-<h3>Polls</h3>
+/* Post images grid */
+.post-images-grid {
+    display:grid; gap:.5rem;
+    grid-template-columns:repeat(auto-fill,minmax(180px,1fr));
+    margin-bottom:.65rem;
+}
+.post-img-item { border-radius:10px; overflow:hidden; cursor:pointer; }
+.post-img-item img { width:100%; height:140px; object-fit:cover; transition:transform .3s; display:block; }
+.post-img-item:hover img { transform:scale(1.04); }
 
-{% for poll in polls %}
-<div style="border:1px solid #ccc; padding:10px; border-radius:10px; margin-bottom:15px;">
+/* Poll options */
+.poll-options { display:flex; flex-direction:column; gap:.45rem; margin-bottom:.65rem; }
+.poll-option-btn {
+    width:100%; background:none; border:1.5px solid var(--gray-200);
+    border-radius:10px; padding:.6rem .9rem; text-align:left;
+    cursor:pointer; font-family:'DM Sans',sans-serif; font-size:.82rem;
+    color:var(--ink); transition:all .2s; display:flex; align-items:center; gap:.75rem;
+    position:relative; overflow:hidden;
+}
+.poll-option-btn:hover { border-color:var(--teal); background:var(--teal-pale); }
+.poll-option-btn .poll-bar {
+    position:absolute; left:0; top:0; bottom:0;
+    background:rgba(14,138,138,.07); transition:width .5s ease;
+    pointer-events:none;
+}
+.poll-option-text { flex:1; z-index:1; position:relative; }
+.poll-option-img { width:36px; height:36px; border-radius:7px; object-fit:cover; flex-shrink:0; }
+.poll-vote-count { font-size:.7rem; color:var(--muted); font-weight:600; z-index:1; position:relative; }
 
-    <!-- ✅ USER INFO -->
-     
-    <div style="display:flex; align-items:center; gap:10px;">
-        <a href="{% url 'travellers:user_profile' poll.user.id %}">
-        {% if poll.user.travellerprofile.profile_picture %}
-            <img src="{{ poll.user.travellerprofile.profile_picture.url }}"
-                 width="40" height="40" style="border-radius:50%;">
-        {% else %}
-            <img src="/static/default-user.png"
-                 width="40" height="40" style="border-radius:50%;">
-        {% endif %}
+/* Card footer / actions */
+.feed-card-footer {
+    display:flex; align-items:center; gap:.25rem;
+    padding-top:.7rem; border-top:1px solid var(--gray-150);
+    margin-top:.2rem;
+}
+.feed-action-btn {
+    display:inline-flex; align-items:center; gap:.35rem;
+    padding:.35rem .75rem; border-radius:99px;
+    font-size:.72rem; font-weight:500; cursor:pointer;
+    border:none; background:transparent; color:var(--muted);
+    font-family:'DM Sans',sans-serif; transition:all .15s; text-decoration:none;
+}
+.feed-action-btn svg { width:14px; height:14px; stroke:currentColor; fill:none; }
+.feed-action-btn:hover { background:var(--s2); color:var(--teal); }
+.feed-action-btn.liked { color:var(--rose); }
+.feed-action-btn.liked svg { fill:var(--rose); stroke:var(--rose); }
+.feed-action-btn.active-comment { color:var(--teal); }
+.feed-action-spacer { flex:1; }
+.delete-btn {
+    display:inline-flex; align-items:center;
+    padding:.3rem .6rem; border-radius:99px;
+    background:none; border:none; cursor:pointer;
+    color:var(--muted); font-size:.7rem; transition:all .15s;
+}
+.delete-btn:hover { background:var(--red-pale); color:var(--red); }
 
-        <b>
-            {{ poll.user.travellerprofile.first_name|default:poll.user.username }}
-        </b>
-        </a>
-    </div>
+/* Comments drawer */
+.comments-drawer {
+    max-height:0; overflow:hidden;
+    transition:max-height .35s ease;
+    border-top:0 solid var(--gray-150);
+}
+.comments-drawer.open {
+    max-height:600px;
+    border-top:1px solid var(--gray-150);
+}
+.comments-drawer-inner { padding:.85rem 1.2rem .85rem calc(44px + 1.2rem); }
+.comment-item {
+    display:flex; align-items:flex-start; gap:.55rem;
+    padding:.4rem 0; border-bottom:1px solid var(--gray-150); font-size:.78rem;
+}
+.comment-item:last-child { border-bottom:none; }
+.comment-av {
+    width:26px; height:26px; border-radius:50%;
+    background:var(--teal-pale); display:flex; align-items:center;
+    justify-content:center; font-size:.6rem; font-weight:700;
+    color:var(--teal); overflow:hidden; flex-shrink:0;
+}
+.comment-av img { width:100%; height:100%; object-fit:cover; }
+.comment-body { flex:1; }
+.comment-author { font-weight:700; color:var(--teal); text-decoration:none; font-size:.73rem; }
+.comment-author:hover { text-decoration:underline; }
+.comment-text { color:var(--text-soft); margin-left:.3rem; }
+.comment-form { display:flex; gap:.5rem; margin-top:.75rem; }
+.comment-form input {
+    flex:1; padding:.5rem .85rem; border:1.5px solid var(--gray-200);
+    border-radius:40px; font-size:.78rem; font-family:'DM Sans',sans-serif;
+    transition:border-color .15s;
+}
+.comment-form input:focus { outline:none; border-color:var(--teal); }
+.comment-form button {
+    padding:.48rem 1.1rem; background:var(--teal); color:white;
+    border:none; border-radius:40px; cursor:pointer;
+    font-weight:600; font-size:.74rem; transition:background .15s;
+}
+.comment-form button:hover { background:var(--teal-dark); }
 
-    <small style="color:gray;">
-        {{ poll.created_at|timesince }} ago
-    </small>
+/* ══════════════════════════════
+   SIDEBAR CARDS
+══════════════════════════════ */
+.sidebar-card {
+    background:white; border:1px solid var(--gray-200);
+    border-radius:var(--radius); overflow:hidden;
+    box-shadow:var(--sh);
+}
+.sidebar-card-head {
+    padding:.85rem 1.2rem; border-bottom:1px solid var(--gray-200);
+    background:var(--s2); font-size:.8rem; font-weight:700;
+    color:var(--ink); display:flex; align-items:center;
+    justify-content:space-between;
+}
+.sidebar-card-body { padding:.75rem 1.2rem; }
 
-    <p><b>{{ poll.question }}</b></p>
+/* Stats in sidebar */
+.stat-row {
+    display:flex; align-items:center; justify-content:space-between;
+    padding:.5rem 0; border-bottom:1px solid var(--gray-150);
+    font-size:.8rem;
+}
+.stat-row:last-child { border-bottom:none; }
+.stat-row span { color:var(--muted); display:flex; align-items:center; gap:.4rem; }
+.stat-row strong { font-weight:700; color:var(--ink); }
 
-    {% for option in poll.options.all %}
-        <form method="POST" action="{% url 'vote_poll' option.id %}">
-            {% csrf_token %}
-            <button type="submit" style="width:100%; margin-bottom:5px;">
-                {{ option.option_text }} ({{ option.pollvote_set.count }})
-            </button>
+/* Members list */
+.member-item {
+    display:flex; align-items:center; gap:.7rem;
+    padding:.5rem 0; border-bottom:1px solid var(--gray-150);
+    text-decoration:none; transition:background .15s;
+    border-radius:8px; padding:.5rem .4rem;
+    margin:0 -.4rem;
+}
+.member-item:last-child { border-bottom:none; }
+.member-item:hover { background:var(--teal-pale); }
+.member-av {
+    width:34px; height:34px; border-radius:50%;
+    background:var(--teal-pale); display:flex; align-items:center;
+    justify-content:center; font-size:.72rem; font-weight:700;
+    color:var(--teal); overflow:hidden; flex-shrink:0;
+    border:2px solid white; box-shadow:0 1px 4px rgba(0,0,0,.1);
+}
+.member-av img { width:100%; height:100%; object-fit:cover; }
+.member-name {
+    font-size:.8rem; font-weight:500; color:var(--text-dark);
+    flex:1; min-width:0;
+}
+.member-name small { display:block; font-size:.65rem; color:var(--muted); font-weight:400; }
+.creator-badge {
+    font-size:.62rem; font-weight:700; color:var(--amber);
+    background:var(--amber-pale); padding:.1rem .45rem; border-radius:99px;
+}
 
-            {% if option.image %}
-                <img src="{{ option.image.url }}" width="20%">
+/* Trip cards in sidebar */
+.trip-item {
+    display:flex; align-items:center; gap:.75rem;
+    padding:.65rem 0; border-bottom:1px solid var(--gray-150);
+    text-decoration:none; transition:all .15s;
+    cursor:pointer;
+}
+.trip-item:last-child { border-bottom:none; }
+.trip-item:hover { opacity:.85; }
+.trip-thumb {
+    width:52px; height:52px; border-radius:10px;
+    background:var(--teal-pale); overflow:hidden; flex-shrink:0;
+    display:flex; align-items:center; justify-content:center; font-size:1.3rem;
+}
+.trip-thumb img { width:100%; height:100%; object-fit:cover; }
+.trip-info { flex:1; min-width:0; }
+.trip-title-sm { font-size:.82rem; font-weight:600; color:var(--ink); margin-bottom:.15rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.trip-meta-sm { font-size:.68rem; color:var(--muted); display:flex; gap:.5rem; }
+
+/* Empty feed state */
+.feed-empty {
+    text-align:center; padding:3rem 2rem;
+    background:white; border:1.5px dashed var(--gray-300);
+    border-radius:var(--radius);
+}
+.feed-empty .icon { font-size:2rem; opacity:.3; margin-bottom:.5rem; }
+.feed-empty h4 { font-size:.9rem; color:var(--gray-700); margin-bottom:.3rem; }
+.feed-empty p { font-size:.78rem; color:var(--muted); }
+
+/* Lightbox */
+.lightbox {
+    display:none; position:fixed; inset:0;
+    background:rgba(0,0,0,.92); z-index:9000;
+    align-items:center; justify-content:center;
+}
+.lightbox.open { display:flex; }
+.lightbox img { max-width:90%; max-height:90%; border-radius:10px; }
+.lb-close {
+    position:absolute; top:18px; right:26px;
+    font-size:2.2rem; color:white; cursor:pointer;
+    background:none; border:none; line-height:1; opacity:.8;
+}
+.lb-close:hover { opacity:1; }
+
+/* Responsive */
+@media(max-width:1200px){
+    .page-body{padding:1.5rem 2rem 3rem;}
+}
+@media(max-width:1024px){ 
+    .content-grid{grid-template-columns:1fr;} 
+    .right-sidebar{position:static; margin-top:1.5rem;} 
+}
+@media(max-width:768px){
+    .community-hero{height:260px;}
+    .community-hero-content{padding:1.5rem 1.2rem 2rem;}
+    .page-body{padding:1rem 1rem 2rem;}
+    .action-bar{padding:.75rem 1rem;}
+    .post-images-grid{grid-template-columns:1fr 1fr;}
+    .feed-vote-col{width:38px;}
+}
+
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
+.feed-card{animation:fadeUp .35s ease both;}
+.feed-card:nth-child(2){animation-delay:.05s;}
+.feed-card:nth-child(3){animation-delay:.1s;}
+.feed-card:nth-child(4){animation-delay:.15s;}
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- ══ HERO — increased height 320px ══ -->
+<div class="community-hero">
+    {% if community.cover_image %}
+    <div class="community-hero-bg" style="background-image:url('{{ community.cover_image.url }}');"></div>
+    {% else %}
+    <div class="community-hero-bg" style="background:linear-gradient(135deg,var(--teal),var(--teal-dark));"></div>
+    {% endif %}
+    <div class="hero-fade-bottom"></div>
+    <div class="community-hero-content">
+        <div class="hero-eyebrow">Wayzo Community</div>
+        <h1>{{ community.name }}</h1>
+        {% if community.description %}<p>{{ community.description|truncatechars:180 }}</p>{% endif %}
+        <div class="community-meta-chips">
+            <span class="meta-chip">👥 {{ members_count }} members</span>
+            <span class="meta-chip">📝 {{ posts.count }} posts</span>
+            <span class="meta-chip">📊 {{ polls.count }} polls</span>
+            <span class="meta-chip">✈️ {{ trips.count }} trips</span>
+            {% if community.community_type == 'private' %}
+            <span class="meta-chip">🔒 Private Community</span>
+            {% else %}
+            <span class="meta-chip">🌍 Public Community</span>
             {% endif %}
-        </form>
-    {% endfor %}
-
-    <!-- ✅ DELETE BUTTON -->
-    {% if request.user == poll.user or request.user == community.creator %}
-<form method="POST" action="{% url 'delete_item' 'poll' poll.id %}">
-    {% csrf_token %}
-    <button type="submit">🗑 Delete</button>
-</form>
-{% endif %}
-
+        </div>
+    </div>
 </div>
-{% empty %}
-<p>No polls available</p>
-{% endfor %}
 
-<h3>Trips</h3>
 
-<div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(300px,1fr)); gap:20px; justify-items:center;">
+<!-- ══ PAGE BODY ══ -->
+<div class="page-body">
 
-    {% for trip in trips %}
-    <div style="width:100%; max-width:320px; cursor:pointer;"
-         onclick="window.location.href='{% url 'trip_detail' trip.id %}'">
-
-        <div style="border:1px solid #ddd; border-radius:12px; padding:15px; transition:0.3s; background:#fff;">
-
-            <!-- USER -->
-            <div style="display:flex; align-items:center; gap:10px; margin-bottom:10px;">
-                <a href="{% url 'travellers:user_profile' trip.creator.id %}" style="display:flex; align-items:center; gap:10px; text-decoration:none; color:black;">
-                    {% if trip.creator.travellerprofile.profile_picture %}
-                        <img src="{{ trip.creator.travellerprofile.profile_picture.url }}" width="35" height="35" style="border-radius:50%;">
-                    {% else %}
-                        <img src="{% static 'default-user.png' %}" width="35" height="35" style="border-radius:50%;">
-                    {% endif %}
-                    <b>{{ trip.creator.travellerprofile.first_name }}</b>
+    <!-- Action bar -->
+    <div class="action-bar">
+        <div class="action-btns-left">
+            {% if is_member %}
+            <a href="{% url 'community:create_post' community.id %}" class="action-btn action-btn-primary">
+                <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+                New Post
+            </a>
+            <a href="{% url 'community:create_poll' community.id %}" class="action-btn action-btn-secondary">
+                <svg viewBox="0 0 24 24"><polygon points="22 3 2 3 10 13 10 21 14 18 14 13 22 3"/></svg>
+                Create Poll
+            </a>
+            <a href="{% url 'community:create_trip' community.id %}" class="action-btn action-btn-secondary">
+                <svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                Plan a Trip
+            </a>
+            {% else %}
+            <span class="action-btn" style="background:var(--gray-100);color:var(--muted);cursor:default;">
+                <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+                Join to post
+            </span>
+            {% endif %}
+            
+            {% if request.user == community.creator %}
+            <a href="{% url 'community:edit_community' community.id %}" class="action-btn action-btn-ghost">
+                <svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                Edit Community
+            </a>
+            {% endif %}
+        </div>
+        
+        <!-- Join/Leave button -->
+        <div>
+            {% if request.user.is_authenticated %}
+                {% if is_member %}
+                    <button class="action-btn leave-btn" onclick="if(confirm('Leave {{ community.name }}? You can rejoin anytime.')) window.location.href='{% url 'community:leave_community' community.id %}'">
+                        <svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                        Leave
+                    </button>
+                {% elif has_pending_request %}
+                    <button class="action-btn pending-request" disabled>
+                        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                        Request Pending
+                    </button>
+                {% elif community.community_type == 'private' %}
+                    <a href="{% url 'community:request_join_community' community.id %}" class="action-btn join-btn">
+                        <svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                        Request to Join
+                    </a>
+                {% else %}
+                    <a href="{% url 'community:join_community' community.id %}" class="action-btn join-btn">
+                        <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                        Join Community
+                    </a>
+                {% endif %}
+            {% else %}
+                <a href="{% url 'login' %}" class="action-btn join-btn">
+                    <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                    Login to Join
                 </a>
+            {% endif %}
+        </div>
+    </div>
+
+
+    <!-- ══ TWO-COLUMN GRID ══ -->
+    <div class="content-grid">
+
+        <!-- ── LEFT: UNIFIED FEED ── -->
+        <div class="main-col">
+
+            <!-- Request Section for Creator -->
+            {% if request.user == community.creator and pending_requests %}
+            <div class="request-section">
+                <div class="request-header">
+                    <span>🔔</span> Join Requests ({{ pending_requests|length }})
+                </div>
+                <div class="request-list">
+                    {% for req in pending_requests %}
+                    <div class="request-item">
+                        <div class="request-info">
+                            <div class="request-avatar">
+                                {% if req.user.profile_picture %}
+                                <img src="{{ req.user.profile_picture.url }}" alt="{{ req.user.username }}">
+                                {% else %}
+                                {{ req.user.username|first|upper }}
+                                {% endif %}
+                            </div>
+                            <div>
+                                <div class="request-user">{{ req.user.get_display_name|default:req.user.username }}</div>
+                                <div class="request-date">Requested {{ req.created_at|timesince }} ago</div>
+                            </div>
+                        </div>
+                        <div class="request-actions">
+                            <form method="POST" action="{% url 'community:accept_request' req.id %}" style="display:inline;">
+                                {% csrf_token %}
+                                <button type="submit" class="accept-req-btn">✓ Accept</button>
+                            </form>
+                            <form method="POST" action="{% url 'community:reject_request' req.id %}" style="display:inline;">
+                                {% csrf_token %}
+                                <button type="submit" class="reject-req-btn" onclick="return confirm('Reject this request?')">✗ Reject</button>
+                            </form>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Feed sort bar -->
+            <div class="feed-sort-bar">
+                <span class="feed-sort-label">📰 Community Feed</span>
+                <div class="feed-sort-tabs">
+                    <button class="feed-sort-tab active" onclick="filterFeed('all',this)">All</button>
+                    <button class="feed-sort-tab" onclick="filterFeed('post',this)">Posts</button>
+                    <button class="feed-sort-tab" onclick="filterFeed('poll',this)">Polls</button>
+                </div>
             </div>
 
-            <!-- IMAGE (FIRST IMAGE) -->
-            {% with trip.images.first as first_image %}
-                {% if first_image %}
-                    <img src="{{ first_image.image.url }}" style="width:100%; height:180px; object-fit:cover; border-radius:10px; margin-bottom:10px;">
+            <!-- UNIFIED FEED — posts + polls interleaved -->
+            <div class="feed" id="communityFeed">
+
+                <!-- ── POSTS ── -->
+                {% for post in posts %}
+                <div class="feed-card" data-type="post" id="feed-post-{{ post.id }}">
+                    <div class="feed-card-inner">
+                        <!-- Vote / type col -->
+                        <div class="feed-vote-col">
+                            <span class="feed-type-icon">📝</span>
+                            <span class="vote-count">{{ post.likes.count }}</span>
+                            <span class="vote-label">likes</span>
+                        </div>
+
+                        <!-- Content -->
+                        <div class="feed-card-body">
+                            <div class="feed-card-meta">
+                                <span class="type-pill post">Post</span>
+                                <div class="post-av">
+                                    {% if post.user.profile_picture %}<img src="{{ post.user.profile_picture.url }}" alt="">
+                                    {% else %}{{ post.user.username|first|upper }}{% endif %}
+                                </div>
+                                <a href="{% url 'travellers:public_profile' post.user.id %}" class="author-link">{{ post.user.get_display_name }}</a>
+                                <span class="dot">·</span>
+                                <span>{{ post.created_at|timesince }} ago</span>
+                                {% if request.user == post.user or request.user == community.creator %}
+                                <span class="dot">·</span>
+                                <form method="POST" action="{% url 'community:delete_item' 'post' post.id %}" style="display:inline;">
+                                    {% csrf_token %}
+                                    <button type="submit" class="delete-btn" onclick="return confirm('Delete this post?')">🗑 Delete</button>
+                                </form>
+                                {% endif %}
+                            </div>
+
+                            <h3 class="feed-card-title">{{ post.title }}</h3>
+                            <p class="feed-card-content">{{ post.content }}</p>
+
+                            {% if post.images.all %}
+                            <div class="post-images-grid">
+                                {% for img in post.images.all|slice:":4" %}
+                                <div class="post-img-item" onclick="openLightbox('{{ img.image.url }}')">
+                                    <img src="{{ img.image.url }}" alt="Post image" loading="lazy">
+                                </div>
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+
+                            <!-- Footer actions -->
+                            <div class="feed-card-footer">
+                                {% if is_member %}
+                                <form method="POST" action="{% url 'community:like_post' post.id %}" style="display:inline;">
+                                    {% csrf_token %}
+                                    <button type="submit" class="feed-action-btn {% if request.user in post.likes.all %}liked{% endif %}">
+                                        <svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+                                        {{ post.likes.count }} Likes
+                                    </button>
+                                </form>
+                                <button class="feed-action-btn" id="cmtToggle-{{ post.id }}" onclick="toggleComments('post-{{ post.id }}', this)">
+                                    <svg viewBox="0 0 24 24"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+                                    {{ post.comments.count }} Comments
+                                </button>
+                                {% else %}
+                                <span class="feed-action-btn" style="cursor:default;opacity:0.5;">
+                                    <svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+                                    {{ post.likes.count }} Likes
+                                </span>
+                                <span class="feed-action-btn" style="cursor:default;opacity:0.5;">
+                                    <svg viewBox="0 0 24 24"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+                                    {{ post.comments.count }} Comments
+                                </span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Comments drawer -->
+                    <div class="comments-drawer" id="cmtDrawer-post-{{ post.id }}">
+                        <div class="comments-drawer-inner">
+                            {% for comment in post.comments.all|slice:":8" %}
+                            <div class="comment-item">
+                                <div class="comment-av">
+                                    {% if comment.user.profile_picture %}<img src="{{ comment.user.profile_picture.url }}" alt="">
+                                    {% else %}{{ comment.user.username|first|upper }}{% endif %}
+                                </div>
+                                <div class="comment-body">
+                                    <a href="{% url 'travellers:public_profile' comment.user.id %}" class="comment-author">{{ comment.user.username }}</a>
+                                    <span class="comment-text">{{ comment.text }}</span>
+                                </div>
+                            </div>
+                            {% empty %}
+                            <p style="font-size:.76rem;color:var(--muted);font-style:italic;padding:.25rem 0;">No comments yet — start the conversation!</p>
+                            {% endfor %}
+                            {% if is_member %}
+                            <form method="POST" action="{% url 'community:add_comment' post.id %}" class="comment-form">
+                                {% csrf_token %}
+                                <input type="text" name="text" placeholder="Write a comment…" required>
+                                <button type="submit">Post</button>
+                            </form>
+                            {% else %}
+                            <p style="font-size:.7rem;color:var(--muted);text-align:center;padding:.5rem 0;">Join the community to comment</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+
+                <!-- ── POLLS ── -->
+                {% for poll in polls %}
+                <div class="feed-card" data-type="poll" id="feed-poll-{{ poll.id }}">
+                    <div class="feed-card-inner">
+                        <!-- Vote / type col -->
+                        <div class="feed-vote-col">
+                            <span class="feed-type-icon">📊</span>
+                            <span class="vote-count">{{ poll.options.count }}</span>
+                            <span class="vote-label">options</span>
+                        </div>
+
+                        <!-- Content -->
+                        <div class="feed-card-body">
+                            <div class="feed-card-meta">
+                                <span class="type-pill poll">Poll</span>
+                                <div class="post-av">
+                                    {% if poll.user.profile_picture %}<img src="{{ poll.user.profile_picture.url }}" alt="">
+                                    {% else %}{{ poll.user.username|first|upper }}{% endif %}
+                                </div>
+                                <a href="{% url 'travellers:public_profile' poll.user.id %}" class="author-link">{{ poll.user.get_display_name }}</a>
+                                <span class="dot">·</span>
+                                <span>{{ poll.created_at|timesince }} ago</span>
+                                {% if request.user == poll.user or request.user == community.creator %}
+                                <span class="dot">·</span>
+                                <form method="POST" action="{% url 'community:delete_item' 'poll' poll.id %}" style="display:inline;">
+                                    {% csrf_token %}
+                                    <button type="submit" class="delete-btn" onclick="return confirm('Delete this poll?')">🗑 Delete</button>
+                                </form>
+                                {% endif %}
+                            </div>
+
+                            <h3 class="feed-card-title">{{ poll.question }}</h3>
+
+                            <!-- Poll options -->
+                            <div class="poll-options">
+                                {% for option in poll.options.all %}
+                                <form method="POST" action="{% url 'community:vote_poll' option.id %}">
+                                    {% csrf_token %}
+                                    <button type="submit" class="poll-option-btn" {% if not is_member %}disabled style="opacity:0.6;cursor:not-allowed;"{% endif %}>
+                                        <div class="poll-bar" style="width:{{ option.pollvote_set.count|default:0 }}%;"></div>
+                                        {% if option.image %}
+                                        <img src="{{ option.image.url }}" class="poll-option-img" alt="{{ option.option_text }}">
+                                        {% endif %}
+                                        <span class="poll-option-text">{{ option.option_text }}</span>
+                                        <span class="poll-vote-count">{{ option.pollvote_set.count }} vote{{ option.pollvote_set.count|pluralize }}</span>
+                                    </button>
+                                </form>
+                                {% endfor %}
+                            </div>
+
+                            <div class="feed-card-footer">
+                                <span class="feed-action-btn" style="cursor:default;color:var(--muted);">
+                                    <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                                    Total votes: {{ poll.total_votes }}
+                                </span>
+                                {% if not is_member %}
+                                <span class="feed-action-btn" style="cursor:default;opacity:0.5;">Join to vote</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+
+                <!-- Empty state -->
+                {% if not posts and not polls %}
+                <div class="feed-empty">
+                    <div class="icon">💬</div>
+                    <h4>Nothing here yet</h4>
+                    <p>Be the first to post or create a poll!</p>
+                    {% if is_member %}
+                    <a href="{% url 'community:create_post' community.id %}" class="action-btn action-btn-primary" style="margin-top:1rem;">Create First Post</a>
+                    {% endif %}
+                </div>
                 {% endif %}
-            {% endwith %}
 
-            <h4>{{ trip.title }}</h4>
-            <p>{{ trip.places_covered }}</p>
+            </div><!-- /feed -->
+        </div><!-- /main-col -->
 
-            <p>💰 ₹{{ trip.budget }}</p>
-            <p>📅 {{ trip.start_date }} → {{ trip.end_date }}</p>
-            <p>👥 Max: {{ trip.max_members }}</p>
 
-        </div>
-    </div>
+        <!-- ── RIGHT SIDEBAR ── -->
+        <div class="right-sidebar">
 
-    {% empty %}
-    <p>No trips available</p>
-    {% endfor %}
+            <!-- Community Stats -->
+            <div class="sidebar-card">
+                <div class="sidebar-card-head">📊 Community Stats</div>
+                <div class="sidebar-card-body">
+                    <div class="stat-row"><span>📝 Posts</span><strong>{{ posts.count }}</strong></div>
+                    <div class="stat-row"><span>📊 Polls</span><strong>{{ polls.count }}</strong></div>
+                    <div class="stat-row"><span>✈️ Trips</span><strong>{{ trips.count }}</strong></div>
+                    <div class="stat-row"><span>👥 Members</span><strong>{{ members_count }}</strong></div>
+                    {% if community.created_at %}
+                    <div class="stat-row"><span>🗓️ Created</span><strong>{{ community.created_at|date:"M Y" }}</strong></div>
+                    {% endif %}
+                </div>
+            </div>
 
+            <!-- Trips Section (Full) -->
+            {% if trips %}
+            <div class="sidebar-card">
+                <div class="sidebar-card-head">
+                    ✈️ Upcoming Trips
+                    {% if is_member %}
+                    <a href="{% url 'community:create_trip' community.id %}" style="font-size:.7rem;color:var(--teal);text-decoration:none;font-weight:600;">+ Plan</a>
+                    {% endif %}
+                </div>
+                <div class="sidebar-card-body">
+                    {% for trip in trips|slice:":6" %}
+                    <div class="trip-item" onclick="window.location.href='{% url 'community:trip_detail' trip.id %}'">
+                        <div class="trip-thumb">
+                            {% with trip.images.first as fi %}
+                            {% if fi %}<img src="{{ fi.image.url }}" alt="">{% else %}🏔️{% endif %}
+                            {% endwith %}
+                        </div>
+                        <div class="trip-info">
+                            <div class="trip-title-sm">{{ trip.title }}</div>
+                            <div class="trip-meta-sm">
+                                <span>📍 {{ trip.places_covered|truncatechars:20 }}</span>
+                                <span>₹{{ trip.budget }}</span>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                    {% if trips.count > 6 %}
+                    <div style="text-align:center;margin-top:.5rem;">
+                        <span style="font-size:.73rem;color:var(--muted);">+{{ trips.count|add:"-6" }} more trips</span>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% elif is_member %}
+            <div class="sidebar-card">
+                <div class="sidebar-card-head">✈️ Plan a Trip</div>
+                <div class="sidebar-card-body" style="text-align:center;padding:1.2rem;">
+                    <p style="font-size:.78rem;color:var(--muted);margin-bottom:.75rem;">No trips planned yet</p>
+                    <a href="{% url 'community:create_trip' community.id %}" class="action-btn action-btn-primary" style="padding:.4rem 1rem;font-size:.72rem;">Create First Trip</a>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Members — all clickable -->
+            <div class="sidebar-card">
+                <div class="sidebar-card-head">
+                    👥 Members ({{ members_count }})
+                    {% if members_count > 10 %}
+                    <a href="{% url 'community:community_members' community.id %}" style="font-size:.7rem;color:var(--teal);text-decoration:none;font-weight:600;">See all</a>
+                    {% endif %}
+                </div>
+                <div class="sidebar-card-body">
+                    {% for member in members|slice:":10" %}
+                    <a href="{% url 'travellers:public_profile' member.user.id %}" class="member-item">
+                        <div class="member-av">
+                            {% if member.user.profile_picture %}
+                            <img src="{{ member.user.profile_picture.url }}" alt="{{ member.user.username }}">
+                            {% else %}
+                            {{ member.user.username|first|upper }}
+                            {% endif %}
+                        </div>
+                        <div class="member-name">
+                            {{ member.user.get_display_name|default:member.user.username }}
+                            {% if member.user == community.creator %}
+                            <small>Creator</small>
+                            {% endif %}
+                        </div>
+                        {% if member.user == community.creator %}
+                        <span class="creator-badge">★</span>
+                        {% endif %}
+                    </a>
+                    {% endfor %}
+                    {% if members_count > 10 %}
+                    <div style="text-align:center;margin-top:.6rem;">
+                        <a href="{% url 'community:community_members' community.id %}" style="font-size:.75rem;color:var(--teal);text-decoration:none;font-weight:600;">
+                            +{{ members_count|add:"-10" }} more members →
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+        </div><!-- /right-sidebar -->
+
+    </div><!-- /content-grid -->
+</div><!-- /page-body -->
+
+
+<!-- Lightbox -->
+<div class="lightbox" id="lightbox" onclick="closeLightbox()">
+    <button class="lb-close">&times;</button>
+    <img id="lbImg" src="">
 </div>
-<p>Total polls: {{ polls|length }}</p>
-<p>Total trips: {{ trips|length }}</p>  
-<hr>
-<a href="{% url 'community_home' %}">Back to Community</a>
-<a href="{% url 'travellers:user_profile' request.user.id %}">Back to Dashboard</a>
+
 
 <script>
-function toggleComments(postId) {
-    let el = document.getElementById("comments-" + postId);
-    el.style.display = (el.style.display === "none") ? "block" : "none";
+/* ── Feed filter ── */
+function filterFeed(type, btn){
+    document.querySelectorAll('.feed-sort-tab').forEach(t=>t.classList.remove('active'));
+    btn.classList.add('active');
+    document.querySelectorAll('.feed-card').forEach(card=>{
+        card.style.display = (type==='all' || card.dataset.type===type) ? '' : 'none';
+    });
 }
+
+/* ── Comments drawer toggle ── */
+function toggleComments(id, btn){
+    const drawer = document.getElementById('cmtDrawer-' + id);
+    if(!drawer) return;
+    const isOpen = drawer.classList.contains('open');
+    drawer.classList.toggle('open', !isOpen);
+    if(btn) btn.classList.toggle('active-comment', !isOpen);
+}
+
+/* ── Lightbox ── */
+function openLightbox(src){
+    document.getElementById('lbImg').src = src;
+    document.getElementById('lightbox').classList.add('open');
+}
+function closeLightbox(){
+    document.getElementById('lightbox').classList.remove('open');
+}
+document.querySelector('.lb-close')?.addEventListener('click', e=>{
+    e.stopPropagation(); closeLightbox();
+});
+document.addEventListener('keydown', e=>{ if(e.key==='Escape') closeLightbox(); });
 </script>
 
-
+{% endblock %}

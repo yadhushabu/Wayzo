@@ -1,651 +1,1031 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Add Destination</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background: #f6f7fb;
-            margin: 0;
-            padding: 0;
-        }
+{% extends base_template %}
+{% load static %}
+{% load custom_filters %}
 
-        .container {
-            width: 900px;
-            margin: 40px auto;
-            background: white;
-            padding: 25px;
-            border-radius: 12px;
-            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
-        }
+{% block title %}Add Destination | Wayzo{% endblock %}
+{% block topbar_title %}Add Destination{% endblock %}
+{% block topbar_subtitle %}Share a new place with the Wayzo community{% endblock %}
 
-        h2 {
-            text-align: center;
-            margin-bottom: 20px;
-            color: #333;
-        }
+{% block head_extra %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://maps.googleapis.com/maps/api/js?key={{ google_api_key }}&libraries=places&callback=initAutocomplete" async defer></script>
+{% endblock %}
 
-        label {
-            font-weight: bold;
-            display: block;
-            margin-top: 12px;
-            color: #555;
-        }
+{% block extra_styles %}
+@import url('https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,500;0,600;1,400&display=swap');
 
-        input, textarea, select {
-            width: 100%;
-            padding: 10px;
-            margin-top: 5px;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            font-size: 14px;
-        }
+/* ═══════════════════════════════════
+   ADD DESTINATION — Page Styles
+   Matches Wayzo design token system
+═══════════════════════════════════ */
+:root {
+    --ad-teal:      #0e8a8a;
+    --ad-teal-d:    #0a6b6b;
+    --ad-teal-pale: #e6f4f4;
+    --ad-ink:       #0d1117;
+    --ad-ink2:      #1c2333;
+    --ad-muted:     #586069;
+    --ad-border:    #e1e4e8;
+    --ad-surface:   #ffffff;
+    --ad-s2:        #f6f8fa;
+    --ad-s3:        #f0f3f6;
+    --ad-amber:     #d97706;
+    --ad-amber-p:   #fef3c7;
+    --ad-green:     #16a34a;
+    --ad-green-p:   #dcfce7;
+    --ad-rose:      #f43f5e;
+    --ad-r:         14px;
+    --ad-sh:        0 1px 8px rgba(0,0,0,.06), 0 4px 16px rgba(0,0,0,.04);
+    --ad-sh-lg:     0 8px 32px rgba(0,0,0,.10), 0 2px 8px rgba(0,0,0,.06);
+}
 
-        input:focus, textarea:focus, select:focus {
-            outline: none;
-            border-color: #007bff;
-            box-shadow: 0 0 5px rgba(0,123,255,0.3);
-        }
+.ad-page {
+    font-family: 'Sora', sans-serif;
+    background: var(--ad-s2);
+    min-height: 100vh;
+    padding-bottom: 5rem;
+}
 
-        textarea {
-            height: 100px;
-            resize: vertical;
-        }
+/* ── PAGE HERO STRIP ── */
+.ad-hero-strip {
+    background: linear-gradient(135deg, #0d1117 0%, #0e3a4a 50%, #0a3d2a 100%);
+    padding: 2.5rem 2.5rem 4rem;
+    position: relative; overflow: hidden;
+}
+.ad-hero-strip::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.02'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+}
+.ad-hero-strip-inner {
+    max-width: 1200px; margin: 0 auto;
+    position: relative; z-index: 1;
+    display: flex; align-items: flex-end; justify-content: space-between;
+    flex-wrap: wrap; gap: 1rem;
+}
+.ad-hero-eyebrow {
+    display: inline-flex; align-items: center; gap: .4rem;
+    background: rgba(255,255,255,.1); backdrop-filter: blur(8px);
+    border: 1px solid rgba(255,255,255,.18); border-radius: 99px;
+    padding: .26rem .85rem; font-size: .66rem; font-weight: 600;
+    color: rgba(255,255,255,.85); margin-bottom: .65rem;
+    text-transform: uppercase; letter-spacing: .06em;
+}
+.ad-hero-eyebrow span { width: 6px; height: 6px; border-radius: 50%; background: #5FC5C5; }
+.ad-hero-title {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(1.6rem, 3vw, 2.4rem);
+    font-weight: 600; color: white; line-height: 1.15;
+    text-shadow: 0 2px 16px rgba(0,0,0,.3);
+}
+.ad-hero-title em { font-style: italic; color: #8DE8E8; }
+.ad-hero-sub { font-size: .82rem; color: rgba(255,255,255,.6); margin-top: .35rem; }
+.ad-hero-steps {
+    display: flex; gap: .5rem; flex-wrap: wrap;
+}
+.ad-hero-step {
+    display: flex; align-items: center; gap: .45rem;
+    background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.12);
+    border-radius: 99px; padding: .32rem .85rem;
+    font-size: .7rem; color: rgba(255,255,255,.65); font-weight: 500;
+}
+.ad-hero-step.active { background: rgba(14,138,138,.3); border-color: rgba(95,197,197,.4); color: #5FC5C5; }
+.ad-hero-step-num {
+    width: 18px; height: 18px; border-radius: 50%;
+    background: rgba(255,255,255,.12); display: flex; align-items: center; justify-content: center;
+    font-size: .62rem; font-weight: 800; color: rgba(255,255,255,.7);
+    flex-shrink: 0;
+}
+.ad-hero-step.active .ad-hero-step-num { background: #0e8a8a; color: white; }
 
-        .btn {
-            margin-top: 20px;
-            width: 100%;
-            padding: 12px;
-            background: #007bff;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 16px;
-            font-weight: bold;
-        }
+/* ── BODY ── */
+.ad-body {
+    max-width: 1200px; margin: -2rem auto 0;
+    padding: 0 2.5rem 3rem;
+    position: relative; z-index: 5;
+}
 
-        .btn:hover {
-            background: #0056b3;
-        }
+/* ── LAYOUT GRID ── */
+.ad-grid {
+    display: grid;
+    grid-template-columns: 1fr 320px;
+    gap: 1.5rem;
+    align-items: start;
+}
+.ad-main { min-width: 0; }
+.ad-side { position: sticky; top: 90px; display: flex; flex-direction: column; gap: 1.2rem; }
 
-        .btn:disabled {
-            background: #ccc;
-            cursor: not-allowed;
-        }
+/* ── SECTION CARDS ── */
+.ad-section {
+    background: var(--ad-surface); border: 1px solid var(--ad-border);
+    border-radius: var(--ad-r); margin-bottom: 1.4rem;
+    overflow: hidden; box-shadow: var(--ad-sh);
+    animation: adFadeUp .4s ease both;
+}
+.ad-section:nth-child(2) { animation-delay: .05s; }
+.ad-section:nth-child(3) { animation-delay: .1s; }
+.ad-section:nth-child(4) { animation-delay: .15s; }
+.ad-section:nth-child(5) { animation-delay: .2s; }
 
-        .note {
-            font-size: 12px;
-            color: gray;
-            margin-top: 5px;
-        }
+@keyframes adFadeUp {
+    from { opacity: 0; transform: translateY(10px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
 
-        .coordinates-row {
-            display: flex;
-            gap: 15px;
-        }
+.ad-section-head {
+    display: flex; align-items: center; gap: .6rem;
+    padding: 1rem 1.4rem; border-bottom: 1px solid var(--ad-border);
+    background: var(--ad-s2);
+}
+.ad-section-head-icon {
+    width: 32px; height: 32px; border-radius: 8px;
+    background: var(--ad-teal-pale); display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+}
+.ad-section-head-icon svg { width: 16px; height: 16px; stroke: var(--ad-teal); fill: none; stroke-width: 2; }
+.ad-section-head h3 { font-size: .9rem; font-weight: 700; color: var(--ad-ink); margin: 0; }
+.ad-section-head p { font-size: .72rem; color: var(--ad-muted); margin: .1rem 0 0; }
+.ad-section-body { padding: 1.4rem; }
 
-        .coordinates-row > div {
-            flex: 1;
-        }
+/* ── FORM FIELDS ── */
+.ad-field { margin-bottom: 1.1rem; }
+.ad-field:last-child { margin-bottom: 0; }
 
-        .fetch-status {
-            margin-top: 5px;
-            font-size: 12px;
-        }
+.ad-label {
+    display: flex; align-items: center; gap: .4rem;
+    font-size: .76rem; font-weight: 700; color: var(--ad-ink2);
+    margin-bottom: .45rem;
+}
+.ad-label-req { color: var(--ad-rose); font-size: .75rem; }
+.ad-label-hint { font-size: .68rem; color: var(--ad-muted); font-weight: 400; margin-left: auto; }
 
-        .fetch-status.loading {
-            color: #007bff;
-        }
+.ad-input,
+.ad-textarea,
+.ad-select {
+    width: 100%; padding: .68rem .9rem;
+    border: 1.5px solid var(--ad-border); border-radius: 10px;
+    font-size: .84rem; font-family: 'Sora', sans-serif;
+    color: var(--ad-ink); background: var(--ad-surface);
+    transition: border-color .2s, box-shadow .2s;
+    appearance: none;
+}
+.ad-input:focus, .ad-textarea:focus, .ad-select:focus {
+    outline: none;
+    border-color: var(--ad-teal);
+    box-shadow: 0 0 0 3px rgba(14,138,138,.12);
+}
+.ad-input::placeholder, .ad-textarea::placeholder { color: var(--ad-border); color: #b8bec6; }
+.ad-input.has-value { border-color: rgba(14,138,138,.4); background: #fafffe; }
+.ad-textarea { min-height: 110px; resize: vertical; line-height: 1.65; }
+.ad-select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23586069' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right .9rem center; padding-right: 2.2rem; }
 
-        .fetch-status.success {
-            color: #28a745;
-        }
+/* Input with icon */
+.ad-input-wrap { position: relative; }
+.ad-input-wrap .ad-input { padding-left: 2.5rem; }
+.ad-input-wrap .ad-input-icon {
+    position: absolute; left: .75rem; top: 50%; transform: translateY(-50%);
+    width: 16px; height: 16px; stroke: var(--ad-muted); fill: none; stroke-width: 2;
+    pointer-events: none;
+}
+.ad-input-status {
+    position: absolute; right: .75rem; top: 50%; transform: translateY(-50%);
+    font-size: .7rem; font-weight: 600; pointer-events: none;
+}
+.ad-input-status.loading { color: var(--ad-teal); }
+.ad-input-status.success { color: var(--ad-green); }
+.ad-input-status.error   { color: var(--ad-rose); }
 
-        .fetch-status.error {
-            color: #dc3545;
-        }
+/* Field grid */
+.ad-field-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+.ad-field-grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; }
 
-        #map {
-            height: 400px;
-            margin-top: 15px;
-            border-radius: 8px;
-            border: 1px solid #ddd;
-        }
+/* Coord row */
+.ad-coord-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+.ad-coord-input {
+    display: flex; align-items: center; gap: .5rem;
+    background: var(--ad-s2); border: 1.5px solid var(--ad-border);
+    border-radius: 10px; padding: .55rem .8rem;
+    transition: border-color .2s;
+}
+.ad-coord-input:focus-within { border-color: var(--ad-teal); box-shadow: 0 0 0 3px rgba(14,138,138,.12); }
+.ad-coord-icon { font-size: .85rem; flex-shrink: 0; }
+.ad-coord-input input {
+    border: none; background: transparent; width: 100%;
+    font-size: .83rem; font-family: 'Sora', sans-serif;
+    color: var(--ad-ink); outline: none;
+}
+.ad-coord-input input::placeholder { color: #b8bec6; }
+.ad-coord-lbl { font-size: .62rem; color: var(--ad-muted); font-weight: 600; text-transform: uppercase; letter-spacing: .04em; white-space: nowrap; }
 
-        .map-container {
-            margin-top: 15px;
-        }
+/* ── MONTH RANGE ── */
+.ad-month-wrap {
+    display: grid; grid-template-columns: 1fr auto 1fr; gap: .75rem; align-items: center;
+}
+.ad-month-sep {
+    text-align: center; font-size: .72rem; color: var(--ad-muted); font-weight: 600;
+    padding-top: 1.5rem;
+}
 
-        .map-container label {
-            margin-top: 0;
-        }
+/* ── CHECKBOX TOGGLE ── */
+.ad-toggle-row {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: .85rem 1rem; background: var(--ad-s2);
+    border: 1.5px solid var(--ad-border); border-radius: 10px;
+}
+.ad-toggle-info h4 { font-size: .82rem; font-weight: 700; color: var(--ad-ink); margin-bottom: .1rem; }
+.ad-toggle-info p { font-size: .7rem; color: var(--ad-muted); }
+.ad-toggle {
+    position: relative; width: 42px; height: 24px; flex-shrink: 0;
+}
+.ad-toggle input { opacity: 0; width: 0; height: 0; position: absolute; }
+.ad-toggle-slider {
+    position: absolute; inset: 0; background: var(--ad-border);
+    border-radius: 99px; cursor: pointer; transition: background .2s;
+}
+.ad-toggle-slider::before {
+    content: ''; position: absolute;
+    width: 18px; height: 18px; border-radius: 50%;
+    background: white; top: 3px; left: 3px;
+    transition: transform .2s; box-shadow: 0 1px 4px rgba(0,0,0,.2);
+}
+.ad-toggle input:checked + .ad-toggle-slider { background: var(--ad-teal); }
+.ad-toggle input:checked + .ad-toggle-slider::before { transform: translateX(18px); }
 
-        .image-preview {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            margin-top: 10px;
-        }
+/* ── IMAGE UPLOAD ZONE ── */
+.ad-upload-zone {
+    border: 2px dashed var(--ad-border); border-radius: 12px;
+    padding: 2rem; text-align: center;
+    transition: all .2s; cursor: pointer; background: var(--ad-s2);
+    position: relative;
+}
+.ad-upload-zone:hover, .ad-upload-zone.drag-over {
+    border-color: var(--ad-teal);
+    background: var(--ad-teal-pale);
+}
+.ad-upload-zone input[type="file"] {
+    position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%;
+}
+.ad-upload-icon { font-size: 2rem; margin-bottom: .5rem; }
+.ad-upload-title { font-size: .88rem; font-weight: 700; color: var(--ad-ink); margin-bottom: .2rem; }
+.ad-upload-sub { font-size: .72rem; color: var(--ad-muted); }
+.ad-upload-sub strong { color: var(--ad-teal); }
 
-        .image-preview-item {
-            position: relative;
-            width: 100px;
-            height: 100px;
-            border-radius: 8px;
-            overflow: hidden;
-            border: 1px solid #ddd;
-        }
+.ad-preview-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(88px, 1fr));
+    gap: .65rem; margin-top: 1rem;
+}
+.ad-preview-item {
+    aspect-ratio: 1; border-radius: 10px; overflow: hidden;
+    border: 1.5px solid var(--ad-border); position: relative;
+    background: var(--ad-s3);
+}
+.ad-preview-item img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.ad-preview-remove {
+    position: absolute; top: 4px; right: 4px;
+    width: 20px; height: 20px; border-radius: 50%;
+    background: rgba(0,0,0,.65); color: white; border: none;
+    font-size: .75rem; cursor: pointer; display: flex; align-items: center; justify-content: center;
+    transition: background .15s;
+}
+.ad-preview-remove:hover { background: var(--ad-rose); }
+.ad-preview-count {
+    position: absolute; bottom: 4px; left: 4px;
+    background: rgba(0,0,0,.55); color: white;
+    font-size: .58rem; font-weight: 700; padding: .1rem .4rem; border-radius: 99px;
+}
 
-        .image-preview-item img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
+/* ── MAP ── */
+.ad-map-wrapper {
+    border-radius: 12px; overflow: hidden;
+    border: 1.5px solid var(--ad-border); box-shadow: var(--ad-sh);
+}
+#ad-map { height: 360px; }
+.ad-map-hint {
+    display: flex; align-items: center; gap: .5rem;
+    padding: .65rem 1rem; background: var(--ad-s2);
+    border-top: 1px solid var(--ad-border);
+    font-size: .72rem; color: var(--ad-muted);
+}
+.ad-map-hint svg { width: 13px; height: 13px; stroke: var(--ad-teal); fill: none; flex-shrink: 0; }
 
-        .remove-image {
-            position: absolute;
-            top: 5px;
-            right: 5px;
-            background: rgba(0,0,0,0.7);
-            color: white;
-            border: none;
-            border-radius: 50%;
-            width: 20px;
-            height: 20px;
-            cursor: pointer;
-            font-size: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
+/* ── ERROR MESSAGES ── */
+.ad-errors {
+    background: #fff5f5; border: 1px solid rgba(244,63,94,.25);
+    border-radius: 8px; padding: .65rem .9rem; margin-top: .45rem;
+}
+.ad-errors li { font-size: .73rem; color: var(--ad-rose); font-weight: 500; list-style: none; }
 
-        .form-group {
-            margin-bottom: 15px;
-        }
+/* ── ALERT BANNER ── */
+.ad-alert {
+    border-radius: 10px; padding: .85rem 1.1rem; margin-bottom: 1.4rem;
+    display: flex; align-items: flex-start; gap: .7rem; font-size: .8rem;
+}
+.ad-alert.error   { background: #fff5f5; border: 1px solid rgba(244,63,94,.2); color: #9b1c2e; }
+.ad-alert.success { background: var(--ad-green-p); border: 1px solid rgba(22,163,74,.2); color: #14532d; }
+.ad-alert svg { width: 16px; height: 16px; flex-shrink: 0; margin-top: 1px; fill: none; stroke-width: 2; stroke: currentColor; }
 
-        .errorlist {
-            color: #dc3545;
-            font-size: 12px;
-            margin-top: 5px;
-            list-style: none;
-            padding: 0;
-        }
+/* ── SIDEBAR CARDS ── */
+.ad-side-card {
+    background: var(--ad-surface); border: 1px solid var(--ad-border);
+    border-radius: var(--ad-r); overflow: hidden; box-shadow: var(--ad-sh);
+}
+.ad-side-card-head {
+    display: flex; align-items: center; gap: .5rem;
+    padding: .85rem 1.1rem; border-bottom: 1px solid var(--ad-border);
+    background: var(--ad-s2); font-size: .8rem; font-weight: 700; color: var(--ad-ink);
+}
+.ad-side-card-head svg { width: 14px; height: 14px; stroke: var(--ad-teal); fill: none; stroke-width: 2; }
+.ad-side-card-body { padding: 1rem 1.1rem; }
 
-        .form-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 15px;
-        }
+.ad-tips-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: .65rem; }
+.ad-tips-list li {
+    display: flex; align-items: flex-start; gap: .55rem;
+    font-size: .76rem; color: var(--ad-muted); line-height: 1.55;
+}
+.ad-tips-list li .tip-dot {
+    width: 18px; height: 18px; border-radius: 50%; flex-shrink: 0; margin-top: 1px;
+    background: var(--ad-teal-pale); display: flex; align-items: center; justify-content: center;
+    font-size: .62rem;
+}
 
-        .full-width {
-            grid-column: span 2;
-        }
+/* Score preview */
+.ad-score-preview {
+    background: linear-gradient(135deg, var(--ad-teal) 0%, var(--ad-teal-d) 100%);
+    border-radius: var(--ad-r); padding: 1.2rem; color: white; text-align: center;
+    box-shadow: 0 6px 20px rgba(14,138,138,.3);
+}
+.ad-score-preview-val { font-size: 2.2rem; font-weight: 800; line-height: 1; color: #8DE8E8; }
+.ad-score-preview-lbl { font-size: .65rem; opacity: .75; text-transform: uppercase; letter-spacing: .07em; margin-top: .2rem; }
+.ad-score-preview-note { font-size: .72rem; opacity: .75; margin-top: .65rem; line-height: 1.5; }
 
-        .month-range {
-            display: flex;
-            gap: 15px;
-            align-items: center;
-        }
-        
-        .month-range input {
-            width: 100px;
-        }
+/* ── SUBMIT BUTTON ── */
+.ad-submit-bar {
+    background: var(--ad-surface); border: 1px solid var(--ad-border);
+    border-radius: var(--ad-r); padding: 1.2rem 1.4rem;
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 1rem; flex-wrap: wrap; box-shadow: var(--ad-sh);
+}
+.ad-submit-info { font-size: .78rem; color: var(--ad-muted); }
+.ad-submit-info strong { color: var(--ad-ink); display: block; font-size: .86rem; margin-bottom: .15rem; }
+.ad-submit-btn {
+    display: inline-flex; align-items: center; gap: .55rem;
+    padding: .82rem 2.2rem; background: var(--ad-teal); color: white;
+    border: none; border-radius: 99px; font-size: .9rem; font-weight: 700;
+    cursor: pointer; font-family: 'Sora', sans-serif; transition: all .25s;
+    box-shadow: 0 4px 16px rgba(14,138,138,.35);
+}
+.ad-submit-btn:hover { background: var(--ad-teal-d); transform: translateY(-2px); box-shadow: 0 8px 24px rgba(14,138,138,.4); }
+.ad-submit-btn:disabled { background: var(--ad-border); color: var(--ad-muted); box-shadow: none; transform: none; cursor: not-allowed; }
+.ad-submit-btn svg { width: 18px; height: 18px; stroke: white; fill: none; stroke-width: 2; }
+.ad-cancel-btn {
+    display: inline-flex; align-items: center; gap: .45rem;
+    padding: .78rem 1.4rem; background: transparent; color: var(--ad-muted);
+    border: 1.5px solid var(--ad-border); border-radius: 99px;
+    font-size: .84rem; font-weight: 600; cursor: pointer;
+    font-family: 'Sora', sans-serif; transition: all .2s; text-decoration: none;
+}
+.ad-cancel-btn:hover { border-color: var(--ad-rose); color: var(--ad-rose); }
 
-        @media (max-width: 768px) {
-            .container {
-                width: 95%;
-                margin: 20px auto;
-                padding: 15px;
-            }
-            
-            .coordinates-row {
-                flex-direction: column;
-                gap: 0;
-            }
-            
-            .form-grid {
-                grid-template-columns: 1fr;
-            }
-            
-            .full-width {
-                grid-column: span 1;
-            }
-            
-            #map {
-                height: 300px;
-            }
-        }
-    </style>
-    
-    <!-- Leaflet CSS -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    
-    <!-- Google Places API -->
-    <script src="https://maps.googleapis.com/maps/api/js?key={{ google_api_key }}&libraries=places"></script>
-</head>
+/* ── RESPONSIVE ── */
+@media (max-width: 1024px) {
+    .ad-grid { grid-template-columns: 1fr; }
+    .ad-side { position: static; }
+    .ad-body { padding: 0 1.5rem 3rem; }
+}
+@media (max-width: 640px) {
+    .ad-hero-strip { padding: 2rem 1.2rem 3.5rem; }
+    .ad-body { padding: 0 1rem 2rem; }
+    .ad-field-grid, .ad-field-grid-3, .ad-coord-row { grid-template-columns: 1fr; }
+    .ad-month-wrap { grid-template-columns: 1fr; }
+    .ad-month-sep { display: none; }
+    .ad-hero-steps { display: none; }
+}
+{% endblock %}
 
-<body>
+{% block content %}
+<div class="ad-page">
 
-<div class="container">
-    <h2>🏝️ Add New Destination</h2>
-
-    <form method="POST" enctype="multipart/form-data" id="destinationForm">
-        {% csrf_token %}
-
-        <!-- Destination Name -->
-        <div class="form-group">
-            <label for="id_name">Destination Name *</label>
-            <input type="text" name="name" id="id_name" required placeholder="e.g., Goa, India" autocomplete="off" value="{{ form.name.value|default:'' }}">
-            {% if form.name.errors %}
-                <div class="errorlist">{{ form.name.errors }}</div>
-            {% endif %}
-            <div id="fetch-status" class="fetch-status"></div>
-        </div>
-
-        <!-- Coordinates Row -->
-        <div class="coordinates-row">
-            <div class="form-group">
-                <label for="id_latitude">Latitude</label>
-                <input type="number" step="any" name="latitude" id="id_latitude" placeholder="Auto-fetched" value="{{ form.latitude.value|default:'' }}">
-                {% if form.latitude.errors %}
-                    <div class="errorlist">{{ form.latitude.errors }}</div>
-                {% endif %}
+    <!-- ══ PAGE HERO STRIP ══ -->
+    <div class="ad-hero-strip">
+        <div class="ad-hero-strip-inner">
+            <div>
+                <div class="ad-hero-eyebrow"><span></span> Destinations</div>
+                <h1 class="ad-hero-title">Add a New<br><em>Destination</em></h1>
+                <p class="ad-hero-sub">Share a place you love with the Wayzo community</p>
             </div>
-            <div class="form-group">
-                <label for="id_longitude">Longitude</label>
-                <input type="number" step="any" name="longitude" id="id_longitude" placeholder="Auto-fetched" value="{{ form.longitude.value|default:'' }}">
-                {% if form.longitude.errors %}
-                    <div class="errorlist">{{ form.longitude.errors }}</div>
-                {% endif %}
-            </div>
-        </div>
-
-        <!-- Description -->
-        <div class="form-group">
-            <label for="id_description">Description</label>
-            <textarea name="description" id="id_description" placeholder="Describe the destination, its history, culture, attractions...">{{ form.description.value|default:'' }}</textarea>
-            {% if form.description.errors %}
-                <div class="errorlist">{{ form.description.errors }}</div>
-            {% endif %}
-        </div>
-
-        <!-- Form Fields Grid -->
-        <div class="form-grid">
-            <div class="form-group">
-                <label for="id_country">Country</label>
-                <input type="text" name="country" id="id_country" placeholder="e.g., India" value="{{ form.country.value|default:'' }}">
-                {% if form.country.errors %}
-                    <div class="errorlist">{{ form.country.errors }}</div>
-                {% endif %}
-            </div>
-
-            <div class="form-group">
-                <label for="id_state">State/Province</label>
-                <input type="text" name="state" id="id_state" placeholder="e.g., Goa (optional)" value="{{ form.state.value|default:'' }}">
-                {% if form.state.errors %}
-                    <div class="errorlist">{{ form.state.errors }}</div>
-                {% endif %}
-            </div>
-
-            <div class="form-group">
-                <label for="id_city">City</label>
-                <input type="text" name="city" id="id_city" placeholder="e.g., Panaji" value="{{ form.city.value|default:'' }}">
-                {% if form.city.errors %}
-                    <div class="errorlist">{{ form.city.errors }}</div>
-                {% endif %}
-            </div>
-
-            <div class="form-group">
-                <label for="id_best_season">Best Season</label>
-                <select name="best_season" id="id_best_season">
-                    <option value="">Select Season</option>
-                    <option value="spring" {% if form.best_season.value == 'spring' %}selected{% endif %}>Spring</option>
-                    <option value="summer" {% if form.best_season.value == 'summer' %}selected{% endif %}>Summer</option>
-                    <option value="autumn" {% if form.best_season.value == 'autumn' %}selected{% endif %}>Autumn</option>
-                    <option value="winter" {% if form.best_season.value == 'winter' %}selected{% endif %}>Winter</option>
-                    <option value="year_round" {% if form.best_season.value == 'year_round' %}selected{% endif %}>Year Round</option>
-                </select>
-                {% if form.best_season.errors %}
-                    <div class="errorlist">{{ form.best_season.errors }}</div>
-                {% endif %}
-            </div>
-
-            <!-- Best Month Range -->
-            <div class="form-group full-width">
-                <label>📅 Best Months to Visit</label>
-                <div class="month-range">
-                    <div>
-                        <label style="font-weight: normal; font-size: 12px;">From Month</label>
-                        <input type="number" name="best_month_start" id="id_best_month_start" 
-                               min="1" max="12" placeholder="1-12" 
-                               value="{{ form.best_month_start.value|default:'1' }}">
-                    </div>
-                    <div>
-                        <label style="font-weight: normal; font-size: 12px;">To Month</label>
-                        <input type="number" name="best_month_end" id="id_best_month_end" 
-                               min="1" max="12" placeholder="1-12" 
-                               value="{{ form.best_month_end.value|default:'12' }}">
-                    </div>
+            <div class="ad-hero-steps">
+                <div class="ad-hero-step active">
+                    <div class="ad-hero-step-num">1</div> Basic Info
                 </div>
-                <div class="note">
-                    💡 <strong>Examples:</strong> 
-                    November to February = Start: 11, End: 2 (wraps around year)
-                    Summer months = Start: 6, End: 8
+                <div class="ad-hero-step">
+                    <div class="ad-hero-step-num">2</div> Location
                 </div>
-                {% if form.best_month_start.errors %}
-                    <div class="errorlist">{{ form.best_month_start.errors }}</div>
-                {% endif %}
-                {% if form.best_month_end.errors %}
-                    <div class="errorlist">{{ form.best_month_end.errors }}</div>
-                {% endif %}
-            </div>
-
-            <div class="form-group">
-                <label for="id_preferred_weather">Preferred Weather</label>
-                <select name="preferred_weather" id="id_preferred_weather">
-                    <option value="">Select Weather</option>
-                    <option value="sunny" {% if form.preferred_weather.value == 'sunny' %}selected{% endif %}>☀️ Sunny</option>
-                    <option value="cold" {% if form.preferred_weather.value == 'cold' %}selected{% endif %}>❄️ Cold</option>
-                    <option value="rainy" {% if form.preferred_weather.value == 'rainy' %}selected{% endif %}>🌧️ Rainy</option>
-                    <option value="snow" {% if form.preferred_weather.value == 'snow' %}selected{% endif %}>⛄ Snow</option>
-                    <option value="cloudy" {% if form.preferred_weather.value == 'cloudy' %}selected{% endif %}>☁️ Cloudy</option>
-                </select>
-                {% if form.preferred_weather.errors %}
-                    <div class="errorlist">{{ form.preferred_weather.errors }}</div>
-                {% endif %}
-            </div>
-
-            <div class="form-group">
-                <label for="id_is_featured">✨ Featured Destination</label>
-                <input type="checkbox" name="is_featured" id="id_is_featured" {% if form.is_featured.value %}checked{% endif %}>
-                <div class="note">Featured destinations appear on the homepage</div>
-                {% if form.is_featured.errors %}
-                    <div class="errorlist">{{ form.is_featured.errors }}</div>
-                {% endif %}
+                <div class="ad-hero-step">
+                    <div class="ad-hero-step-num">3</div> Season &amp; Weather
+                </div>
+                <div class="ad-hero-step">
+                    <div class="ad-hero-step-num">4</div> Images &amp; Save
+                </div>
             </div>
         </div>
+    </div>
 
-        <!-- Multiple Images Upload -->
-        <div class="form-group">
-            <label>🖼️ Destination Images</label>
-            <input type="file" name="images" id="imageInput" multiple accept="image/*">
-            <div class="note">You can upload multiple images (Max: 10MB each, recommended size: 1200x800px)</div>
-            <div id="imagePreview" class="image-preview"></div>
+    <!-- ══ BODY ══ -->
+    <div class="ad-body">
+
+        <!-- Django messages -->
+        {% if messages %}
+        {% for message in messages %}
+        <div class="ad-alert {% if message.tags == 'error' %}error{% else %}success{% endif %}">
+            {% if message.tags == 'error' %}
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            {% else %}
+            <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+            {% endif %}
+            <span>{{ message }}</span>
         </div>
+        {% endfor %}
+        {% endif %}
 
-        <!-- Leaflet Map -->
-        <div class="map-container">
-            <label>📍 Location Map</label>
-            <div id="map"></div>
-            <div class="note">Click on the map to set exact location coordinates</div>
-        </div>
+        <form method="POST" enctype="multipart/form-data" id="adForm">
+            {% csrf_token %}
 
-        <button type="submit" class="btn" id="submitBtn">
-            🏝️ Save Destination
-        </button>
-    </form>
-</div>
+            <div class="ad-grid">
 
+                <!-- ══ MAIN COLUMN ══ -->
+                <div class="ad-main">
+
+                    <!-- ── SECTION 1: Basic Info ── -->
+                    <div class="ad-section" id="step-1">
+                        <div class="ad-section-head">
+                            <div class="ad-section-head-icon">
+                                <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                            </div>
+                            <div>
+                                <h3>Basic Information</h3>
+                                <p>Name, description and destination details</p>
+                            </div>
+                            <span style="margin-left:auto;font-size:.68rem;background:var(--ad-teal-pale);color:var(--ad-teal);padding:.22rem .7rem;border-radius:99px;font-weight:700;">Step 1</span>
+                        </div>
+                        <div class="ad-section-body">
+
+                            <!-- Destination Name -->
+                            <div class="ad-field">
+                                <label class="ad-label" for="id_name">
+                                    Destination Name <span class="ad-label-req">*</span>
+                                    <span class="ad-label-hint">Start typing — coordinates auto-fill</span>
+                                </label>
+                                <div class="ad-input-wrap">
+                                    <svg class="ad-input-icon" viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                                    <input class="ad-input" type="text" name="name" id="id_name"
+                                           placeholder="e.g., Goa, Munnar, Paris..." autocomplete="off"
+                                           value="{{ form.name.value|default:'' }}" required>
+                                    <span class="ad-input-status" id="adFetchStatus"></span>
+                                </div>
+                                {% if form.name.errors %}
+                                <ul class="ad-errors">{% for e in form.name.errors %}<li>{{ e }}</li>{% endfor %}</ul>
+                                {% endif %}
+                            </div>
+
+                            <!-- Description -->
+                            <div class="ad-field">
+                                <label class="ad-label" for="id_description">Description</label>
+                                <textarea class="ad-textarea" name="description" id="id_description"
+                                          placeholder="Describe the destination — its culture, history, what makes it special...">{{ form.description.value|default:'' }}</textarea>
+                                {% if form.description.errors %}
+                                <ul class="ad-errors">{% for e in form.description.errors %}<li>{{ e }}</li>{% endfor %}</ul>
+                                {% endif %}
+                            </div>
+
+                            <!-- Country / State / City -->
+                            <div class="ad-field-grid-3">
+                                <div class="ad-field">
+                                    <label class="ad-label" for="id_country">Country</label>
+                                    <input class="ad-input" type="text" name="country" id="id_country"
+                                           placeholder="e.g., India" value="{{ form.country.value|default:'' }}">
+                                    {% if form.country.errors %}
+                                    <ul class="ad-errors">{% for e in form.country.errors %}<li>{{ e }}</li>{% endfor %}</ul>
+                                    {% endif %}
+                                </div>
+                                <div class="ad-field">
+                                    <label class="ad-label" for="id_state">State / Province</label>
+                                    <input class="ad-input" type="text" name="state" id="id_state"
+                                           placeholder="e.g., Kerala" value="{{ form.state.value|default:'' }}">
+                                </div>
+                                <div class="ad-field">
+                                    <label class="ad-label" for="id_city">City</label>
+                                    <input class="ad-input" type="text" name="city" id="id_city"
+                                           placeholder="e.g., Kochi" value="{{ form.city.value|default:'' }}">
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+
+                    <!-- ── SECTION 2: Location / Map ── -->
+                    <div class="ad-section" id="step-2">
+                        <div class="ad-section-head">
+                            <div class="ad-section-head-icon">
+                                <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                            </div>
+                            <div>
+                                <h3>Coordinates &amp; Map</h3>
+                                <p>Auto-fetched when you type the name, or click the map</p>
+                            </div>
+                            <span style="margin-left:auto;font-size:.68rem;background:var(--ad-teal-pale);color:var(--ad-teal);padding:.22rem .7rem;border-radius:99px;font-weight:700;">Step 2</span>
+                        </div>
+                        <div class="ad-section-body">
+
+                            <div class="ad-coord-row" style="margin-bottom:1.1rem;">
+                                <div class="ad-field">
+                                    <label class="ad-label">Latitude</label>
+                                    <div class="ad-coord-input">
+                                        <span class="ad-coord-icon">🌐</span>
+                                        <div>
+                                            <div class="ad-coord-lbl">LAT</div>
+                                            <input type="number" step="any" name="latitude" id="id_latitude"
+                                                   placeholder="Auto-fetched"
+                                                   value="{{ form.latitude.value|default:'' }}">
+                                        </div>
+                                    </div>
+                                    {% if form.latitude.errors %}
+                                    <ul class="ad-errors">{% for e in form.latitude.errors %}<li>{{ e }}</li>{% endfor %}</ul>
+                                    {% endif %}
+                                </div>
+                                <div class="ad-field">
+                                    <label class="ad-label">Longitude</label>
+                                    <div class="ad-coord-input">
+                                        <span class="ad-coord-icon">🌐</span>
+                                        <div>
+                                            <div class="ad-coord-lbl">LNG</div>
+                                            <input type="number" step="any" name="longitude" id="id_longitude"
+                                                   placeholder="Auto-fetched"
+                                                   value="{{ form.longitude.value|default:'' }}">
+                                        </div>
+                                    </div>
+                                    {% if form.longitude.errors %}
+                                    <ul class="ad-errors">{% for e in form.longitude.errors %}<li>{{ e }}</li>{% endfor %}</ul>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <div class="ad-map-wrapper">
+                                <div id="ad-map"></div>
+                                <div class="ad-map-hint">
+                                    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                                    Click anywhere on the map to set precise coordinates
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+
+                    <!-- ── SECTION 3: Season & Weather ── -->
+                    <div class="ad-section" id="step-3">
+                        <div class="ad-section-head">
+                            <div class="ad-section-head-icon">
+                                <svg viewBox="0 0 24 24"><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/><circle cx="12" cy="12" r="5"/></svg>
+                            </div>
+                            <div>
+                                <h3>Season &amp; Weather</h3>
+                                <p>Helps our AI rank this destination at the right time</p>
+                            </div>
+                            <span style="margin-left:auto;font-size:.68rem;background:var(--ad-teal-pale);color:var(--ad-teal);padding:.22rem .7rem;border-radius:99px;font-weight:700;">Step 3</span>
+                        </div>
+                        <div class="ad-section-body">
+
+                            <div class="ad-field-grid" style="margin-bottom:1.1rem;">
+                                <div class="ad-field">
+                                    <label class="ad-label" for="id_best_season">Best Season</label>
+                                    <select class="ad-select" name="best_season" id="id_best_season">
+                                        <option value="">Select season...</option>
+                                        <option value="spring"     {% if form.best_season.value == 'spring'     %}selected{% endif %}>🌸 Spring</option>
+                                        <option value="summer"     {% if form.best_season.value == 'summer'     %}selected{% endif %}>☀️ Summer</option>
+                                        <option value="autumn"     {% if form.best_season.value == 'autumn'     %}selected{% endif %}>🍂 Autumn</option>
+                                        <option value="winter"     {% if form.best_season.value == 'winter'     %}selected{% endif %}>❄️ Winter</option>
+                                        <option value="year_round" {% if form.best_season.value == 'year_round' %}selected{% endif %}>🌍 Year Round</option>
+                                    </select>
+                                    {% if form.best_season.errors %}
+                                    <ul class="ad-errors">{% for e in form.best_season.errors %}<li>{{ e }}</li>{% endfor %}</ul>
+                                    {% endif %}
+                                </div>
+                                <div class="ad-field">
+                                    <label class="ad-label" for="id_preferred_weather">Preferred Weather</label>
+                                    <select class="ad-select" name="preferred_weather" id="id_preferred_weather">
+                                        <option value="">Select weather...</option>
+                                        <option value="sunny"  {% if form.preferred_weather.value == 'sunny'  %}selected{% endif %}>☀️ Sunny</option>
+                                        <option value="cold"   {% if form.preferred_weather.value == 'cold'   %}selected{% endif %}>❄️ Cold</option>
+                                        <option value="rainy"  {% if form.preferred_weather.value == 'rainy'  %}selected{% endif %}>🌧️ Rainy</option>
+                                        <option value="snow"   {% if form.preferred_weather.value == 'snow'   %}selected{% endif %}>⛄ Snow</option>
+                                        <option value="cloudy" {% if form.preferred_weather.value == 'cloudy' %}selected{% endif %}>☁️ Cloudy</option>
+                                    </select>
+                                    {% if form.preferred_weather.errors %}
+                                    <ul class="ad-errors">{% for e in form.preferred_weather.errors %}<li>{{ e }}</li>{% endfor %}</ul>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <!-- Best Month Range -->
+                            <div class="ad-field">
+                                <label class="ad-label">
+                                    📅 Best Months to Visit
+                                    <span class="ad-label-hint">Month numbers 1–12</span>
+                                </label>
+                                <div class="ad-month-wrap">
+                                    <div>
+                                        <div style="font-size:.68rem;color:var(--ad-muted);font-weight:600;margin-bottom:.3rem;text-transform:uppercase;letter-spacing:.04em;">From Month</div>
+                                        <input class="ad-input" type="number" name="best_month_start" id="id_best_month_start"
+                                               min="1" max="12" placeholder="1"
+                                               value="{{ form.best_month_start.value|default:'1' }}">
+                                    </div>
+                                    <div class="ad-month-sep">→</div>
+                                    <div>
+                                        <div style="font-size:.68rem;color:var(--ad-muted);font-weight:600;margin-bottom:.3rem;text-transform:uppercase;letter-spacing:.04em;">To Month</div>
+                                        <input class="ad-input" type="number" name="best_month_end" id="id_best_month_end"
+                                               min="1" max="12" placeholder="12"
+                                               value="{{ form.best_month_end.value|default:'12' }}">
+                                    </div>
+                                </div>
+                                <div style="margin-top:.6rem;padding:.65rem .9rem;background:var(--ad-amber-p);border:1px solid rgba(217,119,6,.2);border-radius:8px;font-size:.72rem;color:#78350f;line-height:1.6;">
+                                    💡 <strong>Examples:</strong> Nov–Feb (winter season) → Start: 11, End: 2 &nbsp;·&nbsp; June–Aug (summer) → Start: 6, End: 8
+                                </div>
+                                {% if form.best_month_start.errors %}
+                                <ul class="ad-errors">{% for e in form.best_month_start.errors %}<li>{{ e }}</li>{% endfor %}</ul>
+                                {% endif %}
+                            </div>
+
+                            <!-- Featured toggle (staff only visually indicated) -->
+                            {% if request.user.is_staff %}
+                            <div class="ad-field">
+                                <div class="ad-toggle-row">
+                                    <div class="ad-toggle-info">
+                                        <h4>✦ Featured Destination</h4>
+                                        <p>Appears in featured sections and homepage highlights</p>
+                                    </div>
+                                    <label class="ad-toggle">
+                                        <input type="checkbox" name="is_featured" id="id_is_featured"
+                                               {% if form.is_featured.value %}checked{% endif %}>
+                                        <span class="ad-toggle-slider"></span>
+                                    </label>
+                                </div>
+                            </div>
+                            {% endif %}
+
+                        </div>
+                    </div>
+
+                    <!-- ── SECTION 4: Images ── -->
+                    <div class="ad-section" id="step-4">
+                        <div class="ad-section-head">
+                            <div class="ad-section-head-icon">
+                                <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                            </div>
+                            <div>
+                                <h3>Destination Images</h3>
+                                <p>Upload multiple photos — they appear in the hero slideshow</p>
+                            </div>
+                            <span style="margin-left:auto;font-size:.68rem;background:var(--ad-teal-pale);color:var(--ad-teal);padding:.22rem .7rem;border-radius:99px;font-weight:700;">Step 4</span>
+                        </div>
+                        <div class="ad-section-body">
+
+                            <div class="ad-upload-zone" id="adUploadZone">
+                                <input type="file" name="images" id="adImageInput" multiple accept="image/*">
+                                <div class="ad-upload-icon">🖼️</div>
+                                <div class="ad-upload-title">Drop images here or click to browse</div>
+                                <div class="ad-upload-sub">JPG, PNG, WEBP · Max <strong>10MB</strong> each · Multiple allowed</div>
+                            </div>
+
+                            <div class="ad-preview-grid" id="adPreviewGrid"></div>
+
+                        </div>
+                    </div>
+
+                    <!-- ── SUBMIT BAR ── -->
+                    <div class="ad-submit-bar">
+                        <div class="ad-submit-info">
+                            <strong>Ready to submit?</strong>
+                            {% if request.user.is_staff %}
+                            Your destination will be auto-approved and go live immediately.
+                            {% else %}
+                            Your destination will be reviewed before going live.
+                            {% endif %}
+                        </div>
+                        <div style="display:flex;align-items:center;gap:.75rem;">
+                            <a href="{% url 'destinations:destination_list' %}" class="ad-cancel-btn">Cancel</a>
+                            <button type="submit" class="ad-submit-btn" id="adSubmitBtn">
+                                <svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                                Save Destination
+                            </button>
+                        </div>
+                    </div>
+
+                </div><!-- /main -->
+
+                <!-- ══ SIDEBAR ══ -->
+                <div class="ad-side">
+
+                    <!-- Score preview -->
+                    <div class="ad-score-preview">
+                        <div style="font-size:.68rem;opacity:.65;text-transform:uppercase;letter-spacing:.08em;margin-bottom:.5rem;">Initial AI Score</div>
+                        <div class="ad-score-preview-val" id="adScorePreview">20</div>
+                        <div class="ad-score-preview-lbl">/ 100 points</div>
+                        <div class="ad-score-preview-note">Score improves with reviews, bookings, and seasonal accuracy over time.</div>
+                    </div>
+
+                    <!-- Tips card -->
+                    <div class="ad-side-card">
+                        <div class="ad-side-card-head">
+                            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                            Pro Tips
+                        </div>
+                        <div class="ad-side-card-body">
+                            <ul class="ad-tips-list">
+                                <li><div class="tip-dot">📍</div> Start typing the destination name — coordinates, country, and city will auto-fill instantly.</li>
+                                <li><div class="tip-dot">🗺️</div> Click anywhere on the map to fine-tune the exact pinpoint location.</li>
+                                <li><div class="tip-dot">📅</div> Set accurate best months to boost your destination's seasonal score.</li>
+                                <li><div class="tip-dot">🖼️</div> Upload 3–5 high-quality photos for a beautiful hero slideshow.</li>
+                                <li><div class="tip-dot">✍️</div> Write a rich description — it helps travellers and improves visibility.</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- Score breakdown info -->
+                    <div class="ad-side-card">
+                        <div class="ad-side-card-head">
+                            <svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+                            How Scores Work
+                        </div>
+                        <div class="ad-side-card-body">
+                            <div style="display:flex;flex-direction:column;gap:.55rem;">
+                                {% for label, max_score, color in score_breakdown %}
+                                
+                                <div style="display:flex;justify-content:space-between;font-size:.75rem;padding:.4rem 0;border-bottom:1px solid var(--ad-s3);">
+                                    <span style="color:var(--ad-muted);">Manual Priority</span><strong style="color:var(--ad-ink);">/20</strong>
+                                </div>
+                                {% endfor %}
+                                <div style="display:flex;justify-content:space-between;font-size:.75rem;padding:.4rem 0;border-bottom:1px solid var(--ad-s3);">
+                                    <span style="color:var(--ad-muted);">Weather Match</span><strong style="color:var(--ad-ink);">/20</strong>
+                                </div>
+                                <div style="display:flex;justify-content:space-between;font-size:.75rem;padding:.4rem 0;border-bottom:1px solid var(--ad-s3);">
+                                    <span style="color:var(--ad-muted);">Seasonal Score</span><strong style="color:var(--ad-ink);">/20</strong>
+                                </div>
+                                <div style="display:flex;justify-content:space-between;font-size:.75rem;padding:.4rem 0;border-bottom:1px solid var(--ad-s3);">
+                                    <span style="color:var(--ad-muted);">Popularity</span><strong style="color:var(--ad-ink);">/30</strong>
+                                </div>
+                                <div style="display:flex;justify-content:space-between;font-size:.75rem;padding:.4rem 0;">
+                                    <span style="color:var(--ad-muted);">Usage</span><strong style="color:var(--ad-ink);">/10</strong>
+                                </div>
+                                <div style="display:flex;justify-content:space-between;font-size:.8rem;padding:.55rem .65rem;background:var(--ad-teal-pale);border-radius:8px;margin-top:.25rem;">
+                                    <span style="color:var(--ad-teal);font-weight:700;">Total</span><strong style="color:var(--ad-teal);">/100</strong>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Quick nav -->
+                    <div class="ad-side-card">
+                        <div class="ad-side-card-head">
+                            <svg viewBox="0 0 24 24"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+                            Jump to Section
+                        </div>
+                        <div class="ad-side-card-body" style="padding:.6rem;">
+                            <a href="#step-1" style="display:flex;align-items:center;gap:.55rem;padding:.55rem .7rem;border-radius:8px;text-decoration:none;font-size:.78rem;color:var(--ad-muted);transition:all .15s;" onmouseover="this.style.background='var(--ad-s2)';this.style.color='var(--ad-teal)'" onmouseout="this.style.background='';this.style.color='var(--ad-muted)'">📄 Basic Info</a>
+                            <a href="#step-2" style="display:flex;align-items:center;gap:.55rem;padding:.55rem .7rem;border-radius:8px;text-decoration:none;font-size:.78rem;color:var(--ad-muted);transition:all .15s;" onmouseover="this.style.background='var(--ad-s2)';this.style.color='var(--ad-teal)'" onmouseout="this.style.background='';this.style.color='var(--ad-muted)'">🗺️ Map &amp; Location</a>
+                            <a href="#step-3" style="display:flex;align-items:center;gap:.55rem;padding:.55rem .7rem;border-radius:8px;text-decoration:none;font-size:.78rem;color:var(--ad-muted);transition:all .15s;" onmouseover="this.style.background='var(--ad-s2)';this.style.color='var(--ad-teal)'" onmouseout="this.style.background='';this.style.color='var(--ad-muted)'">🌤️ Season &amp; Weather</a>
+                            <a href="#step-4" style="display:flex;align-items:center;gap:.55rem;padding:.55rem .7rem;border-radius:8px;text-decoration:none;font-size:.78rem;color:var(--ad-muted);transition:all .15s;" onmouseover="this.style.background='var(--ad-s2)';this.style.color='var(--ad-teal)'" onmouseout="this.style.background='';this.style.color='var(--ad-muted)'">🖼️ Images</a>
+                        </div>
+                    </div>
+
+                </div><!-- /sidebar -->
+
+            </div><!-- /grid -->
+        </form>
+    </div><!-- /body -->
+</div><!-- /ad-page -->
+{% endblock %}
+
+{% block extra_scripts %}
 <script>
-// Initialize variables
-let map;
-let marker;
-let debounceTimer;
-const API_KEYS = {
-    google: '{{ google_api_key }}',
-    openweather: '{{ openweather_api_key }}'
-};
+(function(){
 
-// Get form elements
-const destinationNameInput = document.getElementById('id_name');
-const latitudeInput = document.getElementById('id_latitude');
-const longitudeInput = document.getElementById('id_longitude');
-const fetchStatus = document.getElementById('fetch-status');
-const imageInput = document.getElementById('imageInput');
-const imagePreview = document.getElementById('imagePreview');
+    /* ── Leaflet Map ── */
+    let map, marker;
 
-// Initialize Google Places Autocomplete
-function initAutocomplete() {
-    if (destinationNameInput && window.google) {
-        const autocomplete = new google.maps.places.Autocomplete(destinationNameInput, {
-            types: ['geocode', 'establishment'],
-            componentRestrictions: { country: [] }
+    function initMap() {
+        map = L.map('ad-map').setView([20, 78], 4);
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+            attribution: '© OSM contributors © CARTO', maxZoom: 19
+        }).addTo(map);
+
+        // Custom teal pin icon
+        const pinIcon = L.divIcon({
+            html: `<div style="width:30px;height:30px;background:#0e8a8a;border-radius:50% 50% 50% 0;transform:rotate(-45deg);border:3px solid white;box-shadow:0 2px 10px rgba(14,138,138,.5);"></div>`,
+            iconSize: [30, 30], iconAnchor: [15, 30], className: ''
         });
-        
-        autocomplete.addListener('place_changed', function() {
-            const place = autocomplete.getPlace();
-            if (place.geometry) {
-                updateCoordinates(place.geometry.location.lat(), place.geometry.location.lng());
-                updateMapLocation(place.geometry.location.lat(), place.geometry.location.lng());
-                showFetchStatus('success', '✓ Location found successfully!');
-                
-                // Auto-fill country, state, and city
-                let country = '', state = '', city = '';
-                for (const component of place.address_components) {
-                    if (component.types.includes('country')) {
-                        country = component.long_name;
-                        document.getElementById('id_country').value = country;
-                    }
-                    if (component.types.includes('administrative_area_level_1')) {
-                        state = component.long_name;
-                        document.getElementById('id_state').value = state;
-                    }
-                    if (component.types.includes('locality') || component.types.includes('administrative_area_level_2')) {
-                        city = component.long_name;
-                        document.getElementById('id_city').value = city;
-                    }
-                }
-            }
+
+        map.on('click', function(e) {
+            const lat = e.latlng.lat.toFixed(6);
+            const lng = e.latlng.lng.toFixed(6);
+            document.getElementById('id_latitude').value = lat;
+            document.getElementById('id_longitude').value = lng;
+            if (marker) marker.setLatLng([lat, lng]);
+            else marker = L.marker([lat, lng], {icon: pinIcon}).addTo(map);
+            showStatus('success', `✓ ${lat}, ${lng}`);
         });
-    }
-}
 
-// Fetch coordinates using Google Geocoding API
-async function fetchCoordinatesFromGoogle(placeName) {
-    if (!API_KEYS.google) {
-        showFetchStatus('error', 'Google API key not configured');
-        return null;
+        // If edit mode / existing coords
+        const existLat = parseFloat(document.getElementById('id_latitude').value);
+        const existLng = parseFloat(document.getElementById('id_longitude').value);
+        if (existLat && existLng) {
+            map.setView([existLat, existLng], 10);
+            marker = L.marker([existLat, existLng], {icon: pinIcon}).addTo(map);
+        }
     }
-    
-    const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(placeName)}&key=${API_KEYS.google}`;
-    
-    try {
-        const response = await fetch(url);
-        const data = await response.json();
-        
-        if (data.status === 'OK' && data.results.length > 0) {
-            const location = data.results[0].geometry.location;
-            
-            // Auto-fill country, state, and city
-            let country = '', state = '', city = '';
-            for (const component of data.results[0].address_components) {
-                if (component.types.includes('country')) {
-                    country = component.long_name;
-                    document.getElementById('id_country').value = country;
-                }
-                if (component.types.includes('administrative_area_level_1')) {
-                    state = component.long_name;
-                    document.getElementById('id_state').value = state;
-                }
-                if (component.types.includes('locality')) {
-                    city = component.long_name;
-                    document.getElementById('id_city').value = city;
-                }
+
+    /* ── Google Places Autocomplete ── */
+    window.initAutocomplete = function() {
+        const input = document.getElementById('id_name');
+        if (!input || !window.google) return;
+
+        const ac = new google.maps.places.Autocomplete(input, {
+            types: ['geocode', 'establishment']
+        });
+
+        ac.addListener('place_changed', function() {
+            const place = ac.getPlace();
+            if (!place.geometry) return;
+
+            const lat = place.geometry.location.lat();
+            const lng = place.geometry.location.lng();
+            setCoords(lat, lng);
+            showStatus('success', `✓ Found! (${lat.toFixed(4)}, ${lng.toFixed(4)})`);
+
+            // Fill address components
+            for (const comp of (place.address_components || [])) {
+                if (comp.types.includes('country'))
+                    document.getElementById('id_country').value = comp.long_name;
+                if (comp.types.includes('administrative_area_level_1'))
+                    document.getElementById('id_state').value = comp.long_name;
+                if (comp.types.includes('locality') || comp.types.includes('administrative_area_level_2'))
+                    document.getElementById('id_city').value = comp.long_name;
             }
-            
-            return { lat: location.lat, lng: location.lng };
-        } else {
-            console.error('Geocoding error:', data.status);
-            return null;
-        }
-    } catch (error) {
-        console.error('Error fetching coordinates:', error);
-        return null;
-    }
-}
+            updateScorePreview();
+        });
+    };
 
-// Update coordinate inputs
-function updateCoordinates(lat, lng) {
-    latitudeInput.value = lat;
-    longitudeInput.value = lng;
-}
-
-// Show fetch status message
-function showFetchStatus(type, message) {
-    fetchStatus.textContent = message;
-    fetchStatus.className = `fetch-status ${type}`;
-    
-    setTimeout(() => {
-        if (fetchStatus.className === `fetch-status ${type}`) {
-            fetchStatus.textContent = '';
-            fetchStatus.className = 'fetch-status';
-        }
-    }, 3000);
-}
-
-// Update map location
-function updateMapLocation(lat, lng) {
-    if (map) {
-        const newLocation = [lat, lng];
-        map.setView(newLocation, 13);
-        if (marker) {
-            marker.setLatLng(newLocation);
-        } else {
-            marker = L.marker(newLocation).addTo(map);
-        }
-    }
-}
-
-// Initialize Leaflet map
-function initMap() {
-    const defaultLocation = [20, 0];
-    
-    map = L.map('map').setView(defaultLocation, 2);
-    
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> contributors &copy; <a href="https://carto.com/">CARTO</a>',
-        subdomains: 'abcd',
-        maxZoom: 19
-    }).addTo(map);
-    
-    map.on('click', function(e) {
-        const lat = e.latlng.lat;
-        const lng = e.latlng.lng;
-        updateCoordinates(lat, lng);
-        
-        if (marker) {
-            marker.setLatLng([lat, lng]);
-        } else {
-            marker = L.marker([lat, lng]).addTo(map);
-        }
-        showFetchStatus('success', '✓ Location set from map click');
+    /* ── Name input debounced geocoding fallback ── */
+    let debounce;
+    document.getElementById('id_name').addEventListener('input', function() {
+        clearTimeout(debounce);
+        const val = this.value.trim();
+        if (!val) return;
+        showStatus('loading', '🔍');
+        debounce = setTimeout(async () => {
+            const apiKey = '{{ google_api_key }}';
+            if (!apiKey) { showStatus('error', '⚠'); return; }
+            try {
+                const r = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(val)}&key=${apiKey}`);
+                const d = await r.json();
+                if (d.status === 'OK') {
+                    const loc = d.results[0].geometry.location;
+                    setCoords(loc.lat, loc.lng);
+                    for (const comp of (d.results[0].address_components || [])) {
+                        if (comp.types.includes('country') && !document.getElementById('id_country').value)
+                            document.getElementById('id_country').value = comp.long_name;
+                        if (comp.types.includes('administrative_area_level_1') && !document.getElementById('id_state').value)
+                            document.getElementById('id_state').value = comp.long_name;
+                        if (comp.types.includes('locality') && !document.getElementById('id_city').value)
+                            document.getElementById('id_city').value = comp.long_name;
+                    }
+                    showStatus('success', `✓`);
+                } else {
+                    showStatus('error', '⚠');
+                }
+            } catch(e) { showStatus('error', '⚠'); }
+        }, 900);
     });
-}
 
-// Handle destination name input with debouncing
-destinationNameInput.addEventListener('input', function(e) {
-    const destinationName = e.target.value.trim();
-    
-    if (debounceTimer) {
-        clearTimeout(debounceTimer);
-    }
-    
-    if (destinationName === '') {
-        latitudeInput.value = '';
-        longitudeInput.value = '';
-        fetchStatus.textContent = '';
-        return;
-    }
-    
-    showFetchStatus('loading', '🔍 Fetching location coordinates...');
-    
-    debounceTimer = setTimeout(async () => {
-        let coordinates = await fetchCoordinatesFromGoogle(destinationName);
-        
-        if (coordinates) {
-            updateCoordinates(coordinates.lat, coordinates.lng);
-            updateMapLocation(coordinates.lat, coordinates.lng);
-            showFetchStatus('success', `✓ Location found! (${coordinates.lat.toFixed(4)}, ${coordinates.lng.toFixed(4)})`);
-        } else {
-            showFetchStatus('error', '⚠ Could not fetch coordinates. Please enter manually or click on map.');
-            latitudeInput.value = '';
-            longitudeInput.value = '';
+    function setCoords(lat, lng) {
+        document.getElementById('id_latitude').value = parseFloat(lat).toFixed(6);
+        document.getElementById('id_longitude').value = parseFloat(lng).toFixed(6);
+        if (map) {
+            const pinIcon = L.divIcon({
+                html: `<div style="width:30px;height:30px;background:#0e8a8a;border-radius:50% 50% 50% 0;transform:rotate(-45deg);border:3px solid white;box-shadow:0 2px 10px rgba(14,138,138,.5);"></div>`,
+                iconSize: [30, 30], iconAnchor: [15, 30], className: ''
+            });
+            map.setView([lat, lng], 11);
+            if (marker) marker.setLatLng([lat, lng]);
+            else marker = L.marker([lat, lng], {icon: pinIcon}).addTo(map);
         }
-    }, 800);
-});
+    }
 
-// Image preview functionality
-imageInput.addEventListener('change', function(e) {
-    imagePreview.innerHTML = '';
-    const files = Array.from(e.target.files);
-    
-    files.forEach((file, index) => {
-        if (file.type.startsWith('image/')) {
-            const reader = new FileReader();
-            const previewItem = document.createElement('div');
-            previewItem.className = 'image-preview-item';
-            
-            reader.onload = function(e) {
-                const img = document.createElement('img');
-                img.src = e.target.result;
-                const removeBtn = document.createElement('button');
-                removeBtn.innerHTML = '×';
-                removeBtn.className = 'remove-image';
-                removeBtn.onclick = function() {
-                    previewItem.remove();
-                    const dt = new DataTransfer();
-                    const remainingFiles = files.filter((_, i) => i !== index);
-                    remainingFiles.forEach(f => dt.items.add(f));
-                    imageInput.files = dt.files;
-                };
-                
-                previewItem.appendChild(img);
-                previewItem.appendChild(removeBtn);
-                imagePreview.appendChild(previewItem);
-            };
-            reader.readAsDataURL(file);
-        }
+    function showStatus(type, msg) {
+        const el = document.getElementById('adFetchStatus');
+        el.textContent = msg;
+        el.className = 'ad-input-status ' + type;
+        if (type !== 'loading') setTimeout(() => { el.textContent = ''; el.className = 'ad-input-status'; }, 3000);
+    }
+
+    /* ── Image Upload & Preview ── */
+    const uploadZone = document.getElementById('adUploadZone');
+    const fileInput  = document.getElementById('adImageInput');
+    const previewGrid = document.getElementById('adPreviewGrid');
+    let selectedFiles = [];
+
+    uploadZone.addEventListener('dragover', e => { e.preventDefault(); uploadZone.classList.add('drag-over'); });
+    uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('drag-over'));
+    uploadZone.addEventListener('drop', e => {
+        e.preventDefault(); uploadZone.classList.remove('drag-over');
+        handleFiles(Array.from(e.dataTransfer.files));
     });
-});
 
-// Form validation before submit
-document.getElementById('destinationForm').addEventListener('submit', function(e) {
-    const name = destinationNameInput.value.trim();
-    if (!name) {
-        e.preventDefault();
-        alert('❌ Please enter destination name');
-        return false;
+    fileInput.addEventListener('change', function() {
+        handleFiles(Array.from(this.files));
+    });
+
+    function handleFiles(files) {
+        files.forEach(file => {
+            if (!file.type.startsWith('image/')) return;
+            if (file.size > 10 * 1024 * 1024) { alert(`${file.name} exceeds 10MB`); return; }
+            selectedFiles.push(file);
+            renderPreview(file, selectedFiles.length - 1);
+        });
+        syncFilesToInput();
+        updateScorePreview();
     }
-    
-    const submitBtn = document.getElementById('submitBtn');
-    submitBtn.disabled = true;
-    submitBtn.textContent = '💾 Saving...';
-});
 
-// Initialize everything when page loads
-document.addEventListener('DOMContentLoaded', function() {
-    initMap();
-    
-    setTimeout(() => {
-        if (window.google && window.google.maps) {
-            initAutocomplete();
-        }
-    }, 500);
-    
-    // Add helpful tips
-    const helpText = document.createElement('div');
-    helpText.className = 'note';
-    helpText.style.marginTop = '20px';
-    helpText.style.padding = '10px';
-    helpText.style.background = '#e8f4f8';
-    helpText.style.borderRadius = '8px';
-    helpText.style.textAlign = 'center';
-    helpText.innerHTML = '💡 <strong>Pro Tips:</strong> Start typing a destination name - coordinates, country, and city will auto-fetch! Set month range (1-12) for best time to visit.';
-    document.querySelector('.container').appendChild(helpText);
-});
+    function renderPreview(file, idx) {
+        const reader = new FileReader();
+        reader.onload = e => {
+            const item = document.createElement('div');
+            item.className = 'ad-preview-item';
+            item.dataset.idx = idx;
+            item.innerHTML = `
+                <img src="${e.target.result}" alt="">
+                <button class="ad-preview-remove" type="button" onclick="removePreview(${idx})">×</button>
+                <span class="ad-preview-count">${idx + 1}</span>`;
+            previewGrid.appendChild(item);
+        };
+        reader.readAsDataURL(file);
+    }
+
+    window.removePreview = function(idx) {
+        selectedFiles.splice(idx, 1);
+        previewGrid.innerHTML = '';
+        selectedFiles.forEach((f, i) => renderPreview(f, i));
+        syncFilesToInput();
+        updateScorePreview();
+    };
+
+    function syncFilesToInput() {
+        const dt = new DataTransfer();
+        selectedFiles.forEach(f => dt.items.add(f));
+        fileInput.files = dt.files;
+    }
+
+    /* ── Score Preview (live estimate) ── */
+    function updateScorePreview() {
+        let score = 10; // base manual priority
+        if (document.getElementById('id_name').value.trim())        score += 2;
+        if (document.getElementById('id_description').value.trim()) score += 3;
+        if (document.getElementById('id_latitude').value)           score += 2;
+        if (document.getElementById('id_best_season').value)        score += 3;
+        if (selectedFiles.length > 0)                               score += 3;
+        if (selectedFiles.length >= 3)                              score += 2;
+        document.getElementById('adScorePreview').textContent = Math.min(score, 25);
+    }
+
+    ['id_name','id_description','id_best_season','id_preferred_weather'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.addEventListener('input', updateScorePreview);
+        if (el) el.addEventListener('change', updateScorePreview);
+    });
+
+    /* ── Step indicator highlighting ── */
+    const stepIds = ['step-1', 'step-2', 'step-3', 'step-4'];
+    const stepBtns = document.querySelectorAll('.ad-hero-step');
+    window.addEventListener('scroll', () => {
+        let cur = 0;
+        stepIds.forEach((id, i) => {
+            const el = document.getElementById(id);
+            if (el && el.getBoundingClientRect().top < 200) cur = i;
+        });
+        stepBtns.forEach((b, i) => b.classList.toggle('active', i === cur));
+    }, {passive: true});
+
+    /* ── Form submit ── */
+    document.getElementById('adForm').addEventListener('submit', function(e) {
+        const name = document.getElementById('id_name').value.trim();
+        if (!name) { e.preventDefault(); alert('Please enter a destination name.'); return; }
+        const btn = document.getElementById('adSubmitBtn');
+        btn.disabled = true;
+        btn.innerHTML = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="white" stroke-width="2"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4"/></svg> Saving...';
+    });
+
+    /* ── Init ── */
+    document.addEventListener('DOMContentLoaded', initMap);
+
+})();
 </script>
-
-</body>
-</html>
+{% endblock %}

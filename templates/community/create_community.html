@@ -1,21 +1,862 @@
-<h2>Create Community</h2>
+{% extends "travellers/base.html" %}
+{% load static %}
 
-<form method="POST" enctype="multipart/form-data">
-    {% csrf_token %}
-    {{ form.as_p }}
-    {{ form.is_private }}
+{% block title %}Create Community | Wayzo{% endblock %}
+{% block nav_community %}active{% endblock %}
+{% block topbar_title %}Create Community{% endblock %}
+{% block topbar_subtitle %}Bring travellers together around shared interests{% endblock %}
 
-<div id="approval-field">
-    {{ form.join_approval_required }}
+{% block extra_styles %}
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,400&family=DM+Sans:wght@300;400;500;600&display=swap');
+
+:root {
+    --cc-teal: #0e8a8a;
+    --cc-teal-dark: #0a6e6e;
+    --cc-teal-pale: #e6f3f3;
+    --cc-ink: #0f172a;
+    --cc-ink2: #1e293b;
+    --cc-muted: #64748b;
+    --cc-border: #e2e8f0;
+    --cc-surface: #fff;
+    --cc-s2: #f8fafc;
+    --cc-s3: #f1f5f9;
+    --cc-red: #dc2626;
+    --cc-red-pale: #fee2e2;
+    --cc-green: #16a34a;
+    --cc-green-pale: #dcfce7;
+    --cc-amber: #d97706;
+    --cc-r: 16px;
+    --cc-sh: 0 1px 3px rgba(0,0,0,.04), 0 4px 16px rgba(0,0,0,.06);
+    --cc-sh-md: 0 4px 24px rgba(0,0,0,.10);
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+body { font-family: 'DM Sans', sans-serif; }
+
+/* ── HERO ── */
+.cc-hero {
+    position: relative;
+    height: 230px;
+    overflow: hidden;
+    background: linear-gradient(135deg, #0a3d3d 0%, #0e5a5a 40%, #1a7a5a 70%, #0b3228 100%);
+    flex-shrink: 0;
+}
+.cc-hero-art { position: absolute; inset: 0; overflow: hidden; }
+.cc-hero-art svg { position: absolute; bottom: 0; left: 0; width: 100%; height: 100%; }
+.cc-hero-overlay {
+    position: absolute; bottom: 0; left: 0; right: 0; height: 110px;
+    background: linear-gradient(to bottom, transparent, rgba(0,0,0,.38));
+    pointer-events: none;
+}
+.cc-hero-content {
+    position: absolute; inset: 0; z-index: 5;
+    display: flex; flex-direction: column; justify-content: flex-end;
+    padding: 80px 3rem 2rem;
+}
+.cc-hero-eyebrow {
+    display: inline-flex; align-items: center; gap: .45rem;
+    background: rgba(255,255,255,.14); backdrop-filter: blur(8px);
+    border: 1px solid rgba(255,255,255,.2); border-radius: 40px;
+    padding: .3rem .9rem; font-size: .72rem; color: rgba(255,255,255,.9);
+    font-weight: 500; width: fit-content; margin-bottom: .6rem;
+}
+.cc-hero-eyebrow::before {
+    content: ''; width: 6px; height: 6px; border-radius: 50%;
+    background: #5FC5C5; display: inline-block; flex-shrink: 0;
+}
+.cc-hero-title {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(1.6rem, 3vw, 2.2rem);
+    font-weight: 700; color: #fff !important; line-height: 1.15;
+    text-shadow: 0 2px 12px rgba(0,0,0,.3); margin-bottom: .25rem;
+}
+.cc-hero-sub { font-size: .84rem; color: rgba(255,255,255,.65); font-weight: 300; }
+
+/* ── BREADCRUMB ── */
+.cc-breadcrumb {
+    max-width: 1200px; margin: 0 auto;
+    padding: .9rem 3rem;
+    display: flex; align-items: center; gap: .4rem;
+    font-size: .76rem; color: var(--cc-muted);
+}
+.cc-breadcrumb a { color: var(--cc-muted); text-decoration: none; transition: color .15s; }
+.cc-breadcrumb a:hover { color: var(--cc-teal); }
+.cc-breadcrumb-sep { color: var(--cc-border); }
+.cc-breadcrumb-current { color: var(--cc-ink2); font-weight: 600; }
+
+/* ── PAGE LAYOUT ── */
+.cc-page {
+    max-width: 1200px; margin: 0 auto;
+    padding: 0 3rem 5rem;
+}
+.cc-grid {
+    display: grid;
+    grid-template-columns: 1fr 320px;
+    gap: 2rem;
+    align-items: start;
+}
+.cc-form-col { min-width: 0; }
+.cc-tips-col { position: sticky; top: 24px; }
+
+/* ── CARDS ── */
+.cc-card {
+    background: var(--cc-surface);
+    border: 1px solid var(--cc-border);
+    border-radius: var(--cc-r);
+    margin-bottom: 1.5rem;
+    overflow: hidden;
+    box-shadow: var(--cc-sh);
+    transition: box-shadow .2s;
+}
+.cc-card:hover { box-shadow: var(--cc-sh-md); }
+.cc-card::before {
+    content: ''; display: block; height: 3px;
+    background: linear-gradient(90deg, #0e8a8a, #1aa8a8);
+}
+.cc-card-head {
+    display: flex; align-items: center; gap: .75rem;
+    padding: 1.15rem 1.6rem;
+    border-bottom: 1px solid var(--cc-border);
+    background: var(--cc-s2);
+}
+.cc-card-head-icon {
+    width: 36px; height: 36px; border-radius: 10px;
+    background: var(--cc-teal-pale);
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.cc-card-head-icon svg { width: 16px; height: 16px; stroke: #0e8a8a; fill: none; stroke-width: 2; }
+.cc-card-head h3 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1rem; font-weight: 600; color: var(--cc-ink); margin: 0 0 .06rem;
+}
+.cc-card-head p { font-size: .73rem; color: var(--cc-muted); margin: 0; }
+.cc-card-body { padding: 1.6rem; }
+
+/* ── FORM FIELDS ── */
+.cc-fg { margin-bottom: 1.25rem; }
+.cc-fg:last-child { margin-bottom: 0; }
+.cc-fg > label {
+    display: block !important; font-size: .7rem !important; font-weight: 700 !important;
+    color: var(--cc-muted) !important; text-transform: uppercase !important;
+    letter-spacing: .5px !important; margin-bottom: .4rem !important;
+}
+.cc-fg > label .req { color: var(--cc-red); }
+.cc-fg .hint { font-size: .7rem; color: var(--cc-muted); margin-top: .25rem; line-height: 1.5; }
+
+.cc-fg input[type="text"],
+.cc-fg input[type="number"],
+.cc-fg textarea,
+.cc-fg select {
+    width: 100% !important; padding: .72rem 1rem !important;
+    border: 1.5px solid #e2e8f0 !important; border-radius: 10px !important;
+    font-size: .875rem !important; font-family: 'DM Sans', sans-serif !important;
+    color: #0f172a !important; background: #fff !important;
+    transition: border-color .15s, box-shadow .15s;
+    box-sizing: border-box !important;
+}
+.cc-fg input:focus,
+.cc-fg textarea:focus,
+.cc-fg select:focus {
+    outline: none !important; border-color: #0e8a8a !important;
+    box-shadow: 0 0 0 3px rgba(14,138,138,.12) !important;
+}
+.cc-fg textarea { resize: vertical; min-height: 100px; }
+.cc-fg select { appearance: auto; cursor: pointer; }
+.cc-fg-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+
+/* ── COVER UPLOAD ── */
+.cc-cover-upload {
+    border: 2px dashed var(--cc-border); border-radius: 12px;
+    padding: 2rem 1.5rem; text-align: center; cursor: pointer;
+    transition: border-color .2s, background .2s; position: relative;
+    overflow: hidden; background: var(--cc-s2);
+}
+.cc-cover-upload:hover { border-color: #0e8a8a; background: var(--cc-teal-pale); }
+.cc-cover-upload input[type="file"] {
+    position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%;
+}
+.cc-cover-icon { font-size: 2.2rem; opacity: .4; margin-bottom: .5rem; }
+.cc-cover-label { font-size: .85rem; font-weight: 600; color: var(--cc-muted); margin-bottom: .25rem; }
+.cc-cover-sub { font-size: .72rem; color: var(--cc-muted); }
+.cc-cover-preview {
+    width: 100%; height: 160px; object-fit: cover;
+    border-radius: 10px; display: none; margin-bottom: .75rem;
+}
+
+/* ── COMMUNITY TYPE CARDS ── */
+.cc-type-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+.cc-type-card {
+    border: 2px solid var(--cc-border); border-radius: 12px;
+    padding: 1.1rem 1.2rem; cursor: pointer; transition: all .15s;
+    background: var(--cc-surface); text-align: left;
+    font-family: 'DM Sans', sans-serif; display: block;
+}
+.cc-type-card:hover { border-color: #0e8a8a; background: var(--cc-teal-pale); }
+.cc-type-card.selected {
+    border-color: #0e8a8a; background: var(--cc-teal-pale);
+    box-shadow: 0 0 0 3px rgba(14,138,138,.12);
+}
+.cc-type-card input[type="radio"] { display: none; }
+.cc-type-icon { font-size: 1.5rem; margin-bottom: .5rem; }
+.cc-type-name { font-size: .88rem; font-weight: 700; color: var(--cc-ink); margin-bottom: .18rem; }
+.cc-type-desc { font-size: .74rem; color: var(--cc-muted); line-height: 1.5; }
+
+/* ── PRIVACY INFO BOX ── */
+.cc-privacy-info {
+    background: var(--cc-teal-pale); border: 1px solid rgba(14,138,138,.25);
+    border-radius: 10px; padding: .9rem 1.1rem; margin-top: 1rem;
+    font-size: .8rem; color: #0a6e6e; display: none; line-height: 1.55;
+}
+.cc-privacy-info.show { display: block; }
+.cc-privacy-info strong { font-weight: 700; }
+
+/* ══════════════════════════════════════
+   TOGGLE SWITCHES — fully self-contained
+   Uses IDs to avoid base-template bleed
+══════════════════════════════════════ */
+.cc-toggle-row { display: flex; flex-direction: column; gap: .75rem; }
+
+.cc-toggle-item {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: .9rem 1.2rem; background: #f8fafc;
+    border: 1.5px solid #e2e8f0; border-radius: 12px; gap: 1rem;
+    transition: border-color .15s;
+}
+.cc-toggle-item:hover { border-color: rgba(14,138,138,.4); }
+
+.cc-toggle-info .cc-toggle-label {
+    font-size: .875rem; font-weight: 600; color: #0f172a;
+    margin-bottom: .08rem; display: block;
+}
+.cc-toggle-info .cc-toggle-sub { font-size: .74rem; color: #64748b; display: block; }
+
+/* The switch wrapper */
+.cc-sw {
+    position: relative;
+    display: inline-block;
+    width: 52px;
+    height: 28px;
+    flex-shrink: 0;
+    cursor: pointer;
+}
+/* Hide the native checkbox completely */
+.cc-sw input[type="checkbox"] {
+    position: absolute !important;
+    opacity: 0 !important;
+    width: 0 !important;
+    height: 0 !important;
+    pointer-events: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    appearance: none !important;
+    -webkit-appearance: none !important;
+    border: none !important;
+    background: none !important;
+}
+/* Track */
+.cc-sw-track {
+    position: absolute;
+    inset: 0;
+    border-radius: 34px;
+    background: #cbd5e1;
+    transition: background .25s ease;
+    pointer-events: none;
+}
+/* Thumb */
+.cc-sw-track::after {
+    content: '';
+    position: absolute;
+    top: 4px;
+    left: 4px;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: #ffffff;
+    box-shadow: 0 1px 4px rgba(0,0,0,.25);
+    transition: transform .25s ease;
+}
+/* Checked state — teal track + moved thumb */
+.cc-sw input[type="checkbox"]:checked ~ .cc-sw-track {
+    background: #0e8a8a;
+}
+.cc-sw input[type="checkbox"]:checked ~ .cc-sw-track::after {
+    transform: translateX(24px);
+}
+
+/* ══════════════════════════════════════
+   SUBMIT BUTTON — guaranteed visible
+   Matches the "New Post" teal button
+══════════════════════════════════════ */
+.cc-form-foot {
+    display: flex; align-items: center; justify-content: flex-end;
+    gap: 1rem; padding: 1.2rem 1.6rem;
+    background: #f1f5f9;
+    border-top: 1px solid #e2e8f0;
+}
+
+/* Cancel */
+.cc-btn-cancel {
+    display: inline-flex !important; align-items: center !important; gap: .45rem !important;
+    padding: .75rem 1.5rem !important;
+    background: #ffffff !important;
+    color: #64748b !important;
+    border: 1.5px solid #e2e8f0 !important;
+    border-radius: 40px !important;
+    font-size: .875rem !important; font-weight: 500 !important;
+    text-decoration: none !important;
+    font-family: 'DM Sans', sans-serif !important;
+    transition: all .2s;
+    cursor: pointer;
+}
+.cc-btn-cancel:hover {
+    border-color: #0e8a8a !important; color: #0e8a8a !important;
+    background: #e6f3f3 !important;
+}
+
+/* Submit — solid teal, identical to "New Post" pill */
+button.cc-btn-submit,
+input.cc-btn-submit,
+.cc-btn-submit {
+    display: inline-flex !important; align-items: center !important; gap: .5rem !important;
+    padding: .78rem 2rem !important;
+    background-color: #0e8a8a !important;
+    color: #ffffff !important;
+    border: none !important;
+    border-radius: 40px !important;
+    font-size: .9rem !important; font-weight: 700 !important;
+    font-family: 'DM Sans', sans-serif !important;
+    cursor: pointer !important;
+    text-decoration: none !important;
+    box-shadow: 0 4px 14px rgba(14,138,138,.45) !important;
+    transition: background-color .2s, transform .2s, box-shadow .2s;
+    line-height: 1 !important;
+}
+button.cc-btn-submit:hover,
+.cc-btn-submit:hover {
+    background-color: #0a6e6e !important;
+    transform: translateY(-2px) !important;
+    box-shadow: 0 6px 20px rgba(14,138,138,.5) !important;
+    color: #ffffff !important;
+}
+button.cc-btn-submit:active,
+.cc-btn-submit:active {
+    transform: translateY(0) !important;
+}
+.cc-btn-submit svg {
+    width: 16px !important; height: 16px !important;
+    stroke: #ffffff !important; fill: none !important;
+    stroke-width: 2.2 !important; flex-shrink: 0;
+}
+
+/* ── ALERTS ── */
+.cc-alert {
+    display: flex; align-items: center; gap: .6rem;
+    padding: .9rem 1.2rem; border-radius: 12px; margin-bottom: 1.2rem;
+    font-size: .84rem; line-height: 1.5;
+}
+.cc-alert svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 2; flex-shrink: 0; }
+.cc-alert.success { background: #dcfce7; border: 1px solid #bbf7d0; color: #166534; }
+.cc-alert.error   { background: #fee2e2; border: 1px solid #fecaca; color: #991b1b; }
+.errorlist { color: #dc2626; font-size: .73rem; list-style: none; padding: 0; margin: .3rem 0 0; }
+
+/* ── TIPS SIDEBAR ── */
+.cc-tips-card {
+    background: #fff; border: 1px solid #e2e8f0;
+    border-radius: 16px; overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0,0,0,.04), 0 4px 16px rgba(0,0,0,.06);
+}
+.cc-tips-card::before {
+    content: ''; display: block; height: 3px;
+    background: linear-gradient(90deg, #0e8a8a, #1aa8a8);
+}
+.cc-tips-head {
+    padding: 1rem 1.4rem; border-bottom: 1px solid #e2e8f0;
+    background: #f8fafc; font-size: .875rem; font-weight: 700;
+    color: #0f172a; display: flex; align-items: center; gap: .55rem;
+}
+.cc-tips-head svg { width: 16px; height: 16px; stroke: #0e8a8a; fill: none; stroke-width: 2; }
+.cc-tips-body { padding: 1rem 1.4rem; }
+.cc-tip-item {
+    display: flex; align-items: flex-start; gap: .75rem;
+    padding: .65rem 0; border-bottom: 1px solid #f1f5f9;
+}
+.cc-tip-item:last-child { border-bottom: none; padding-bottom: 0; }
+.cc-tip-icon {
+    width: 30px; height: 30px; border-radius: 8px; flex-shrink: 0;
+    background: #e6f3f3;
+    display: flex; align-items: center; justify-content: center;
+    font-size: .9rem;
+}
+.cc-tip-title { font-weight: 600; color: #1e293b; margin-bottom: .08rem; font-size: .82rem; }
+.cc-tip-text  { font-size: .74rem; color: #64748b; line-height: 1.55; }
+
+/* Admin note */
+.cc-admin-note {
+    margin-top: 1rem; background: #fff;
+    border: 1px solid #e2e8f0; border-radius: 16px; overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0,0,0,.04), 0 4px 16px rgba(0,0,0,.06);
+}
+.cc-admin-note::before {
+    content: ''; display: block; height: 3px;
+    background: linear-gradient(90deg, #d97706, #f59e0b);
+}
+.cc-admin-note-head {
+    padding: 1rem 1.4rem; border-bottom: 1px solid #fef3c7;
+    background: #fffbeb; font-size: .875rem; font-weight: 700;
+    color: #92400e; display: flex; align-items: center; gap: .55rem;
+}
+.cc-admin-note-head svg { width: 16px; height: 16px; stroke: #d97706; fill: none; stroke-width: 2; }
+.cc-admin-note-body {
+    padding: 1rem 1.4rem; font-size: .8rem;
+    color: #64748b; line-height: 1.7; background: #fffbeb;
+}
+
+/* ── RESPONSIVE ── */
+@media (max-width: 960px) {
+    .cc-grid { grid-template-columns: 1fr; }
+    .cc-tips-col { position: static; }
+    .cc-page { padding: 0 1.5rem 4rem; }
+    .cc-breadcrumb { padding: .85rem 1.5rem; }
+    .cc-hero-content { padding: 72px 1.5rem 1.6rem; }
+}
+@media (max-width: 640px) {
+    .cc-page { padding: 0 1rem 3rem; }
+    .cc-breadcrumb { padding: .75rem 1rem; }
+    .cc-hero-content { padding: 68px 1rem 1.4rem; }
+    .cc-fg-row { grid-template-columns: 1fr; }
+    .cc-type-grid { grid-template-columns: 1fr; }
+    .cc-form-foot { flex-direction: column-reverse; }
+    .cc-btn-submit, .cc-btn-cancel { width: 100% !important; justify-content: center !important; }
+    .cc-card-body { padding: 1.2rem; }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- ── HERO ── -->
+<div class="cc-hero">
+    <div class="cc-hero-art">
+        <svg viewBox="0 0 1440 230" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+                <radialGradient id="ccGA" cx="20%" cy="60%" r="40%">
+                    <stop offset="0%" stop-color="#1aa8a8" stop-opacity=".2"/>
+                    <stop offset="100%" stop-color="transparent" stop-opacity="0"/>
+                </radialGradient>
+                <filter id="ccBlur"><feGaussianBlur stdDeviation="2.5"/></filter>
+            </defs>
+            <rect width="1440" height="230" fill="transparent"/>
+            <rect width="1440" height="230" fill="url(#ccGA)"/>
+            <g opacity=".35" fill="#fff">
+                <circle cx="80" cy="30" r="1"/><circle cx="260" cy="18" r=".8"/>
+                <circle cx="500" cy="42" r=".9"/><circle cx="740" cy="15" r="1.1"/>
+                <circle cx="1000" cy="35" r=".8"/><circle cx="1250" cy="22" r="1"/>
+                <circle cx="180" cy="65" r=".7"/><circle cx="650" cy="70" r=".9"/>
+                <circle cx="1100" cy="58" r=".75"/>
+            </g>
+            <circle cx="1320" cy="42" r="22" fill="#fef3c7" opacity=".14" filter="url(#ccBlur)"/>
+            <circle cx="1320" cy="42" r="12" fill="#fef9e7" opacity=".3"/>
+            <ellipse cx="200" cy="230" rx="280" ry="120" fill="#0d3228" opacity=".6"/>
+            <ellipse cx="1240" cy="230" rx="260" ry="110" fill="#0d3228" opacity=".55"/>
+            <ellipse cx="720" cy="230" rx="460" ry="80" fill="#0a2a1e" opacity=".7"/>
+            <g fill="#071810" opacity=".8">
+                <rect x="60" y="148" width="6" height="82" rx="3"/>
+                <ellipse cx="63" cy="140" rx="22" ry="30"/>
+                <rect x="98" y="158" width="5" height="72" rx="2.5"/>
+                <ellipse cx="101" cy="150" rx="17" ry="24"/>
+            </g>
+            <g fill="#071810" opacity=".75">
+                <rect x="1295" y="150" width="6" height="80" rx="3"/>
+                <ellipse cx="1298" cy="142" rx="23" ry="31"/>
+                <rect x="1328" y="160" width="5" height="70" rx="2.5"/>
+                <ellipse cx="1331" cy="152" rx="17" ry="24"/>
+            </g>
+            <g opacity=".45" filter="url(#ccBlur)">
+                <circle cx="400" cy="155" r="2.5" fill="#fef3c7"/>
+                <circle cx="680" cy="140" r="2" fill="#fef3c7"/>
+                <circle cx="960" cy="158" r="2.5" fill="#fef3c7"/>
+            </g>
+        </svg>
+    </div>
+    <div class="cc-hero-overlay"></div>
+    <div class="cc-hero-content">
+        <div class="cc-hero-eyebrow">Community</div>
+        <h1 class="cc-hero-title">Start a New Community</h1>
+        <div class="cc-hero-sub">Connect travellers around a shared passion or destination</div>
+    </div>
+</div>
+
+<!-- ── BREADCRUMB ── -->
+<div class="cc-breadcrumb">
+    <a href="{% url 'community:community_home' %}">Community</a>
+    <span class="cc-breadcrumb-sep">/</span>
+    <span class="cc-breadcrumb-current">Create</span>
+</div>
+
+<!-- ── PAGE ── -->
+<div class="cc-page">
+
+    {% if messages %}
+        {% for message in messages %}
+        <div class="cc-alert {% if 'success' in message.tags %}success{% else %}error{% endif %}">
+            <svg viewBox="0 0 24 24">
+                {% if 'success' in message.tags %}
+                    <polyline points="20 6 9 17 4 12"/>
+                {% else %}
+                    <circle cx="12" cy="12" r="10"/>
+                    <line x1="12" y1="8" x2="12" y2="12"/>
+                    <line x1="12" y1="16" x2="12.01" y2="16"/>
+                {% endif %}
+            </svg>
+            {{ message }}
+        </div>
+        {% endfor %}
+    {% endif %}
+
+    <div class="cc-grid">
+
+        <!-- ── FORM COLUMN ── -->
+        <div class="cc-form-col">
+            <form method="POST" enctype="multipart/form-data" id="ccForm">
+                {% csrf_token %}
+
+                <!-- 1. Cover Image -->
+                <div class="cc-card">
+                    <div class="cc-card-head">
+                        <div class="cc-card-head-icon">
+                            <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                        </div>
+                        <div>
+                            <h3>Cover Image</h3>
+                            <p>Give your community a welcoming visual identity</p>
+                        </div>
+                    </div>
+                    <div class="cc-card-body">
+                        <div class="cc-cover-upload" id="ccCoverZone">
+                            <img id="ccCoverPreview" class="cc-cover-preview" src="" alt="Preview">
+                            <input type="file" name="cover_image" accept="image/*" id="ccCoverInput" onchange="previewCover(this)">
+                            <div id="ccCoverPlaceholder">
+                                <div class="cc-cover-icon">🏔️</div>
+                                <div class="cc-cover-label">Click or drag to upload a cover photo</div>
+                                <div class="cc-cover-sub">JPG, PNG, WebP &middot; Max 5 MB &middot; Recommended 1200&times;400</div>
+                            </div>
+                        </div>
+                        {% if form.cover_image.errors %}<ul class="errorlist">{{ form.cover_image.errors }}</ul>{% endif %}
+                    </div>
+                </div>
+
+                <!-- 2. Basic Info -->
+                <div class="cc-card">
+                    <div class="cc-card-head">
+                        <div class="cc-card-head-icon">
+                            <svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+                        </div>
+                        <div>
+                            <h3>Basic Information</h3>
+                            <p>Help people understand what your community is about</p>
+                        </div>
+                    </div>
+                    <div class="cc-card-body">
+                        <div class="cc-fg">
+                            <label>Community Name <span class="req">*</span></label>
+                            {{ form.name }}
+                            {% if form.name.errors %}<ul class="errorlist">{{ form.name.errors }}</ul>{% endif %}
+                        </div>
+                        <div class="cc-fg">
+                            <label>Description <span class="req">*</span></label>
+                            {{ form.description }}
+                            {% if form.description.errors %}<ul class="errorlist">{{ form.description.errors }}</ul>{% endif %}
+                            <span class="hint">Tell people what this community is about and what they can expect</span>
+                        </div>
+                        <div class="cc-fg-row">
+                            <div class="cc-fg">
+                                <label>Interest / Category <span class="req">*</span></label>
+                                {{ form.interest }}
+                                {% if form.interest.errors %}<ul class="errorlist">{{ form.interest.errors }}</ul>{% endif %}
+                                <span class="hint">e.g. Adventure, Culture, Food</span>
+                            </div>
+                            <div class="cc-fg">
+                                <label>Tags</label>
+                                {{ form.tags }}
+                                {% if form.tags.errors %}<ul class="errorlist">{{ form.tags.errors }}</ul>{% endif %}
+                                <span class="hint">Comma-separated: hiking, solo, kerala</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 3. Privacy & Type -->
+                <div class="cc-card">
+                    <div class="cc-card-head">
+                        <div class="cc-card-head-icon">
+                            <svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                        </div>
+                        <div>
+                            <h3>Privacy &amp; Type</h3>
+                            <p>Control who can see and join your community</p>
+                        </div>
+                    </div>
+                    <div class="cc-card-body">
+                        <div class="cc-fg">
+                            <label>Community Type <span class="req">*</span></label>
+                            <div class="cc-type-grid">
+                                <label class="cc-type-card selected" id="typePublic" onclick="selectType('public')">
+                                    <input type="radio" name="community_type" value="public" checked>
+                                    <div class="cc-type-icon">🌍</div>
+                                    <div class="cc-type-name">Public</div>
+                                    <div class="cc-type-desc">Anyone can find and join. Great for large communities.</div>
+                                </label>
+                                <label class="cc-type-card" id="typePrivate" onclick="selectType('private')">
+                                    <input type="radio" name="community_type" value="private">
+                                    <div class="cc-type-icon">🔒</div>
+                                    <div class="cc-type-name">Private</div>
+                                    <div class="cc-type-desc">Invite-only. Members must be approved to join.</div>
+                                </label>
+                            </div>
+                            {% if form.community_type.errors %}<ul class="errorlist">{{ form.community_type.errors }}</ul>{% endif %}
+                        </div>
+                        <div class="cc-privacy-info" id="ccPrivacyInfo">
+                            <strong>🔒 Private Community</strong> — Only approved members can see posts and content. You'll review join requests before anyone can participate.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 4. Rules & Permissions -->
+                <div class="cc-card">
+                    <div class="cc-card-head">
+                        <div class="cc-card-head-icon">
+                            <svg viewBox="0 0 24 24"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+                        </div>
+                        <div>
+                            <h3>Rules &amp; Permissions</h3>
+                            <p>Set expectations and what members can do</p>
+                        </div>
+                    </div>
+                    <div class="cc-card-body">
+                        <div class="cc-fg">
+                            <label>Community Rules</label>
+                            {{ form.rules }}
+                            {% if form.rules.errors %}<ul class="errorlist">{{ form.rules.errors }}</ul>{% endif %}
+                            <span class="hint">Optional guidelines to keep your community respectful and on-topic</span>
+                        </div>
+
+                        <div class="cc-fg">
+                            <label>Max Members</label>
+                            {{ form.max_members }}
+                            {% if form.max_members.errors %}<ul class="errorlist">{{ form.max_members.errors }}</ul>{% endif %}
+                            <span class="hint">Leave blank for unlimited members</span>
+                        </div>
+
+                        <div class="cc-fg" style="margin-bottom:0;">
+                            <label>Member Permissions</label>
+                            <div class="cc-toggle-row">
+
+                                <!-- Allow Posts -->
+                                <div class="cc-toggle-item">
+                                    <div class="cc-toggle-info">
+                                        <span class="cc-toggle-label">Allow Posts</span>
+                                        <span class="cc-toggle-sub">Members can create posts in this community</span>
+                                    </div>
+                                    <label class="cc-sw" id="sw-allow-post" onclick="toggleSwitch('allow_post_cb', 'sw-allow-post')">
+                                        <input type="checkbox"
+                                               id="allow_post_cb"
+                                               name="{{ form.allow_post.html_name }}"
+                                               {% if form.allow_post.value %}checked{% endif %}>
+                                        <span class="cc-sw-track"></span>
+                                    </label>
+                                </div>
+
+                                <!-- Allow Trip Plans -->
+                                <div class="cc-toggle-item">
+                                    <div class="cc-toggle-info">
+                                        <span class="cc-toggle-label">Allow Trip Plans</span>
+                                        <span class="cc-toggle-sub">Members can share and organise trips</span>
+                                    </div>
+                                    <label class="cc-sw" id="sw-allow-trip" onclick="toggleSwitch('allow_trip_cb', 'sw-allow-trip')">
+                                        <input type="checkbox"
+                                               id="allow_trip_cb"
+                                               name="{{ form.allow_trip.html_name }}"
+                                               {% if form.allow_trip.value %}checked{% endif %}>
+                                        <span class="cc-sw-track"></span>
+                                    </label>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ── FORM FOOTER with guaranteed-visible button ── -->
+                    <div class="cc-form-foot">
+                        <a href="{% url 'community:community_home' %}" class="cc-btn-cancel">Cancel</a>
+                        <button type="submit" class="cc-btn-submit">
+                            <svg viewBox="0 0 24 24">
+                                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                                <circle cx="9" cy="7" r="4"/>
+                                <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                                <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                            </svg>
+                            Create Community
+                        </button>
+                    </div>
+                </div>
+
+            </form>
+        </div>
+
+        <!-- ── TIPS SIDEBAR ── -->
+        <div class="cc-tips-col">
+            <div class="cc-tips-card">
+                <div class="cc-tips-head">
+                    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                    Tips for a great community
+                </div>
+                <div class="cc-tips-body">
+                    <div class="cc-tip-item">
+                        <div class="cc-tip-icon">🎯</div>
+                        <div>
+                            <div class="cc-tip-title">Be specific</div>
+                            <div class="cc-tip-text">Focused communities grow faster. "Kerala Backpacking" beats just "Travel".</div>
+                        </div>
+                    </div>
+                    <div class="cc-tip-item">
+                        <div class="cc-tip-icon">📸</div>
+                        <div>
+                            <div class="cc-tip-title">Add a cover photo</div>
+                            <div class="cc-tip-text">Communities with cover images get 3× more join requests.</div>
+                        </div>
+                    </div>
+                    <div class="cc-tip-item">
+                        <div class="cc-tip-icon">📋</div>
+                        <div>
+                            <div class="cc-tip-title">Set clear rules</div>
+                            <div class="cc-tip-text">Good guidelines keep conversations healthy and on-topic.</div>
+                        </div>
+                    </div>
+                    <div class="cc-tip-item">
+                        <div class="cc-tip-icon">🏷️</div>
+                        <div>
+                            <div class="cc-tip-title">Use tags</div>
+                            <div class="cc-tip-text">Tags help travellers discover your community through search.</div>
+                        </div>
+                    </div>
+                    <div class="cc-tip-item">
+                        <div class="cc-tip-icon">🔓</div>
+                        <div>
+                            <div class="cc-tip-title">Start public</div>
+                            <div class="cc-tip-text">Public communities grow organically. Switch to private anytime.</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="cc-admin-note">
+                <div class="cc-admin-note-head">
+                    <svg viewBox="0 0 24 24"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+                    You become the admin
+                </div>
+                <div class="cc-admin-note-body">
+                    As creator you'll automatically be the community administrator. You can invite members, moderate posts, and update settings anytime from the community dashboard.
+                </div>
+            </div>
+        </div>
+
+    </div>
 </div>
 
 <script>
-document.getElementById("id_is_private").addEventListener("change", function(){
-    document.getElementById("approval-field").style.display = this.checked ? "block" : "none";
+/* ── Cover image preview ── */
+function previewCover(input) {
+    if (!input.files[0]) return;
+    const reader = new FileReader();
+    reader.onload = ev => {
+        const img = document.getElementById('ccCoverPreview');
+        const ph  = document.getElementById('ccCoverPlaceholder');
+        img.src = ev.target.result;
+        img.style.display = 'block';
+        if (ph) ph.style.display = 'none';
+    };
+    reader.readAsDataURL(input.files[0]);
+}
+
+/* ── Community type selection ── */
+function selectType(type) {
+    document.getElementById('typePublic').classList.toggle('selected',  type === 'public');
+    document.getElementById('typePrivate').classList.toggle('selected', type === 'private');
+    const info = document.getElementById('ccPrivacyInfo');
+    if (info) info.classList.toggle('show', type === 'private');
+}
+
+/* ── Toggle helper — JS click on the label drives the hidden checkbox ── */
+function toggleSwitch(cbId, labelId) {
+    /* The browser fires the label's onclick BEFORE toggling the checkbox,
+       so we manually flip it here, then update visual state. */
+    const cb = document.getElementById(cbId);
+    if (!cb) return;
+    cb.checked = !cb.checked;
+    updateToggleVisual(cb);
+}
+
+function updateToggleVisual(cb) {
+    /* Ensure the sibling .cc-sw-track reflects checked state
+       by forcing inline style as an extra guarantee on top of CSS :checked */
+    const track = cb.nextElementSibling;
+    if (!track) return;
+    if (cb.checked) {
+        track.style.background = '#0e8a8a';
+        track.style.setProperty('--thumb-x', '24px');
+    } else {
+        track.style.background = '#cbd5e1';
+        track.style.setProperty('--thumb-x', '0px');
+    }
+}
+
+/* Prevent the label's default behaviour from double-toggling */
+document.addEventListener('DOMContentLoaded', function () {
+    ['allow_post_cb', 'allow_trip_cb'].forEach(function(id) {
+        var cb = document.getElementById(id);
+        if (!cb) return;
+        /* Apply initial visual */
+        updateToggleVisual(cb);
+        /* Stop the label's native toggle (we do it manually) */
+        cb.addEventListener('click', function(e) { e.preventDefault(); });
+    });
+
+    /* Re-sync when the form might rehydrate */
+    document.querySelectorAll('.cc-sw input[type="checkbox"]').forEach(function(cb) {
+        updateToggleVisual(cb);
+    });
 });
+
+/* ── Drag-over on cover zone ── */
+var zone = document.getElementById('ccCoverZone');
+if (zone) {
+    zone.addEventListener('dragover', function(e) {
+        e.preventDefault();
+        zone.style.borderColor = '#0e8a8a';
+        zone.style.background  = '#e6f3f3';
+    });
+    zone.addEventListener('dragleave', function() {
+        zone.style.borderColor = '';
+        zone.style.background  = '';
+    });
+    zone.addEventListener('drop', function(e) {
+        e.preventDefault();
+        zone.style.borderColor = '';
+        zone.style.background  = '';
+        var file = e.dataTransfer.files[0];
+        if (file && file.type.startsWith('image/')) {
+            var input = document.getElementById('ccCoverInput');
+            var dt = new DataTransfer();
+            dt.items.add(file);
+            input.files = dt.files;
+            previewCover(input);
+        }
+    });
+}
+
+/* Also add inline thumb-position via CSS custom property trick */
+document.head.insertAdjacentHTML('beforeend', '<style>.cc-sw-track::after{transform:translateX(var(--thumb-x,0px));}</style>');
 </script>
-    <button type="submit">Create</button>
-</form>
-<hr>
-<a href="{% url 'community_home' %}">Back to Community</a>
-<a href="{% url 'travellers:user_profile' request.user.id %}">Back to Dashboard</a>
+
+{% endblock %}

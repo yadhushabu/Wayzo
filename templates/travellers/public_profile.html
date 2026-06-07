@@ -1,127 +1,720 @@
+{% extends "travellers/base.html" %}
 {% load static %}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>{{ profile_user.username }} | Traveller Profile</title>
 
-    <style>
-        body {
-            font-family: Arial;
-            background: #f5f7fb;
-            margin: 0;
-        }
+{% block title %}Wayzo | {{ profile_user.get_full_name|default:profile_user.username }}'s Profile{% endblock %}
 
-        .container {
-            max-width: 900px;
-            margin: 40px auto;
-        }
+{% block extra_styles %}
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,400&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap');
 
-        .profile-card {
-            background: white;
-            padding: 25px;
-            border-radius: 15px;
-            text-align: center;
-        }
+:root {
+  --teal:#0e8a8a; --teal-dark:#0a6e6e; --teal-light:#1aa8a8; --teal-pale:#e6f3f3;
+  --amber:#d97706; --amber-pale:#fef3c7;
+  --green:#16a34a; --green-pale:#dcfce7;
+  --red:#dc2626; --red-pale:#fee2e2;
+  --rose:#e0233a;
+  --ink:#0f172a; --ink2:#1e293b; --muted:#64748b;
+  --border:#e2e8f0; --surface:#fff; --surface2:#f8fafc; --surface3:#f1f5f9;
+  --gray-100:#f8f9fc; --gray-150:#f1f4f8; --gray-200:#e2e8f0;
+  --gray-300:#cbd5e1; --gray-400:#94a3b8; --gray-500:#64748b;
+  --gray-700:#334155; --gray-800:#1e293b; --gray-900:#0f172a;
+  --text-soft:#475569; --text-light:#94a3b8;
+  --radius:16px; --shadow:0 4px 24px rgba(0,0,0,.07); --shadow-lg:0 12px 48px rgba(0,0,0,.13);
+  --white:#fff;
+}
 
-        .profile-img {
-            width: 120px;
-            height: 120px;
-            border-radius: 50%;
-            object-fit: cover;
-        }
+/* Override base topbar for profile page - make it transparent and above cover */
+.topbar {
+    background: transparent !important;
+    position: fixed !important;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 100;
+    pointer-events: none;
+}
+.topbar > * { pointer-events: auto; }
 
-        .stats {
-            display: flex;
-            justify-content: space-around;
-            margin-top: 15px;
-        }
+/* Cover Hero */
+.cover-hero{position:relative;height:420px;overflow:hidden;flex-shrink:0;margin-top:0;}
+.cover-bg{
+  position:absolute;inset:0;z-index:0;
+  background-size:cover;background-position:center;
+}
+.cover-bg::after{
+  content:"";position:absolute;inset:0;
+  background:linear-gradient(to bottom,rgba(0,0,0,.45) 0%,rgba(0,0,0,.1) 25%,rgba(0,0,0,.08) 45%,rgba(0,0,0,.55) 70%,rgba(0,0,0,.82) 100%);
+}
+.cover-fade{
+  position:absolute;bottom:0;left:0;right:0;height:160px;
+  background:linear-gradient(to bottom,transparent 0%,var(--gray-100) 100%);
+  z-index:3;pointer-events:none;
+}
 
-        .btn {
-            padding: 10px 20px;
-            border-radius: 25px;
-            text-decoration: none;
-            display: inline-block;
-            margin-top: 15px;
-        }
+/* Profile identity strip */
+.profile-identity{
+  position:absolute;bottom:0;left:0;right:0;z-index:4;
+  padding:0 2.5rem 1.8rem;
+  display:flex;align-items:flex-end;gap:1.6rem;
+}
+.profile-avatar-xl{
+  width:110px;height:110px;border-radius:20px;
+  background:var(--teal-dark);
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Playfair Display',serif;font-size:2.4rem;font-weight:500;color:white;
+  overflow:hidden;flex-shrink:0;
+  border:3px solid rgba(255,255,255,.15);
+  box-shadow:0 12px 40px rgba(0,0,0,.35);position:relative;
+}
+.profile-avatar-xl img{width:100%;height:100%;object-fit:cover;}
+.profile-identity-info{flex:1;padding-bottom:.3rem;}
+.profile-name-row{display:flex;align-items:center;gap:.8rem;margin-bottom:.3rem;flex-wrap:wrap;}
+.profile-name-row h2{font-family:'Playfair Display',serif;font-size:1.8rem;font-weight:600;color:white;text-shadow:0 2px 12px rgba(0,0,0,.4);}
+.explorer-badge{
+  display:inline-flex;align-items:center;gap:.35rem;
+  background:rgba(14,138,138,.3);border:1px solid rgba(95,197,197,.4);
+  color:#8de8e8;font-size:.62rem;font-weight:700;
+  padding:.24rem .65rem;border-radius:40px;
+  letter-spacing:.06em;text-transform:uppercase;backdrop-filter:blur(6px);
+}
+.explorer-badge svg{width:9px;height:9px;stroke:currentColor;fill:none;}
+.profile-tagline{font-size:.82rem;color:rgba(255,255,255,.65);font-weight:300;}
+.profile-identity-actions{display:flex;gap:.65rem;align-items:center;padding-bottom:.3rem;flex-shrink:0;flex-wrap:wrap;}
 
-        .follow {
-            background: #3A4A67;
-            color: white;
-        }
+/* Hero action buttons */
+.hero-action-btn{
+  display:inline-flex;align-items:center;gap:.45rem;
+  padding:.55rem 1.15rem;border-radius:40px;
+  font-size:.78rem;font-weight:600;cursor:pointer;
+  font-family:'DM Sans',sans-serif;text-decoration:none;transition:all .2s;border:none;
+}
+.hero-action-btn svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;}
+.btn-buddy-hero{background:var(--teal);color:white;box-shadow:0 4px 14px rgba(14,138,138,.4);}
+.btn-buddy-hero:hover{background:var(--teal-dark);transform:translateY(-1px);color:white;}
+.btn-pending-hero{background:rgba(217,119,6,.25);color:#fde68a;border:1px solid rgba(251,191,36,.3);cursor:not-allowed;opacity:.85;}
+.btn-accept-hero{background:#10b981;color:white;box-shadow:0 4px 14px rgba(16,185,129,.4);}
+.btn-accept-hero:hover{background:#059669;transform:translateY(-1px);}
+.btn-buddies-hero{background:rgba(22,163,74,.25);color:#86efac;border:1px solid rgba(134,239,172,.3);cursor:default;}
+.btn-ghost-hero{background:rgba(255,255,255,.12);backdrop-filter:blur(8px);color:white;border:1px solid rgba(255,255,255,.22);}
+.btn-ghost-hero:hover{background:rgba(255,255,255,.22);}
+.btn-msg-ghost{background:rgba(255,255,255,.12);backdrop-filter:blur(8px);color:white;border:1px solid rgba(255,255,255,.22);}
+.btn-msg-ghost:hover{background:rgba(255,255,255,.22);}
+.btn-msg-locked{background:rgba(255,255,255,.07);color:rgba(255,255,255,.35);border:1px solid rgba(255,255,255,.1);cursor:not-allowed;}
 
-        .unfollow {
-            background: #ddd;
-            color: black;
-        }
+/* Page Body */
+.page-body{position:relative;z-index:10;padding:0 2.5rem 3rem;margin-top:0;}
 
-        .posts {
-            margin-top: 30px;
-        }
+/* Alert */
+.alert{border-radius:12px;padding:.85rem 1.2rem;margin-bottom:1.2rem;font-size:.8rem;display:flex;align-items:center;gap:.6rem;}
+.alert-success{background:#f0fdf4;border:1px solid #dcfce7;color:#16a34a;}
+.alert-error{background:#fef2f2;border:1px solid #fee2e2;color:#dc2626;}
 
-        .post {
-            background: white;
-            padding: 15px;
-            border-radius: 12px;
-            margin-bottom: 15px;
-        }
+/* Stats Bar */
+.stats-bar{
+  background:white;border:1px solid var(--border);border-radius:18px;
+  padding:1.1rem 1.8rem;display:flex;align-items:center;
+  box-shadow:var(--shadow);margin-bottom:2rem;
+  overflow-x:auto;scrollbar-width:none;
+}
+.stats-bar::-webkit-scrollbar{display:none;}
+.stat-item{text-align:center;padding:0 2rem;flex-shrink:0;}
+.stat-num{font-size:1.6rem;font-weight:800;color:var(--gray-900);line-height:1;display:block;letter-spacing:-.02em;}
+.stat-label{font-size:.63rem;color:var(--text-light);text-transform:uppercase;letter-spacing:.1em;margin-top:.3rem;display:block;}
+.stat-item:hover .stat-num{color:var(--teal);}
+.stat-divider{width:1px;height:40px;background:var(--border);flex-shrink:0;}
 
-        .post img {
-            width: 100%;
-            border-radius: 10px;
-            margin-top: 10px;
-        }
-    </style>
-</head>
-<body>
+/* Profile Grid */
+.profile-grid{display:grid;grid-template-columns:290px 1fr;gap:1.5rem;align-items:start;}
 
-<div class="container">
+/* Left Panel */
+.left-panel{display:flex;flex-direction:column;gap:1.2rem;}
+.panel-card{background:white;border:1px solid var(--border);border-radius:18px;padding:1.4rem;box-shadow:var(--shadow);}
+.panel-card-title{font-size:.65rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--gray-400);margin-bottom:1rem;}
 
-    <!-- PROFILE -->
-    <div class="profile-card">
-        <img src="{{ profile.profile_picture.url }}" class="profile-img">
+.detail-row{display:flex;align-items:flex-start;gap:.75rem;padding:.55rem 0;border-bottom:1px solid var(--gray-100);}
+.detail-row:last-child{border-bottom:none;padding-bottom:0;}
+.detail-icon{width:30px;height:30px;border-radius:9px;background:var(--teal-pale);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.detail-icon svg{width:13px;height:13px;stroke:var(--teal);fill:none;stroke-width:2;}
+.detail-label{font-size:.63rem;color:var(--text-light);text-transform:uppercase;letter-spacing:.05em;}
+.detail-val{font-size:.82rem;font-weight:500;color:var(--gray-800);margin-top:1px;}
+.detail-val a{color:var(--teal);text-decoration:none;}
+.detail-val a:hover{text-decoration:underline;}
+.bio-text{font-size:.83rem;color:var(--text-soft);line-height:1.7;margin-bottom:1rem;}
 
+.tag-row{display:flex;flex-wrap:wrap;gap:.4rem;}
+.tag{display:inline-flex;align-items:center;gap:.28rem;background:var(--gray-100);border:1px solid var(--gray-200);color:var(--gray-700);font-size:.7rem;font-weight:500;padding:.28rem .7rem;border-radius:40px;}
+.tag.teal{background:var(--teal-pale);border-color:rgba(14,138,138,.2);color:var(--teal);}
+.tag svg{width:9px;height:9px;stroke:currentColor;fill:none;}
+
+.connect-btn{
+  display:flex;align-items:center;justify-content:center;gap:.5rem;
+  width:100%;padding:.72rem;border-radius:40px;
+  font-size:.82rem;font-weight:600;cursor:pointer;
+  font-family:'DM Sans',sans-serif;border:none;text-decoration:none;
+  transition:all .25s;margin-top:.6rem;
+}
+.connect-btn:first-child{margin-top:0;}
+.cb-buddy{background:linear-gradient(135deg,var(--teal),var(--teal-dark));color:white;box-shadow:0 4px 14px rgba(14,138,138,.3);}
+.cb-buddy:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(14,138,138,.4);color:white;}
+.cb-pending{background:var(--amber-pale);color:var(--amber);border:1px solid #fde68a;cursor:not-allowed;}
+.cb-accept{background:#10b981;color:white;box-shadow:0 4px 14px rgba(16,185,129,.3);}
+.cb-accept:hover{background:#059669;transform:translateY(-1px);}
+.cb-buddies{background:var(--green-pale);color:var(--green);border:1px solid #a7f3d0;cursor:default;}
+.cb-reject{background:var(--red-pale);color:var(--red);border:1px solid #fecaca;}
+.cb-reject:hover{background:#fee2e2;}
+.cb-msg{background:white;color:var(--teal);border:2px solid var(--teal);}
+.cb-msg:hover{background:var(--teal-pale);}
+.cb-msg-locked{background:var(--gray-100);color:var(--gray-400);border:1px solid var(--gray-200);cursor:not-allowed;}
+
+.mini-trip{display:flex;align-items:center;gap:.75rem;padding:.55rem 0;border-bottom:1px solid var(--gray-100);}
+.mini-trip:last-child{border-bottom:none;}
+.trip-dot{width:8px;height:8px;border-radius:50%;background:var(--teal);flex-shrink:0;}
+.trip-dest{font-size:.82rem;font-weight:600;color:var(--gray-800);}
+.trip-date{font-size:.7rem;color:var(--text-light);margin-top:1px;}
+
+/* Feed */
+.feed-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:.2rem;}
+.feed-header h3{font-family:'Playfair Display',serif;font-size:1.25rem;font-weight:600;color:var(--gray-900);}
+.feed-header span{font-size:.75rem;color:var(--text-light);}
+.feed-tabs{display:flex;gap:.3rem;background:var(--gray-100);padding:.3rem;border-radius:12px;margin-bottom:1.2rem;}
+.feed-tab{padding:.48rem 1.1rem;border-radius:9px;font-size:.76rem;font-weight:500;cursor:pointer;border:none;background:none;color:var(--text-light);font-family:'DM Sans',sans-serif;transition:all .2s;}
+.feed-tab.active{background:white;color:var(--gray-900);box-shadow:0 1px 6px rgba(0,0,0,.08);font-weight:600;}
+
+.posts-feed{display:flex;flex-direction:column;gap:1.3rem;}
+
+.post-card{background:white;border:1px solid var(--border);border-radius:18px;overflow:hidden;transition:box-shadow .25s;box-shadow:var(--shadow);}
+.post-card:hover{box-shadow:0 8px 30px rgba(0,0,0,.1);}
+.post-img-wrap{position:relative;max-height:400px;overflow:hidden;background:var(--gray-150);}
+.post-img-wrap img{width:100%;display:block;object-fit:cover;max-height:400px;}
+.post-img-location{
+  position:absolute;bottom:.75rem;left:.75rem;
+  background:rgba(0,0,0,.6);backdrop-filter:blur(6px);
+  color:white;font-size:.7rem;padding:.28rem .7rem;border-radius:40px;
+  display:flex;align-items:center;gap:.35rem;
+}
+.post-img-location svg{width:10px;stroke:white;fill:none;}
+
+.post-body{padding:1.1rem 1.4rem;}
+.post-header{display:flex;align-items:center;gap:.75rem;margin-bottom:.7rem;}
+.post-av{
+  width:38px;height:38px;border-radius:10px;
+  background:var(--teal-dark);overflow:hidden;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+  font-weight:700;color:white;font-size:.82rem;
+}
+.post-av img{width:100%;height:100%;object-fit:cover;}
+.post-author{font-size:.84rem;font-weight:600;color:var(--gray-900);}
+.post-time{font-size:.7rem;color:var(--text-light);margin-top:1px;}
+.post-caption{font-size:.86rem;color:var(--text-soft);line-height:1.65;}
+
+.post-actions-bar{
+  display:flex;align-items:center;gap:.3rem;
+  padding-top:.85rem;border-top:1px solid var(--gray-150);margin-top:.85rem;
+}
+.action-btn{
+  display:flex;align-items:center;gap:.4rem;
+  padding:.44rem .85rem;border-radius:40px;
+  font-size:.76rem;font-weight:500;cursor:pointer;
+  border:none;background:none;color:var(--text-light);
+  font-family:'DM Sans',sans-serif;transition:all .2s;text-decoration:none;
+}
+.action-btn svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:1.8;}
+.action-btn:hover{background:var(--gray-100);}
+.like-btn:hover{color:var(--rose);}
+.like-btn.liked{color:var(--rose);}
+.like-btn.liked svg{fill:var(--rose);stroke:var(--rose);}
+.comment-btn:hover{color:var(--teal);}
+.action-spacer{flex:1;}
+
+.comments-wrap{
+  background:var(--surface2);border-radius:12px;
+  padding:0;max-height:0;overflow:hidden;
+  transition:max-height .35s ease,padding .3s ease;
+  margin-top:.85rem;
+}
+.comments-wrap.open{max-height:600px;padding:1rem;border:1px solid var(--border);}
+.comment-list{margin-bottom:.85rem;}
+.comment-item{
+  display:flex;align-items:flex-start;gap:.55rem;
+  padding:.45rem 0;border-bottom:1px solid var(--gray-150);
+  font-size:.78rem;
+}
+.comment-item:last-child{border-bottom:none;}
+.comment-av{
+  width:28px;height:28px;border-radius:8px;
+  background:var(--teal-dark);display:flex;align-items:center;justify-content:center;
+  font-weight:700;color:white;font-size:.6rem;flex-shrink:0;overflow:hidden;
+}
+.comment-av img{width:100%;height:100%;object-fit:cover;}
+.comment-body{flex:1;min-width:0;}
+.comment-user{font-weight:700;color:var(--teal);text-decoration:none;font-size:.76rem;}
+.comment-user:hover{text-decoration:underline;}
+.comment-text{color:var(--text-soft);margin-left:.3rem;word-break:break-word;}
+.comment-time{font-size:.62rem;color:var(--text-light);margin-top:.15rem;}
+.comment-form{display:flex;gap:.5rem;margin-top:.65rem;}
+.comment-form input{
+  flex:1;padding:.55rem 1rem;border:1.5px solid var(--border);
+  border-radius:40px;font-size:.78rem;font-family:'DM Sans',sans-serif;
+  transition:border-color .2s;background:white;
+}
+.comment-form input:focus{outline:none;border-color:var(--teal);}
+.comment-form button{
+  padding:.52rem 1.2rem;background:var(--teal);color:white;
+  border:none;border-radius:40px;cursor:pointer;
+  font-family:'DM Sans',sans-serif;font-weight:600;font-size:.75rem;
+  transition:background .2s;
+}
+.comment-form button:hover{background:var(--teal-dark);}
+
+.trips-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:.8rem;margin-top:1rem;}
+.trip-card{background:var(--gray-100);border:1px solid var(--gray-200);border-radius:14px;padding:1rem;}
+.trip-dest-name{font-size:.88rem;font-weight:600;color:var(--gray-900);margin-bottom:.35rem;}
+.trip-dates-row{display:flex;align-items:center;gap:.4rem;font-size:.72rem;color:var(--text-light);}
+.trip-dates-row svg{width:12px;stroke:var(--gray-400);fill:none;}
+.trip-desc-mini{font-size:.75rem;color:var(--text-light);margin-top:.4rem;line-height:1.5;}
+
+.lock-card{
+  text-align:center;padding:4rem 2rem;
+  background:white;border:1.5px dashed var(--gray-300);
+  border-radius:18px;box-shadow:var(--shadow);
+}
+.lock-icon{font-size:2.8rem;opacity:.4;margin-bottom:1rem;display:block;}
+.lock-card h4{font-family:'Playfair Display',serif;font-size:1.15rem;color:var(--gray-700);margin-bottom:.5rem;}
+.lock-card p{font-size:.82rem;color:var(--text-light);max-width:300px;margin:0 auto 1.4rem;}
+.lock-cta{
+  display:inline-flex;align-items:center;gap:.5rem;
+  background:var(--teal);color:white;
+  padding:.65rem 1.4rem;border-radius:40px;
+  font-size:.8rem;font-weight:600;text-decoration:none;
+  font-family:'DM Sans',sans-serif;transition:background .2s;border:none;cursor:pointer;
+}
+.lock-cta:hover{background:var(--teal-dark);}
+
+@media(max-width:1024px){
+  .profile-grid{grid-template-columns:1fr;}
+  .trips-grid{grid-template-columns:1fr;}
+}
+@media(max-width:768px){
+  .cover-hero{height:360px;}
+  .profile-identity{padding:0 1.2rem 1.5rem;gap:1rem;flex-wrap:wrap;}
+  .profile-name-row h2{font-size:1.4rem;}
+  .profile-avatar-xl{width:80px;height:80px;font-size:1.8rem;border-radius:14px;}
+  .page-body{padding:0 1rem 3rem;}
+  .stats-bar .stat-item{padding:0 1rem;}
+}
+
+@keyframes fadeUp{from{opacity:0;transform:translateY(14px);}to{opacity:1;transform:translateY(0);}}
+.panel-card{animation:fadeUp .4s ease both;}
+.post-card{animation:fadeUp .4s ease both;}
+.stats-bar{animation:fadeUp .35s ease both;}
+</style>
+{% endblock %}
+
+{% block topbar_title %}{{ profile_user.get_full_name|default:profile_user.username }}{% endblock %}
+{% block topbar_subtitle %}Traveller profile &amp; posts{% endblock %}
+
+{% block content %}
+
+<!-- COVER HERO -->
+<div class="cover-hero">
+  <div class="cover-bg" style="background-image:url('{% if profile.cover_image %}{{ profile.cover_image.url }}{% else %}https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1600&h=600&fit=crop{% endif %}');"></div>
+  <div class="cover-fade"></div>
+
+  <div class="profile-identity">
+    <div class="profile-avatar-xl">
+      {% if profile.user.profile_picture %}
+        <img src="{{ profile.user.profile_picture.url }}" alt="{{ profile_user.get_full_name }}">
+      {% else %}
+        {{ profile_user.first_name|first|upper }}{{ profile_user.last_name|first|upper }}
+      {% endif %}
+    </div>
+
+    <div class="profile-identity-info">
+      <div class="profile-name-row">
         <h2>{{ profile_user.get_full_name|default:profile_user.username }}</h2>
-        <p>{{ profile.bio }}</p>
-
-        <div class="stats">
-            <div><strong>{{ posts|length }}</strong><br>Posts</div>
-            <div><strong>{{ followers_count }}</strong><br>Followers</div>
-            <div><strong>{{ following_count }}</strong><br>Following</div>
-        </div>
-
-        <!-- FOLLOW BUTTON -->
-        {% if is_following %}
-            <a href="{% url 'travellers:toggle_follow' profile_user.id %}" class="btn unfollow">
-                Unfollow
-            </a>
-        {% else %}
-            <a href="{% url 'travellers:toggle_follow' profile_user.id %}" class="btn follow">
-                Follow
-            </a>
+        <span class="explorer-badge">
+          <svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+          Explorer
+        </span>
+        {% if buddy_status == "accepted" %}
+        <span class="explorer-badge" style="background:rgba(22,163,74,.25);border-color:rgba(134,239,172,.35);color:#86efac;">✓ Buddies</span>
         {% endif %}
+      </div>
+      <p class="profile-tagline">
+        {% if profile.city %}{{ profile.city }}{% if profile.country %}, {{ profile.country }}{% endif %} &nbsp;·&nbsp; {% endif %}
+        Member since {{ profile.created_at|date:"F Y" }}
+        {% if profile.bio %}&nbsp;·&nbsp; {{ profile.bio|truncatechars:50 }}{% endif %}
+      </p>
     </div>
 
-    <!-- POSTS -->
-    <div class="posts">
-        <h3>Posts</h3>
+    <div class="profile-identity-actions">
+      {% if buddy_status == "none" %}
+        <form method="POST" action="{% url 'travellers:send_buddy_request' profile_user.id %}" style="display:inline;">
+          {% csrf_token %}
+          <button type="submit" class="hero-action-btn btn-buddy-hero">
+            <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            Buddy Up
+          </button>
+        </form>
+      {% elif buddy_status == "pending_sent" %}
+        <button class="hero-action-btn btn-pending-hero" disabled>⏳ Request Sent</button>
+      {% elif buddy_status == "pending_received" %}
+        <form method="POST" action="{% url 'travellers:accept_buddy_request' buddy_request.id %}" style="display:inline;">
+          {% csrf_token %}
+          <button type="submit" class="hero-action-btn btn-accept-hero">✅ Accept Request</button>
+        </form>
+        <form method="POST" action="{% url 'travellers:reject_buddy_request' buddy_request.id %}" style="display:inline;">
+          {% csrf_token %}
+          <button type="submit" class="hero-action-btn btn-ghost-hero">✗ Decline</button>
+        </form>
+      {% elif buddy_status == "accepted" %}
+        <button class="hero-action-btn btn-buddies-hero" disabled>✓ You're Buddies!</button>
+      {% endif %}
 
-        {% for post in posts %}
-            <div class="post">
-                <p>{{ post.caption }}</p>
-
-                {% if post.image %}
-                    <img src="{{ post.image.url }}">
-                {% endif %}
-
-                <p>❤️ {{ post.likes.count }} Likes</p>
-            </div>
-        {% empty %}
-            <p>No posts yet.</p>
-        {% endfor %}
+      {% if buddy_status == "accepted" %}
+        <a href="{% url 'travellers:inbox' %}?user_id={{ profile_user.id }}" class="hero-action-btn btn-msg-ghost">💬 Message</a>
+      {% else %}
+        <button class="hero-action-btn btn-msg-locked" disabled title="Become buddies first">💬 Message</button>
+      {% endif %}
     </div>
-
+  </div>
 </div>
 
-</body>
-</html>
+<!-- PAGE BODY -->
+<div class="page-body">
+
+  {% if messages %}{% for message in messages %}
+  <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+  {% endfor %}{% endif %}
+
+  <div class="stats-bar">
+    <div class="stat-item"><span class="stat-num">{{ posts_count|default:0 }}</span><span class="stat-label">Posts</span></div>
+    <div class="stat-divider"></div>
+    <div class="stat-item"><span class="stat-num">{{ trips_count|default:0 }}</span><span class="stat-label">Trips</span></div>
+    <div class="stat-divider"></div>
+    <div class="stat-item"><span class="stat-num">{{ followers_count|default:0 }}</span><span class="stat-label">Followers</span></div>
+    <div class="stat-divider"></div>
+    <div class="stat-item"><span class="stat-num">{{ following_count|default:0 }}</span><span class="stat-label">Following</span></div>
+  </div>
+
+  <div class="profile-grid">
+
+    <!-- LEFT PANEL -->
+    <div class="left-panel">
+      <div class="panel-card">
+        <div class="panel-card-title">About</div>
+        {% if profile.bio %}<p class="bio-text">{{ profile.bio }}</p>{% endif %}
+        {% if profile.first_name %}
+        <div class="detail-row">
+          <div class="detail-icon"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
+          <div><div class="detail-label">Full Name</div><div class="detail-val">{{ profile.first_name }} {{ profile.last_name }}</div></div>
+        </div>
+        {% endif %}
+        {% if profile.city or profile.country %}
+        <div class="detail-row">
+          <div class="detail-icon"><svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg></div>
+          <div><div class="detail-label">Location</div><div class="detail-val">{{ profile.city }}{% if profile.city and profile.country %}, {% endif %}{{ profile.country }}</div></div>
+        </div>
+        {% endif %}
+        <div class="detail-row">
+          <div class="detail-icon"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div>
+          <div><div class="detail-label">Member Since</div><div class="detail-val">{{ profile.created_at|date:"F Y" }}</div></div>
+        </div>
+        {% if buddy_status == "accepted" and profile.user.email %}
+        <div class="detail-row">
+          <div class="detail-icon"><svg viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg></div>
+          <div><div class="detail-label">Email</div><div class="detail-val"><a href="mailto:{{ profile.user.email }}">{{ profile.user.email }}</a></div></div>
+        </div>
+        {% endif %}
+      </div>
+
+      <div class="panel-card">
+        <div class="panel-card-title">Connect</div>
+        {% if buddy_status == "none" %}
+          <form method="POST" action="{% url 'travellers:send_buddy_request' profile_user.id %}">
+            {% csrf_token %}
+            <button type="submit" class="connect-btn cb-buddy">🤝 Buddy Up</button>
+          </form>
+        {% elif buddy_status == "pending_sent" %}
+          <button class="connect-btn cb-pending" disabled>⏳ Request Sent</button>
+        {% elif buddy_status == "pending_received" %}
+          <form method="POST" action="{% url 'travellers:accept_buddy_request' buddy_request.id %}">
+            {% csrf_token %}
+            <button type="submit" class="connect-btn cb-accept">✅ Accept Buddy Request</button>
+          </form>
+          <form method="POST" action="{% url 'travellers:reject_buddy_request' buddy_request.id %}" style="margin-top:.5rem;">
+            {% csrf_token %}
+            <button type="submit" class="connect-btn cb-reject" style="margin-top:.5rem;">❌ Reject Request</button>
+          </form>
+        {% elif buddy_status == "accepted" %}
+          <button class="connect-btn cb-buddies" disabled>✅ You're Buddies!</button>
+        {% endif %}
+
+        {% if buddy_status == "accepted" %}
+          <a href="{% url 'travellers:inbox' %}?user_id={{ profile_user.id }}" class="connect-btn cb-msg" style="margin-top:.55rem;">💬 Send Message</a>
+        {% else %}
+          <button class="connect-btn cb-msg-locked" disabled style="margin-top:.55rem;">💬 Message (Become buddies first)</button>
+        {% endif %}
+      </div>
+
+      <div class="panel-card">
+        <div class="panel-card-title">Traveller Type</div>
+        <div class="tag-row">
+          <span class="tag teal"><svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>Explorer</span>
+          <span class="tag">Adventure</span>
+          <span class="tag">Culture</span>
+          {% if trips_count > 2 %}<span class="tag teal">Frequent Traveller</span>{% endif %}
+          {% if buddy_status == "accepted" %}<span class="tag teal">Your Buddy</span>{% endif %}
+        </div>
+      </div>
+
+      {% if buddy_status == "accepted" and trips %}
+      <div class="panel-card">
+        <div class="panel-card-title">Recent Trips</div>
+        {% for trip in trips|slice:":5" %}
+        <div class="mini-trip">
+          <div class="trip-dot"></div>
+          <div><div class="trip-dest">{{ trip.destination }}</div><div class="trip-date">{{ trip.start_date|date:"M Y" }} — {{ trip.end_date|date:"M Y" }}</div></div>
+        </div>
+        {% endfor %}
+        {% if trips_count > 5 %}
+        <a href="#feed-trips" onclick="switchFeed('trips', document.getElementById('tab-trips'))" style="font-size:.74rem;color:var(--teal);text-decoration:none;display:block;margin-top:.7rem;">View all trips →</a>
+        {% endif %}
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- FEED -->
+    <div>
+      <div class="feed-header">
+        <h3>✈️ Travel Posts</h3>
+        {% if buddy_status == "accepted" %}<span>{{ posts_count|default:0 }} post{{ posts_count|default:0|pluralize }}</span>{% endif %}
+      </div>
+
+      {% if buddy_status == "accepted" %}
+      <div class="feed-tabs">
+        <button class="feed-tab active" id="tab-posts" onclick="switchFeed('posts', this)">Posts</button>
+        {% if trips %}<button class="feed-tab" id="tab-trips" onclick="switchFeed('trips', this)">Trips</button>{% endif %}
+      </div>
+      {% endif %}
+
+      <div class="posts-feed" id="feed-posts">
+        {% if buddy_status == "accepted" %}
+          {% for post in posts %}
+          <div class="post-card" id="post-{{ post.id }}">
+            {% if post.image %}
+            <div class="post-img-wrap">
+              <img src="{{ post.image.url }}" alt="Travel photo by {{ profile_user.get_full_name }}">
+              {% if post.location %}
+              <div class="post-img-location">
+                <svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                {{ post.location }}
+              </div>
+              {% endif %}
+            </div>
+            {% endif %}
+            <div class="post-body">
+              <div class="post-header">
+                <div class="post-av">{% if profile.user.profile_picture %}<img src="{{ profile.user.profile_picture.url }}" alt="">{% else %}{{ profile_user.username|first|upper }}{% endif %}</div>
+                <div><div class="post-author">{{ profile_user.get_full_name|default:profile_user.username }}</div><div class="post-time">{{ post.created_at|date:"M d, Y" }}</div></div>
+              </div>
+              <p class="post-caption">{{ post.caption }}</p>
+              <div class="post-actions-bar">
+                <button class="action-btn like-btn {% if request.user in post.likes.all %}liked{% endif %}" onclick="likePost({{ post.id }}, this)">
+                  <svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+                  <span class="like-count">{{ post.likes.count }}</span>
+                </button>
+                <button class="action-btn comment-btn" onclick="toggleComments({{ post.id }}, this)">
+                  <svg viewBox="0 0 24 24"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+                  <span class="comment-count">{{ post.comments.count }}</span>
+                </button>
+                <div class="action-spacer"></div>
+                <span style="font-size:.7rem;color:var(--text-light);padding:.44rem .6rem;">{{ post.created_at|date:"M d" }}</span>
+              </div>
+              <div class="comments-wrap" id="comments-{{ post.id }}">
+                <div class="comment-list" id="comment-list-{{ post.id }}">
+                  {% for comment in post.comments.all %}
+                  <div class="comment-item">
+                    <div class="comment-av">{% if comment.user.profile_picture %}<img src="{{ comment.user.profile_picture.url }}" alt="">{% else %}{{ comment.user.username|first|upper }}{% endif %}</div>
+                    <div class="comment-body"><div><a href="{% url 'travellers:public_profile' comment.user.id %}" class="comment-user">{{ comment.user.username }}</a><span class="comment-text">{{ comment.text }}</span></div><div class="comment-time">{{ comment.created_at|timesince }} ago</div></div>
+                  </div>
+                  {% empty %}
+                  <div style="font-size:.78rem;color:var(--text-light);font-style:italic;padding:.3rem 0;">No comments yet — be the first!</div>
+                  {% endfor %}
+                </div>
+                <form class="comment-form" onsubmit="event.preventDefault();addComment({{ post.id }},this);">
+                  {% csrf_token %}
+                  <input type="text" name="text" placeholder="Add a comment…" required>
+                  <button type="submit">Post</button>
+                </form>
+              </div>
+            </div>
+          </div>
+          {% empty %}
+          <div class="lock-card"><span class="lock-icon">📸</span><h4>No posts yet</h4><p>{{ profile_user.first_name }} hasn't shared any travel stories yet. Check back later!</p></div>
+          {% endfor %}
+        {% elif buddy_status == "pending_sent" %}
+          <div class="lock-card"><span class="lock-icon">⏳</span><h4>Request Pending</h4><p>Waiting for {{ profile_user.first_name }} to accept your buddy request. Posts will appear once you're connected.</p></div>
+        {% elif buddy_status == "pending_received" %}
+          <div class="lock-card"><span class="lock-icon">🔔</span><h4>Buddy Request Received</h4><p>{{ profile_user.first_name }} wants to connect! Accept their buddy request above to see their travel posts.</p>
+          <form method="POST" action="{% url 'travellers:accept_buddy_request' buddy_request.id %}">{% csrf_token %}<button type="submit" class="lock-cta">✅ Accept &amp; View Posts</button></form></div>
+        {% else %}
+          <div class="lock-card"><span class="lock-icon">🔒</span><h4>Private Profile</h4><p>Send a buddy request to {{ profile_user.first_name|default:"this traveller" }} to view their travel stories and connect.</p>
+          <form method="POST" action="{% url 'travellers:send_buddy_request' profile_user.id %}">{% csrf_token %}<button type="submit" class="lock-cta">🤝 Send Buddy Request</button></form></div>
+        {% endif %}
+      </div>
+
+      {% if buddy_status == "accepted" and trips %}
+      <div id="feed-trips" style="display:none;">
+        <div class="panel-card"><div class="panel-card-title" style="margin-bottom:0;">All Trips by {{ profile_user.first_name }}</div>
+        <div class="trips-grid">{% for trip in trips %}<div class="trip-card"><div class="trip-dest-name">{{ trip.destination }}</div><div class="trip-dates-row"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>{{ trip.start_date|date:"M d, Y" }} — {{ trip.end_date|date:"M d, Y" }}</div>{% if trip.description %}<p class="trip-desc-mini">{{ trip.description|truncatewords:18 }}</p>{% endif %}</div>{% endfor %}</div></div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<script>
+const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value || document.cookie.split(';').find(r=>r.trim().startsWith('csrftoken='))?.split('=')[1];
+
+// Notification Functions
+let notifOpen = false;
+function toggleNotifDropdown(){
+  const dropdown = document.getElementById('notifDropdown');
+  notifOpen = !notifOpen;
+  dropdown.classList.toggle('show', notifOpen);
+  if(notifOpen) loadNotifications();
+}
+
+function loadNotifications(){
+  const list = document.getElementById('notifList');
+  list.innerHTML = '<div class="notif-empty">Loading…</div>';
+  fetch('/community/api/recent-notifications/')
+    .then(r=>r.json())
+    .then(data=>{
+      if(!data.notifications?.length) { list.innerHTML = '<div class="notif-empty">🔔 You\'re all caught up!</div>'; return; }
+      list.innerHTML = data.notifications.map(n=>{
+        const initials = (n.sender_name||'?')[0].toUpperCase();
+        let actions = '';
+        if(n.type==='buddy_request' && n.buddy_request_id){
+          actions = `<div class="notif-actions"><button class="notif-action-btn notif-action-accept" onclick="acceptBuddy(${n.buddy_request_id},${n.id},this)">✓ Accept</button><button class="notif-action-btn notif-action-reject" onclick="rejectBuddy(${n.buddy_request_id},${n.id},this)">✕ Reject</button></div>`;
+        }
+        return `<div class="notif-item ${n.is_read?'':'unread'}" onclick="markRead(${n.id},this)"><div class="notif-av">${n.sender_avatar?`<img src="${n.sender_avatar}" alt="">`:initials}</div><div class="notif-body"><div class="notif-msg">${escapeHtml(n.message)}</div><div class="notif-time">${timeAgo(n.created_at)}</div>${actions}</div>${!n.is_read?'<div class="notif-unread-dot"></div>':''}</div>`;
+      }).join('');
+    })
+    .catch(()=>{ list.innerHTML='<div class="notif-empty">Could not load notifications.</div>'; });
+}
+
+function markRead(id, el){
+  if(!el.classList.contains('unread')) return;
+  el.classList.remove('unread');
+  const dot = el.querySelector('.notif-unread-dot');
+  if(dot) dot.remove();
+  fetch(`/community/notification/mark-read/${id}/`,{method:'POST',headers:{'X-CSRFToken':csrfToken}});
+}
+
+function acceptBuddy(buddyId, notifId, btn){
+  btn.disabled=true; btn.textContent='…';
+  fetch(`/travellers/buddy/accept/${buddyId}/`,{method:'POST',headers:{'X-CSRFToken':csrfToken}})
+    .then(r=>{ if(r.ok){ markRead(notifId,btn.closest('.notif-item')); btn.closest('.notif-actions').innerHTML='<span style="font-size:.72rem;color:var(--green);font-weight:600;">✅ Accepted</span>'; showToast('Buddy request accepted!','success'); setTimeout(()=>location.reload(),800); } })
+    .catch(()=>showToast('Error','error'));
+}
+
+function rejectBuddy(buddyId, notifId, btn){
+  btn.disabled=true; btn.textContent='…';
+  fetch(`/travellers/buddy/reject/${buddyId}/`,{method:'POST',headers:{'X-CSRFToken':csrfToken}})
+    .then(r=>{ if(r.ok){ markRead(notifId,btn.closest('.notif-item')); btn.closest('.notif-actions').innerHTML='<span style="font-size:.72rem;color:var(--muted);">Rejected</span>'; showToast('Request rejected','info'); } })
+    .catch(()=>showToast('Error','error'));
+}
+
+function timeAgo(dateStr){
+  const diff = Date.now()-new Date(dateStr);
+  const m = Math.floor(diff/60000);
+  if(m<1) return 'Just now';
+  if(m<60) return `${m}m ago`;
+  const h = Math.floor(m/60);
+  if(h<24) return `${h}h ago`;
+  return `${Math.floor(h/24)}d ago`;
+}
+
+function escapeHtml(text) { const div = document.createElement('div'); div.textContent = text; return div.innerHTML; }
+
+document.addEventListener('click', e=>{
+  const wrap = document.querySelector('.notif-wrap');
+  if(notifOpen && wrap && !wrap.contains(e.target)){
+    notifOpen=false;
+    document.getElementById('notifDropdown')?.classList.remove('show');
+  }
+});
+
+// Feed Functions
+function switchFeed(tab, btn){
+  document.querySelectorAll('.feed-tab').forEach(b=>b.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  const postsDiv = document.getElementById('feed-posts');
+  const tripsDiv = document.getElementById('feed-trips');
+  if(postsDiv) postsDiv.style.display = tab==='posts' ? 'flex' : 'none';
+  if(tripsDiv) tripsDiv.style.display = tab==='trips' ? 'block' : 'none';
+}
+
+function toggleComments(postId, btn){
+  const panel = document.getElementById('comments-'+postId);
+  if(!panel) return;
+  panel.classList.toggle('open');
+  if(btn) btn.style.color = panel.classList.contains('open') ? 'var(--teal)' : '';
+}
+
+function likePost(postId, btn){
+  const countEl = btn.querySelector('.like-count');
+  const wasLiked = btn.classList.contains('liked');
+  btn.classList.toggle('liked');
+  countEl.textContent = parseInt(countEl.textContent) + (wasLiked ? -1 : 1);
+  fetch(`/traveller/like-profile-post/${postId}/`,{method:'POST',headers:{'X-CSRFToken':csrfToken,'X-Requested-With':'XMLHttpRequest'}})
+    .then(r=>r.json())
+    .then(data=>{
+      if(data.success){
+        if(data.liked) btn.classList.add('liked'); else btn.classList.remove('liked');
+        countEl.textContent = data.likes_count;
+      } else { btn.classList.toggle('liked'); countEl.textContent = parseInt(countEl.textContent) + (wasLiked ? 1 : -1); }
+    })
+    .catch(()=>{ btn.classList.toggle('liked'); countEl.textContent = parseInt(countEl.textContent) + (wasLiked ? 1 : -1); });
+}
+
+async function addComment(postId, form){
+  const input = form.querySelector('input[name="text"]');
+  const text = input.value.trim();
+  if(!text) return;
+  const btn = form.querySelector('button');
+  btn.disabled=true; btn.textContent='…';
+  try{
+    const fd = new FormData(); fd.append('text', text);
+    const res = await fetch(`/traveller/comment-profile-post/${postId}/`,{method:'POST',headers:{'X-CSRFToken':csrfToken,'X-Requested-With':'XMLHttpRequest'},body:fd});
+    const data = await res.json();
+    if(data.success){
+      input.value='';
+      const list = document.getElementById('comment-list-'+postId);
+      const div = document.createElement('div');
+      div.className='comment-item';
+      div.innerHTML=`<div class="comment-av">${escapeHtml(data.username[0].toUpperCase())}</div><div class="comment-body"><div><a href="/traveller/public-profile/${data.user_id}/" class="comment-user">${escapeHtml(data.username)}</a><span class="comment-text">${escapeHtml(data.text)}</span></div><div class="comment-time">Just now</div></div>`;
+      list.appendChild(div);
+      const countEl = document.querySelector(`#post-${postId} .comment-count`);
+      if(countEl) countEl.textContent = data.comments_count;
+      showToast('Comment posted!','success');
+    } else { showToast(data.error||'Error','error'); }
+  } catch(e){ showToast('Network error','error'); }
+  finally{ btn.disabled=false; btn.textContent='Post'; }
+}
+
+function showToast(msg, type){
+  document.querySelectorAll('.wayzo-toast').forEach(t=>t.remove());
+  const colors = {success:'#10b981', error:'#ef4444', info:'#3b82f6'};
+  const t = document.createElement('div');
+  t.className = 'wayzo-toast';
+  t.style.cssText = `position:fixed;bottom:24px;right:24px;background:${colors[type]||colors.success};color:white;padding:12px 20px;border-radius:12px;font-size:.84rem;z-index:9999;box-shadow:0 4px 20px rgba(0,0,0,.18);animation:fadeUp .3s ease;font-family:'DM Sans',sans-serif;font-weight:500;`;
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(()=>t.remove(),3000);
+}
+</script>
+
+{% endblock %}

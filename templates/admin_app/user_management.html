@@ -1,0 +1,762 @@
+{% extends "admin_app/base.html" %}
+{% load static %}
+
+{% block title %}User Management | Wayzo Admin{% endblock %}
+
+{% block topbar_title %}User Management{% endblock %}
+{% block topbar_subtitle %}Manage and monitor all platform users{% endblock %}
+
+{% block extra_styles %}
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap');
+
+  /* ── PAGE HEADER ── */
+  .page-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1.5rem;
+    margin-bottom: 1.75rem;
+    flex-wrap: wrap;
+  }
+  .page-breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.72rem;
+    color: #9CA3AF;
+    margin-bottom: 0.5rem;
+    font-family: 'DM Sans', sans-serif;
+  }
+  .page-breadcrumb a { color: #9CA3AF; text-decoration: none; }
+  .page-breadcrumb a:hover { color: #0E8A8A; }
+  .page-breadcrumb i { font-size: 0.55rem; }
+  .page-title {
+    font-family: 'Inter', sans-serif;
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: #111827;
+    letter-spacing: -0.025em;
+    margin-bottom: 0.2rem;
+  }
+  .page-desc {
+    font-size: 0.8rem;
+    color: #6B7280;
+    font-family: 'DM Sans', sans-serif;
+  }
+  .live-pill {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.72rem;
+    color: #9CA3AF;
+    font-family: 'DM Sans', sans-serif;
+    padding: 0.4rem 0.85rem;
+    background: #F9FAFB;
+    border: 1px solid #E5E7EB;
+    border-radius: 8px;
+    align-self: flex-end;
+    margin-bottom: 0.2rem;
+    white-space: nowrap;
+  }
+
+  /* ── STAT CARDS ── */
+  .stat-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1rem;
+    margin-bottom: 1.75rem;
+  }
+  .stat-card {
+    background: #ffffff;
+    border: 1px solid #E5E7EB;
+    border-radius: 12px;
+    padding: 1.1rem 1.3rem;
+    display: flex;
+    align-items: center;
+    gap: 0.9rem;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+    transition: box-shadow 0.2s, transform 0.2s;
+    position: relative;
+    overflow: hidden;
+    cursor: pointer;
+    text-decoration: none;
+  }
+  .stat-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.08); transform: translateY(-1px); }
+  .stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    border-radius: 12px 12px 0 0;
+  }
+  .stat-card.teal::before   { background: #0E8A8A; }
+  .stat-card.amber::before  { background: #D97706; }
+  .stat-card.indigo::before { background: #4F46E5; }
+  .stat-card.green::before  { background: #059669; }
+  .stat-card.rose::before   { background: #E11D48; }
+  .stat-icon-wrap {
+    width: 40px; height: 40px;
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .stat-icon-wrap.teal   { background: #F0FAFA; color: #0E8A8A; }
+  .stat-icon-wrap.amber  { background: #FFFBEB; color: #D97706; }
+  .stat-icon-wrap.indigo { background: #EEF2FF; color: #4F46E5; }
+  .stat-icon-wrap.green  { background: #F0FDF4; color: #059669; }
+  .stat-icon-wrap.rose   { background: #FFF1F2; color: #E11D48; }
+  .stat-icon-wrap i { font-size: 1rem; }
+  .stat-val {
+    font-family: 'Inter', sans-serif;
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: #111827;
+    line-height: 1;
+    letter-spacing: -0.03em;
+    margin-bottom: 0.18rem;
+  }
+  .stat-lbl {
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: #6B7280;
+    font-family: 'DM Sans', sans-serif;
+  }
+
+  /* ── FILTER PANEL ── */
+  .filter-panel {
+    background: #ffffff;
+    border: 1px solid #E5E7EB;
+    border-radius: 12px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+    margin-bottom: 1.25rem;
+    overflow: hidden;
+  }
+  .filter-panel-header {
+    padding: 0.85rem 1.4rem;
+    border-bottom: 1px solid #F3F4F6;
+    background: #FAFAFA;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .filter-panel-title {
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: #374151;
+    font-family: 'Inter', sans-serif;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .filter-panel-title i { color: #0E8A8A; font-size: 0.78rem; }
+
+  /* quick role chips */
+  .quick-chips {
+    display: flex;
+    gap: 0.4rem;
+    flex-wrap: wrap;
+    padding: 0.85rem 1.4rem;
+    border-bottom: 1px solid #F3F4F6;
+  }
+  .quick-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.32rem 0.85rem;
+    border-radius: 99px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-decoration: none;
+    background: #F3F4F6;
+    color: #6B7280;
+    border: 1px solid #E5E7EB;
+    font-family: 'DM Sans', sans-serif;
+    transition: all 0.15s;
+  }
+  .quick-chip i { font-size: 0.6rem; }
+  .quick-chip:hover { background: #E6F4F4; color: #0E8A8A; border-color: #0E8A8A; }
+  .quick-chip.active { background: #0E8A8A; color: white; border-color: #0E8A8A; }
+
+  .filter-body { padding: 1.2rem 1.4rem; }
+  .filter-grid {
+    display: grid;
+    grid-template-columns: 1.8fr 1fr 1fr 1fr 1fr auto;
+    gap: 1rem;
+    align-items: end;
+  }
+  .filter-field { display: flex; flex-direction: column; gap: 0.4rem; }
+  .filter-label {
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: #9CA3AF;
+    font-family: 'DM Sans', sans-serif;
+  }
+  .filter-input,
+  .filter-select {
+    padding: 0.55rem 0.85rem;
+    border: 1px solid #E5E7EB;
+    border-radius: 8px;
+    font-size: 0.8rem;
+    font-family: 'DM Sans', sans-serif;
+    color: #374151;
+    background: #FAFAFA;
+    transition: all 0.15s;
+    width: 100%;
+  }
+  .filter-input:focus, .filter-select:focus {
+    outline: none;
+    border-color: #0E8A8A;
+    background: white;
+    box-shadow: 0 0 0 3px rgba(14,138,138,0.08);
+  }
+  .filter-actions-group { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+  .btn-apply {
+    display: inline-flex; align-items: center; gap: 0.3rem;
+    padding: 0.55rem 1.1rem; border-radius: 8px;
+    font-size: 0.78rem; font-weight: 600;
+    background: #0E8A8A; color: white; border: none;
+    cursor: pointer; font-family: 'DM Sans', sans-serif;
+    transition: all 0.15s; white-space: nowrap;
+  }
+  .btn-apply:hover { background: #0A6B6B; }
+  .btn-clear-f {
+    display: inline-flex; align-items: center; gap: 0.3rem;
+    padding: 0.55rem 1rem; border-radius: 8px;
+    font-size: 0.78rem; font-weight: 600;
+    background: #F3F4F6; color: #6B7280; border: 1px solid #E5E7EB;
+    text-decoration: none; font-family: 'DM Sans', sans-serif;
+    transition: all 0.15s; white-space: nowrap;
+  }
+  .btn-clear-f:hover { background: #E5E7EB; color: #374151; }
+
+  /* active filter tags */
+  .active-filters {
+    display: flex; align-items: center; gap: 0.5rem;
+    flex-wrap: wrap; padding: 0.75rem 1.4rem;
+    border-top: 1px solid #F3F4F6; background: #FFFBEB;
+  }
+  .af-label {
+    font-size: 0.68rem; font-weight: 700; color: #92400E;
+    font-family: 'DM Sans', sans-serif;
+    text-transform: uppercase; letter-spacing: 0.06em;
+  }
+  .af-tag {
+    display: inline-flex; align-items: center; gap: 0.3rem;
+    padding: 0.2rem 0.6rem; background: #FEF3C7; color: #92400E;
+    border: 1px solid #FDE68A; border-radius: 99px;
+    font-size: 0.68rem; font-weight: 600; font-family: 'DM Sans', sans-serif;
+  }
+
+  /* ── TABLE PANEL ── */
+  .table-panel {
+    background: #ffffff;
+    border: 1px solid #E5E7EB;
+    border-radius: 12px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+    overflow: hidden;
+  }
+  .table-panel-header {
+    padding: 0.9rem 1.4rem;
+    border-bottom: 1px solid #F3F4F6;
+    background: #FAFAFA;
+    display: flex; align-items: center;
+    justify-content: space-between; gap: 1rem; flex-wrap: wrap;
+  }
+  .table-panel-title {
+    display: flex; align-items: center; gap: 0.6rem;
+    font-size: 0.82rem; font-weight: 700;
+    color: #374151; font-family: 'Inter', sans-serif;
+  }
+  .teal-dot { width: 8px; height: 8px; border-radius: 50%; background: #0E8A8A; flex-shrink: 0; }
+  .result-tag {
+    font-size: 0.65rem; font-weight: 700;
+    padding: 0.18rem 0.55rem; border-radius: 99px;
+    background: #E6F4F4; color: #0E8A8A;
+    font-family: 'DM Sans', sans-serif;
+  }
+
+  /* ── USER TABLE ── */
+  .user-table { width: 100%; border-collapse: collapse; min-width: 1000px; }
+  .user-table thead th {
+    padding: 0.6rem 1.1rem;
+    text-align: left;
+    font-size: 0.68rem; font-weight: 700;
+    color: #9CA3AF; text-transform: uppercase;
+    letter-spacing: 0.07em;
+    background: #F9FAFB;
+    border-bottom: 1px solid #F3F4F6;
+    font-family: 'DM Sans', sans-serif;
+    white-space: nowrap;
+  }
+  .user-table tbody td {
+    padding: 0.85rem 1.1rem;
+    font-size: 0.81rem; color: #374151;
+    border-bottom: 1px solid #F9FAFB;
+    vertical-align: middle;
+    font-family: 'DM Sans', sans-serif;
+  }
+  .user-table tbody tr:last-child td { border-bottom: none; }
+  .user-table tbody tr { transition: background 0.12s; }
+  .user-table tbody tr:hover { background: #FAFBFC; }
+
+  /* user cell */
+  .user-cell { display: flex; align-items: center; gap: 0.65rem; }
+  .u-avatar {
+    width: 34px; height: 34px; border-radius: 50%;
+    background: linear-gradient(135deg, #0E8A8A, #1aafaf);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.62rem; font-weight: 700; color: white;
+    flex-shrink: 0; overflow: hidden; font-family: 'Inter', sans-serif;
+  }
+  .u-avatar img { width: 100%; height: 100%; object-fit: cover; }
+  .u-name { font-weight: 600; color: #111827; font-size: 0.82rem; }
+  .u-handle { font-size: 0.67rem; color: #9CA3AF; }
+
+  /* role tag */
+  .role-tag {
+    display: inline-flex; align-items: center; gap: 0.28rem;
+    padding: 0.2rem 0.6rem; border-radius: 99px;
+    font-size: 0.65rem; font-weight: 700;
+    font-family: 'DM Sans', sans-serif; white-space: nowrap;
+  }
+  .role-tag i { font-size: 0.58rem; }
+  .role-tag.traveller  { background: #D1FAE5; color: #065F46; }
+  .role-tag.agency     { background: #EEF2FF; color: #3730A3; }
+  .role-tag.restaurant { background: #FEF3C7; color: #92400E; }
+
+  /* verified / status */
+  .v-tag {
+    display: inline-flex; align-items: center; gap: 0.28rem;
+    font-size: 0.7rem; font-weight: 600;
+    font-family: 'DM Sans', sans-serif;
+  }
+  .v-tag i { font-size: 0.6rem; }
+  .v-tag.yes { color: #059669; }
+  .v-tag.no  { color: #9CA3AF; }
+  .s-tag {
+    display: inline-flex; align-items: center; gap: 0.28rem;
+    font-size: 0.7rem; font-weight: 600;
+    font-family: 'DM Sans', sans-serif;
+  }
+  .s-tag i { font-size: 0.45rem; }
+  .s-tag.active   { color: #059669; }
+  .s-tag.inactive { color: #E11D48; }
+
+  /* number cells */
+  .num-cell {
+    font-family: 'Inter', sans-serif;
+    font-size: 0.85rem; font-weight: 700;
+    color: #0E8A8A;
+  }
+  .num-cell.zero { color: #D1D5DB; }
+
+  /* date cell */
+  .date-cell { font-size: 0.72rem; color: #9CA3AF; white-space: nowrap; }
+  .date-cell.never { color: #D1D5DB; }
+
+  /* email */
+  .email-cell {
+    font-size: 0.78rem; color: #6B7280;
+    max-width: 180px; overflow: hidden;
+    text-overflow: ellipsis; white-space: nowrap;
+  }
+
+  /* view btn */
+  .btn-view-user {
+    display: inline-flex; align-items: center; gap: 0.3rem;
+    padding: 0.38rem 0.85rem; border-radius: 7px;
+    font-size: 0.72rem; font-weight: 600;
+    background: #F0FAFA; color: #0E8A8A;
+    border: 1px solid rgba(14,138,138,0.2);
+    text-decoration: none;
+    font-family: 'DM Sans', sans-serif;
+    transition: all 0.15s;
+  }
+  .btn-view-user:hover { background: #0E8A8A; color: white; }
+  .btn-view-user i { font-size: 0.62rem; }
+
+  /* ── EMPTY STATE ── */
+  .empty-row td { padding: 3rem 1.1rem !important; }
+  .empty-inner {
+    display: flex; flex-direction: column;
+    align-items: center; gap: 0.6rem; text-align: center;
+  }
+  .empty-circle {
+    width: 52px; height: 52px; border-radius: 50%;
+    background: #F3F4F6;
+    display: flex; align-items: center; justify-content: center;
+    color: #D1D5DB; font-size: 1.3rem;
+  }
+  .empty-inner h4 { font-size: 0.88rem; font-weight: 700; color: #374151; font-family: 'Inter', sans-serif; }
+  .empty-inner p  { font-size: 0.75rem; color: #9CA3AF; font-family: 'DM Sans', sans-serif; }
+
+  /* ── PAGINATION ── */
+  .pagination-bar {
+    display: flex; align-items: center;
+    justify-content: space-between;
+    padding: 1rem 1.4rem;
+    border-top: 1px solid #F3F4F6;
+    flex-wrap: wrap; gap: 0.75rem;
+  }
+  .page-info-text { font-size: 0.75rem; color: #9CA3AF; font-family: 'DM Sans', sans-serif; }
+  .page-info-text strong { color: #374151; }
+  .pagination-controls { display: flex; align-items: center; gap: 0.3rem; }
+  .page-btn {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 32px; height: 32px; border-radius: 7px;
+    font-size: 0.75rem; font-weight: 600;
+    text-decoration: none; border: 1px solid #E5E7EB;
+    background: white; color: #374151;
+    font-family: 'DM Sans', sans-serif; transition: all 0.15s;
+  }
+  .page-btn:hover { background: #F3F4F6; border-color: #D1D5DB; }
+  .page-btn.current { background: #0E8A8A; color: white; border-color: #0E8A8A; }
+  .page-btn.disabled { opacity: 0.35; pointer-events: none; }
+
+  .table-scroll { overflow-x: auto; }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 1200px) {
+    .stat-row { grid-template-columns: repeat(2, 1fr); }
+    .filter-grid { grid-template-columns: 1fr 1fr 1fr; }
+  }
+  @media (max-width: 768px) {
+    .stat-row { grid-template-columns: 1fr 1fr; }
+    .filter-grid { grid-template-columns: 1fr; }
+    .page-header { flex-direction: column; gap: 0.75rem; }
+  }
+  @media (max-width: 480px) {
+    .stat-row { grid-template-columns: 1fr; }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- ═══════════ PAGE HEADER ═══════════ -->
+<div class="page-header">
+  <div>
+    <div class="page-breadcrumb">
+      <a href="{% url 'admin_app:admin_dashboard' %}">Dashboard</a>
+      <i class="fas fa-chevron-right"></i>
+      <span>User Management</span>
+    </div>
+    <div class="page-title">User Management</div>
+    <div class="page-desc">View, filter, and manage all registered travellers, agencies, and restaurants.</div>
+  </div>
+  <div class="live-pill">
+    <i class="fas fa-circle" style="font-size:0.42rem;color:#10B981;"></i>
+    {{ users.paginator.count }} users &nbsp;·&nbsp; Page {{ users.number }} of {{ users.paginator.num_pages }}
+  </div>
+</div>
+
+<!-- ═══════════ STAT CARDS ═══════════ -->
+<div class="stat-row">
+    <a class="stat-card teal" href="{% url 'admin_app:user_management' %}">
+        <div class="stat-icon-wrap teal"><i class="fas fa-users"></i></div>
+        <div>
+            <div class="stat-val">{{ total_users_count|default:"0" }}</div>
+            <div class="stat-lbl">Total Users</div>
+        </div>
+    </a>
+    <a class="stat-card green" href="{% url 'admin_app:user_management' %}?role=traveller">
+        <div class="stat-icon-wrap green"><i class="fas fa-user"></i></div>
+        <div>
+            <div class="stat-val">{{ travellers_count|default:"0" }}</div>
+            <div class="stat-lbl">Travellers</div>
+        </div>
+    </a>
+    <a class="stat-card amber" href="{% url 'admin_app:user_management' %}?role=agency">
+        <div class="stat-icon-wrap amber"><i class="fas fa-building"></i></div>
+        <div>
+            <div class="stat-val">{{ agencies_count|default:"0" }}</div>
+            <div class="stat-lbl">Agencies</div>
+        </div>
+    </a>
+    <a class="stat-card indigo" href="{% url 'admin_app:user_management' %}?role=restaurant">
+        <div class="stat-icon-wrap indigo"><i class="fas fa-utensils"></i></div>
+        <div>
+            <div class="stat-val">{{ restaurants_count|default:"0" }}</div>
+            <div class="stat-lbl">Restaurants</div>
+        </div>
+    </a>
+</div>
+
+<!-- ═══════════ FILTER PANEL ═══════════ -->
+<div class="filter-panel">
+  <div class="filter-panel-header">
+    <div class="filter-panel-title">
+      <i class="fas fa-filter"></i> Filters & Search
+    </div>
+  </div>
+
+  <!-- Quick role chips -->
+  <div class="quick-chips">
+    <a href="{% url 'admin_app:user_management' %}"
+       class="quick-chip {% if not selected_role and not selected_status and not selected_verification and not search %}active{% endif %}">
+      <i class="fas fa-th"></i> All Users
+    </a>
+    <a href="?role=traveller"
+       class="quick-chip {% if selected_role == 'traveller' %}active{% endif %}">
+      <i class="fas fa-user"></i> Travellers
+    </a>
+    <a href="?role=agency"
+       class="quick-chip {% if selected_role == 'agency' %}active{% endif %}">
+      <i class="fas fa-building"></i> Agencies
+    </a>
+    <a href="?role=restaurant"
+       class="quick-chip {% if selected_role == 'restaurant' %}active{% endif %}">
+      <i class="fas fa-utensils"></i> Restaurants
+    </a>
+    <a href="?status=active"
+       class="quick-chip {% if selected_status == 'active' %}active{% endif %}">
+      <i class="fas fa-circle" style="font-size:0.5rem;"></i> Active
+    </a>
+    <a href="?verification=verified"
+       class="quick-chip {% if selected_verification == 'verified' %}active{% endif %}">
+      <i class="fas fa-check-circle"></i> Verified
+    </a>
+  </div>
+
+  <!-- Filter form -->
+  <div class="filter-body">
+    <form method="GET" id="filterForm">
+      <div class="filter-grid">
+        <div class="filter-field">
+          <label class="filter-label"><i class="fas fa-search" style="margin-right:0.25rem;"></i>Search</label>
+          <input class="filter-input" type="text" name="search"
+            placeholder="Name, email, username…" value="{{ search|default:'' }}">
+        </div>
+        <div class="filter-field">
+          <label class="filter-label"><i class="fas fa-user-tag" style="margin-right:0.25rem;"></i>Role</label>
+          <select class="filter-select" name="role">
+            <option value="">All Roles</option>
+            <option value="traveller" {% if selected_role == 'traveller' %}selected{% endif %}>Travellers</option>
+            <option value="agency"    {% if selected_role == 'agency' %}selected{% endif %}>Agencies</option>
+            <option value="restaurant"{% if selected_role == 'restaurant' %}selected{% endif %}>Restaurants</option>
+          </select>
+        </div>
+        <div class="filter-field">
+          <label class="filter-label"><i class="fas fa-shield-alt" style="margin-right:0.25rem;"></i>Verification</label>
+          <select class="filter-select" name="verification">
+            <option value="">All</option>
+            <option value="verified"   {% if selected_verification == 'verified' %}selected{% endif %}>Verified</option>
+            <option value="unverified" {% if selected_verification == 'unverified' %}selected{% endif %}>Unverified</option>
+          </select>
+        </div>
+        <div class="filter-field">
+          <label class="filter-label"><i class="fas fa-toggle-on" style="margin-right:0.25rem;"></i>Status</label>
+          <select class="filter-select" name="status">
+            <option value="">All</option>
+            <option value="active"   {% if selected_status == 'active' %}selected{% endif %}>Active</option>
+            <option value="inactive" {% if selected_status == 'inactive' %}selected{% endif %}>Inactive</option>
+          </select>
+        </div>
+        <div class="filter-field">
+          <label class="filter-label"><i class="fas fa-calendar-check" style="margin-right:0.25rem;"></i>Bookings</label>
+          <select class="filter-select" name="bookings">
+            <option value="">All</option>
+            <option value="has_bookings" {% if selected_bookings == 'has_bookings' %}selected{% endif %}>Has Bookings</option>
+            <option value="no_bookings"  {% if selected_bookings == 'no_bookings' %}selected{% endif %}>No Bookings</option>
+          </select>
+        </div>
+        <div class="filter-field">
+          <label class="filter-label">&nbsp;</label>
+          <div class="filter-actions-group">
+            <button type="submit" class="btn-apply"><i class="fas fa-filter"></i> Apply</button>
+            <a href="{% url 'admin_app:user_management' %}" class="btn-clear-f"><i class="fas fa-times"></i> Clear</a>
+          </div>
+        </div>
+      </div>
+    </form>
+  </div>
+
+  <!-- Active filter tags -->
+  {% if search or selected_role or selected_verification or selected_status or selected_bookings or selected_audit %}
+  <div class="active-filters">
+    <span class="af-label"><i class="fas fa-filter" style="margin-right:0.3rem;"></i>Active:</span>
+    {% if search %}<span class="af-tag"><i class="fas fa-search"></i> "{{ search }}"</span>{% endif %}
+    {% if selected_role %}<span class="af-tag"><i class="fas fa-user-tag"></i> {{ selected_role|title }}</span>{% endif %}
+    {% if selected_verification %}<span class="af-tag"><i class="fas fa-shield-alt"></i> {{ selected_verification|title }}</span>{% endif %}
+    {% if selected_status %}<span class="af-tag"><i class="fas fa-circle"></i> {{ selected_status|title }}</span>{% endif %}
+    {% if selected_bookings %}<span class="af-tag"><i class="fas fa-calendar-check"></i> {{ selected_bookings|title }}</span>{% endif %}
+    {% if selected_audit %}<span class="af-tag"><i class="fas fa-history"></i> {{ selected_audit|title }}</span>{% endif %}
+  </div>
+  {% endif %}
+</div>
+
+<!-- ═══════════ TABLE PANEL ═══════════ -->
+<div class="table-panel">
+  <div class="table-panel-header">
+    <div class="table-panel-title">
+      <div class="teal-dot"></div>
+      Users
+      <span class="result-tag">{{ users.paginator.count }} records</span>
+    </div>
+    <span style="font-size:0.72rem;color:#9CA3AF;font-family:'DM Sans',sans-serif;">
+      Page {{ users.number }} of {{ users.paginator.num_pages }}
+    </span>
+  </div>
+
+  <div class="table-scroll">
+    <table class="user-table">
+      <thead>
+        <tr>
+          <th>User</th>
+          <th>Role</th>
+          <th>Email</th>
+          <th>Verified</th>
+          <th>Status</th>
+          <th>Bookings</th>
+          <th>Audit Logs</th>
+          <th>Last Login</th>
+          <th>Joined</th>
+          <th style="text-align:right;">Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for user in users %}
+        <tr>
+          <!-- USER -->
+          <td>
+            <div class="user-cell">
+              <div class="u-avatar">
+                {% if user.profile_picture and user.profile_picture.url %}
+                  <img src="{{ user.profile_picture.url }}" alt="">
+                {% else %}
+                  {{ user.get_display_name|slice:":2"|upper }}
+                {% endif %}
+              </div>
+              <div>
+                <div class="u-name">{{ user.get_display_name }}</div>
+                <div class="u-handle">@{{ user.username }}</div>
+              </div>
+            </div>
+          </td>
+
+          <!-- ROLE -->
+          <td>
+            <span class="role-tag {{ user.role }}">
+              <i class="fas {% if user.role == 'traveller' %}fa-user{% elif user.role == 'agency' %}fa-building{% else %}fa-utensils{% endif %}"></i>
+              {{ user.get_role_display|default:user.role|title }}
+            </span>
+          </td>
+
+          <!-- EMAIL -->
+          <td><div class="email-cell" title="{{ user.email }}">{{ user.email|default:"—" }}</div></td>
+
+          <!-- VERIFIED -->
+          <td>
+            {% if user.is_verified %}
+              <span class="v-tag yes"><i class="fas fa-check-circle"></i> Verified</span>
+            {% else %}
+              <span class="v-tag no"><i class="far fa-clock"></i> Pending</span>
+            {% endif %}
+          </td>
+
+          <!-- STATUS -->
+          <td>
+            {% if user.is_active %}
+              <span class="s-tag active"><i class="fas fa-circle"></i> Active</span>
+            {% else %}
+              <span class="s-tag inactive"><i class="fas fa-circle"></i> Inactive</span>
+            {% endif %}
+          </td>
+
+          <!-- BOOKINGS -->
+          <td>
+            <span class="num-cell {% if user.total_bookings == 0 %}zero{% endif %}">
+              {{ user.total_bookings|default:0 }}
+            </span>
+          </td>
+
+          <!-- AUDIT LOGS -->
+          <td>
+            <span class="num-cell {% if user.audit_logs_count == 0 %}zero{% endif %}">
+              {{ user.audit_logs_count|default:0 }}
+            </span>
+          </td>
+
+          <!-- LAST LOGIN -->
+          <td>
+            {% if user.last_login %}
+              <div class="date-cell">{{ user.last_login|date:"d M Y" }}<br>
+                <span style="color:#C4C9D4;">{{ user.last_login|date:"H:i" }}</span>
+              </div>
+            {% else %}
+              <span class="date-cell never">Never</span>
+            {% endif %}
+          </td>
+
+          <!-- JOINED -->
+          <td><div class="date-cell">{{ user.date_joined|date:"d M Y" }}</div></td>
+
+          <!-- ACTION -->
+          <td style="text-align:right;">
+            <a href="{% url 'admin_app:user_profile' user.id %}" class="btn-view-user">
+              <i class="fas fa-eye"></i> View
+            </a>
+          </td>
+        </tr>
+        {% empty %}
+        <tr class="empty-row">
+          <td colspan="10">
+            <div class="empty-inner">
+              <div class="empty-circle"><i class="fas fa-users-slash"></i></div>
+              <h4>No users found</h4>
+              <p>Try adjusting your filters or clearing the search.</p>
+              <a href="{% url 'admin_app:user_management' %}" class="btn-apply" style="margin-top:0.5rem;text-decoration:none;">
+                <i class="fas fa-undo"></i> Clear Filters
+              </a>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- PAGINATION -->
+  {% if users.paginator.num_pages > 1 %}
+  <div class="pagination-bar">
+    <div class="page-info-text">
+      Showing <strong>{{ users.start_index }}–{{ users.end_index }}</strong>
+      of <strong>{{ users.paginator.count }}</strong> users
+    </div>
+    <div class="pagination-controls">
+      {% if users.has_previous %}
+        <a class="page-btn" href="?page=1{% for k,v in request.GET.items %}{% if k != 'page' %}&{{ k }}={{ v }}{% endif %}{% endfor %}"><i class="fas fa-angle-double-left"></i></a>
+        <a class="page-btn" href="?page={{ users.previous_page_number }}{% for k,v in request.GET.items %}{% if k != 'page' %}&{{ k }}={{ v }}{% endif %}{% endfor %}"><i class="fas fa-angle-left"></i></a>
+      {% else %}
+        <span class="page-btn disabled"><i class="fas fa-angle-double-left"></i></span>
+        <span class="page-btn disabled"><i class="fas fa-angle-left"></i></span>
+      {% endif %}
+
+      {% for num in users.paginator.page_range %}
+        {% if users.number == num %}
+          <span class="page-btn current">{{ num }}</span>
+        {% elif num > users.number|add:'-3' and num < users.number|add:'3' %}
+          <a class="page-btn" href="?page={{ num }}{% for k,v in request.GET.items %}{% if k != 'page' %}&{{ k }}={{ v }}{% endif %}{% endfor %}">{{ num }}</a>
+        {% endif %}
+      {% endfor %}
+
+      {% if users.has_next %}
+        <a class="page-btn" href="?page={{ users.next_page_number }}{% for k,v in request.GET.items %}{% if k != 'page' %}&{{ k }}={{ v }}{% endif %}{% endfor %}"><i class="fas fa-angle-right"></i></a>
+        <a class="page-btn" href="?page={{ users.paginator.num_pages }}{% for k,v in request.GET.items %}{% if k != 'page' %}&{{ k }}={{ v }}{% endif %}{% endfor %}"><i class="fas fa-angle-double-right"></i></a>
+      {% else %}
+        <span class="page-btn disabled"><i class="fas fa-angle-right"></i></span>
+        <span class="page-btn disabled"><i class="fas fa-angle-double-right"></i></span>
+      {% endif %}
+    </div>
+  </div>
+  {% endif %}
+</div>
+
+<script>
+  // Stat cards: populate role counts from paginated data dynamically
+  // (counts come from context — wire up if you add them to the view)
+</script>
+{% endblock %}

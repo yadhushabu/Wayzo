@@ -1,0 +1,287 @@
+<style>
+/* ══════════════════════════════════════════════
+   SUPPORT TEMPLATES — SHARED STYLES
+   Works for travellers/base, agencies/base_agencies,
+   restaurants/base_restaurant
+══════════════════════════════════════════════ */
+
+/* ── TOPBAR (traveller only — overlay on hero) ── */
+{% if base_template == "travellers/base.html" %}
+.topbar {
+    background: transparent !important;
+    padding: 0 2rem;
+    height: 70px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    z-index: 100;
+    gap: 1rem;
+}
+.topbar-left { display: flex; align-items: center; gap: 1rem; flex: 1; min-width: 0; }
+.topbar-left h1 { font-family: 'Playfair Display', serif; font-size: 1.2rem; font-weight: 500; color: white; text-shadow: 0 1px 8px rgba(0,0,0,0.2); }
+.topbar-left p { font-size: 0.75rem; color: rgba(255,255,255,0.7); margin-top: 1px; }
+.topbar-right { display: flex; align-items: center; gap: 1rem; flex-shrink: 0; }
+{% endif %}
+
+/* ── HERO — TRAVELLER variant ── */
+.support-hero {
+    position: relative;
+    overflow: hidden;
+    flex-shrink: 0;
+    background: linear-gradient(135deg, #061018 0%, #0a3232 50%, #061018 100%);
+}
+.support-hero--traveller {
+    height: 260px;
+}
+.support-hero--traveller .support-hero-content {
+    position: relative; z-index: 3;
+    height: 100%;
+    display: flex; flex-direction: column;
+    align-items: flex-start; justify-content: center;
+    padding: 4rem 3rem 5rem;
+}
+.support-hero--traveller .support-hero-fade {
+    position: absolute; bottom: 0; left: 0; right: 0;
+    height: 120px;
+    background: linear-gradient(to bottom, transparent 0%, var(--gray-100, #F8F9FC) 100%);
+    z-index: 2; pointer-events: none;
+}
+
+/* ── HERO — PORTAL variant (agency / restaurant) ── */
+/* Sits in normal document flow inside .dashboard-layout  */
+.support-hero--portal {
+    height: 180px;
+    border-radius: 16px;
+    margin-bottom: 0;          /* page-body handles spacing */
+}
+.support-hero--portal .support-hero-content {
+    position: relative; z-index: 3;
+    height: 100%;
+    display: flex; flex-direction: column;
+    align-items: flex-start; justify-content: center;
+    padding: 2rem 2.5rem 2.5rem;
+}
+.support-hero--portal .support-hero-fade {
+    position: absolute; bottom: 0; left: 0; right: 0;
+    height: 70px;
+    background: linear-gradient(to bottom, transparent 0%, var(--gray-100, #F8F9FC) 100%);
+    z-index: 2; pointer-events: none;
+    border-radius: 0 0 16px 16px;
+}
+
+/* ── HERO SHARED INTERNALS ── */
+.support-hero::before {
+    content: "";
+    position: absolute; inset: 0;
+    background: radial-gradient(ellipse at 30% 50%, rgba(14,138,138,0.25) 0%, transparent 60%),
+                radial-gradient(ellipse at 80% 20%, rgba(93,197,197,0.1) 0%, transparent 50%);
+}
+.hero-eyebrow {
+    display: inline-flex; align-items: center; gap: 0.5rem;
+    background: rgba(255,255,255,0.1); backdrop-filter: blur(10px);
+    border: 1px solid rgba(255,255,255,0.2);
+    color: rgba(255,255,255,0.9);
+    font-size: 0.68rem; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase;
+    padding: 0.38rem 1rem; border-radius: 40px; margin-bottom: 0.9rem;
+}
+.hero-eyebrow::before {
+    content: ""; display: inline-block; width: 6px; height: 6px; border-radius: 50%;
+    background: #5FC5C5; flex-shrink: 0;
+}
+.support-hero h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: 2.2rem; font-weight: 600; line-height: 1.1;
+    color: white; margin-bottom: 0.5rem; letter-spacing: -0.01em;
+}
+.support-hero h1 em { font-style: italic; color: #8DE8E8; }
+.support-hero p { font-size: 0.85rem; color: rgba(255,255,255,0.6); font-weight: 300; }
+
+/* ── PAGE BODY — TRAVELLER ── */
+.page-body--traveller {
+    position: relative; z-index: 10;
+    margin-top: -60px;
+    padding: 0 2.5rem 3rem;
+}
+
+/* ── PAGE BODY — PORTAL (agency / restaurant) ── */
+/* .dashboard-layout already provides 2rem padding on all sides  */
+.page-body--portal {
+    padding: 0 0 2rem;      /* no extra horizontal padding needed */
+}
+.page-body--portal .support-hero--portal {
+    margin-bottom: 1.8rem;
+}
+
+/* ── MESSAGES ── */
+.sc-alert {
+    padding: 0.85rem 1.2rem; border-radius: 12px;
+    font-size: 0.82rem; margin-bottom: 1.5rem;
+    display: flex; align-items: center; gap: 0.6rem;
+}
+.sc-alert-success { background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.25); color: #065f46; }
+.sc-alert-error   { background: rgba(239,68,68,0.08); border: 1px solid rgba(239,68,68,0.2); color: #991b1b; }
+
+/* ── MAIN LAYOUT ── */
+.support-layout {
+    display: grid;
+    grid-template-columns: 1fr 340px;
+    gap: 1.8rem;
+    align-items: start;
+}
+
+/* ── CARD ── */
+.support-card {
+    background: white;
+    border: 1px solid #E9EDF2;
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.06);
+}
+.sc-card-header {
+    padding: 1.4rem 1.6rem 1rem;
+    border-bottom: 1px solid #F1F3F8;
+    display: flex; align-items: center; justify-content: space-between;
+}
+.sc-card-header-left h3 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.15rem; font-weight: 600; color: #191E24; margin-bottom: 0.15rem;
+}
+.sc-card-header-left p { font-size: 0.72rem; color: #6F7886; }
+.sc-card-body { padding: 1.4rem 1.6rem; }
+
+/* ── FORM ── */
+.sc-form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+.sc-form-group { display: flex; flex-direction: column; gap: 0.38rem; }
+.sc-form-group.full { grid-column: 1 / -1; }
+.sc-form-label {
+    font-size: 0.72rem; font-weight: 600;
+    color: #4A515C; letter-spacing: 0.04em; text-transform: uppercase;
+}
+#id_title, #id_description, #id_attachment {
+    padding: 0.7rem 0.9rem;
+    border: 1.5px solid #E9EDF2;
+    border-radius: 10px;
+    font-size: 0.83rem;
+    font-family: 'Inter', sans-serif;
+    color: #1E242C;
+    background: #F8F9FC;
+    transition: border-color 0.2s, background 0.2s;
+    width: 100%;
+    box-sizing: border-box;
+}
+#id_title:focus, #id_description:focus, #id_attachment:focus {
+    outline: none; border-color: #0E8A8A; background: white;
+    box-shadow: 0 0 0 3px rgba(14,138,138,0.08);
+}
+#id_description { resize: vertical; min-height: 100px; }
+
+.sc-submit-btn {
+    display: inline-flex; align-items: center; gap: 0.5rem;
+    background: #0E8A8A; color: white; border: none;
+    padding: 0.78rem 2rem; border-radius: 50px;
+    font-size: 0.83rem; font-weight: 600;
+    font-family: 'Inter', sans-serif; cursor: pointer;
+    transition: background 0.2s, transform 0.2s, box-shadow 0.2s;
+    box-shadow: 0 6px 20px rgba(14,138,138,0.28);
+    margin-top: 0.5rem;
+}
+.sc-submit-btn:hover {
+    background: #0A6B6B; transform: translateY(-2px);
+    box-shadow: 0 10px 28px rgba(14,138,138,0.35);
+}
+.sc-submit-btn svg { width: 15px; height: 15px; stroke: white; fill: none; stroke-width: 2; }
+
+/* ── TICKET TABLE ── */
+.ticket-table { width: 100%; border-collapse: collapse; }
+.ticket-table th {
+    font-size: 0.67rem; font-weight: 600; text-transform: uppercase;
+    letter-spacing: 0.06em; color: #9AA3AF;
+    padding: 0 0.9rem 0.8rem; text-align: left;
+}
+.ticket-table td {
+    padding: 0.9rem; font-size: 0.79rem; color: #3C4350;
+    border-top: 1px solid #F1F3F8; vertical-align: middle;
+}
+.ticket-table tr:hover td { background: #F8F9FC; }
+.ticket-id { font-weight: 600; color: #4A515C; font-size: 0.75rem; }
+.ticket-title-cell { color: #191E24; font-weight: 500; max-width: 200px; }
+.ticket-title-cell small { display: block; color: #6F7886; font-size: 0.68rem; font-weight: 400; margin-top: 1px; }
+
+/* STATUS BADGES */
+.status-badge {
+    display: inline-flex; align-items: center; gap: 0.3rem;
+    font-size: 0.65rem; font-weight: 600; padding: 0.26rem 0.7rem;
+    border-radius: 40px; letter-spacing: 0.04em; text-transform: uppercase;
+}
+.status-badge::before { content: ""; width: 5px; height: 5px; border-radius: 50%; flex-shrink: 0; }
+.status-open        { background: rgba(239,68,68,0.1); color: #dc2626; }
+.status-open::before { background: #ef4444; }
+.status-in_progress { background: rgba(245,158,11,0.1); color: #d97706; }
+.status-in_progress::before { background: #f59e0b; }
+.status-resolved    { background: rgba(16,185,129,0.1); color: #059669; }
+.status-resolved::before { background: #10b981; }
+.status-closed      { background: rgba(107,114,128,0.1); color: #4b5563; }
+.status-closed::before { background: #9ca3af; }
+
+.view-link {
+    display: inline-flex; align-items: center; gap: 0.3rem;
+    color: #0E8A8A; font-size: 0.73rem; font-weight: 500;
+    text-decoration: none; transition: gap 0.2s;
+}
+.view-link:hover { gap: 0.5rem; }
+.view-link svg { width: 12px; height: 12px; stroke: currentColor; fill: none; stroke-width: 2; }
+
+/* ── FAQ ── */
+.faq-item { border-bottom: 1px solid #F1F3F8; overflow: hidden; }
+.faq-item:last-child { border-bottom: none; }
+.faq-question {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0.9rem 1.6rem; cursor: pointer;
+    font-size: 0.79rem; font-weight: 500; color: #2E343D;
+    transition: color 0.2s; user-select: none; gap: 0.6rem;
+}
+.faq-question:hover { color: #0E8A8A; }
+.faq-question svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2; flex-shrink: 0; transition: transform 0.25s; }
+.faq-item.open .faq-question { color: #0E8A8A; }
+.faq-item.open .faq-question svg { transform: rotate(180deg); }
+.faq-answer {
+    max-height: 0; overflow: hidden;
+    transition: max-height 0.3s ease, padding 0.3s ease;
+    font-size: 0.75rem; color: #6F7886; line-height: 1.65; padding: 0 1.6rem;
+}
+.faq-item.open .faq-answer { max-height: 200px; padding: 0 1.6rem 1rem; }
+
+/* ── TIPS ── */
+.tips-body { display: flex; flex-direction: column; gap: 0.75rem; }
+.tip-item { display: flex; align-items: flex-start; gap: 0.7rem; font-size: 0.76rem; color: #3C4350; line-height: 1.5; }
+.tip-icon {
+    width: 28px; height: 28px; border-radius: 8px;
+    background: rgba(14,138,138,0.1);
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.tip-icon svg { width: 13px; height: 13px; stroke: #0E8A8A; fill: none; stroke-width: 2; }
+
+.empty-tickets { text-align: center; padding: 3rem 1rem; }
+.empty-tickets svg { stroke: #BEC7D1; margin-bottom: 0.8rem; }
+.empty-tickets p { font-size: 0.8rem; color: #6F7886; }
+
+@keyframes fadeUp { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
+.page-body--traveller > *,
+.page-body--portal > * { animation: fadeUp 0.5s ease both; }
+.page-body--traveller > *:nth-child(2),
+.page-body--portal > *:nth-child(2) { animation-delay: 0.07s; }
+
+@media (max-width: 1000px) { .support-layout { grid-template-columns: 1fr; } }
+@media (max-width: 680px) {
+    .page-body--traveller { padding: 0 1.2rem 2rem; }
+    .page-body--portal    { padding: 0 0 1.5rem; }
+    .sc-form-grid { grid-template-columns: 1fr; }
+    .support-hero--traveller { height: 180px; }
+    .support-hero--portal    { height: 150px; }
+    .support-hero h1 { font-size: 1.6rem; }
+    .support-hero--traveller .support-hero-content { padding: 2rem 1.5rem 3rem; }
+    .support-hero--portal .support-hero-content    { padding: 1.5rem 1.5rem 2rem; }
+}
+</style>

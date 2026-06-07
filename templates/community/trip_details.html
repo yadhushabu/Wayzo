@@ -1,162 +1,914 @@
-<h2>{{ trip.title }}</h2>
+{% extends "travellers/base.html" %}
+{% load static %}
 
-<!-- USER -->
-<div style="display:flex; align-items:center; gap:10px;">
-    <a href="{% url 'travellers:user_profile' trip.creator.id %}">
-    {% if trip.creator.travellerprofile.profile_picture %}
-        <img src="{{ trip.creator.travellerprofile.profile_picture.url }}" width="40" height="40" style="border-radius:50%;">
-    {% endif %}
-    <b>{{ trip.creator.travellerprofile.first_name }}</b></a>
-</div>
-{% if is_owner %}
-    <a href="{% url 'edit_trip' trip.id %}">Edit Trip ✏️</a>
-    <form method="POST" action="{% url 'delete_item' 'trip' trip.id %}"> {% csrf_token %} <button style="background:red;color:white;">🗑 Cancel Trip</button> </form>
-{% endif %}
-<!-- IMAGES -->
-<div style="display:flex; gap:10px; overflow-x:auto; margin:15px 0;">
-    {% for img in trip.images.all %}
-        <img src="{{ img.image.url }}" width="250" style="border-radius:10px;">
-    {% endfor %}
-</div>
+{% block title %}{{ trip.title }} | Wayzo Trip{% endblock %}
+{% block nav_community %}active{% endblock %}
 
-<p>{{ trip.description }}</p>
+{% block extra_styles %}
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,400&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap');
 
-<hr>
+:root {
+    --teal:#0e8a8a; --teal-dark:#0a6e6e; --teal-pale:#eaf4f4;
+    --amber:#f59e0b; --amber-pale:#fef3c7;
+    --green:#10b981; --green-pale:#d1fae5;
+    --red:#ef4444; --red-pale:#fee2e2;
+    --ink:#1e242c; --ink2:#334155; --muted:#64748b;
+    --border:#e9edf2;
+    --surface:#fff; --s2:#f8f9fc;
+    --gray-100:#f8f9fc; --gray-200:#e9edf2;
+    --gray-300:#dce2ea; --gray-400:#bec7d1;
+    --gray-700:#4a515c; --gray-800:#2e343d; --gray-900:#191e24;
+    --text-dark:#1e242c; --text-soft:#3c4350; --text-light:#6f7886;
+    --radius:18px; --radius-sm:10px;
+    --sh:0 4px 16px rgba(0,0,0,.06);
+    --sh-lg:0 12px 40px rgba(0,0,0,.1);
+}
 
-<h3>Trip Info</h3>
-<p>📍 {{ trip.places_covered }}</p>
-<p>📅 {{ trip.start_date }} → {{ trip.end_date }}</p>
-<p>⏳ {{ trip.duration_days }} Days / {{ trip.duration_nights }} Nights</p>
-<p>💰 Budget: ₹{{ trip.budget }}</p>
-<p>👥 Max Members: {{ trip.max_members }}</p>
-<p>🏕 Type: {{ trip.trip_type }}</p>
+*,*::before,*::after{box-sizing:border-box;}
+body{font-family:'DM Sans',sans-serif;background:var(--gray-100);}
 
-<hr>
+/* ══════════════════════════════
+   HERO SECTION
+══════════════════════════════ */
+.trip-hero {
+    position:relative; height:380px; overflow:hidden;
+    background:linear-gradient(135deg,#0a3d3d,#0d2b2a);
+}
+.trip-hero-bg {
+    position:absolute; inset:0;
+    background-size:cover; background-position:center;
+    z-index:0;
+}
+.trip-hero-bg::after {
+    content:''; position:absolute; inset:0;
+    background:linear-gradient(160deg,rgba(6,16,24,.78) 0%,rgba(10,50,50,.62) 45%,rgba(6,16,24,.45) 100%);
+}
+.hero-fade-bottom {
+    position:absolute; bottom:0; left:0; right:0; height:120px;
+    background:linear-gradient(to bottom,transparent,var(--gray-100));
+    z-index:3;
+}
+.trip-hero-content {
+    position:relative; z-index:4;
+    height:100%; display:flex; flex-direction:column;
+    justify-content:flex-end; padding:2rem 3rem 2.5rem;
+    max-width:1000px;
+}
+.hero-eyebrow {
+    display:inline-flex; align-items:center; gap:.45rem;
+    background:rgba(255,255,255,.1); backdrop-filter:blur(10px);
+    border:1px solid rgba(255,255,255,.2); border-radius:40px;
+    padding:.28rem .85rem; font-size:.65rem; font-weight:500;
+    letter-spacing:.08em; text-transform:uppercase;
+    color:rgba(255,255,255,.85); margin-bottom:.6rem; width:fit-content;
+}
+.hero-eyebrow::before {
+    content:''; width:5px; height:5px; border-radius:50%;
+    background:#5FC5C5; display:inline-block; margin-right:.3rem;
+}
+.trip-hero-content h1 {
+    font-family:'Playfair Display',serif;
+    font-size:clamp(1.8rem,3.5vw,2.4rem); font-weight:700;
+    color:white; line-height:1.15; margin-bottom:.4rem;
+    text-shadow:0 2px 16px rgba(0,0,0,.35);
+}
+.trip-meta-chips {
+    display:flex; flex-wrap:wrap; gap:.5rem; margin-top:.6rem;
+}
+.meta-chip {
+    display:inline-flex; align-items:center; gap:.3rem;
+    background:rgba(255,255,255,.12); backdrop-filter:blur(8px);
+    border:1px solid rgba(255,255,255,.18); border-radius:99px;
+    padding:.3rem .85rem; font-size:.72rem; color:rgba(255,255,255,.82);
+}
 
-<h3>Itinerary</h3>
-{% for day in trip.itineraries.all %}
-    <div style="border-left:3px solid #333; padding-left:10px; margin-bottom:10px;">
-        <b>Day {{ day.day_number }} - {{ day.title }}</b>
-        <p>{{ day.description }}</p>
-    </div>
-{% endfor %}
+/* ══════════════════════════════
+   PAGE BODY
+══════════════════════════════ */
+.page-body {
+    position:relative; z-index:10;
+    padding:2rem 3rem 4rem;
+    max-width:1400px; margin:0 auto;
+}
 
-<hr>
+/* ══════════════════════════════
+   ACTION BAR
+══════════════════════════════ */
+.action-bar {
+    background:white; border-radius:var(--radius);
+    box-shadow:0 8px 32px rgba(0,0,0,.08);
+    border:1px solid var(--gray-200);
+    padding:.85rem 1.5rem;
+    margin-bottom:2rem;
+    display:flex; align-items:center; justify-content:space-between;
+    flex-wrap:wrap; gap:.75rem;
+}
+.action-btns { display:flex; gap:.5rem; flex-wrap:wrap; }
+.action-btn {
+    display:inline-flex; align-items:center; gap:.4rem;
+    padding:.5rem 1.2rem; border-radius:40px;
+    font-size:.78rem; font-weight:600; text-decoration:none;
+    transition:all .2s; cursor:pointer; border:none;
+}
+.action-btn svg { width:14px; height:14px; stroke:currentColor; fill:none; stroke-width:2; }
+.action-btn-primary { background:var(--teal); color:white; }
+.action-btn-primary:hover { background:var(--teal-dark); transform:translateY(-1px); }
+.action-btn-secondary { background:var(--s2); color:var(--text-soft); border:1px solid var(--gray-200); }
+.action-btn-secondary:hover { border-color:var(--teal); color:var(--teal); }
+.action-btn-danger { background:var(--red-pale); color:var(--red); border:1px solid #fca5a5; }
+.action-btn-danger:hover { background:var(--red); color:white; }
+.action-btn-disabled { background:var(--gray-100); color:var(--muted); cursor:default; }
 
-<h3>Rules</h3>
-<p>{{ trip.rules }}</p>
+/* ══════════════════════════════
+   MAIN GRID
+══════════════════════════════ */
+.content-grid {
+    display:grid;
+    grid-template-columns:1fr 360px;
+    gap:2rem;
+    align-items:start;
+}
+.main-col { min-width:0; }
+.right-sidebar { position:sticky; top:90px; display:flex; flex-direction:column; gap:1.5rem; }
 
-<hr>
+/* ══════════════════════════════
+   IMAGE GALLERY
+══════════════════════════════ */
+.image-gallery {
+    background:white;
+    border:1px solid var(--gray-200);
+    border-radius:var(--radius);
+    overflow:hidden;
+    margin-bottom:1.5rem;
+    box-shadow:var(--sh);
+}
+.gallery-header {
+    padding:.9rem 1.2rem;
+    border-bottom:1px solid var(--gray-200);
+    background:var(--s2);
+    font-weight:700;
+    display:flex;
+    align-items:center;
+    gap:.5rem;
+}
+.gallery-main {
+    position:relative;
+    height:400px;
+    background:var(--gray-150);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+}
+.gallery-main-img {
+    width:100%;
+    height:100%;
+    object-fit:cover;
+}
+.gallery-thumbs {
+    display:flex;
+    gap:.5rem;
+    padding:1rem;
+    overflow-x:auto;
+    background:var(--s2);
+    border-top:1px solid var(--gray-200);
+}
+.gallery-thumb {
+    width:80px;
+    height:80px;
+    border-radius:10px;
+    object-fit:cover;
+    cursor:pointer;
+    transition:all .2s;
+    border:2px solid transparent;
+    flex-shrink:0;
+}
+.gallery-thumb:hover { transform:scale(1.05); }
+.gallery-thumb.active { border-color:var(--teal); }
 
-<!-- 🔥 EXTRA FEATURES -->
-<h3>Inclusions</h3>
-<p>{{ trip.inclusions }}</p>
+/* ══════════════════════════════
+   INFO CARDS
+══════════════════════════════ */
+.info-card {
+    background:white;
+    border:1px solid var(--gray-200);
+    border-radius:var(--radius);
+    overflow:hidden;
+    margin-bottom:1.5rem;
+}
+.info-card-header {
+    padding:.9rem 1.2rem;
+    border-bottom:1px solid var(--gray-200);
+    background:var(--s2);
+    font-weight:700;
+    display:flex;
+    align-items:center;
+    gap:.5rem;
+}
+.info-card-body { padding:1.2rem; }
 
-<h3>Exclusions</h3>
-<p>{{ trip.exclusions }}</p>
+.info-grid {
+    display:grid;
+    grid-template-columns:repeat(2,1fr);
+    gap:1rem;
+}
+.info-item {
+    background:var(--gray-100);
+    border-radius:var(--radius-sm);
+    padding:.8rem;
+}
+.info-label {
+    font-size:.65rem;
+    text-transform:uppercase;
+    letter-spacing:.05em;
+    color:var(--muted);
+    margin-bottom:.2rem;
+}
+.info-value {
+    font-size:.9rem;
+    font-weight:700;
+    color:var(--ink);
+}
+.info-text {
+    font-size:.85rem;
+    color:var(--text-soft);
+    line-height:1.6;
+}
 
-<h3>Things to Pack</h3>
-<p>{{ trip.things_to_pack }}</p>
+/* Itinerary Timeline */
+.itinerary-timeline {
+    position:relative;
+    padding-left:2rem;
+}
+.itinerary-timeline::before {
+    content:'';
+    position:absolute;
+    left:8px;
+    top:0;
+    bottom:0;
+    width:2px;
+    background:linear-gradient(to bottom,var(--teal),var(--gray-300));
+}
+.day-item {
+    position:relative;
+    margin-bottom:1.2rem;
+}
+.day-dot {
+    position:absolute;
+    left:-1.9rem;
+    top:0;
+    width:28px;
+    height:28px;
+    background:var(--teal);
+    border:3px solid white;
+    border-radius:50%;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    color:white;
+    font-weight:700;
+    font-size:.7rem;
+    box-shadow:0 2px 8px rgba(0,0,0,.1);
+}
+.day-content {
+    background:white;
+    border:1px solid var(--gray-200);
+    border-radius:var(--radius-sm);
+    padding:1rem;
+    transition:all .2s;
+}
+.day-content:hover {
+    border-color:var(--teal-pale);
+    box-shadow:var(--sh);
+}
+.day-title {
+    font-weight:700;
+    font-size:.9rem;
+    color:var(--ink);
+    margin-bottom:.4rem;
+}
+.day-desc {
+    font-size:.8rem;
+    color:var(--text-soft);
+    line-height:1.6;
+}
 
-<h3>Cancellation Policy</h3>
-<p>{{ trip.cancellation_policy }}</p>
+/* Sections */
+.section-divider {
+    margin:1rem 0 .5rem;
+    padding:.5rem 0 .2rem;
+    border-bottom:2px solid var(--teal-pale);
+}
+.section-title {
+    font-weight:700;
+    font-size:.9rem;
+    color:var(--ink);
+    display:flex;
+    align-items:center;
+    gap:.5rem;
+}
 
-<hr>
-<p>Seats left: {{ seats_left }}</p>
-<!-- ✅ BOOK NOW BUTTON -->
-{% if is_owner %}
-    <p><b>You created this trip</b></p>
-{% elif is_joined %}
-    <button disabled>Already Joined</button>
-{% else %}
-    <form method="POST" action="{% url 'join_trip' trip.id %}">
-        {% csrf_token %}
-        <button type="submit">Book Now 🚀</button>
-    </form>
-{% endif %}
+/* Members List */
+.member-item {
+    display:flex;
+    align-items:center;
+    gap:.75rem;
+    padding:.7rem 0;
+    border-bottom:1px solid var(--gray-150);
+    text-decoration:none;
+}
+.member-item:last-child { border-bottom:none; }
+.member-av {
+    width:40px;
+    height:40px;
+    border-radius:50%;
+    background:var(--teal-pale);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-weight:700;
+    color:var(--teal);
+    overflow:hidden;
+    flex-shrink:0;
+}
+.member-av img { width:100%; height:100%; object-fit:cover; }
+.member-info { flex:1; }
+.member-name {
+    font-weight:600;
+    font-size:.85rem;
+    color:var(--ink);
+    margin-bottom:.1rem;
+}
+.member-role {
+    font-size:.65rem;
+    color:var(--muted);
+}
+.member-status {
+    font-size:.7rem;
+    padding:.2rem .6rem;
+    border-radius:20px;
+    font-weight:600;
+}
+.status-approved { background:var(--green-pale); color:var(--green); }
+.status-pending { background:var(--amber-pale); color:#92400e; }
 
-{% if is_joined and not is_owner %}
-    <form method="POST" action="{% url 'cancel_trip' trip.id %}">
-        {% csrf_token %}
-        <button type="submit" style="background:red;color:white;">
-            Cancel Booking ❌
-        </button>
-    </form>
-{% endif %}
+/* Promote Button */
+.btn-promote {
+    background:var(--amber-pale);
+    color:var(--amber);
+    border:1px solid #fcd34d;
+    padding:.2rem .8rem;
+    border-radius:20px;
+    font-size:.65rem;
+    font-weight:600;
+    cursor:pointer;
+    transition:all .2s;
+}
+.btn-promote:hover {
+    background:var(--amber);
+    color:white;
+}
 
-{% if messages %}
-    {% for message in messages %}
-        <div style="padding:10px; margin:10px 0; border-radius:8px; background:#eee;">
-            {{ message }}
+/* Empty State */
+.empty-state {
+    text-align:center;
+    padding:2rem;
+    color:var(--muted);
+    background:var(--gray-100);
+    border-radius:var(--radius-sm);
+}
+
+/* Responsive */
+@media(max-width:1024px){
+    .content-grid{grid-template-columns:1fr;}
+    .right-sidebar{position:static;margin-top:1.5rem;}
+}
+@media(max-width:768px){
+    .trip-hero{height:280px;}
+    .trip-hero-content{padding:1.5rem 1.2rem 2rem;}
+    .page-body{padding:1rem 1rem 2rem;}
+    .gallery-main{height:250px;}
+    .info-grid{grid-template-columns:1fr;}
+}
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- ══ HERO SECTION ══ -->
+<div class="trip-hero">
+    {% with trip.images.first as hero_image %}
+    <div class="trip-hero-bg" style="background-image:url('{% if hero_image %}{{ hero_image.image.url }}{% else %}https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1600&h=600&fit=crop{% endif %}');"></div>
+    {% endwith %}
+    <div class="hero-fade-bottom"></div>
+    <div class="trip-hero-content">
+        <div class="hero-eyebrow">Trip by {{ trip.creator.get_full_name|default:trip.creator.username }}</div>
+        <h1>{{ trip.title }}</h1>
+        <div class="trip-meta-chips">
+            <span class="meta-chip">📍 {{ trip.places_covered }}</span>
+            <span class="meta-chip">📅 {{ trip.start_date|date:"M d" }} - {{ trip.end_date|date:"M d, Y" }}</span>
+            <span class="meta-chip">💰 ₹{{ trip.budget }}</span>
+            <span class="meta-chip">👥 {{ trip.participants.count }}/{{ trip.max_members }}</span>
         </div>
-    {% endfor %}
-{% endif %}
-{% if is_owner %}
-<hr>
+    </div>
+</div>
 
-<hr>
-<h3>Members</h3>
+<!-- ══ PAGE BODY ══ -->
+<div class="page-body">
 
-{% for p in participants %}
-    <div style="margin-bottom:12px; padding:10px; border:1px solid #ddd; border-radius:8px;">
+    <!-- Action Bar -->
+    <div class="action-bar">
+        <div class="action-btns">
+            {% if is_owner %}
+            <a href="{% url 'community:edit_trip' trip.id %}" class="action-btn action-btn-secondary">
+                <svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                Edit Trip
+            </a>
+            <form method="POST" action="{% url 'community:delete_item' 'trip' trip.id %}" style="display:inline;">
+                {% csrf_token %}
+                <button type="submit" class="action-btn action-btn-danger" onclick="return confirm('Cancel this trip? This action cannot be undone.')">
+                    <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
+                    Cancel Trip
+                </button>
+            </form>
+            {% elif is_joined %}
+            <form method="POST" action="{% url 'community:cancel_trip' trip.id %}">
+                {% csrf_token %}
+                <button type="submit" class="action-btn action-btn-danger">
+                    <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                    Cancel Booking
+                </button>
+            </form>
+            {% else %}
+            <form method="POST" action="{% url 'community:join_trip' trip.id %}">
+                {% csrf_token %}
+                <button type="submit" class="action-btn action-btn-primary">
+                    <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                    Book Now 🚀
+                </button>
+            </form>
+            {% endif %}
+            
+            <!-- Group Chat Button - FIXED: uses trip_id parameter -->
+            {% if is_joined or is_owner %}
+            <a href="{% url 'travellers:inbox' %}?trip_id={{ trip.id }}" class="action-btn action-btn-primary">
+                <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                Group Chat
+            </a>
+            {% endif %}
+            
+            <!-- Live Tracking - Only for Owner and Coordinators -->
+            {% if can_view_map %}
+            <a href="{% url 'community:trip_live_map' trip.id %}" class="action-btn action-btn-secondary">
+                <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                Live Tracking
+            </a>
+            {% endif %}
+            
+            <!-- Show Invite Link ONLY for Private Trips (not in community) -->
+            {% if trip.visibility == 'private' and trip.invite_code %}
+            <button class="action-btn action-btn-secondary" onclick="copyInviteLink()">
+                <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><polyline points="13 13 11 13 11 8 9 8 9 12 11 12 11 13 13 13 13 8 15 8 15 13"/></svg>
+                Invite Friends
+            </button>
+            {% endif %}
+        </div>
         
-        <a href="{% url 'travellers:user_profile' p.user.id %}">
-            <b>{{ p.user.username }}</b>
-        </a>
-
-        <span style="margin-left:10px;">
-            Status: 
-            <b style="
-                color:
-                {% if p.status == 'approved' %}green
-                {% elif p.status == 'pending' %}orange
-                {% else %}red
-                {% endif %}
-            ">
-                {{ p.status }}
-            </b>
-        </span>
-
-        <div style="margin-top:8px;">
-
-            <!-- APPROVE / REJECT -->
-            {% if p.status == "pending" %}
-                <form method="POST" action="{% url 'approve_participant' p.id %}" style="display:inline;">
-                    {% csrf_token %}
-                    <button style="background:green;color:white;">Approve ✔</button>
-                </form>
-
-                <form method="POST" action="{% url 'reject_participant' p.id %}" style="display:inline;">
-                    {% csrf_token %}
-                    <button style="background:orange;color:white;">Reject ❌</button>
-                </form>
-            {% endif %}
-
-            <!-- REMOVE -->
-            {% if p.status == "approved" %}
-                <form method="POST" action="{% url 'remove_participant' p.id %}" style="display:inline;">
-                    {% csrf_token %}
-                    <button style="background:red;color:white;">Remove 🚫</button>
-                </form>
-
-                <!-- CHAT (ONLY AFTER APPROVED) -->
-                <a href="{% url 'travellers:inbox' %}?room={{ p.chat_room.id }}" 
-                   style="margin-left:10px; background:#0095f6; color:white; padding:5px 10px; border-radius:5px; text-decoration:none;">
-                    Chat 💬
-                </a>
-            {% endif %}
-
-        </div>
+        {% if seats_left > 0 and not is_owner and not is_joined %}
+        <span style="font-size:.75rem;color:var(--green);font-weight:600;">✨ {{ seats_left }} seats left!</span>
+        {% elif seats_left == 0 %}
+        <span style="font-size:.75rem;color:var(--red);font-weight:600;">⚠️ Trip is full</span>
+        {% endif %}
     </div>
 
-{% empty %}
-    <p>No members yet</p>
-{% endfor %}
+    <!-- Main Content Grid -->
+    <div class="content-grid">
 
-{% endif %}
+        <!-- LEFT COLUMN -->
+        <div class="main-col">
 
-{% if p.status == "approved" or is_owner %}
-<a href="{% url 'travellers:inbox' %}?type=trips&trip_id={{ trip.id }}&user_id={{ p.user.id }}">
-    Chat 💬
-</a>
-{% endif %}
+            <!-- Image Gallery -->
+            {% if trip.images.all %}
+            <div class="image-gallery">
+                <div class="gallery-header">
+                    <svg viewBox="0 0 24 24" width="16" height="16" stroke="var(--teal)" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                    Trip Gallery ({{ trip.images.all|length }} photos)
+                </div>
+                <div class="gallery-main">
+                    {% with trip.images.first as first_img %}
+                    <img id="galleryMainImg" class="gallery-main-img" src="{{ first_img.image.url }}" alt="{{ trip.title }}">
+                    {% endwith %}
+                </div>
+                <div class="gallery-thumbs">
+                    {% for img in trip.images.all %}
+                    <img class="gallery-thumb {% if forloop.first %}active{% endif %}" 
+                         src="{{ img.image.url }}" 
+                         alt="Gallery image {{ forloop.counter }}"
+                         onclick="setGalleryImage(this.src, this)">
+                    {% endfor %}
+                </div>
+            </div>
+            {% else %}
+            <div class="info-card">
+                <div class="info-card-header">
+                    <svg viewBox="0 0 24 24" width="16" height="16" stroke="var(--teal)" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/></svg>
+                    Trip Gallery
+                </div>
+                <div class="info-card-body">
+                    <div class="empty-state">No photos uploaded yet</div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Description -->
+            <div class="info-card">
+                <div class="info-card-header">
+                    <svg viewBox="0 0 24 24" width="16" height="16" stroke="var(--teal)" stroke-width="1.8"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+                    About the Trip
+                </div>
+                <div class="info-card-body">
+                    <p class="info-text">{{ trip.description }}</p>
+                </div>
+            </div>
+
+            <!-- Quick Info Grid -->
+            <div class="info-card">
+                <div class="info-card-header">
+                    <svg viewBox="0 0 24 24" width="16" height="16" stroke="var(--teal)" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                    Trip Details
+                </div>
+                <div class="info-card-body">
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <div class="info-label">📍 Destination</div>
+                            <div class="info-value">{{ trip.places_covered }}</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">🗓️ Duration</div>
+                            <div class="info-value">{{ trip.duration_days }} Days / {{ trip.duration_nights }} Nights</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">💰 Budget</div>
+                            <div class="info-value">₹{{ trip.budget }}</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">🏕️ Trip Type</div>
+                            <div class="info-value">{{ trip.trip_type }}</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">👥 Max Members</div>
+                            <div class="info-value">{{ trip.max_members }} members</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">🔗 Join Type</div>
+                            <div class="info-value">{{ trip.get_join_type_display }}</div>
+                        </div>
+                        {% if trip.visibility == 'private' %}
+                        <div class="info-item">
+                            <div class="info-label">🔒 Visibility</div>
+                            <div class="info-value">Private Trip</div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Itinerary -->
+            <div class="info-card">
+                <div class="info-card-header">
+                    <svg viewBox="0 0 24 24" width="16" height="16" stroke="var(--teal)" stroke-width="1.8"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+                    Itinerary ({{ itineraries|length }} days)
+                </div>
+                <div class="info-card-body">
+                    {% if itineraries %}
+                    <div class="itinerary-timeline">
+                        {% for day in itineraries %}
+                        <div class="day-item">
+                            <div class="day-dot">{{ day.day_number }}</div>
+                            <div class="day-content">
+                                <div class="day-title">{{ day.title }}</div>
+                                <div class="day-desc">{{ day.description }}</div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="empty-state">No itinerary details available</div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Inclusions & Exclusions -->
+            {% if trip.inclusions or trip.exclusions %}
+            <div class="info-card">
+                <div class="info-card-header">
+                    <svg viewBox="0 0 24 24" width="16" height="16" stroke="var(--teal)" stroke-width="1.8"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                    What's Included & Excluded
+                </div>
+                <div class="info-card-body">
+                    <div class="info-grid">
+                        {% if trip.inclusions %}
+                        <div class="info-item">
+                            <div class="info-label">✅ Inclusions</div>
+                            <div class="info-text">{{ trip.inclusions|linebreaks }}</div>
+                        </div>
+                        {% endif %}
+                        {% if trip.exclusions %}
+                        <div class="info-item">
+                            <div class="info-label">❌ Exclusions</div>
+                            <div class="info-text">{{ trip.exclusions|linebreaks }}</div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Things to Pack & Cancellation Policy -->
+            {% if trip.things_to_pack or trip.cancellation_policy %}
+            <div class="info-card">
+                <div class="info-card-header">
+                    <svg viewBox="0 0 24 24" width="16" height="16" stroke="var(--teal)" stroke-width="1.8"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                    Additional Information
+                </div>
+                <div class="info-card-body">
+                    {% if trip.things_to_pack %}
+                    <div class="section-divider"></div>
+                    <div class="section-title">🎒 Things to Pack</div>
+                    <p class="info-text">{{ trip.things_to_pack|linebreaks }}</p>
+                    {% endif %}
+                    
+                    {% if trip.rules %}
+                    <div class="section-divider"></div>
+                    <div class="section-title">📋 Trip Rules</div>
+                    <p class="info-text">{{ trip.rules|linebreaks }}</p>
+                    {% endif %}
+                    
+                    {% if trip.cancellation_policy %}
+                    <div class="section-divider"></div>
+                    <div class="section-title">⚠️ Cancellation Policy</div>
+                    <p class="info-text">{{ trip.cancellation_policy|linebreaks }}</p>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+
+        </div><!-- /main-col -->
+
+        <!-- RIGHT SIDEBAR -->
+        <div class="right-sidebar">
+
+            <!-- Creator Info -->
+            <div class="info-card">
+                <div class="info-card-header">
+                    <svg viewBox="0 0 24 24" width="16" height="16" stroke="var(--teal)" stroke-width="1.8"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                    Trip Organizer
+                </div>
+                <div class="info-card-body">
+                    <a href="{% url 'travellers:public_profile' trip.creator.id %}" class="member-item" style="padding:0 0 .5rem 0;">
+                        <div class="member-av">
+                            {% if trip.creator.profile_picture %}
+                            <img src="{{ trip.creator.profile_picture.url }}" alt="">
+                            {% else %}
+                            {{ trip.creator.username|first|upper }}
+                            {% endif %}
+                        </div>
+                        <div class="member-info">
+                            <div class="member-name">{{ trip.creator.get_full_name|default:trip.creator.username }}</div>
+                            <div class="member-role">Trip Creator</div>
+                        </div>
+                    </a>
+                    
+                    <!-- Message Organizer - Only if buddies -->
+                    {% if is_buddy %}
+                    <a href="{% url 'travellers:inbox' %}?user_id={{ trip.creator.id }}" class="action-btn action-btn-secondary" style="width:100%;justify-content:center;margin-top:.5rem;">
+                        <svg viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+                        Message Organizer
+                    </a>
+                    {% elif not is_owner and not is_buddy %}
+                    <div class="empty-state" style="padding:.5rem; font-size:.7rem;">
+                        <span>🔒 Become buddies to message the organizer</span>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Invite Link Section - ONLY for Private Trips -->
+            {% if trip.visibility == 'private' and trip.invite_code %}
+            <div class="info-card">
+                <div class="info-card-header">
+                    <svg viewBox="0 0 24 24" width="16" height="16" stroke="var(--teal)" stroke-width="1.8"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><polyline points="13 13 11 13 11 8 9 8 9 12 11 12 11 13 13 13 13 8 15 8 15 13"/></svg>
+                    Invite Friends
+                </div>
+                <div class="info-card-body">
+                    <input type="text" 
+                           id="inviteLink" 
+                           value="{{ request.scheme }}://{{ request.get_host }}{% url 'community:invite_trip' trip.invite_code %}"
+                           readonly 
+                           style="width:100%;padding:.6rem;border:1px solid var(--gray-200);border-radius:var(--radius-sm);font-size:.75rem;margin-bottom:.6rem;">
+                    <button onclick="copyInviteLink()" class="action-btn action-btn-primary" style="width:100%;justify-content:center;">
+                        <svg viewBox="0 0 24 24"><polyline points="6 17 12 23 18 17"/><path d="M12 2v21"/></svg>
+                        Copy Invite Link
+                    </button>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Members Section -->
+            <div class="info-card">
+                <div class="info-card-header">
+                    <svg viewBox="0 0 24 24" width="16" height="16" stroke="var(--teal)" stroke-width="1.8"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                    Members ({{ participants|length }})
+                </div>
+                <div class="info-card-body">
+                    {% for p in participants %}
+                    <div class="member-item">
+                        <div class="member-av">
+                            {% if p.user.profile_picture %}
+                            <img src="{{ p.user.profile_picture.url }}" alt="">
+                            {% else %}
+                            {{ p.user.username|first|upper }}
+                            {% endif %}
+                        </div>
+                        <div class="member-info">
+                            <div class="member-name">
+                                {% if p.user == trip.creator %}
+                                {{ p.user.get_full_name|default:p.user.username }}
+                                <span style="color:var(--amber);font-size:.7rem;">★</span>
+                                {% else %}
+                                {{ p.user.get_full_name|default:p.user.username }}
+                                {% endif %}
+                            </div>
+                            <div class="member-role">
+                                {% if p.role == 'coordinator' %}🚩 Coordinator{% else %}{{ p.get_role_display }}{% endif %}
+                            </div>
+                        </div>
+                        <span class="member-status status-{{ p.status }}">
+                            {{ p.status|title }}
+                        </span>
+                    </div>
+                    
+                    <!-- Admin actions (only for trip creator) -->
+                    {% if is_owner and p.user != trip.creator %}
+                    <div style="display:flex; gap:.5rem; margin-left:3rem; margin-bottom:.5rem; flex-wrap:wrap;">
+                        {% if p.status == "pending" %}
+                        <form method="POST" action="{% url 'community:approve_participant' p.id %}" style="display:inline;">
+                            {% csrf_token %}
+                            <button type="submit" class="action-btn action-btn-primary" style="padding:.25rem .8rem;font-size:.65rem;">Approve</button>
+                        </form>
+                        <form method="POST" action="{% url 'community:reject_participant' p.id %}" style="display:inline;">
+                            {% csrf_token %}
+                            <button type="submit" class="action-btn action-btn-danger" style="padding:.25rem .8rem;font-size:.65rem;">Reject</button>
+                        </form>
+                        {% endif %}
+                        {% if p.status == "approved" %}
+                        <!-- Promote to Coordinator button -->
+                        {% if p.role != 'coordinator' %}
+                        <form method="POST" action="{% url 'community:promote_to_coordinator' p.id %}" style="display:inline;">
+                            {% csrf_token %}
+                            <button type="submit" class="btn-promote" onclick="return confirm('Promote {{ p.user.username }} to coordinator? They will have access to live tracking.')">
+                                ⭐ Make Coordinator
+                            </button>
+                        </form>
+                        {% else %}
+                        <span class="btn-promote" style="background:var(--green-pale);color:var(--green);cursor:default;">✓ Coordinator</span>
+                        {% endif %}
+                        
+                        <form method="POST" action="{% url 'community:remove_participant' p.id %}" style="display:inline;">
+                            {% csrf_token %}
+                            <button type="submit" class="action-btn action-btn-danger" style="padding:.25rem .8rem;font-size:.65rem;" onclick="return confirm('Remove this member?')">
+                                Remove
+                            </button>
+                        </form>
+                        
+                        <!-- Message button - Only if buddies -->
+                        {% if p.user.id in buddy_ids %}
+                        <a href="{% url 'travellers:inbox' %}?user_id={{ p.user.id }}" class="action-btn action-btn-secondary" style="padding:.25rem .8rem;font-size:.65rem;text-decoration:none;">
+                            💬 Message
+                        </a>
+                        {% elif p.user != request.user and not is_owner %}
+                        <span style="font-size:.6rem;color:var(--muted);padding:.25rem .5rem;">🔒 Not buddies</span>
+                        {% endif %}
+                        {% endif %}
+                    </div>
+                    {% elif not is_owner and p.user == trip.creator %}
+                    <div style="margin-left:3rem; margin-bottom:.5rem;">
+                        {% if is_buddy %}
+                        <a href="{% url 'travellers:inbox' %}?user_id={{ trip.creator.id }}" class="action-btn action-btn-secondary" style="padding:.25rem .8rem;font-size:.65rem;text-decoration:none;">
+                            💬 Message Organizer
+                        </a>
+                        {% else %}
+                        <span style="font-size:.6rem;color:var(--muted);">🔒 Become buddies to message</span>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                    {% empty %}
+                    <div class="empty-state">No members yet</div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Live Location Sharing - Only for Owner and Coordinators -->
+            {% if is_owner or is_coordinator %}
+            <div class="info-card">
+                <div class="info-card-header">
+                    <svg viewBox="0 0 24 24" width="16" height="16" stroke="var(--teal)" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                    Live Location
+                </div>
+                <div class="info-card-body">
+                    <button onclick="startSharing()" class="action-btn action-btn-primary" style="width:100%;justify-content:center;">
+                        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                        Share Live Location
+                    </button>
+                    <p class="info-text" style="font-size:.7rem;margin-top:.5rem;text-align:center;">
+                        Share your real-time location with group members during the trip
+                    </p>
+                </div>
+            </div>
+            {% elif can_view_map %}
+            <div class="info-card">
+                <div class="info-card-header">
+                    <svg viewBox="0 0 24 24" width="16" height="16" stroke="var(--teal)" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                    Live Tracking
+                </div>
+                <div class="info-card-body">
+                    <a href="{% url 'community:trip_live_map' trip.id %}" class="action-btn action-btn-secondary" style="width:100%;justify-content:center;">
+                        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                        View Live Map
+                    </a>
+                    <p class="info-text" style="font-size:.7rem;margin-top:.5rem;text-align:center;">
+                        View all participants' live locations on the map
+                    </p>
+                </div>
+            </div>
+            {% endif %}
+
+        </div><!-- /right-sidebar -->
+
+    </div><!-- /content-grid -->
+</div><!-- /page-body -->
+
+<script>
+// Gallery image switcher
+function setGalleryImage(src, element) {
+    document.getElementById('galleryMainImg').src = src;
+    document.querySelectorAll('.gallery-thumb').forEach(thumb => {
+        thumb.classList.remove('active');
+    });
+    element.classList.add('active');
+}
+
+// Copy invite link (only used for private trips)
+function copyInviteLink() {
+    const copyText = document.getElementById("inviteLink");
+    if (copyText) {
+        copyText.select();
+        copyText.setSelectionRange(0, 99999);
+        navigator.clipboard.writeText(copyText.value);
+        alert("Invite link copied!");
+    }
+}
+
+// Live location sharing
+let watchId = null;
+
+function startSharing() {
+    if (!navigator.geolocation) {
+        alert("Geolocation is not supported by your browser");
+        return;
+    }
+    
+    watchId = navigator.geolocation.watchPosition(
+        function(position) {
+            fetch("{% url 'community:update_location' %}", {
+                method: "POST",
+                headers: {
+                    "X-CSRFToken": "{{ csrf_token }}"
+                },
+                body: JSON.stringify({
+                    trip_id: "{{ trip.id }}",
+                    latitude: position.coords.latitude,
+                    longitude: position.coords.longitude,
+                    accuracy: position.coords.accuracy
+                })
+            });
+        },
+        function(error) {
+            console.error("Location error:", error);
+            alert("Unable to get your location. Please enable location services.");
+        },
+        { enableHighAccuracy: true }
+    );
+    
+    alert("Location sharing started! Your group can now see your location on the map.");
+}
+
+// Stop sharing when leaving page
+window.addEventListener('beforeunload', function() {
+    if (watchId !== null) {
+        navigator.geolocation.clearWatch(watchId);
+    }
+});
+</script>
+
+{% endblock %}

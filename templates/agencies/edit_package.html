@@ -1,1479 +1,605 @@
+{% extends "agencies/base_agencies.html" %}
 {% load static %}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Wayzo | Edit Tour Package</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
-    <style>
-        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
-        :root {
-            --gray-100:     #F8F9FC;
-            --gray-150:     #F1F3F8;
-            --gray-200:     #E9EDF2;
-            --gray-300:     #DCE2EA;
-            --gray-400:     #BEC7D1;
-            --gray-500:     #9AA3AF;
-            --gray-600:     #6E7682;
-            --gray-700:     #4A515C;
-            --gray-800:     #2E343D;
-            --gray-850:     #21262E;
-            --gray-900:     #191E24;
-            --gray-950:     #0F1217;
-            --accent-muted: #5B6E8C;
-            --accent-deep:  #3A4A67;
-            --accent-light: #8A9CBA;
-            --accent-pale:  #EFF2F9;
-            --white:        #FFFFFF;
-            --text-dark:    #1E242C;
-            --text-soft:    #3C4350;
-            --text-light:   #6F7886;
-            --green:        #22C55E;
-            --amber:        #F59E0B;
-            --red:          #EF4444;
-            --sidebar-w:    260px;
-        }
+{% block title %}Edit Package | {{ package.title }} | Wayzo{% endblock %}
 
-        html { height: 100%; }
-        body {
-            font-family: 'Inter', sans-serif;
-            background: var(--gray-100);
-            color: var(--text-dark);
-            display: flex;
-            min-height: 100vh;
-            overflow-x: hidden;
-        }
+{% block page_title %}Edit Tour Package{% endblock %}
 
-        /* Sidebar Styles */
-        .sidebar {
-            width: var(--sidebar-w);
-            background: var(--gray-950);
-            height: 100vh;
-            position: fixed;
-            top: 0;
-            left: 0;
-            display: flex;
-            flex-direction: column;
-            z-index: 1000;
-            border-right: 1px solid rgba(255,255,255,0.06);
-            transform: translateX(0);
-            transition: transform 0.32s cubic-bezier(0.4,0,0.2,1);
-            overflow-y: auto;
-            overflow-x: hidden;
-        }
-        
-        .sidebar.collapsed {
-            transform: translateX(calc(-1 * var(--sidebar-w)));
-        }
-        
-        .sidebar-overlay {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.5);
-            z-index: 999;
-            opacity: 0;
-            transition: opacity 0.3s ease;
-            backdrop-filter: blur(4px);
-            cursor: pointer;
-        }
-        
-        .sidebar-overlay.visible {
-            display: block;
-            opacity: 1;
-        }
+{% block breadcrumb %}Edit Package{% endblock %}
 
-        .sidebar-brand {
-            padding: 1.8rem 1.6rem 1.4rem;
-            border-bottom: 1px solid rgba(255,255,255,0.06);
-        }
-        
-        .sidebar-logo {
-            font-family: 'Playfair Display', serif;
-            font-size: 1.5rem;
-            font-weight: 600;
-            letter-spacing: -0.01em;
-            color: white;
-            text-decoration: none;
-            display: block;
-            margin-bottom: 0.2rem;
-        }
-        
-        .sidebar-logo:hover {
-            color: rgba(255,255,255,0.9);
-        }
-        
-        .sidebar-sub {
-            font-size: 0.68rem;
-            color: rgba(255,255,255,0.3);
-            letter-spacing: 0.08em;
-            text-transform: uppercase;
-        }
+{% block extra_css %}
+<style>
+    /* Form Cards */
+    .form-card {
+        background: var(--white);
+        border: 1px solid var(--gray-200);
+        border-radius: 20px;
+        overflow: hidden;
+        margin-bottom: 1.5rem;
+        transition: box-shadow 0.2s;
+    }
+    .form-card:hover {
+        box-shadow: 0 8px 24px rgba(0,0,0,0.04);
+    }
+    .form-card-header {
+        padding: 1.2rem 1.5rem;
+        border-bottom: 1px solid var(--gray-200);
+        background: var(--gray-100);
+    }
+    .form-card-header h2 {
+        font-family: 'Playfair Display', serif;
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: var(--gray-900);
+    }
+    .form-card-header p {
+        font-size: 0.75rem;
+        color: var(--text-light);
+        margin-top: 0.2rem;
+    }
+    .form-card-body {
+        padding: 1.5rem;
+    }
 
-        .sidebar-profile {
-            padding: 1.2rem 1.6rem;
-            border-bottom: 1px solid rgba(255,255,255,0.06);
-            display: flex;
-            align-items: center;
-            gap: 0.85rem;
-        }
-        
-        .sidebar-avatar {
-            width: 38px;
-            height: 38px;
-            border-radius: 50%;
-            background: var(--accent-deep);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 0.85rem;
-            font-weight: 600;
-            color: white;
-            overflow: hidden;
-            flex-shrink: 0;
-            border: 2px solid rgba(255,255,255,0.08);
-        }
-        
-        .sidebar-avatar img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-        
-        .sidebar-profile-info {
-            flex: 1;
-            overflow: hidden;
-        }
-        
-        .sidebar-profile-name {
-            font-size: 0.82rem;
-            font-weight: 600;
-            color: white;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-        
-        .sidebar-profile-role {
-            font-size: 0.68rem;
-            color: rgba(255,255,255,0.35);
-        }
+    /* Form Fields */
+    .form-group {
+        margin-bottom: 1.2rem;
+    }
+    .form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1.2rem;
+        margin-bottom: 0.2rem;
+    }
+    .form-row-3 {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 1.2rem;
+        margin-bottom: 0.2rem;
+    }
+    label {
+        display: block;
+        font-size: 0.7rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: var(--gray-700);
+        margin-bottom: 0.4rem;
+    }
+    label .required {
+        color: var(--red);
+    }
+    input, select, textarea {
+        width: 100%;
+        padding: 0.7rem 1rem;
+        font-size: 0.85rem;
+        font-family: 'Inter', sans-serif;
+        border: 1.5px solid var(--gray-200);
+        border-radius: 12px;
+        background: var(--white);
+        color: var(--text-dark);
+        transition: all 0.2s;
+    }
+    input:focus, select:focus, textarea:focus {
+        outline: none;
+        border-color: var(--teal);
+        box-shadow: 0 0 0 3px rgba(14,138,138,0.1);
+    }
+    textarea {
+        resize: vertical;
+        min-height: 100px;
+    }
+    .checkbox-group {
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+        padding: 0.4rem 0;
+    }
+    .checkbox-group input {
+        width: 18px;
+        height: 18px;
+        margin: 0;
+    }
+    .checkbox-group label {
+        margin: 0;
+        text-transform: none;
+        font-weight: 500;
+        font-size: 0.85rem;
+        color: var(--text-dark);
+    }
+    .help-text {
+        font-size: 0.65rem;
+        color: var(--text-light);
+        margin-top: 0.25rem;
+    }
+    .error-text {
+        color: var(--red);
+        font-size: 0.7rem;
+        margin-top: 0.25rem;
+    }
 
-        .sidebar-nav {
-            flex: 1;
-            padding: 1rem 0.8rem;
-            overflow-y: auto;
-        }
-        
-        .nav-group-label {
-            font-size: 0.62rem;
-            font-weight: 600;
-            letter-spacing: 0.12em;
-            text-transform: uppercase;
-            color: rgba(255,255,255,0.22);
-            padding: 0.6rem 0.8rem 0.4rem;
-            display: block;
-        }
-        
-        .nav-item {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            padding: 0.65rem 0.8rem;
-            border-radius: 8px;
-            text-decoration: none;
-            color: rgba(255,255,255,0.5);
-            font-size: 0.82rem;
-            font-weight: 500;
-            transition: all 0.2s;
-            margin-bottom: 2px;
-            width: 100%;
-            text-align: left;
-            cursor: pointer;
-        }
-        
-        .nav-item svg {
-            width: 16px;
-            height: 16px;
-            stroke: currentColor;
-            stroke-width: 1.8;
-            fill: none;
-            flex-shrink: 0;
-        }
-        
-        .nav-item:hover {
-            background: rgba(255,255,255,0.06);
-            color: rgba(255,255,255,0.85);
-        }
-        
-        .nav-item.active {
-            background: rgba(138,156,186,0.14);
-            color: var(--accent-light);
-        }
-        
-        .nav-item.active svg {
-            stroke: var(--accent-light);
-        }
+    /* Itinerary Items */
+    .itinerary-item {
+        background: var(--white);
+        border: 1px solid var(--gray-200);
+        border-radius: 14px;
+        margin-bottom: 1rem;
+        overflow: hidden;
+    }
+    .itinerary-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0.9rem 1.2rem;
+        background: var(--gray-100);
+        cursor: pointer;
+        transition: background 0.2s;
+    }
+    .itinerary-header:hover {
+        background: var(--gray-150);
+    }
+    .itinerary-header h4 {
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: var(--teal);
+        margin: 0;
+    }
+    .itinerary-header span {
+        font-size: 0.7rem;
+        color: var(--text-light);
+    }
+    .itinerary-content {
+        padding: 1.2rem;
+        border-top: 1px solid var(--gray-200);
+    }
+    .itinerary-content.hidden {
+        display: none;
+    }
+    .delete-checkbox {
+        margin-top: 1rem;
+        padding-top: 1rem;
+        border-top: 1px solid var(--gray-200);
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    .delete-checkbox input {
+        width: 18px;
+        height: 18px;
+        margin: 0;
+    }
+    .delete-checkbox label {
+        margin: 0;
+        text-transform: none;
+        font-weight: 500;
+        color: var(--red);
+        cursor: pointer;
+    }
 
-        .sidebar-footer {
-            padding: 0.8rem;
-            border-top: 1px solid rgba(255,255,255,0.06);
-            margin-top: auto;
-        }
-        
-        .logout-btn {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            padding: 0.65rem 0.8rem;
-            border-radius: 8px;
-            text-decoration: none;
-            color: rgba(255,255,255,0.5);
-            font-size: 0.82rem;
-            font-weight: 500;
-            transition: all 0.2s;
-            width: 100%;
-            background: transparent;
-            border: none;
-            cursor: pointer;
-        }
-        
-        .logout-btn svg {
-            width: 16px;
-            height: 16px;
-            stroke: currentColor;
-            stroke-width: 1.8;
-            fill: none;
-            flex-shrink: 0;
-        }
-        
-        .logout-btn:hover {
-            background: rgba(239,68,68,0.1);
-            color: #F87171;
-        }
-        
-        .logout-btn:hover svg {
-            stroke: #F87171;
-        }
+    /* Image Items */
+    .image-item {
+        display: flex;
+        align-items: flex-start;
+        gap: 1rem;
+        margin-bottom: 1rem;
+        padding: 1rem;
+        background: var(--gray-100);
+        border: 1px solid var(--gray-200);
+        border-radius: 12px;
+        flex-wrap: wrap;
+    }
+    .image-preview {
+        width: 80px;
+        height: 80px;
+        border-radius: 10px;
+        overflow: hidden;
+        background: var(--gray-200);
+        flex-shrink: 0;
+    }
+    .image-preview img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+    .image-file-input {
+        flex: 1;
+        min-width: 200px;
+    }
+    .image-file-input input {
+        margin-bottom: 0;
+    }
+    .image-delete {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    .image-delete input {
+        width: 18px;
+        height: 18px;
+        margin: 0;
+    }
 
-        /* Main Content */
-        .main {
-            margin-left: var(--sidebar-w);
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            min-height: 100vh;
-            transition: margin-left 0.32s cubic-bezier(0.4,0,0.2,1);
-        }
-        
-        .main.sidebar-collapsed {
-            margin-left: 0;
-        }
+    /* Add Buttons */
+    .add-btn {
+        background: transparent;
+        border: 2px dashed var(--gray-300);
+        border-radius: 12px;
+        padding: 0.8rem;
+        width: 100%;
+        color: var(--teal);
+        font-size: 0.8rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        margin-top: 1rem;
+    }
+    .add-btn:hover {
+        border-color: var(--teal);
+        background: var(--teal-pale);
+    }
 
-        /* Topbar */
-        .topbar {
-            background: var(--white);
-            border-bottom: 1px solid var(--gray-200);
-            padding: 0 2rem;
-            height: 64px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            position: sticky;
-            top: 0;
-            z-index: 200;
+    /* Form Actions */
+    .form-actions {
+        display: flex;
+        gap: 1rem;
+        margin-top: 2rem;
+        padding-top: 1.5rem;
+        border-top: 1px solid var(--gray-200);
+    }
+    .btn-primary {
+        background: var(--teal);
+        color: white;
+        padding: 0.8rem 2rem;
+        border: none;
+        border-radius: 40px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    .btn-primary:hover {
+        background: var(--teal-dark);
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(14,138,138,0.2);
+    }
+    .btn-secondary {
+        background: transparent;
+        border: 1.5px solid var(--gray-300);
+        color: var(--gray-700);
+        padding: 0.8rem 2rem;
+        border-radius: 40px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    .btn-secondary:hover {
+        border-color: var(--teal);
+        color: var(--teal);
+    }
+
+    @media (max-width: 768px) {
+        .form-row, .form-row-3 {
+            grid-template-columns: 1fr;
             gap: 1rem;
         }
-        
-        .topbar-left {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-            flex: 1;
-            min-width: 0;
-        }
-        
-        .topbar-left h1 {
-            font-family: 'Playfair Display', serif;
-            font-size: 1.2rem;
-            font-weight: 500;
-            color: var(--gray-900);
-        }
-        
-        .topbar-left p {
-            font-size: 0.75rem;
-            color: var(--text-light);
-            margin-top: 1px;
-        }
-        
-        .topbar-right {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            flex-shrink: 0;
-        }
-
-        .hamburger {
-            width: 36px;
-            height: 36px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            gap: 5px;
-            background: transparent;
-            border: none;
-            cursor: pointer;
-            padding: 4px;
-            border-radius: 8px;
-            flex-shrink: 0;
-            transition: background 0.2s;
-        }
-        
-        .hamburger:hover {
-            background: var(--gray-150);
-        }
-        
-        .hamburger span {
-            display: block;
-            width: 20px;
-            height: 2px;
-            background: var(--gray-700);
-            border-radius: 2px;
-            transition: transform 0.3s cubic-bezier(0.4,0,0.2,1), opacity 0.3s ease;
-            transform-origin: center;
-        }
-        
-        .hamburger.is-open span:nth-child(1) {
-            transform: translateY(7px) rotate(45deg);
-        }
-        
-        .hamburger.is-open span:nth-child(2) {
-            opacity: 0;
-        }
-        
-        .hamburger.is-open span:nth-child(3) {
-            transform: translateY(-7px) rotate(-45deg);
-        }
-
-        .topbar-btn {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            padding: 0.5rem 1.1rem;
-            border-radius: 40px;
-            font-size: 0.78rem;
-            font-weight: 500;
-            text-decoration: none;
-            border: none;
-            font-family: 'Inter', sans-serif;
-            transition: all 0.2s;
-            cursor: pointer;
-        }
-        
-        .topbar-btn svg {
-            width: 14px;
-            height: 14px;
-            stroke: currentColor;
-            stroke-width: 2;
-            fill: none;
-        }
-        
-        .topbar-btn.outline {
-            border: 1.5px solid var(--gray-300);
-            background: transparent;
-            color: var(--gray-700);
-        }
-        
-        .topbar-btn.outline:hover {
-            border-color: var(--accent-muted);
-            color: var(--accent-deep);
-        }
-        
-        .topbar-btn.solid {
-            background: var(--gray-900);
-            color: white;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-        }
-        
-        .topbar-btn.solid:hover {
-            background: var(--accent-deep);
-            transform: translateY(-1px);
-        }
-
-        /* Content */
-        .content {
-            padding: 2rem 2.5rem 3rem;
-            flex: 1;
-        }
-
-        /* Breadcrumb */
-        .breadcrumb {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            font-size: 0.78rem;
-            color: var(--text-light);
-            margin-bottom: 1.6rem;
-        }
-        
-        .breadcrumb a {
-            color: var(--text-light);
-            text-decoration: none;
-            transition: color 0.2s;
-        }
-        
-        .breadcrumb a:hover {
-            color: var(--accent-deep);
-        }
-        
-        .breadcrumb svg {
-            width: 12px;
-            height: 12px;
-            stroke: currentColor;
-            stroke-width: 2;
-            fill: none;
-        }
-        
-        .breadcrumb .current {
-            color: var(--text-dark);
-            font-weight: 500;
-        }
-
-        /* Alert Messages */
-        .alert {
-            border-radius: 12px;
+        .form-card-header, .form-card-body {
             padding: 1rem;
-            margin-bottom: 1.5rem;
-            animation: fadeUp 0.3s ease both;
         }
-        
-        .alert-danger {
-            background: #FEF2F2;
-            border: 1px solid #FEE2E2;
-            color: #DC2626;
-        }
-        
-        .alert-success {
-            background: #F0FDF4;
-            border: 1px solid #DCFCE7;
-            color: #16A34A;
-        }
-        
-        .alert-info {
-            background: #EFF6FF;
-            border: 1px solid #DBEAFE;
-            color: #2563EB;
-        }
-        
-        .alert-warning {
-            background: #FFFBEB;
-            border: 1px solid #FEF3C7;
-            color: #D97706;
-        }
-        
-        .alert ul {
-            margin-top: 0.5rem;
-            margin-left: 1.5rem;
-        }
-
-        /* Form Cards */
-        .form-card {
-            background: var(--white);
-            border: 1px solid var(--gray-200);
-            border-radius: 20px;
-            overflow: hidden;
-            margin-bottom: 2rem;
-            transition: box-shadow 0.2s;
-        }
-        
-        .form-card:hover {
-            box-shadow: 0 8px 24px rgba(0,0,0,0.04);
-        }
-
-        .form-card-header {
-            padding: 1.4rem 2rem;
-            border-bottom: 1px solid var(--gray-200);
-            background: var(--gray-100);
-        }
-        
-        .form-card-header h2 {
-            font-family: 'Playfair Display', serif;
-            font-size: 1.2rem;
-            font-weight: 500;
-            color: var(--gray-900);
-            margin-bottom: 0.2rem;
-        }
-        
-        .form-card-header p {
-            font-size: 0.8rem;
-            color: var(--text-light);
-        }
-
-        .form-card-body {
-            padding: 2rem;
-        }
-
-        /* Form Fields */
-        .form-group {
-            margin-bottom: 1.5rem;
-        }
-        
-        .form-row {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 1.5rem;
-            margin-bottom: 1.5rem;
-        }
-        
-        .form-row-3 {
-            display: grid;
-            grid-template-columns: 1fr 1fr 1fr;
-            gap: 1.5rem;
-            margin-bottom: 1.5rem;
-        }
-
-        label {
-            display: block;
-            font-size: 0.75rem;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.06em;
-            color: var(--gray-700);
-            margin-bottom: 0.5rem;
-        }
-        
-        label .required {
-            color: var(--accent-muted);
-            margin-left: 0.25rem;
-        }
-
-        input, select, textarea {
-            width: 100%;
-            padding: 0.75rem 1rem;
-            font-size: 0.9rem;
-            font-family: 'Inter', sans-serif;
-            border: 1.5px solid var(--gray-200);
-            border-radius: 12px;
-            background: var(--white);
-            color: var(--text-dark);
-            transition: all 0.2s;
-        }
-        
-        input:focus, select:focus, textarea:focus {
-            outline: none;
-            border-color: var(--accent-muted);
-            box-shadow: 0 0 0 3px rgba(91,110,140,0.1);
-        }
-        
-        textarea {
-            resize: vertical;
-            min-height: 100px;
-        }
-
-        /* Checkbox Styles */
-        .checkbox-group {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            margin-top: 0.5rem;
-            padding: 0.5rem 0;
-        }
-        
-        .checkbox-group input {
-            width: 18px;
-            height: 18px;
-            margin: 0;
-            cursor: pointer;
-        }
-        
-        .checkbox-group label {
-            margin: 0;
-            text-transform: none;
-            font-weight: 500;
-            font-size: 0.85rem;
-            color: var(--text-dark);
-            cursor: pointer;
-        }
-
-        .error-text {
-            color: #DC2626;
-            font-size: 0.7rem;
-            margin-top: 0.25rem;
-        }
-
-        .help-text {
-            font-size: 0.7rem;
-            color: var(--text-light);
-            margin-top: 0.3rem;
-        }
-
-        /* Itinerary Items */
-        .itinerary-item {
-            background: var(--white);
-            border: 1px solid var(--gray-200);
-            border-radius: 16px;
-            margin-bottom: 1rem;
-            overflow: hidden;
-        }
-        
-        .itinerary-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 1rem 1.5rem;
-            background: var(--gray-100);
-            cursor: pointer;
-            transition: background 0.2s;
-        }
-        
-        .itinerary-header:hover {
-            background: var(--gray-150);
-        }
-        
-        .itinerary-header h4 {
-            font-size: 1rem;
-            font-weight: 600;
-            color: var(--accent-deep);
-            margin: 0;
-        }
-        
-        .itinerary-header span {
-            font-size: 0.7rem;
-            color: var(--text-light);
-        }
-        
-        .itinerary-content {
-            padding: 1.5rem;
-            transition: all 0.3s ease;
-        }
-        
-        .itinerary-content.hidden {
-            display: none;
-        }
-        
-        .delete-checkbox {
-            margin-top: 1rem;
-            padding-top: 1rem;
-            border-top: 1px solid var(--gray-200);
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-        
-        .delete-checkbox input {
-            width: auto;
-            width: 18px;
-            height: 18px;
-        }
-        
-        .delete-checkbox label {
-            margin: 0;
-            text-transform: none;
-            font-weight: 500;
-            color: var(--red);
-            cursor: pointer;
-        }
-
-        /* Image Items */
         .image-item {
-            display: flex;
-            align-items: flex-start;
-            gap: 1rem;
-            margin-bottom: 1rem;
-            padding: 1rem;
-            background: var(--gray-100);
-            border: 1px solid var(--gray-200);
-            border-radius: 12px;
-            position: relative;
-        }
-        
-        .image-item img {
-            width: 80px;
-            height: 80px;
-            object-fit: cover;
-            border-radius: 8px;
-        }
-        
-        .image-item > div:first-child {
-            flex: 1;
-        }
-        
-        .image-item input[type="file"] {
-            margin-bottom: 0;
-        }
-        
-        .image-item .delete-checkbox {
-            margin-top: 0;
-            padding-top: 0;
-            border-top: none;
-        }
-        
-        .add-btn {
-            background: transparent;
-            border: 2px dashed var(--gray-300);
-            border-radius: 12px;
-            padding: 1rem;
-            width: 100%;
-            color: var(--accent-muted);
-            font-size: 0.85rem;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.2s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 0.5rem;
-            margin-top: 1rem;
-        }
-        
-        .add-btn:hover {
-            border-color: var(--accent-muted);
-            background: var(--accent-pale);
-        }
-
-        /* Action Buttons */
-        .form-actions {
-            display: flex;
-            gap: 1rem;
-            margin-top: 2rem;
-            padding-top: 2rem;
-            border-top: 1px solid var(--gray-200);
-        }
-        
-        .btn-primary {
-            background: var(--gray-900);
-            color: white;
-            padding: 0.9rem 2rem;
-            border: none;
-            border-radius: 40px;
-            font-size: 0.85rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s;
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-        
-        .btn-primary:hover {
-            background: var(--accent-deep);
-            transform: translateY(-1px);
-            box-shadow: 0 8px 20px rgba(58,74,103,0.2);
-        }
-        
-        .btn-secondary {
-            background: transparent;
-            border: 1.5px solid var(--gray-300);
-            color: var(--gray-700);
-            padding: 0.9rem 2rem;
-            border-radius: 40px;
-            font-size: 0.85rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s;
-            text-decoration: none;
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-        
-        .btn-secondary:hover {
-            border-color: var(--accent-muted);
-            color: var(--accent-deep);
-        }
-
-        /* Footer */
-        .site-footer {
-            background: var(--gray-950);
-            color: rgba(255,255,255,0.6);
-            padding: 4rem 5% 2rem;
-            margin-top: auto;
-        }
-        
-        .footer-grid {
-            display: grid;
-            grid-template-columns: 2fr 1fr 1fr 1fr;
-            gap: 2.5rem;
-            margin-bottom: 2.8rem;
-        }
-        
-        .footer-logo {
-            font-family: 'Playfair Display', serif;
-            font-size: 1.55rem;
-            font-weight: 600;
-            letter-spacing: -0.01em;
-            color: white;
-            display: block;
-            margin-bottom: 1rem;
-            text-decoration: none;
-        }
-        
-        .footer-logo:hover {
-            color: rgba(255,255,255,0.75);
-        }
-        
-        .footer-desc {
-            font-size: 0.85rem;
-            color: rgba(255,255,255,0.45);
-            line-height: 1.7;
-            max-width: 240px;
-        }
-        
-        .footer-col h5 {
-            font-size: 0.7rem;
-            letter-spacing: 0.1em;
-            text-transform: uppercase;
-            font-weight: 600;
-            color: var(--gray-300);
-            margin-bottom: 1.2rem;
-        }
-        
-        .footer-col ul {
-            list-style: none;
-            display: flex;
             flex-direction: column;
-            gap: 0.7rem;
         }
-        
-        .footer-col ul a {
-            font-size: 0.85rem;
-            color: rgba(255,255,255,0.5);
-            text-decoration: none;
-            transition: color 0.2s;
+        .image-preview {
+            width: 100%;
+            height: auto;
+            max-height: 150px;
         }
-        
-        .footer-col ul a:hover {
-            color: white;
+        .form-actions {
+            flex-direction: column;
         }
-        
-        .footer-bottom {
-            border-top: 1px solid rgba(255,255,255,0.08);
-            padding-top: 2rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-size: 0.75rem;
-            color: rgba(255,255,255,0.3);
+        .btn-primary, .btn-secondary {
+            justify-content: center;
         }
+    }
+</style>
+{% endblock %}
 
-        /* Animation */
-        @keyframes fadeUp {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-        
-        .form-card {
-            animation: fadeUp 0.5s ease both;
-        }
-        
-        .form-card:nth-child(1) { animation-delay: 0.05s; }
-        .form-card:nth-child(2) { animation-delay: 0.1s; }
-        .form-card:nth-child(3) { animation-delay: 0.15s; }
-
-        /* Responsive */
-        @media (max-width: 860px) {
-            .sidebar {
-                transform: translateX(calc(-1 * var(--sidebar-w)));
-            }
-            
-            .sidebar.open {
-                transform: translateX(0);
-            }
-            
-            .main {
-                margin-left: 0 !important;
-            }
-            
-            .form-row, .form-row-3 {
-                grid-template-columns: 1fr;
-                gap: 1rem;
-            }
-            
-            .footer-grid {
-                grid-template-columns: 1fr 1fr;
-                gap: 2rem;
-            }
-            
-            .image-item {
-                flex-direction: column;
-                align-items: flex-start;
-            }
-            
-            .image-item img {
-                width: 100%;
-                height: auto;
-            }
-        }
-        
-        @media (max-width: 600px) {
-            .content {
-                padding: 1rem;
-            }
-            
-            .topbar {
-                padding: 0 1rem;
-            }
-            
-            .form-card-header, .form-card-body {
-                padding: 1rem;
-            }
-            
-            .footer-grid {
-                grid-template-columns: 1fr;
-            }
-            
-            .footer-bottom {
-                flex-direction: column;
-                gap: 0.6rem;
-                text-align: center;
-            }
-            
-            .form-actions {
-                flex-direction: column;
-            }
-            
-            .topbar-left h1 {
-                font-size: 1rem;
-            }
-            
-            .topbar-left p {
-                display: none;
-            }
-        }
-    </style>
-</head>
-<body>
-
-<!-- Sidebar overlay -->
-<div class="sidebar-overlay" id="sidebarOverlay"></div>
-
-<!-- Sidebar -->
-<aside class="sidebar" id="sidebar">
-    <div class="sidebar-brand">
-        <a class="sidebar-logo" href="{% url 'index' %}">Wayzo</a>
-        <span class="sidebar-sub">Agency Portal</span>
+{% block content %}
+<!-- Display messages -->
+{% if messages %}
+<div class="messages">
+    {% for message in messages %}
+    <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}{{ message.tags }}{% endif %}">
+        {{ message }}
     </div>
-    <div class="sidebar-profile">
-        <div class="sidebar-avatar">
-            {% if user.profile_picture %}
-                <img src="{{ user.profile_picture.url }}" alt="">
-            {% else %}
-                {{ agency.agency_name|first|upper }}
-            {% endif %}
-        </div>
-        <div class="sidebar-profile-info">
-            <div class="sidebar-profile-name">{{ agency.agency_name }}</div>
-            <div class="sidebar-profile-role">Travel Agency</div>
-        </div>
-    </div>
-    <nav class="sidebar-nav">
-        <span class="nav-group-label">Main</span>
-        <a href="{% url 'agency:agency_dashboard' %}" class="nav-item">
-            <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
-            Home
-        </a>
-        <a href="{% url 'agency:agency_packages' %}" class="nav-item active">
-            <svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-            Tour Packages
-        </a>
-        <a href="{% url 'agency:agency_bookings' %}" class="nav-item">
-            <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/></svg>
-            Bookings
-        </a>
-        <a href="{% url 'agency:add_package' %}" class="nav-item">
-            <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
-            Add New Package
-        </a>
-        <span class="nav-group-label">Account</span>
-        <a href="{% url 'agency:edit_agencyprofile' %}" class="nav-item">
-            <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-            Edit Profile
-        </a>
-    </nav>
-    <div class="sidebar-footer">
-        <a href="{% url 'logout' %}" class="logout-btn">
-            <svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-            Sign Out
-        </a>
-    </div>
-</aside>
-
-<!-- Main Content -->
-<div class="main" id="mainEl">
-    <div class="topbar">
-        <div class="topbar-left">
-            <button class="hamburger" id="hamburgerBtn">
-                <span></span><span></span><span></span>
-            </button>
-            <div>
-                <h1>Edit Tour Package</h1>
-                <p>Update your package details</p>
-            </div>
-        </div>
-        <div class="topbar-right">
-            <a href="{% url 'agency:agency_packages' %}" class="topbar-btn outline">
-                <svg viewBox="0 0 24 24"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
-                Back to Packages
-            </a>
-        </div>
-    </div>
-
-    <div class="content">
-        <div class="breadcrumb">
-            <a href="{% url 'agency:agency_dashboard' %}">Dashboard</a>
-            <svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
-            <a href="{% url 'agency:agency_packages' %}">Tour Packages</a>
-            <svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
-            <span class="current">Edit Package</span>
-        </div>
-
-        <!-- Display Django messages -->
-        {% if messages %}
-        <div class="messages">
-            {% for message in messages %}
-            <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}{{ message.tags }}{% endif %}">
-                {{ message }}
-            </div>
-            {% endfor %}
-        </div>
-        {% endif %}
-        
-        <!-- Display form non-field errors -->
-        {% if form.non_field_errors %}
-        <div class="alert alert-danger">
-            {% for error in form.non_field_errors %}
-                {{ error }}
-            {% endfor %}
-        </div>
-        {% endif %}
-
-        <form method="POST" enctype="multipart/form-data" id="editForm" action="{% url 'agency:edit_package' package.id %}">
-            {% csrf_token %}
-            
-            <!-- Display form field errors -->
-            {% if form.errors %}
-                {% for field, errors in form.errors.items %}
-                    {% if field != '__all__' %}
-                        {% for error in errors %}
-                        <div class="alert alert-danger">
-                            <strong>{{ field|title }}:</strong> {{ error }}
-                        </div>
-                        {% endfor %}
-                    {% endif %}
-                {% endfor %}
-            {% endif %}
-
-            <div class="form-card">
-                <div class="form-card-header">
-                    <h2>Package Details</h2>
-                    <p>Core information about your tour package</p>
-                </div>
-                <div class="form-card-body">
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label>Package Title <span class="required">*</span></label>
-                            {{ form.title }}
-                            {% if form.title.errors %}
-                                <div class="error-text">{{ form.title.errors.0 }}</div>
-                            {% endif %}
-                        </div>
-                        <div class="form-group">
-                            <label>Places Covered <span class="required">*</span></label>
-                            {{ form.places_covered }}
-                            {% if form.places_covered.errors %}
-                                <div class="error-text">{{ form.places_covered.errors.0 }}</div>
-                            {% endif %}
-                        </div>
-                    </div>
-
-                    <div class="form-row-3">
-                        <div class="form-group">
-                            <label>Duration (Days) <span class="required">*</span></label>
-                            {{ form.duration_days }}
-                        </div>
-                        <div class="form-group">
-                            <label>Duration (Nights) <span class="required">*</span></label>
-                            {{ form.duration_nights }}
-                        </div>
-                        <div class="form-group">
-                            <label>Guide Language</label>
-                            {{ form.guide_language }}
-                        </div>
-                    </div>
-
-                    <div class="form-row-3">
-                        <div class="form-group">
-                            <label>Price (₹) <span class="required">*</span></label>
-                            {{ form.price }}
-                        </div>
-                        <div class="form-group">
-                            <label>Discounted Price (₹)</label>
-                            {{ form.discounted_price }}
-                            <div class="help-text">Optional: Leave blank if no discount</div>
-                        </div>
-                        <div class="form-group">
-                            <label>Min Group Size</label>
-                            {{ form.min_group_size }}
-                        </div>
-                    </div>
-
-                    <div class="form-row-3">
-                        <div class="form-group">
-                            <label>Max Group Size</label>
-                            {{ form.max_group_size }}
-                        </div>
-                        <div class="form-group">
-                            <label>Pickup Points</label>
-                            {{ form.pickup_points }}
-                            <div class="help-text">Comma-separated list of pickup locations</div>
-                        </div>
-                        <div class="form-group">
-                            <label>Drop Points</label>
-                            {{ form.drop_points }}
-                            <div class="help-text">Comma-separated list of drop locations</div>
-                        </div>
-                    </div>
-
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label>Accommodation Type</label>
-                            {{ form.accommodation_type }}
-                            <div class="help-text">e.g., 3★ Hotel, Resort, Camping</div>
-                        </div>
-                        <div class="form-group">
-                            <label>Transport Type</label>
-                            {{ form.transport_type }}
-                            <div class="help-text">e.g., Private Cab, Mini Bus, Flight</div>
-                        </div>
-                    </div>
-
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label>Meals</label>
-                            {{ form.meals }}
-                            <div class="help-text">e.g., Breakfast included, All meals</div>
-                        </div>
-                        <div class="form-group">
-                            <label>Suitable For</label>
-                            {{ form.suitable_for }}
-                            <div class="help-text">e.g., Couples, Family, Adventure seekers</div>
-                        </div>
-                    </div>
-
-                    <div class="form-group">
-                        <label>Things to Carry</label>
-                        {{ form.things_to_carry }}
-                        <div class="help-text">List items travelers should bring</div>
-                    </div>
-
-                    <div class="form-row">
-                        <div class="form-group">
-                            <div class="checkbox-group">
-                                {{ form.is_featured }}
-                                <label for="{{ form.is_featured.id_for_label }}">⭐ Feature this package</label>
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <div class="checkbox-group">
-                                {{ form.is_active }}
-                                <label for="{{ form.is_active.id_for_label }}">✅ Active (Visible to Customers)</label>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="form-group">
-                        <label>Description <span class="required">*</span></label>
-                        {{ form.description }}
-                    </div>
-
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label>Inclusions</label>
-                            {{ form.inclusions }}
-                            <div class="help-text">What's included in the package</div>
-                        </div>
-                        <div class="form-group">
-                            <label>Exclusions</label>
-                            {{ form.exclusions }}
-                            <div class="help-text">What's not included</div>
-                        </div>
-                    </div>
-
-                    <div class="form-group">
-                        <label>Cancellation Policy</label>
-                        {{ form.cancellation_policy }}
-                    </div>
-
-                    <div class="form-group">
-                        <label>Terms & Conditions</label>
-                        {{ form.terms_conditions }}
-                    </div>
-                </div>
-            </div>
-
-            <!-- Gallery Images Section -->
-            <div class="form-card">
-                <div class="form-card-header">
-                    <h2>Package Images</h2>
-                    <p>Upload high-quality images for your package</p>
-                </div>
-                <div class="form-card-body">
-                    {{ image_formset.management_form }}
-                    <div id="image-container">
-                        {% for img_form in image_formset %}
-                        <div class="image-item" data-form-index="{{ forloop.counter0 }}">
-                            {{ img_form.id }}
-                            <div style="flex: 1;">
-                                <label>Image {{ forloop.counter }}</label>
-                                {{ img_form.image }}
-                                {% if img_form.instance.image %}
-                                    <div style="margin-top: 0.5rem;">
-                                        <img src="{{ img_form.instance.image.url }}" width="100" style="border-radius: 8px;">
-                                    </div>
-                                {% endif %}
-                                {% if img_form.image.errors %}
-                                    <div class="error-text">{{ img_form.image.errors.0 }}</div>
-                                {% endif %}
-                            </div>
-                            <div class="delete-checkbox" style="display: flex; align-items: center; gap: 0.5rem;">
-                                <label style="margin: 0; color: #EF4444; cursor: pointer;">Delete this image:</label>
-                                {{ img_form.DELETE }}
-                            </div>
-                        </div>
-                        {% endfor %}
-                    </div>
-                    <button type="button" class="add-btn" onclick="addImage()">
-                        <svg viewBox="0 0 24 24" width="16" height="16"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                        Add Another Image
-                    </button>
-                </div>
-            </div>
-
-            <!-- Itinerary Section -->
-            <div class="form-card">
-                <div class="form-card-header">
-                    <h2>Day-by-Day Itinerary</h2>
-                    <p>Create a detailed plan for each day</p>
-                </div>
-                <div class="form-card-body">
-                    {{ itinerary_formset.management_form }}
-                    <div id="itinerary-container">
-                        {% for itinerary_form in itinerary_formset %}
-                        <div class="itinerary-item" data-form-index="{{ forloop.counter0 }}">
-                            <div class="itinerary-header">
-                                <h4>Day {{ itinerary_form.day_number.value|default:forloop.counter }}</h4>
-                                <span>▼ Click to expand</span>
-                            </div>
-                            <div class="itinerary-content hidden">
-                                {{ itinerary_form.id }}
-                                <div class="form-group">
-                                    <label>Day Number</label>
-                                    {{ itinerary_form.day_number }}
-                                    {% if itinerary_form.day_number.errors %}
-                                        <div class="error-text">{{ itinerary_form.day_number.errors.0 }}</div>
-                                    {% endif %}
-                                </div>
-                                <div class="form-group">
-                                    <label>Day Title</label>
-                                    {{ itinerary_form.title }}
-                                    {% if itinerary_form.title.errors %}
-                                        <div class="error-text">{{ itinerary_form.title.errors.0 }}</div>
-                                    {% endif %}
-                                </div>
-                                <div class="form-group">
-                                    <label>Description</label>
-                                    {{ itinerary_form.description }}
-                                    {% if itinerary_form.description.errors %}
-                                        <div class="error-text">{{ itinerary_form.description.errors.0 }}</div>
-                                    {% endif %}
-                                </div>
-                                <div class="delete-checkbox">
-                                    <label>Delete this day:</label>
-                                    {{ itinerary_form.DELETE }}
-                                </div>
-                            </div>
-                        </div>
-                        {% endfor %}
-                    </div>
-                    <button type="button" class="add-btn" onclick="addDay()">
-                        <svg viewBox="0 0 24 24" width="16" height="16"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                        Add Another Day
-                    </button>
-                </div>
-            </div>
-
-            <!-- Form Actions -->
-            <div class="form-actions">
-                <button type="submit" class="btn-primary">
-                    <svg viewBox="0 0 24 24" width="18" height="18">
-                        <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
-                        <polyline points="17 21 17 13 7 13 7 21"/>
-                        <polyline points="7 3 7 8 15 8"/>
-                    </svg>
-                    Update Package
-                </button>
-                <a href="{% url 'agency:agency_packages' %}" class="btn-secondary">
-                    <svg viewBox="0 0 24 24" width="18" height="18">
-                        <line x1="18" y1="6" x2="6" y2="18"/>
-                        <line x1="6" y1="6" x2="18" y2="18"/>
-                    </svg>
-                    Cancel
-                </a>
-            </div>
-        </form>
-    </div>
-
-    <!-- Footer -->
-    <footer class="site-footer">
-        <div class="footer-grid">
-            <div>
-                <a class="footer-logo" href="{% url 'index' %}">Wayzo</a>
-                <p class="footer-desc">Your smart travel companion. Discover, plan, and experience the world beautifully.</p>
-            </div>
-            <div class="footer-col">
-                <h5>Explore</h5>
-                <ul><li><a href="#">Destinations</a></li><li><a href="#">Restaurants</a></li><li><a href="#">Hotels</a></li><li><a href="#">Packages</a></li></ul>
-            </div>
-            <div class="footer-col">
-                <h5>Travellers</h5>
-                <ul><li><a href="{% url 'traveller_register' %}">Join as Traveller</a></li><li><a href="{% url 'login' %}">Login</a></li><li><a href="#">How it Works</a></li><li><a href="#">FAQs</a></li></ul>
-            </div>
-            <div class="footer-col">
-                <h5>Partners</h5>
-                <ul><li><a href="{% url 'agency_register' %}">Register Agency</a></li><li><a href="{% url 'restaurant_register' %}">Register Restaurant</a></li><li><a href="#">Partner Benefits</a></li><li><a href="#">Contact Us</a></li></ul>
-            </div>
-        </div>
-        <div class="footer-bottom">
-            <span>© 2025 Wayzo. All rights reserved.</span>
-            <span>Made for explorers everywhere</span>
-        </div>
-    </footer>
+    {% endfor %}
 </div>
+{% endif %}
 
+<!-- Display form non-field errors -->
+{% if form.non_field_errors %}
+<div class="alert alert-danger">
+    {% for error in form.non_field_errors %}
+        {{ error }}
+    {% endfor %}
+</div>
+{% endif %}
+
+<form method="POST" enctype="multipart/form-data" id="editForm" novalidate>
+    {% csrf_token %}
+    {{ itinerary_formset.management_form }}
+    {{ image_formset.management_form }}
+
+    <!-- Package Details Section -->
+    <div class="form-card">
+        <div class="form-card-header">
+            <h2>📋 Package Details</h2>
+            <p>Core information about your tour package</p>
+        </div>
+        <div class="form-card-body">
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Package Title <span class="required">*</span></label>
+                    {{ form.title }}
+                    {% if form.title.errors %}<div class="error-text">{{ form.title.errors.0 }}</div>{% endif %}
+                </div>
+                <div class="form-group">
+                    <label>Places Covered <span class="required">*</span></label>
+                    {{ form.places_covered }}
+                    {% if form.places_covered.errors %}<div class="error-text">{{ form.places_covered.errors.0 }}</div>{% endif %}
+                </div>
+            </div>
+
+            <div class="form-row-3">
+                <div class="form-group">
+                    <label>Duration (Days) <span class="required">*</span></label>
+                    {{ form.duration_days }}
+                </div>
+                <div class="form-group">
+                    <label>Duration (Nights) <span class="required">*</span></label>
+                    {{ form.duration_nights }}
+                </div>
+                <div class="form-group">
+                    <label>Guide Language</label>
+                    {{ form.guide_language }}
+                </div>
+            </div>
+
+            <div class="form-row-3">
+                <div class="form-group">
+                    <label>Price (₹) <span class="required">*</span></label>
+                    {{ form.price }}
+                </div>
+                <div class="form-group">
+                    <label>Discounted Price (₹)</label>
+                    {{ form.discounted_price }}
+                    <div class="help-text">Leave blank if no discount</div>
+                </div>
+                <div class="form-group">
+                    <label>Min Group Size</label>
+                    {{ form.min_group_size }}
+                </div>
+            </div>
+
+            <div class="form-row-3">
+                <div class="form-group">
+                    <label>Max Group Size</label>
+                    {{ form.max_group_size }}
+                </div>
+                <div class="form-group">
+                    <label>Pickup Points</label>
+                    {{ form.pickup_points }}
+                    <div class="help-text">Comma-separated list of pickup locations</div>
+                </div>
+                <div class="form-group">
+                    <label>Drop Points</label>
+                    {{ form.drop_points }}
+                    <div class="help-text">Comma-separated list of drop locations</div>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Accommodation Type</label>
+                    {{ form.accommodation_type }}
+                </div>
+                <div class="form-group">
+                    <label>Transport Type</label>
+                    {{ form.transport_type }}
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Meals</label>
+                    {{ form.meals }}
+                </div>
+                <div class="form-group">
+                    <label>Suitable For</label>
+                    {{ form.suitable_for }}
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Things to Carry</label>
+                {{ form.things_to_carry }}
+                <div class="help-text">List items travelers should bring</div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <div class="checkbox-group">
+                        {{ form.is_featured }}
+                        <label>⭐ Feature this package</label>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <div class="checkbox-group">
+                        {{ form.is_active }}
+                        <label>✅ Active (Visible to Customers)</label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Description <span class="required">*</span></label>
+                {{ form.description }}
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Inclusions</label>
+                    {{ form.inclusions }}
+                    <div class="help-text">What's included in the package (one per line)</div>
+                </div>
+                <div class="form-group">
+                    <label>Exclusions</label>
+                    {{ form.exclusions }}
+                    <div class="help-text">What's not included (one per line)</div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Cancellation Policy</label>
+                {{ form.cancellation_policy }}
+            </div>
+
+            <div class="form-group">
+                <label>Terms & Conditions</label>
+                {{ form.terms_conditions }}
+            </div>
+        </div>
+    </div>
+
+    <!-- Gallery Images Section -->
+    <div class="form-card">
+        <div class="form-card-header">
+            <h2>🖼️ Package Images</h2>
+            <p>Upload high-quality images for your package</p>
+        </div>
+        <div class="form-card-body">
+            <div id="image-container">
+                {% for img_form in image_formset %}
+                <div class="image-item" data-form-index="{{ forloop.counter0 }}">
+                    {{ img_form.id }}
+                    <div class="image-preview">
+                        {% if img_form.instance.image %}
+                            <img src="{{ img_form.instance.image.url }}" alt="Package image">
+                        {% else %}
+                            <div style="display: flex; align-items: center; justify-content: center; height: 100%; color: var(--gray-400);">
+                                🖼️
+                            </div>
+                        {% endif %}
+                    </div>
+                    <div class="image-file-input">
+                        <label>Image File</label>
+                        {{ img_form.image }}
+                        {% if img_form.image.errors %}
+                            <div class="error-text">{{ img_form.image.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="image-delete">
+                        {{ img_form.DELETE }}
+                        <label>Delete this image</label>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            <button type="button" class="add-btn" onclick="addImage()">
+                <svg viewBox="0 0 24 24" width="16" height="16"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                Add Another Image
+            </button>
+        </div>
+    </div>
+
+    <!-- Itinerary Section -->
+    <div class="form-card">
+        <div class="form-card-header">
+            <h2>🗓️ Day-by-Day Itinerary</h2>
+            <p>Create a detailed plan for each day</p>
+        </div>
+        <div class="form-card-body">
+            <div id="itinerary-container">
+                {% for itinerary_form in itinerary_formset %}
+                <div class="itinerary-item" data-form-index="{{ forloop.counter0 }}">
+                    <div class="itinerary-header" onclick="toggleItinerary(this)">
+                        <h4>Day {{ itinerary_form.day_number.value|default:forloop.counter }}</h4>
+                        <span>▼ Click to expand</span>
+                    </div>
+                    <div class="itinerary-content hidden">
+                        {{ itinerary_form.id }}
+                        <div class="form-group">
+                            <label>Day Number</label>
+                            {{ itinerary_form.day_number }}
+                            {% if itinerary_form.day_number.errors %}
+                                <div class="error-text">{{ itinerary_form.day_number.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="form-group">
+                            <label>Day Title</label>
+                            {{ itinerary_form.title }}
+                            {% if itinerary_form.title.errors %}
+                                <div class="error-text">{{ itinerary_form.title.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="form-group">
+                            <label>Description</label>
+                            {{ itinerary_form.description }}
+                            {% if itinerary_form.description.errors %}
+                                <div class="error-text">{{ itinerary_form.description.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="delete-checkbox">
+                            {{ itinerary_form.DELETE }}
+                            <label>Delete this day</label>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            <button type="button" class="add-btn" onclick="addDay()">
+                <svg viewBox="0 0 24 24" width="16" height="16"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                Add Another Day
+            </button>
+        </div>
+    </div>
+
+    <!-- Form Actions -->
+    <div class="form-actions">
+        <button type="submit" class="btn-primary">
+            <svg viewBox="0 0 24 24" width="16" height="16"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/></svg>
+            Update Package
+        </button>
+        <a href="{% url 'agency:package_detail' package.id %}" class="btn-secondary">
+            <svg viewBox="0 0 24 24" width="16" height="16"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            Cancel
+        </a>
+    </div>
+</form>
+{% endblock %}
+
+{% block extra_js %}
 <script>
-// Sidebar functionality
-const sidebar = document.getElementById('sidebar');
-const hamburgerBtn = document.getElementById('hamburgerBtn');
-const mainEl = document.getElementById('mainEl');
-const overlay = document.getElementById('sidebarOverlay');
-const MOBILE_BP = 860;
+// Auto-calculate nights when days change
+const daysField = document.getElementById('id_duration_days');
+const nightsField = document.getElementById('id_duration_nights');
 
-function isMobile() {
-    return window.innerWidth <= MOBILE_BP;
-}
-
-function setSidebarOpen(open) {
-    if (isMobile()) {
-        if (open) {
-            sidebar.classList.add('open');
-            overlay.classList.add('visible');
-            hamburgerBtn.classList.add('is-open');
-            document.body.style.overflow = 'hidden';
-        } else {
-            sidebar.classList.remove('open');
-            overlay.classList.remove('visible');
-            hamburgerBtn.classList.remove('is-open');
-            document.body.style.overflow = '';
-        }
-    } else {
-        if (open) {
-            sidebar.classList.remove('collapsed');
-            mainEl.classList.remove('sidebar-collapsed');
-            hamburgerBtn.classList.add('is-open');
-        } else {
-            sidebar.classList.add('collapsed');
-            mainEl.classList.add('sidebar-collapsed');
-            hamburgerBtn.classList.remove('is-open');
-        }
-        overlay.classList.remove('visible');
-        document.body.style.overflow = '';
-    }
-}
-
-function toggleSidebar() {
-    if (isMobile()) {
-        setSidebarOpen(!sidebar.classList.contains('open'));
-    } else {
-        setSidebarOpen(sidebar.classList.contains('collapsed'));
-    }
-}
-
-function closeSidebar() {
-    setSidebarOpen(false);
-}
-
-// Hamburger button click
-if (hamburgerBtn) {
-    hamburgerBtn.addEventListener('click', toggleSidebar);
-}
-
-// Click outside to close sidebar
-document.addEventListener("click", function(event) {
-    if (isMobile() && sidebar.classList.contains('open')) {
-        if (!event.target.closest('#sidebar') && !event.target.closest('#hamburgerBtn')) {
-            closeSidebar();
-        }
-    }
-});
-
-// Close sidebar when clicking on overlay
-if (overlay) {
-    overlay.addEventListener('click', closeSidebar);
-}
-
-// Close sidebar when clicking on nav links
-document.querySelectorAll('.nav-item').forEach(link => {
-    link.addEventListener('click', function(e) {
-        if (isMobile()) {
-            closeSidebar();
-        }
+if (daysField && nightsField) {
+    daysField.addEventListener('input', function() {
+        let days = parseInt(this.value) || 0;
+        nightsField.value = days > 0 ? days - 1 : 0;
     });
-});
-
-// Close sidebar on ESC key
-document.addEventListener('keydown', function(e) {
-    if (e.key === 'Escape') {
-        closeSidebar();
-    }
-});
-
-// Handle window resize
-window.addEventListener('resize', function() {
-    if (!isMobile()) {
-        sidebar.classList.remove('open');
-        overlay.classList.remove('visible');
-        document.body.style.overflow = '';
-        
-        if (!hamburgerBtn.classList.contains('is-open')) {
-            sidebar.classList.add('collapsed');
-            mainEl.classList.add('sidebar-collapsed');
-        }
-    }
-});
-
-// Set initial state - sidebar collapsed by default
-if (!isMobile()) {
-    sidebar.classList.add('collapsed');
-    mainEl.classList.add('sidebar-collapsed');
-    hamburgerBtn.classList.remove('is-open');
-} else {
-    sidebar.classList.remove('open');
-    overlay.classList.remove('visible');
-    hamburgerBtn.classList.remove('is-open');
-    document.body.style.overflow = '';
 }
 
 // Itinerary expand/collapse function
@@ -1502,7 +628,7 @@ function addDay() {
     newDayDiv.className = 'itinerary-item';
     newDayDiv.setAttribute('data-form-index', count);
     newDayDiv.innerHTML = `
-        <div class="itinerary-header">
+        <div class="itinerary-header" onclick="toggleItinerary(this)">
             <h4>Day ${newDayNumber}</h4>
             <span>▼ Click to expand</span>
         </div>
@@ -1520,20 +646,14 @@ function addDay() {
                 <textarea name="itineraries-${count}-description" class="form-control" rows="4" placeholder="Describe the activities, meals, accommodation, and highlights for this day..." required></textarea>
             </div>
             <div class="delete-checkbox">
-                <label>Delete this day:</label>
-                <input type="checkbox" name="itineraries-${count}-DELETE">
+                <input type="checkbox" name="itineraries-${count}-DELETE" id="id_itineraries-${count}-DELETE">
+                <label for="id_itineraries-${count}-DELETE">Delete this day</label>
             </div>
         </div>
     `;
     
     container.appendChild(newDayDiv);
     totalForms.value = count + 1;
-    
-    // Add click event to the new header
-    const newHeader = newDayDiv.querySelector('.itinerary-header');
-    newHeader.addEventListener('click', function() {
-        toggleItinerary(this);
-    });
 }
 
 // Add new image
@@ -1546,13 +666,18 @@ function addImage() {
     newImageDiv.className = 'image-item';
     newImageDiv.setAttribute('data-form-index', count);
     newImageDiv.innerHTML = `
-        <div style="flex: 1;">
-            <label>Image ${count + 1}</label>
+        <div class="image-preview">
+            <div style="display: flex; align-items: center; justify-content: center; height: 100%; color: var(--gray-400);">
+                🖼️
+            </div>
+        </div>
+        <div class="image-file-input">
+            <label>Image File</label>
             <input type="file" name="images-${count}-image" accept="image/*">
         </div>
-        <div class="delete-checkbox" style="display: flex; align-items: center; gap: 0.5rem;">
-            <label style="margin: 0; color: #EF4444; cursor: pointer;">Delete this image:</label>
-            <input type="checkbox" name="images-${count}-DELETE">
+        <div class="image-delete">
+            <input type="checkbox" name="images-${count}-DELETE" id="id_images-${count}-DELETE">
+            <label for="id_images-${count}-DELETE">Delete this image</label>
         </div>
     `;
     
@@ -1560,25 +685,16 @@ function addImage() {
     totalForms.value = count + 1;
 }
 
-// Auto-calculate nights when days change
-const daysField = document.getElementById('id_duration_days');
-const nightsField = document.getElementById('id_duration_nights');
-
-if (daysField && nightsField) {
-    daysField.addEventListener('input', function() {
-        let days = parseInt(this.value) || 0;
-        nightsField.value = days > 0 ? days - 1 : 0;
-    });
-}
-
-// Make sure existing itinerary items have toggle functionality
+// Initialize all existing itinerary headers with toggle functionality
 document.addEventListener('DOMContentLoaded', function() {
     document.querySelectorAll('.itinerary-item .itinerary-header').forEach(header => {
+        // Remove any existing click listeners to avoid duplicates
+        header.removeEventListener('click', header.clickHandler);
+        // Add new click listener
         header.addEventListener('click', function() {
             toggleItinerary(this);
         });
     });
 });
 </script>
-</body>
-</html>
+{% endblock %}

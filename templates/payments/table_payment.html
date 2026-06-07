@@ -1,0 +1,641 @@
+{% extends "travellers/base.html" %}
+{% load static %}
+
+{% block title %}Complete Payment | {{ booking.table.restaurant.restaurant_name }} | Wayzo{% endblock %}
+   
+{% block extra_styles %}
+:root {
+  --teal: #0e8a8a;
+  --teal-dark: #0a6e6e;
+  --teal-pale: #e6f3f3;
+  --teal-light: #b9f5f5;
+  --amber: #F59E0B;
+  --amber-dark: #D97706;
+  --amber-pale: #FFFBEB;
+  --amber-light: #FDE68A;
+}
+
+/* ── Hero — mirrors book_table hero ── */
+.payment-hero {
+  background: linear-gradient(135deg, #1a3c34 0%, #0d2b2a 100%);
+  padding: 3rem 2rem;
+  text-align: center;
+  color: white;
+  margin-bottom: -40px;
+  position: relative;
+}
+.payment-hero h1 { font-size: 2rem; font-weight: 700; margin-bottom: 0.5rem; }
+.payment-hero p  { font-size: 0.95rem; opacity: 0.9; }
+
+/* ── Container — same as book_table ── */
+.payment-container {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 2.5rem 2rem 4rem;
+}
+
+.payment-layout {
+  display: grid;
+  grid-template-columns: 1fr 380px;
+  gap: 2rem;
+  align-items: start;
+}
+
+/* ── Left panel ── */
+.left-panel { display: flex; flex-direction: column; gap: 1.5rem; }
+
+/* Section card — base card style */
+.section-card {
+  background: white;
+  border-radius: 20px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+  overflow: hidden;
+}
+
+.section-header {
+  background: var(--teal);
+  color: white;
+  padding: 1rem 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+.section-header h3 { margin: 0; font-size: 1rem; font-weight: 700; }
+
+.section-body { padding: 1.5rem; }
+
+/* Booking details grid */
+.details-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.detail-tile {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 1rem 1.1rem;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
+.detail-tile-icon {
+  font-size: 1.3rem;
+  flex-shrink: 0;
+  margin-top: 0.1rem;
+}
+
+.detail-tile-label {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.25rem;
+}
+
+.detail-tile-value {
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: #111827;
+}
+
+/* Amount breakdown card */
+.amount-card {
+  background: linear-gradient(135deg, var(--amber) 0%, var(--amber-dark) 100%);
+  border-radius: 16px;
+  padding: 1.5rem;
+  color: white;
+  margin-top: 0.25rem;
+}
+
+.amount-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 0;
+  font-size: 0.85rem;
+  border-bottom: 1px solid rgba(255,255,255,0.2);
+}
+.amount-row:last-child { border-bottom: none; }
+
+.amount-row.total-row {
+  padding-top: 0.85rem;
+  margin-top: 0.25rem;
+}
+.amount-row.total-row .amount-label { font-size: 1rem; font-weight: 700; }
+.amount-row.total-row .amount-value { font-size: 1.6rem; font-weight: 800; }
+
+.amount-label { opacity: 0.9; }
+.amount-value { font-weight: 700; }
+
+.amount-footnote {
+  font-size: 0.75rem;
+  opacity: 0.75;
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid rgba(255,255,255,0.2);
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+/* Info alert */
+.info-alert {
+  background: var(--teal-pale);
+  border: 1px solid var(--teal-light);
+  border-radius: 14px;
+  padding: 1rem 1.2rem;
+  color: var(--teal-dark);
+  font-size: 0.83rem;
+  line-height: 1.7;
+}
+.info-alert strong { display: block; margin-bottom: 0.4rem; font-size: 0.85rem; }
+.info-alert ul { margin: 0; padding-left: 1.2rem; }
+.info-alert li { margin-bottom: 0.2rem; }
+
+/* ── Right sidebar — mirrors book_table sidebar ── */
+.property-sidebar {
+  position: sticky;
+  top: 90px;
+}
+
+/* Property card */
+.property-card {
+  background: white;
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+  margin-bottom: 1.5rem;
+}
+
+.property-image {
+  height: 180px;
+  overflow: hidden;
+}
+.property-image img { width: 100%; height: 100%; object-fit: cover; }
+.property-image-placeholder {
+  width: 100%; height: 100%;
+  background: linear-gradient(135deg, #1a3c34, #0d2b2a);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 3rem;
+}
+.property-info { padding: 1.25rem 1.5rem; }
+.property-name { font-size: 1.15rem; font-weight: 700; margin-bottom: 0.35rem; color: #111827; }
+.property-meta { font-size: 0.82rem; color: #6b7280; margin-bottom: 0.2rem; }
+
+/* Payment action card */
+.pay-card {
+  background: white;
+  border-radius: 20px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+  overflow: hidden;
+}
+
+.pay-card-header {
+  background: linear-gradient(135deg, var(--amber) 0%, var(--amber-dark) 100%);
+  color: white;
+  padding: 1.5rem;
+  text-align: center;
+}
+.pay-card-header h2 { font-size: 1.4rem; font-weight: 700; margin-bottom: 0.2rem; }
+.pay-card-header p  { font-size: 0.82rem; opacity: 0.9; }
+
+.pay-card-body { padding: 1.5rem; }
+
+/* Amount display in pay card */
+.pay-amount-display {
+  text-align: center;
+  padding: 1.25rem 1rem;
+  background: var(--amber-pale);
+  border: 1.5px solid var(--amber-light);
+  border-radius: 14px;
+  margin-bottom: 1.2rem;
+}
+.pay-amount-display .pay-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--amber-dark);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 0.35rem;
+}
+.pay-amount-display .pay-figure {
+  font-size: 2.2rem;
+  font-weight: 800;
+  color: var(--amber-dark);
+  line-height: 1;
+}
+.pay-amount-display .pay-note {
+  font-size: 0.73rem;
+  color: #92400e;
+  margin-top: 0.4rem;
+  opacity: 0.8;
+}
+
+/* Divider */
+.pay-divider {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin: 1rem 0;
+  color: #94a3b8;
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+.pay-divider::before,
+.pay-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: #e2e8f0;
+}
+
+/* Checklist inside pay card */
+.pay-checklist { margin-bottom: 1.2rem; }
+.pay-check-item {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.45rem 0;
+  font-size: 0.82rem;
+  color: #374151;
+  border-bottom: 1px solid #f1f5f9;
+}
+.pay-check-item:last-child { border-bottom: none; }
+.pay-check-icon {
+  width: 22px; height: 22px; border-radius: 50%;
+  background: var(--teal-pale);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.7rem; color: var(--teal); flex-shrink: 0;
+}
+
+/* Submit button */
+.btn-pay {
+  width: 100%;
+  padding: 1rem;
+  background: linear-gradient(135deg, var(--amber) 0%, var(--amber-dark) 100%);
+  color: white;
+  border: none;
+  border-radius: 14px;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: inherit;
+  letter-spacing: 0.01em;
+  box-shadow: 0 4px 14px rgba(245,158,11,0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+.btn-pay:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(245,158,11,0.45);
+}
+.btn-pay:active { transform: translateY(0); }
+
+/* Security note */
+.security-note {
+  text-align: center;
+  margin-top: 0.85rem;
+  font-size: 0.72rem;
+  color: #94a3b8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+}
+
+/* Summary card */
+.summary-card {
+  background: var(--teal-pale);
+  border-radius: 20px;
+  padding: 1.5rem;
+  margin-top: 1.5rem;
+}
+.summary-title {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--teal);
+  margin-bottom: 1rem;
+}
+.summary-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0;
+  font-size: 0.83rem;
+  color: #374151;
+  border-bottom: 1px solid rgba(14,138,138,0.15);
+}
+.summary-row:last-child { border-bottom: none; }
+.summary-row-icon { font-size: 1rem; flex-shrink: 0; }
+.summary-row-label { color: #6b7280; font-size: 0.75rem; min-width: 80px; }
+.summary-row-value { font-weight: 600; color: #111827; margin-left: auto; text-align: right; }
+
+@media (max-width: 992px) {
+  .payment-layout { grid-template-columns: 1fr; }
+  .property-sidebar { position: static; order: -1; }
+}
+@media (max-width: 768px) {
+  .payment-container { padding: 1.5rem 1rem 3rem; }
+  .details-grid { grid-template-columns: 1fr; }
+}
+{% endblock %}
+
+{% block content %}
+
+<!-- Hero -->
+<div class="payment-hero">
+  <h1>💳 Complete Payment</h1>
+  <p>Secure your table at {{ booking.table.restaurant.restaurant_name }}</p>
+</div>
+
+<div class="payment-container">
+  <div class="payment-layout">
+
+    <!-- ═══ LEFT: Booking details + amount breakdown ═══ -->
+    <div class="left-panel">
+
+      <!-- Booking details -->
+      <div class="section-card">
+        <div class="section-header">
+          <span>📋</span>
+          <h3>Booking Details</h3>
+        </div>
+        <div class="section-body">
+          <div class="details-grid">
+
+            <div class="detail-tile">
+              <div class="detail-tile-icon">🍽️</div>
+              <div>
+                <div class="detail-tile-label">Restaurant</div>
+                <div class="detail-tile-value">{{ booking.table.restaurant.restaurant_name }}</div>
+              </div>
+            </div>
+
+            <div class="detail-tile">
+              <div class="detail-tile-icon">🪑</div>
+              <div>
+                <div class="detail-tile-label">Table</div>
+                <div class="detail-tile-value">Table {{ booking.table.table_number }}</div>
+              </div>
+            </div>
+
+            <div class="detail-tile">
+              <div class="detail-tile-icon">📅</div>
+              <div>
+                <div class="detail-tile-label">Date &amp; Time</div>
+                <div class="detail-tile-value">{{ booking.start_time|date:"M d, Y" }}</div>
+                <div style="font-size:.8rem;color:#64748b;margin-top:2px;">{{ booking.start_time|time:"g:i A" }} – {{ booking.end_time|time:"g:i A" }}</div>
+              </div>
+            </div>
+
+            <div class="detail-tile">
+              <div class="detail-tile-icon">👥</div>
+              <div>
+                <div class="detail-tile-label">Guests</div>
+                <div class="detail-tile-value">{{ booking.guests }} guest{{ booking.guests|pluralize }}</div>
+              </div>
+            </div>
+
+            {% if booking.special_request %}
+            <div class="detail-tile" style="grid-column:1/-1;">
+              <div class="detail-tile-icon">📝</div>
+              <div>
+                <div class="detail-tile-label">Special Request</div>
+                <div class="detail-tile-value" style="font-weight:500;">{{ booking.special_request }}</div>
+              </div>
+            </div>
+            {% endif %}
+
+          </div>
+        </div>
+      </div>
+
+      <!-- Amount breakdown -->
+      <div class="section-card">
+        <div class="section-header">
+          <span>💰</span>
+          <h3>Payment Breakdown</h3>
+        </div>
+        <div class="section-body">
+          <div class="amount-card">
+            <div class="amount-row">
+              <span class="amount-label">Table Reservation Fee</span>
+              <span class="amount-value">₹{{ display_amount |floatformat:2 }}</span>
+            </div>
+            <div class="amount-row">
+              <span class="amount-label">Processing Charges</span>
+              <span class="amount-value">₹0.00</span>
+            </div>
+            <div class="amount-row total-row">
+              <span class="amount-label">Advance Due Now</span>
+              <span class="amount-value">₹{{ display_amount |floatformat:2 }}</span>
+            </div>
+            <div class="amount-footnote">
+              🏦 Remaining balance is payable directly at the restaurant
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Info panel -->
+      <div class="info-alert">
+        <strong>ℹ️ Important Information</strong>
+        <ul>
+          <li>This advance payment secures your table reservation</li>
+          <li>The remaining balance is settled at the restaurant</li>
+          <li>Please arrive 10 minutes before your slot time</li>
+          <li>Cancellation policy applies as per restaurant terms</li>
+        </ul>
+      </div>
+
+    </div><!-- /left-panel -->
+
+    <!-- ═══ RIGHT: Property info + Pay button ═══ -->
+    <div class="property-sidebar">
+
+      <!-- Property card -->
+      <div class="property-card">
+        <div class="property-image">
+          {% if booking.table.restaurant.media.first %}
+            <img src="{{ booking.table.restaurant.media.first.image.url }}"
+                 alt="{{ booking.table.restaurant.restaurant_name }}">
+          {% else %}
+            <div class="property-image-placeholder">🍽️</div>
+          {% endif %}
+        </div>
+        <div class="property-info">
+          <div class="property-name">{{ booking.table.restaurant.restaurant_name }}</div>
+          {% if booking.table.restaurant.city %}
+          <div class="property-meta">📍 {{ booking.table.restaurant.city }}{% if booking.table.restaurant.state %}, {{ booking.table.restaurant.state }}{% endif %}</div>
+          {% endif %}
+          {% if booking.table.restaurant.opening_time and booking.table.restaurant.closing_time %}
+          <div class="property-meta">🕐 {{ booking.table.restaurant.opening_time|time:"g:i A" }} – {{ booking.table.restaurant.closing_time|time:"g:i A" }}</div>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Pay action card -->
+      <div class="pay-card">
+        <div class="pay-card-header">
+          <h2>Advance Payment</h2>
+          <p>Pay now to confirm your reservation</p>
+        </div>
+        <div class="pay-card-body">
+
+          <!-- Amount display -->
+          <div class="pay-amount-display">
+            <div class="pay-label">Amount Due Now</div>
+            <div class="pay-figure">₹{{ display_amount |floatformat:0 }}</div>
+            <div class="pay-note">Balance paid at restaurant</div>
+          </div>
+
+          <div class="pay-divider">What you get</div>
+
+          <!-- Checklist -->
+          <div class="pay-checklist">
+            <div class="pay-check-item">
+              <div class="pay-check-icon">✓</div>
+              Confirmed table reservation
+            </div>
+            <div class="pay-check-item">
+              <div class="pay-check-icon">✓</div>
+              Instant booking confirmation
+            </div>
+            <div class="pay-check-item">
+              <div class="pay-check-icon">✓</div>
+              Table {{ booking.table.table_number }} — {{ booking.start_time|time:"g:i A" }}
+            </div>
+            <div class="pay-check-item">
+              <div class="pay-check-icon">✓</div>
+              {{ booking.guests }} guest{{ booking.guests|pluralize }} covered
+            </div>
+          </div>
+
+          <!-- Pay button -->
+          <form method="POST" action="{% url 'travellers:table_payment_success' booking.id %}">
+            {% csrf_token %}
+            <button type="button" id="pay-btn" class="btn-pay">
+    <svg viewBox="0 0 24 24" width="18" height="18" style="stroke:currentColor;fill:none;stroke-width:2.5;flex-shrink:0;">
+        <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/>
+        <line x1="1" y1="10" x2="23" y2="10"/>
+    </svg>
+    Pay ₹{{ display_amount|floatformat:0 }} Now
+</button>
+          </form>
+
+          <div class="security-note">
+            <svg viewBox="0 0 24 24" width="13" height="13" style="stroke:#94a3b8;fill:none;stroke-width:2;flex-shrink:0;">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+            </svg>
+            Secured by Wayzo Payment Gateway
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Summary card -->
+      <div class="summary-card">
+        <div class="summary-title">📋 Booking Summary</div>
+        <div class="summary-row">
+          <span class="summary-row-icon">🍽️</span>
+          <span class="summary-row-label">Restaurant</span>
+          <span class="summary-row-value">{{ booking.table.restaurant.restaurant_name }}</span>
+        </div>
+        <div class="summary-row">
+          <span class="summary-row-icon">🪑</span>
+          <span class="summary-row-label">Table</span>
+          <span class="summary-row-value">Table {{ booking.table.table_number }}</span>
+        </div>
+        <div class="summary-row">
+          <span class="summary-row-icon">📅</span>
+          <span class="summary-row-label">Date</span>
+          <span class="summary-row-value">{{ booking.start_time|date:"M d, Y" }}</span>
+        </div>
+        <div class="summary-row">
+          <span class="summary-row-icon">⏰</span>
+          <span class="summary-row-label">Time</span>
+          <span class="summary-row-value">{{ booking.start_time|time:"g:i A" }}</span>
+        </div>
+        <div class="summary-row">
+          <span class="summary-row-icon">👥</span>
+          <span class="summary-row-label">Guests</span>
+          <span class="summary-row-value">{{ booking.guests }}</span>
+        </div>
+        <div class="summary-row">
+          <span class="summary-row-icon">💳</span>
+          <span class="summary-row-label">Advance</span>
+          <span class="summary-row-value" style="color:var(--amber-dark);font-weight:800;">₹{{ display_amount |floatformat:0 }}</span>
+        </div>
+      </div>
+
+    </div><!-- /property-sidebar -->
+  </div>
+</div>
+ <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+<script>
+
+var options = {
+    "key": "{{ razorpay_key }}",
+    "amount": "{{ amount }}",
+    "currency": "INR",
+    "name": "Wayzo",
+    "description": "Table Reservation Payment",
+    "order_id": "{{ razorpay_order_id }}",
+
+    "handler": function (response) {
+
+        fetch("{% url 'travellers:table_payment_success' booking.id %}", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "X-CSRFToken": "{{ csrf_token }}"
+            },
+            body: JSON.stringify({
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_signature: response.razorpay_signature
+            })
+        })
+        .then(res => res.json())
+        .then(result => {
+
+            if(result.status === "success") {
+
+                window.location.href =
+                `/traveller/payment-success/?booking=${result.booking_id}&booking_type=table&type=${encodeURIComponent(result.payment_type)}&amount=${result.amount}`;
+
+            } else {
+
+                alert("Payment verification failed");
+
+            }
+
+        })
+        .catch(error => {
+            console.error(error);
+            alert("Payment verification failed");
+        });
+
+    },
+
+    "theme": {
+        "color": "#3399cc"
+    }
+};
+
+var rzp = new Razorpay(options);
+
+document.getElementById("pay-btn").onclick = function () {
+    rzp.open();
+};
+</script>
+{% endblock %}

@@ -428,7 +428,7 @@
             <!-- Login Form -->
             <form method="post" id="loginForm" novalidate>
                 {% csrf_token %}
-
+                <input type="hidden" name="next" value="{{ next }}">
                 <div class="form-group">
                     <label for="username">Username</label>
                     <div class="input-wrap">

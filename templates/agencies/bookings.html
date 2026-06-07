@@ -1,40 +1,783 @@
-<h2>📦 Package Bookings</h2>
+{% extends "agencies/base_agencies.html" %}
+{% load static %}
 
-{% for booking in bookings %}
-<div style="border:1px solid #ddd; padding:15px; margin-bottom:15px; border-radius:10px;">
+{% block title %}Bookings | {{ agency.agency_name }}{% endblock %}
 
-    <h3>{{ booking.package.title }}</h3>
-    <p><strong>User:</strong> {{ booking.traveller.username }}</p>
-    <p><strong>Travellers:</strong> {{ booking.travellers_count }}</p>
-    <p><strong>Date:</strong> {{ booking.travel_date }}</p>
+{% block page_title %}Package Bookings{% endblock %}
 
-    <p>
-        <strong>Status:</strong>
-        {% if booking.status == "pending" %}
-            🟡 Pending
-        {% elif booking.status == "confirmed" %}
-            🟢 Confirmed
-        {% elif booking.status == "rejected" %}
-            🔴 Rejected
-        {% elif booking.status == "cancelled" %}
-            ❌ Cancelled
-        {% endif %}
-    </p>
+{% block breadcrumb %}Bookings{% endblock %}
 
-    <p><strong>Payment:</strong> {{ booking.payment_status }}</p>
+{% block extra_css %}
+<style>
+    /* Stats Cards */
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 1.2rem;
+        margin-bottom: 2rem;
+    }
+    .stat-card {
+        background: white;
+        border-radius: 20px;
+        padding: 1.2rem 1rem;
+        border: 1px solid var(--gray-200);
+        transition: all 0.3s;
+        text-align: center;
+    }
+    .stat-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 12px 24px rgba(0,0,0,0.08);
+    }
+    .stat-icon {
+        font-size: 1.8rem;
+        margin-bottom: 0.5rem;
+    }
+    .stat-number {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--teal);
+        line-height: 1;
+        margin-bottom: 0.3rem;
+    }
+    .stat-label {
+        font-size: 0.7rem;
+        color: var(--text-light);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
 
-    <!-- ACTIONS -->
-    {% if booking.status == "pending" %}
-        <a href="{% url 'agency:approve_booking' booking.id %}">✅ Approve</a>
-        <a href="{% url 'agency:reject_booking' booking.id %}">❌ Reject</a>
-    {% endif %}
+    /* Filter Bar */
+    .filter-bar {
+        background: white;
+        border-radius: 16px;
+        padding: 1rem 1.5rem;
+        margin-bottom: 1.5rem;
+        border: 1px solid var(--gray-200);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+    .filter-group {
+        display: flex;
+        align-items: center;
+        gap: 0.8rem;
+        flex-wrap: wrap;
+    }
+    .filter-label {
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: var(--text-soft);
+    }
+    .filter-select {
+        padding: 0.5rem 2rem 0.5rem 1rem;
+        border: 1.5px solid var(--gray-200);
+        border-radius: 40px;
+        font-size: 0.8rem;
+        background: white;
+        cursor: pointer;
+        font-family: 'Inter', sans-serif;
+    }
+    .filter-select:focus {
+        outline: none;
+        border-color: var(--teal);
+    }
+    .search-input {
+        padding: 0.5rem 1rem;
+        border: 1.5px solid var(--gray-200);
+        border-radius: 40px;
+        font-size: 0.8rem;
+        width: 250px;
+        font-family: 'Inter', sans-serif;
+    }
+    .search-input:focus {
+        outline: none;
+        border-color: var(--teal);
+    }
 
-    {% if booking.status == "confirmed" %}
-        <a href="{% url 'agency:cancel_booking_by_agency' booking.id %}"
-           onclick="return confirm('Cancel this booking? Full refund will be issued.')">
-           ⚠️ Cancel Booking
-        </a>
-    {% endif %}
+    /* Bookings Table */
+    .bookings-table-container {
+        background: white;
+        border-radius: 20px;
+        border: 1px solid var(--gray-200);
+        overflow-x: auto;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.04);
+    }
+    .bookings-table {
+        width: 100%;
+        border-collapse: collapse;
+        min-width: 1000px;
+    }
+    .bookings-table th {
+        text-align: left;
+        padding: 1rem 1.2rem;
+        background: var(--gray-100);
+        font-size: 0.75rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: var(--text-soft);
+        border-bottom: 1px solid var(--gray-200);
+    }
+    .bookings-table td {
+        padding: 1rem 1.2rem;
+        border-bottom: 1px solid var(--gray-100);
+        font-size: 0.85rem;
+        vertical-align: middle;
+    }
+    .bookings-table tr:hover {
+        background: var(--gray-100);
+    }
+    .bookings-table tr:last-child td {
+        border-bottom: none;
+    }
 
+    /* Status Badges */
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        padding: 0.25rem 0.75rem;
+        border-radius: 40px;
+        font-size: 0.7rem;
+        font-weight: 600;
+        width: fit-content;
+    }
+    .status-pending {
+        background: rgba(245,158,11,0.1);
+        color: #B45309;
+    }
+    .status-confirmed {
+        background: rgba(16,185,129,0.1);
+        color: #059669;
+    }
+    .status-completed {
+        background: rgba(59,130,246,0.1);
+        color: #2563EB;
+    }
+    .status-rejected {
+        background: rgba(239,68,68,0.1);
+        color: #DC2626;
+    }
+    .status-cancelled {
+        background: rgba(107,114,128,0.1);
+        color: #6B7280;
+    }
+    .status-in-progress, .status-ongoing {
+        background: rgba(139,92,246,0.1);
+        color: #7C3AED;
+    }
+    .status-upcoming {
+        background: rgba(14,138,138,0.1);
+        color: var(--teal);
+    }
+
+    /* Payment Badges */
+    .payment-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.3rem;
+        padding: 0.2rem 0.6rem;
+        border-radius: 40px;
+        font-size: 0.7rem;
+        font-weight: 600;
+    }
+    .payment-paid {
+        background: rgba(16,185,129,0.1);
+        color: #059669;
+    }
+    .payment-partial {
+        background: rgba(245,158,11,0.1);
+        color: #B45309;
+    }
+    .payment-pending {
+        background: rgba(239,68,68,0.1);
+        color: #DC2626;
+    }
+
+    /* Action Buttons */
+    .action-btns {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+    }
+    .action-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.3rem;
+        padding: 0.4rem 0.8rem;
+        border-radius: 40px;
+        font-size: 0.7rem;
+        font-weight: 600;
+        text-decoration: none;
+        transition: all 0.2s;
+        cursor: pointer;
+        border: none;
+        font-family: 'Inter', sans-serif;
+    }
+    .action-btn.approve {
+        background: rgba(16,185,129,0.1);
+        color: #059669;
+    }
+    .action-btn.approve:hover {
+        background: #059669;
+        color: white;
+        transform: translateY(-1px);
+    }
+    .action-btn.reject {
+        background: rgba(239,68,68,0.1);
+        color: #DC2626;
+    }
+    .action-btn.reject:hover {
+        background: #DC2626;
+        color: white;
+        transform: translateY(-1px);
+    }
+    .action-btn.cancel {
+        background: rgba(107,114,128,0.1);
+        color: #6B7280;
+    }
+    .action-btn.cancel:hover {
+        background: #6B7280;
+        color: white;
+        transform: translateY(-1px);
+    }
+    .action-btn.view {
+        background: rgba(59,130,246,0.1);
+        color: #2563EB;
+    }
+    .action-btn.view:hover {
+        background: #2563EB;
+        color: white;
+        transform: translateY(-1px);
+    }
+
+    /* Empty State */
+    .empty-state {
+        text-align: center;
+        padding: 3rem;
+        background: white;
+        border-radius: 20px;
+        border: 1px solid var(--gray-200);
+    }
+    .empty-state-icon {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+        opacity: 0.5;
+    }
+    .empty-state h3 {
+        font-size: 1rem;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+    }
+    .empty-state p {
+        font-size: 0.8rem;
+        color: var(--text-light);
+    }
+
+    /* Pagination */
+    .pagination {
+        display: flex;
+        justify-content: center;
+        gap: 0.5rem;
+        margin-top: 2rem;
+        flex-wrap: wrap;
+    }
+    .page-link {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 36px;
+        height: 36px;
+        padding: 0 0.75rem;
+        border-radius: 8px;
+        background: white;
+        border: 1px solid var(--gray-200);
+        color: var(--text-soft);
+        text-decoration: none;
+        font-size: 0.8rem;
+        font-weight: 500;
+        transition: all 0.2s;
+    }
+    .page-link:hover {
+        background: var(--teal-pale);
+        border-color: var(--teal);
+        color: var(--teal);
+    }
+    .page-link.active {
+        background: var(--teal);
+        border-color: var(--teal);
+        color: white;
+    }
+    .page-link.disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        pointer-events: none;
+    }
+
+    /* Modal */
+    .modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.5);
+        z-index: 1000;
+        align-items: center;
+        justify-content: center;
+    }
+    .modal.open {
+        display: flex;
+    }
+    .modal-content {
+        background: white;
+        border-radius: 20px;
+        max-width: 550px;
+        width: 90%;
+        max-height: 80vh;
+        overflow-y: auto;
+        animation: modalSlideIn 0.3s ease;
+    }
+    @keyframes modalSlideIn {
+        from {
+            transform: translateY(-30px);
+            opacity: 0;
+        }
+        to {
+            transform: translateY(0);
+            opacity: 1;
+        }
+    }
+    .modal-header {
+        padding: 1.2rem 1.5rem;
+        border-bottom: 1px solid var(--gray-200);
+        background: var(--gray-100);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        position: sticky;
+        top: 0;
+    }
+    .modal-header h3 {
+        font-size: 1rem;
+        font-weight: 700;
+    }
+    .modal-close {
+        background: none;
+        border: none;
+        font-size: 1.5rem;
+        cursor: pointer;
+        color: var(--text-light);
+    }
+    .modal-body {
+        padding: 1.5rem;
+    }
+    .booking-detail-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 0.8rem 0;
+        border-bottom: 1px solid var(--gray-100);
+        font-size: 0.85rem;
+    }
+    .booking-detail-label {
+        font-weight: 600;
+        color: var(--text-soft);
+        width: 40%;
+    }
+    .booking-detail-value {
+        color: var(--text-dark);
+        width: 60%;
+        text-align: right;
+    }
+    .cancelled-info {
+        background: #FEE2E2;
+        border-radius: 12px;
+        padding: 0.8rem;
+        margin-top: 1rem;
+    }
+
+    @media (max-width: 768px) {
+        .stats-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+        .filter-bar {
+            flex-direction: column;
+            align-items: stretch;
+        }
+        .search-input {
+            width: 100%;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Stats Cards -->
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-icon">📊</div>
+        <div class="stat-number">{{ total_bookings }}</div>
+        <div class="stat-label">Total Bookings</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon">🟡</div>
+        <div class="stat-number">{{ pending_count }}</div>
+        <div class="stat-label">Pending</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon">🟢</div>
+        <div class="stat-number">{{ confirmed_count }}</div>
+        <div class="stat-label">Confirmed</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon">🚀</div>
+        <div class="stat-number">{{ ongoing_count }}</div>
+        <div class="stat-label">Ongoing</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon">✅</div>
+        <div class="stat-number">{{ completed_count }}</div>
+        <div class="stat-label">Completed</div>
+    </div>
 </div>
-{% endfor %}
+
+<!-- Filter Bar -->
+<div class="filter-bar">
+    <div class="filter-group">
+        <span class="filter-label">Filter by:</span>
+        <select class="filter-select" id="statusFilter" onchange="filterBookings()">
+            <option value="all">All Status</option>
+            <option value="pending">Pending</option>
+            <option value="confirmed">Confirmed</option>
+            <option value="upcoming">Upcoming</option>
+            <option value="ongoing">Ongoing</option>
+            <option value="completed">Completed</option>
+            <option value="rejected">Rejected</option>
+            <option value="cancelled">Cancelled</option>
+        </select>
+        <select class="filter-select" id="paymentFilter" onchange="filterBookings()">
+            <option value="all">All Payments</option>
+            <option value="pending">Pending</option>
+            <option value="partial">Partial Paid</option>
+            <option value="paid">Fully Paid</option>
+        </select>
+    </div>
+    <div class="filter-group">
+        <input type="text" class="search-input" id="searchInput" placeholder="Search by package or traveller..." onkeyup="filterBookings()">
+        <span id="resultsCount" style="font-size:0.75rem;color:var(--text-light);"></span>
+    </div>
+</div>
+
+<!-- Bookings Table -->
+<div class="bookings-table-container">
+    <table class="bookings-table" id="bookingsTable">
+        <thead>
+            <tr>
+                <th>Booking ID</th>
+                <th>Package</th>
+                <th>Traveller</th>
+                <th>Travel Date</th>
+                <th>Travellers</th>
+                <th>Amount</th>
+                <th>Status</th>
+                <th>Payment</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody id="bookingsTableBody">
+            {% for booking in bookings %}
+            <tr data-id="{{ booking.id }}" 
+                data-status="{% if booking.status == 'confirmed' %}{% if booking.travel_date > today %}upcoming{% elif booking.travel_date == today %}ongoing{% elif booking.travel_date < today %}completed{% else %}{{ booking.status }}{% endif %}{% else %}{{ booking.status }}{% endif %}"
+                data-payment="{{ booking.payment_status }}" 
+                data-search="{{ booking.package.title|lower }} {{ booking.traveller.username|lower }}">
+                <td><strong>#{{ booking.id }}</strong></td>
+                <td>{{ booking.package.title|truncatechars:30 }}</td>
+                <td>
+                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                        <div class="sidebar-avatar" style="width: 28px; height: 28px; font-size: 0.7rem;">
+                            {% if booking.traveller.profile_picture %}
+                                <img src="{{ booking.traveller.profile_picture.url }}" alt="">
+                            {% else %}
+                                {{ booking.traveller.username|first|upper }}
+                            {% endif %}
+                        </div>
+                        {{ booking.traveller.username }}
+                    </div>
+                </td>
+                <td>{{ booking.travel_date|date:"d M Y" }}</td>
+                <td>{{ booking.travellers_count }}</td>
+                <td><strong>₹{{ booking.total_amount|floatformat:0 }}</strong></td>
+                <td>
+                    {% if booking.status == "pending" %}
+                        <span class="status-badge status-pending">🟡 Pending</span>
+                    {% elif booking.status == "confirmed" %}
+                        {% if booking.travel_date > today %}
+                            <span class="status-badge status-upcoming">📅 Upcoming</span>
+                        {% elif booking.travel_date == today %}
+                            <span class="status-badge status-ongoing">🚀 Ongoing</span>
+                        {% elif booking.travel_date < today %}
+                            <span class="status-badge status-completed">✅ Completed</span>
+                        {% endif %}
+                    {% elif booking.status == "rejected" %}
+                        <span class="status-badge status-rejected">🔴 Rejected</span>
+                    {% elif booking.status == "cancelled" %}
+                        <span class="status-badge status-cancelled">❌ Cancelled</span>
+                    {% elif booking.status == "in_progress" %}
+                        <span class="status-badge status-ongoing">🚀 Ongoing</span>
+                    {% elif booking.status == "completed" %}
+                        <span class="status-badge status-completed">✅ Completed</span>
+                    {% endif %}
+                </td>
+                <td>
+                    <span class="payment-badge payment-{{ booking.payment_status }}">
+                        {% if booking.payment_status == "paid" %}✅ Paid
+                        {% elif booking.payment_status == "partial" %}🟡 Partial
+                        {% else %}⏳ Pending{% endif %}
+                    </span>
+                </td>
+                <td>
+                    <div class="action-btns">
+                        <button class="action-btn view" onclick="viewBookingDetails({{ booking.id }})">
+                            👁️ View
+                        </button>
+                        {% if booking.status == "pending" %}
+                            <a href="{% url 'agency:approve_booking' booking.id %}" class="action-btn approve" onclick="return confirm('Approve this booking?')">
+                                ✅ Approve
+                            </a>
+                            <a href="{% url 'agency:reject_booking' booking.id %}" class="action-btn reject" onclick="return confirm('Reject this booking? Refund will be processed.')">
+                                ❌ Reject
+                            </a>
+                        {% endif %}
+                        {% if booking.status == "confirmed" and booking.travel_date > today %}
+                            <a href="{% url 'agency:cancel_booking_by_agency' booking.id %}" class="action-btn cancel" onclick="return confirm('Cancel this booking? Full refund will be issued to the traveller.')">
+                                ⚠️ Cancel
+                            </a>
+                        {% endif %}
+                    </div>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="9" style="text-align: center; padding: 3rem;">
+                    <div class="empty-state-icon">📭</div>
+                    <h3>No bookings yet</h3>
+                    <p>When travellers book your packages, they'll appear here</p>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- Pagination -->
+{% if bookings.has_other_pages %}
+<div class="pagination">
+    {% if bookings.has_previous %}
+        <a href="?page=1{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}" class="page-link">« First</a>
+        <a href="?page={{ bookings.previous_page_number }}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}" class="page-link">‹ Prev</a>
+    {% else %}
+        <span class="page-link disabled">« First</span>
+        <span class="page-link disabled">‹ Prev</span>
+    {% endif %}
+
+    {% for num in bookings.paginator.page_range %}
+        {% if num == bookings.number %}
+            <span class="page-link active">{{ num }}</span>
+        {% elif num > bookings.number|add:'-3' and num < bookings.number|add:'3' %}
+            <a href="?page={{ num }}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}" class="page-link">{{ num }}</a>
+        {% endif %}
+    {% endfor %}
+
+    {% if bookings.has_next %}
+        <a href="?page={{ bookings.next_page_number }}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}" class="page-link">Next ›</a>
+        <a href="?page={{ bookings.paginator.num_pages }}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}" class="page-link">Last »</a>
+    {% else %}
+        <span class="page-link disabled">Next ›</span>
+        <span class="page-link disabled">Last »</span>
+    {% endif %}
+</div>
+{% endif %}
+
+<!-- Booking Details Modal -->
+<div class="modal" id="bookingModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Booking Details</h3>
+            <button class="modal-close" onclick="closeModal()">&times;</button>
+        </div>
+        <div class="modal-body" id="modalBody">
+            <div style="text-align: center; padding: 2rem;">Loading...</div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // AJAX function to fetch booking details
+    function viewBookingDetails(bookingId) {
+        const modal = document.getElementById('bookingModal');
+        const modalBody = document.getElementById('modalBody');
+        
+        modalBody.innerHTML = '<div style="text-align: center; padding: 2rem;">Loading booking details...</div>';
+        modal.classList.add('open');
+        
+        // Fetch booking details via AJAX
+        fetch(`/agency/api/booking-details/${bookingId}/`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    modalBody.innerHTML = `<div style="text-align: center; padding: 2rem; color: var(--red);">Error: ${data.error}</div>`;
+                    return;
+                }
+                
+                let cancelledHtml = '';
+                if (data.cancelled_by) {
+                    let cancelledByText = '';
+                    if (data.cancelled_by === 'user') cancelledByText = 'Traveller';
+                    else if (data.cancelled_by === 'agency') cancelledByText = 'You (Agency)';
+                    else cancelledByText = 'System';
+                    
+                    cancelledHtml = `
+                        <div class="cancelled-info">
+                            <div class="booking-detail-row">
+                                <span class="booking-detail-label">Cancelled By:</span>
+                                <span class="booking-detail-value">${cancelledByText}</span>
+                            </div>
+                            <div class="booking-detail-row">
+                                <span class="booking-detail-label">Refund Amount:</span>
+                                <span class="booking-detail-value">₹${data.refund_amount || '0'}</span>
+                            </div>
+                            <div class="booking-detail-row">
+                                <span class="booking-detail-label">Refund Status:</span>
+                                <span class="booking-detail-value">${data.refund_status || 'Not Applicable'}</span>
+                            </div>
+                        </div>
+                    `;
+                }
+                
+                let statusText = '';
+                if (data.status === 'pending') statusText = '🟡 Pending';
+                else if (data.status === 'confirmed') {
+                    if (data.is_upcoming) statusText = '📅 Upcoming';
+                    else if (data.is_ongoing) statusText = '🚀 Ongoing';
+                    else if (data.is_completed) statusText = '✅ Completed';
+                    else statusText = '🟢 Confirmed';
+                }
+                else if (data.status === 'rejected') statusText = '🔴 Rejected';
+                else if (data.status === 'cancelled') statusText = '❌ Cancelled';
+                else statusText = data.status;
+                
+                modalBody.innerHTML = `
+                    <div class="booking-detail-row">
+                        <span class="booking-detail-label">Booking ID:</span>
+                        <span class="booking-detail-value">#${data.id}</span>
+                    </div>
+                    <div class="booking-detail-row">
+                        <span class="booking-detail-label">Package:</span>
+                        <span class="booking-detail-value">${data.package_title}</span>
+                    </div>
+                    <div class="booking-detail-row">
+                        <span class="booking-detail-label">Traveller:</span>
+                        <span class="booking-detail-value">${data.traveller_name} (${data.traveller_email})</span>
+                    </div>
+                    <div class="booking-detail-row">
+                        <span class="booking-detail-label">Contact:</span>
+                        <span class="booking-detail-value">${data.traveller_phone || 'Not provided'}</span>
+                    </div>
+                    <div class="booking-detail-row">
+                        <span class="booking-detail-label">Travel Date:</span>
+                        <span class="booking-detail-value">${data.travel_date}</span>
+                    </div>
+                    <div class="booking-detail-row">
+                        <span class="booking-detail-label">Number of Travellers:</span>
+                        <span class="booking-detail-value">${data.travellers_count}</span>
+                    </div>
+                    <div class="booking-detail-row">
+                        <span class="booking-detail-label">Total Amount:</span>
+                        <span class="booking-detail-value">₹${data.total_amount}</span>
+                    </div>
+                    <div class="booking-detail-row">
+                        <span class="booking-detail-label">Advance Paid:</span>
+                        <span class="booking-detail-value">₹${data.advance_amount || '0'}</span>
+                    </div>
+                    <div class="booking-detail-row">
+                        <span class="booking-detail-label">Remaining Amount:</span>
+                        <span class="booking-detail-value">₹${data.remaining_amount || data.total_amount}</span>
+                    </div>
+                    <div class="booking-detail-row">
+                        <span class="booking-detail-label">Payment Status:</span>
+                        <span class="booking-detail-value">${data.payment_status === 'paid' ? '✅ Fully Paid' : data.payment_status === 'partial' ? '🟡 Partial Paid' : '⏳ Pending'}</span>
+                    </div>
+                    <div class="booking-detail-row">
+                        <span class="booking-detail-label">Booking Status:</span>
+                        <span class="booking-detail-value">${statusText}</span>
+                    </div>
+                    <div class="booking-detail-row">
+                        <span class="booking-detail-label">Booked On:</span>
+                        <span class="booking-detail-value">${data.booked_at}</span>
+                    </div>
+                    ${cancelledHtml}
+                `;
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                modalBody.innerHTML = '<div style="text-align: center; padding: 2rem; color: var(--red);">Error loading booking details</div>';
+            });
+    }
+    
+    function closeModal() {
+        document.getElementById('bookingModal').classList.remove('open');
+    }
+    
+    // Close modal on outside click
+    document.getElementById('bookingModal')?.addEventListener('click', function(e) {
+        if (e.target === this) closeModal();
+    });
+    
+    // Escape key to close modal
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') closeModal();
+    });
+    
+    // Filter bookings
+    function filterBookings() {
+        const statusFilter = document.getElementById('statusFilter').value;
+        const paymentFilter = document.getElementById('paymentFilter').value;
+        const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+        const rows = document.querySelectorAll('#bookingsTableBody tr');
+        
+        let visibleCount = 0;
+        
+        rows.forEach(row => {
+            if (!row.cells) return;
+            
+            const status = row.getAttribute('data-status');
+            const payment = row.getAttribute('data-payment');
+            const searchText = row.getAttribute('data-search') || '';
+            
+            let show = true;
+            
+            if (statusFilter !== 'all' && status !== statusFilter) show = false;
+            if (paymentFilter !== 'all' && payment !== paymentFilter) show = false;
+            if (searchTerm && !searchText.includes(searchTerm)) show = false;
+            
+            row.style.display = show ? '' : 'none';
+            if (show) visibleCount++;
+        });
+        
+        const resultsSpan = document.getElementById('resultsCount');
+        if (resultsSpan) {
+            resultsSpan.textContent = `Showing ${visibleCount} booking${visibleCount !== 1 ? 's' : ''}`;
+        }
+    }
+    
+    // Initial results count
+    document.addEventListener('DOMContentLoaded', function() {
+        setTimeout(() => {
+            filterBookings();
+        }, 100);
+    });
+</script>
+{% endblock %}

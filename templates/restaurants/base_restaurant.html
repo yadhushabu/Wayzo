@@ -1,0 +1,1151 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Wayzo | {% block title %}Restaurant Portal{% endblock %}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --gray-100:     #F8F9FC;
+            --gray-150:     #F1F3F8;
+            --gray-200:     #E9EDF2;
+            --gray-300:     #DCE2EA;
+            --gray-400:     #BEC7D1;
+            --gray-500:     #9AA3AF;
+            --gray-600:     #6E7682;
+            --gray-700:     #4A515C;
+            --gray-800:     #2E343D;
+            --gray-850:     #21262E;
+            --gray-900:     #191E24;
+            --gray-950:     #0F1217;
+            --teal:         #0E8A8A;
+            --teal-dark:    #0A6B6B;
+            --teal-pale:    #EAF4F4;
+            --white:        #FFFFFF;
+            --text-dark:    #1E242C;
+            --text-soft:    #3C4350;
+            --text-light:   #6F7886;
+            --amber:        #F59E0B;
+            --rose:         #F43F5E;
+            --green:        #10B981;
+            --indigo:       #4F46E5;
+            --sidebar-w:    260px;
+        }
+
+        html { height: 100%; scroll-behavior: smooth; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--gray-100);
+            color: var(--text-dark);
+            display: flex;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* ── SIDEBAR ── */
+        .sidebar {
+            width: var(--sidebar-w);
+            background: var(--gray-950);
+            height: 100vh;
+            position: fixed; top: 0; left: 0;
+            display: flex; flex-direction: column;
+            z-index: 300;
+            border-right: 1px solid rgba(255,255,255,0.06);
+            transform: translateX(0);
+            transition: transform 0.32s cubic-bezier(0.4,0,0.2,1);
+            overflow-y: auto; overflow-x: hidden;
+        }
+        .sidebar.collapsed { transform: translateX(calc(-1 * var(--sidebar-w))); }
+        .sidebar-overlay {
+            display: none; position: fixed; inset: 0;
+            background: rgba(0,0,0,0.45); z-index: 290;
+            opacity: 0; transition: opacity 0.3s ease; backdrop-filter: blur(2px);
+        }
+        .sidebar-overlay.visible { display: block; opacity: 1; }
+        .sidebar-brand { padding: 1.8rem 1.6rem 1.4rem; border-bottom: 1px solid rgba(255,255,255,0.06); }
+        .sidebar-logo { font-family: 'Playfair Display', serif; font-size: 1.5rem; font-weight: 600; letter-spacing: -0.01em; color: white; text-decoration: none; display: block; margin-bottom: 0.2rem; }
+        .sidebar-sub { font-size: 0.68rem; color: rgba(255,255,255,0.3); letter-spacing: 0.08em; text-transform: uppercase; }
+        .sidebar-profile { padding: 1.2rem 1.6rem; border-bottom: 1px solid rgba(255,255,255,0.06); display: flex; align-items: center; gap: 0.85rem; }
+        .sidebar-avatar { width: 38px; height: 38px; border-radius: 50%; background: var(--teal); display: flex; align-items: center; justify-content: center; font-size: 0.85rem; font-weight: 600; color: white; overflow: hidden; flex-shrink: 0; border: 2px solid rgba(255,255,255,0.08); }
+        .sidebar-avatar img { width: 100%; height: 100%; object-fit: cover; }
+        .sidebar-profile-info { overflow: hidden; }
+        .sidebar-profile-name { font-size: 0.82rem; font-weight: 600; color: white; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .sidebar-profile-role { font-size: 0.68rem; color: rgba(255,255,255,0.35); }
+        .sidebar-nav { flex: 1; padding: 1rem 0.8rem; overflow-y: auto; }
+        .nav-group-label { font-size: 0.62rem; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: rgba(255,255,255,0.22); padding: 0.6rem 0.8rem 0.4rem; display: block; }
+        .nav-item {
+            display: flex; align-items: center; gap: 0.75rem;
+            padding: 0.65rem 0.8rem; border-radius: 8px;
+            text-decoration: none; color: rgba(255,255,255,0.5);
+            font-size: 0.82rem; font-weight: 500;
+            transition: all 0.2s; margin-bottom: 2px;
+        }
+        .nav-item svg { width: 16px; height: 16px; stroke: currentColor; stroke-width: 1.8; fill: none; flex-shrink: 0; }
+        .nav-item:hover { background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.85); }
+        .nav-item.active { background: rgba(14,138,138,0.18); color: #5FC5C5; }
+        
+        .nav-badge {
+            background: var(--rose);
+            color: white;
+            font-size: 0.65rem;
+            font-weight: 700;
+            padding: 0.15rem 0.5rem;
+            border-radius: 99px;
+            margin-left: auto;
+            min-width: 22px;
+            text-align: center;
+        }
+        
+        /* Revenue Section in Sidebar */
+        .sidebar-revenue {
+            padding: 1rem 0.8rem;
+            border-top: 1px solid rgba(255,255,255,0.06);
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+            margin: 0.5rem 0;
+        }
+        .sidebar-revenue-title {
+            font-size: 0.62rem;
+            font-weight: 600;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: rgba(255,255,255,0.22);
+            padding: 0.2rem 0.8rem 0.6rem;
+            display: block;
+        }
+        .revenue-stats {
+            padding: 0 0.8rem;
+        }
+        .revenue-stat {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+        }
+        .revenue-stat:last-child {
+            border-bottom: none;
+        }
+        .revenue-label {
+            font-size: 0.7rem;
+            color: rgba(255,255,255,0.5);
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+        .revenue-label svg {
+            width: 12px;
+            height: 12px;
+            stroke: currentColor;
+        }
+        .revenue-value {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: white;
+        }
+        .revenue-total {
+            background: rgba(14,138,138,0.2);
+            border-radius: 8px;
+            margin-top: 0.5rem;
+            padding: 0.5rem 0.8rem;
+        }
+        .revenue-total .revenue-label {
+            color: rgba(255,255,255,0.7);
+        }
+        .revenue-total .revenue-value {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--teal);
+        }
+
+        .sidebar-footer { padding: 0.8rem; border-top: 1px solid rgba(255,255,255,0.06); margin-top: auto; }
+        .logout-btn { display: flex; align-items: center; gap: 0.75rem; padding: 0.65rem 0.8rem; border-radius: 8px; text-decoration: none; color: rgba(255,255,255,0.5); font-size: 0.82rem; font-weight: 500; transition: all 0.2s; width: 100%; background: transparent; border: none; cursor: pointer; }
+        .logout-btn svg { width: 16px; height: 16px; stroke: currentColor; stroke-width: 1.8; fill: none; }
+        .logout-btn:hover { background: rgba(239,68,68,0.1); color: #F87171; }
+
+        /* ── MAIN LAYOUT ── */
+        .main {
+            margin-left: var(--sidebar-w);
+            flex: 1; display: flex; flex-direction: column;
+            transition: margin-left 0.32s cubic-bezier(0.4,0,0.2,1);
+            background: var(--gray-100);
+        }
+        .main.sidebar-collapsed { margin-left: 0; }
+
+        /* ── HAMBURGER - Fixed Color ── */
+        .hamburger {
+            width: 36px;
+            height: 36px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+            background: var(--teal);
+            border: none;
+            cursor: pointer;
+            padding: 4px;
+            border-radius: 9px;
+            flex-shrink: 0;
+            transition: all 0.2s;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .hamburger:hover {
+            background: var(--teal-dark);
+            transform: scale(1.02);
+        }
+        .hamburger span {
+            display: block;
+            width: 18px;
+            height: 2px;
+            background: white;
+            border-radius: 2px;
+            transition: transform 0.3s cubic-bezier(0.4,0,0.2,1), opacity 0.3s ease;
+            transform-origin: center;
+        }
+        .hamburger.is-open span:nth-child(1) {
+            transform: translateY(7px) rotate(45deg);
+        }
+        .hamburger.is-open span:nth-child(2) {
+            opacity: 0;
+        }
+        .hamburger.is-open span:nth-child(3) {
+            transform: translateY(-7px) rotate(-45deg);
+        }
+
+        /* ── SIDEBAR CLOSE BUTTON ── */
+        .sidebar-close-btn {
+            position: fixed;
+            top: 17px;
+            left: calc(var(--sidebar-w) + 10px);
+            z-index: 600;
+            width: 36px; height: 36px;
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center; gap: 5px;
+            background: var(--teal);
+            border: none;
+            border-radius: 9px;
+            cursor: pointer;
+            padding: 4px;
+            opacity: 0;
+            pointer-events: none;
+            transform: translateX(-6px);
+            transition: opacity 0.22s ease, transform 0.22s ease, background 0.2s;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .sidebar-close-btn:hover {
+            background: var(--teal-dark);
+        }
+        .sidebar-close-btn span {
+            display: block;
+            width: 18px; height: 2px;
+            background: white;
+            border-radius: 2px;
+        }
+        .sidebar-close-btn span:nth-child(1) { transform: translateY(5px) rotate(45deg); }
+        .sidebar-close-btn span:nth-child(2) { transform: translateY(-4px) rotate(-45deg); }
+        body.sidebar-is-open .sidebar-close-btn {
+            opacity: 1;
+            pointer-events: auto;
+            transform: translateX(0);
+        }
+        @media (max-width: 860px) {
+            .sidebar-close-btn { left: calc(var(--sidebar-w) + 8px); top: 17px; }
+        }
+
+        /* ── TOPBAR ── */
+        .topbar {
+            background: white;
+            border-bottom: 1px solid var(--gray-200);
+            padding: 0 2rem;
+            height: 70px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 200;
+            gap: 1rem;
+        }
+        
+        .topbar-left {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            flex: 1;
+            min-width: 0;
+        }
+        
+        .topbar-left h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.2rem;
+            font-weight: 500;
+            color: var(--gray-900);
+        }
+        
+        .topbar-left p {
+            font-size: 0.75rem;
+            color: var(--text-light);
+            margin-top: 1px;
+        }
+        
+        .topbar-right {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            flex-shrink: 0;
+        }
+
+        /* Notification Styles */
+        .notification-btn {
+            position: relative;
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            background: var(--gray-100);
+            border: 1px solid var(--gray-200);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .notification-btn:hover { background: var(--gray-200); }
+        .notification-btn svg { width: 18px; height: 18px; stroke: var(--gray-700); fill: none; }
+        .notification-badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background: var(--rose);
+            color: white;
+            font-size: 0.65rem;
+            min-width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0 4px;
+            font-weight: 700;
+        }
+        
+        /* Notification Dropdown */
+        .notif-wrap { position: relative; }
+        .notif-dropdown {
+            position: absolute;
+            top: calc(100% + 12px);
+            right: 0;
+            width: 380px;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 8px 40px rgba(0,0,0,0.16);
+            border: 1px solid var(--gray-200);
+            z-index: 1000;
+            display: none;
+            overflow: hidden;
+        }
+        .notif-dropdown.show { display: block; animation: fadeUp .2s ease; }
+        .notif-dropdown-head {
+            padding: .85rem 1.1rem;
+            border-bottom: 1px solid var(--gray-200);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: var(--gray-100);
+        }
+        .notif-dropdown-head h4 { font-size: .88rem; font-weight: 700; color: var(--gray-900); }
+        .notif-see-all { font-size: .73rem; color: var(--teal); text-decoration: none; font-weight: 600; }
+        .notif-list { max-height: 400px; overflow-y: auto; }
+        .notif-item {
+            padding: .85rem 1.1rem;
+            border-bottom: 1px solid var(--gray-200);
+            display: flex;
+            gap: .75rem;
+            align-items: flex-start;
+            transition: background .15s;
+            cursor: pointer;
+        }
+        .notif-item:hover { background: var(--gray-100); }
+        .notif-item.unread { background: var(--teal-pale); }
+        .notif-av {
+            width: 38px; height: 38px; border-radius: 50%;
+            background: var(--teal);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 700;
+            font-size: .78rem;
+            flex-shrink: 0;
+            overflow: hidden;
+        }
+        .notif-body { flex: 1; min-width: 0; }
+        .notif-msg { font-size: .8rem; color: var(--gray-800); line-height: 1.45; margin-bottom: .2rem; }
+        .notif-time { font-size: .68rem; color: var(--text-light); }
+        .notif-empty { padding: 2rem; text-align: center; color: var(--text-light); font-size: .82rem; }
+
+        /* Avatar Menu */
+        .avatar-menu { position: relative; cursor: pointer; }
+        .avatar-trigger {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.3rem 0.8rem 0.3rem 0.35rem;
+            border-radius: 40px;
+            background: var(--gray-100);
+            border: 1px solid var(--gray-200);
+            transition: background 0.2s;
+        }
+        .avatar-trigger:hover { background: var(--gray-200); }
+        .avatar-img {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            color: white;
+            background: var(--teal);
+            overflow: hidden;
+            font-size: 0.75rem;
+        }
+        .avatar-img img { width: 100%; height: 100%; object-fit: cover; }
+        .avatar-name { font-size: 0.79rem; font-weight: 500; color: var(--gray-700); }
+        .dropdown-popup {
+            position: absolute;
+            top: 50px;
+            right: 0;
+            background: white;
+            border-radius: 14px;
+            box-shadow: 0 16px 40px -8px rgba(0,0,0,0.18);
+            width: 220px;
+            padding: 0.6rem 0;
+            z-index: 400;
+            border: 1px solid var(--gray-200);
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-6px);
+            transition: all 0.2s;
+        }
+        .dropdown-popup.show { opacity: 1; visibility: visible; transform: translateY(0); }
+        .dropdown-info { padding: 0.6rem 1rem 0.5rem; border-bottom: 1px solid var(--gray-200); }
+        .dropdown-info p { font-size: .84rem; font-weight: 600; color: var(--gray-900); }
+        .dropdown-info span { font-size: .72rem; color: var(--text-light); }
+        .dropdown-item {
+            display: flex;
+            align-items: center;
+            gap: 0.7rem;
+            padding: 0.55rem 1rem;
+            color: var(--gray-700);
+            text-decoration: none;
+            font-size: 0.79rem;
+            transition: background 0.15s;
+        }
+        .dropdown-item:hover { background: var(--gray-100); }
+        .dropdown-divider { height: 1px; background: var(--gray-200); margin: 0.5rem 0; }
+
+        /* Support Centre Modal */
+        .support-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.6);
+            backdrop-filter: blur(4px);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        .support-modal.open { display: flex; }
+        .support-modal-content {
+            background: white;
+            border-radius: 20px;
+            width: 500px;
+            max-width: 90vw;
+            max-height: 85vh;
+            overflow-y: auto;
+            animation: modalSlideIn 0.3s ease;
+        }
+        @keyframes modalSlideIn {
+            from { transform: translateY(-30px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        .support-modal-header {
+            padding: 1.5rem;
+            background: linear-gradient(135deg, var(--teal) 0%, var(--teal-dark) 100%);
+            color: white;
+            border-radius: 20px 20px 0 0;
+        }
+        .support-modal-header h3 { font-family: 'Playfair Display', serif; font-size: 1.3rem; font-weight: 600; margin-bottom: 0.3rem; }
+        .support-modal-header p { font-size: 0.8rem; opacity: 0.9; }
+        .support-close {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: white;
+            background: none;
+            border: none;
+        }
+        .support-modal-body { padding: 1.5rem; }
+        .support-option {
+            border: 1px solid var(--gray-200);
+            border-radius: 12px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .support-option:hover {
+            border-color: var(--teal);
+            background: var(--teal-pale);
+            transform: translateX(4px);
+        }
+        .support-option-title { font-weight: 700; font-size: 1rem; margin-bottom: 0.25rem; color: var(--gray-800); }
+        .support-option-desc { font-size: 0.75rem; color: var(--text-light); }
+        .support-form-group { margin-bottom: 1rem; }
+        .support-form-group label {
+            display: block;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-bottom: 0.4rem;
+            color: var(--gray-700);
+        }
+        .support-form-group input,
+        .support-form-group select,
+        .support-form-group textarea {
+            width: 100%;
+            padding: 0.7rem;
+            border: 1.5px solid var(--gray-200);
+            border-radius: 10px;
+            font-size: 0.85rem;
+            font-family: inherit;
+            transition: border-color 0.2s;
+        }
+        .support-form-group input:focus,
+        .support-form-group select:focus,
+        .support-form-group textarea:focus {
+            outline: none;
+            border-color: var(--teal);
+        }
+        .support-submit-btn {
+            width: 100%;
+            padding: 0.85rem;
+            background: var(--teal);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .support-submit-btn:hover { background: var(--teal-dark); transform: translateY(-2px); }
+
+        /* Content */
+        .content { padding: 2rem 2.5rem 3rem; flex: 1; }
+
+        /* Breadcrumb */
+        .breadcrumb {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.78rem;
+            color: var(--text-light);
+            margin-bottom: 1.6rem;
+        }
+        .breadcrumb a { color: var(--text-light); text-decoration: none; transition: color 0.2s; }
+        .breadcrumb a:hover { color: var(--teal); }
+        .breadcrumb svg { width: 12px; height: 12px; stroke: currentColor; stroke-width: 2; fill: none; }
+        .breadcrumb .current { color: var(--text-dark); font-weight: 500; }
+
+        /* Alert Messages */
+        .messages { margin-bottom: 1.5rem; }
+        .alert {
+            padding: 1rem 1.2rem;
+            border-radius: 12px;
+            margin-bottom: 0.75rem;
+            font-size: 0.85rem;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        .alert.success {
+            background: rgba(34,197,94,0.1);
+            border: 1px solid rgba(34,197,94,0.2);
+            color: #16A34A;
+        }
+        .alert.error {
+            background: rgba(239,68,68,0.1);
+            border: 1px solid rgba(239,68,68,0.2);
+            color: #DC2626;
+        }
+        .alert.info {
+            background: rgba(14,138,138,0.1);
+            border: 1px solid rgba(14,138,138,0.2);
+            color: var(--teal);
+        }
+
+        /* Dashboard Cards */
+        .dashboard-card {
+            background: var(--white);
+            border: 1px solid var(--gray-200);
+            border-radius: 20px;
+            overflow: hidden;
+            margin-bottom: 2rem;
+            transition: box-shadow 0.2s;
+        }
+        .dashboard-card:hover { box-shadow: 0 8px 24px rgba(0,0,0,0.04); }
+        .card-header {
+            padding: 1.2rem 1.5rem;
+            border-bottom: 1px solid var(--gray-200);
+            background: var(--gray-100);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+        .card-header h3 {
+            font-family: 'Playfair Display', serif;
+            font-size: 1rem;
+            font-weight: 500;
+            color: var(--gray-900);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .card-header h3 svg { width: 18px; height: 18px; stroke: var(--teal); }
+        .card-body { padding: 1.5rem; }
+        .action-buttons { display: flex; gap: 0.75rem; flex-wrap: wrap; }
+        .action-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.6rem 1.2rem;
+            border-radius: 40px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+        .action-btn.primary { background: var(--teal); color: white; }
+        .action-btn.primary:hover { background: var(--teal-dark); transform: translateY(-1px); }
+        .action-btn.secondary { background: var(--gray-100); color: var(--gray-700); border: 1px solid var(--gray-200); }
+        .action-btn.secondary:hover { border-color: var(--teal); color: var(--teal); }
+
+        /* Footer */
+        .site-footer {
+            background: var(--gray-950);
+            color: rgba(255,255,255,0.5);
+            padding: 3rem 5% 2rem;
+            margin-top: 0;
+        }
+        .footer-grid { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 2.5rem; margin-bottom: 2.8rem; }
+        .footer-logo { font-family: 'Playfair Display', serif; font-size: 1.6rem; font-weight: 600; color: white; text-decoration: none; display: block; margin-bottom: 1rem; }
+        .footer-desc { font-size: 0.83rem; color: rgba(255,255,255,0.38); line-height: 1.75; max-width: 240px; }
+        .footer-col h5 { font-size: 0.63rem; letter-spacing: 0.12em; text-transform: uppercase; font-weight: 600; color: rgba(255,255,255,0.45); margin-bottom: 1.2rem; }
+        .footer-col ul { list-style: none; display: flex; flex-direction: column; gap: 0.65rem; }
+        .footer-col ul a { font-size: 0.82rem; color: rgba(255,255,255,0.38); text-decoration: none; transition: color 0.2s; }
+        .footer-col ul a:hover { color: white; }
+        .footer-bottom { border-top: 1px solid rgba(255,255,255,0.07); padding-top: 1.8rem; display: flex; justify-content: space-between; font-size: 0.72rem; }
+
+        @media (max-width: 860px) {
+            .sidebar { transform: translateX(calc(-1 * var(--sidebar-w))); }
+            .sidebar.open { transform: translateX(0); }
+            .main { margin-left: 0 !important; }
+            .footer-grid { grid-template-columns: 1fr 1fr; }
+            .content { padding: 1rem; }
+            .topbar { padding: 0 1rem; }
+        }
+        @media (max-width: 600px) {
+            .footer-grid { grid-template-columns: 1fr; }
+            .footer-bottom { flex-direction: column; text-align: center; gap: 0.6rem; }
+        }
+
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        
+        .dashboard-card { animation: fadeUp 0.5s ease both; }
+    </style>
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+
+<aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+        <a class="sidebar-logo" href="{% url 'index' %}">Wayzo</a>
+        <span class="sidebar-sub">Restaurant Portal</span>
+    </div>
+    <div class="sidebar-profile">
+        <div class="sidebar-avatar">
+            {% if user.profile_picture %}
+                <img src="{{ user.profile_picture.url }}" alt="">
+            {% else %}
+                {{ restaurant.restaurant_name|first|upper }}
+            {% endif %}
+        </div>
+        <div class="sidebar-profile-info">
+            <div class="sidebar-profile-name">{{ restaurant.restaurant_name }}</div>
+            <div class="sidebar-profile-role">Property Owner</div>
+        </div>
+    </div>
+    
+    
+    <nav class="sidebar-nav">
+        <span class="nav-group-label">Main</span>
+        <a href="{% url 'restaurant_dashboard' %}" class="nav-item {% if request.resolver_match.url_name == 'restaurant_dashboard' %}active{% endif %}">
+            <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+            Dashboard
+        </a>
+        <a href="{% url 'manage_property' %}" class="nav-item {% if request.resolver_match.url_name == 'manage_property' %}active{% endif %}">
+            <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+            Manage Property
+        </a>
+        <a href="{% url 'bookings' %}" class="nav-item {% if request.resolver_match.url_name == 'bookings' %}active{% endif %}">
+            <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+            Bookings
+        </a>
+        
+        <span class="nav-group-label">Management</span>
+        <a href="{% url 'manage_property' %}?tab=media" class="nav-item">
+            <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+            Gallery
+        </a>
+        
+        <span class="nav-group-label">Support</span>
+        <a href="{% url 'support:support_center' %}" class="nav-item">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            Support Centre
+        </a>
+        
+        <span class="nav-group-label">Account</span>
+        <a href="{% url 'manage_property' %}?tab=profile" class="nav-item">
+            <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            Property Settings
+        </a>
+        
+        <form action="{% url 'logout' %}" method="post" style="width: 100%;">
+            {% csrf_token %}
+            <button type="submit" class="logout-btn">
+                <svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                Sign Out
+            </button>
+        </form>
+    </nav>
+</aside>
+
+<div class="main" id="mainEl">
+    <div class="topbar">
+        <div class="topbar-left">
+            <button class="hamburger" id="hamburgerBtn">
+                <span></span><span></span><span></span>
+            </button>
+            <div>
+                <h1>{% block page_title %}Restaurant Dashboard{% endblock %}</h1>
+                <p>Welcome back, {{ restaurant.restaurant_name }}</p>
+            </div>
+        </div>
+        <div class="topbar-right">
+            <!-- Notification Bell -->
+            <div class="notif-wrap">
+                <button class="notification-btn" id="notificationBtn" onclick="toggleNotifDropdown()">
+                    <svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+                    <span class="notification-badge" id="notifBadge">{{ unread_notifications|default:"0" }}</span>
+                </button>
+                <div class="notif-dropdown" id="notifDropdown">
+                    <div class="notif-dropdown-head">
+                        <h4>🔔 Notifications</h4>
+                        <a href="{% url 'community:notifications' %}" class="notif-see-all">See all</a>
+                    </div>
+                    <div class="notif-list" id="notifList"><div class="notif-empty">Loading…</div></div>
+                </div>
+            </div>
+
+            <!-- Avatar Menu -->
+            <div class="avatar-menu" id="avatarMenu">
+                <div class="avatar-trigger" id="avatarTrigger">
+                    <div class="avatar-img">
+                        {% if user.profile_picture %}
+                            <img src="{{ user.profile_picture.url }}" alt="">
+                        {% else %}
+                            {{ restaurant.restaurant_name|first|upper }}
+                        {% endif %}
+                    </div>
+                    <span class="avatar-name">{{ user.first_name|default:restaurant.restaurant_name }}</span>
+                </div>
+                <div class="dropdown-popup" id="dropdownPopup">
+                    <div class="dropdown-info">
+                        <p>{{ restaurant.restaurant_name }}</p>
+                        <span>{{ user.email }}</span>
+                    </div>
+                    <a href="{% url 'manage_property' %}?tab=profile" class="dropdown-item">Property Settings</a>
+                    <a href="{% url 'support:support_center' %}" class="dropdown-item">Support Centre</a>
+                    <div class="dropdown-divider"></div>
+                    <form action="{% url 'logout' %}" method="post" style="width: 100%;">
+                        {% csrf_token %}
+                        <button type="submit" class="dropdown-item" style="width: 100%; text-align: left; background: none; border: none; cursor: pointer; color: var(--rose);">
+                            Sign Out
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="content">
+        <div class="breadcrumb">
+            <svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
+            <span class="current">{% block breadcrumb %}Restaurant Dashboard{% endblock %}</span>
+        </div>
+
+        <!-- Messages -->
+        {% if messages %}
+        <div class="messages">
+            {% for message in messages %}
+            <div class="alert {{ message.tags }}">
+                {% if message.tags == 'success' %}
+                <svg width="18" height="18" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+                {% elif message.tags == 'error' %}
+                <svg width="18" height="18" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                {% else %}
+                <svg width="18" height="18" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                {% endif %}
+                {{ message }}
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        {% block content %}{% endblock %}
+    </div>
+
+    <!-- Footer -->
+    <footer class="site-footer">
+        <div class="footer-grid">
+            <div>
+                <a class="footer-logo" href="{% url 'index' %}">Wayzo</a>
+                <p class="footer-desc">Your smart travel companion. Discover, plan, and experience the world beautifully.</p>
+            </div>
+            <div class="footer-col">
+                <h5>Explore</h5>
+                <ul><li><a href="#">Destinations</a></li><li><a href="#">Restaurants</a></li><li><a href="#">Hotels</a></li><li><a href="#">Packages</a></li></ul>
+            </div>
+            <div class="footer-col">
+                <h5>Travellers</h5>
+                <ul><li><a href="{% url 'traveller_register' %}">Join as Traveller</a></li><li><a href="{% url 'login' %}">Login</a></li><li><a href="#">How it Works</a></li><li><a href="#">FAQs</a></li></ul>
+            </div>
+            <div class="footer-col">
+                <h5>Partners</h5>
+                <ul><li><a href="{% url 'agency_register' %}">Register Agency</a></li><li><a href="{% url 'restaurant_register' %}">Register Restaurant</a></li><li><a href="#">Partner Benefits</a></li><li><a href="#">Contact Us</a></li></ul>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <span>© 2025 Wayzo. All rights reserved.</span>
+            <span>Made for explorers everywhere</span>
+        </div>
+    </footer>
+</div>
+
+<!-- Support Centre Modal -->
+<div class="support-modal" id="supportModal">
+    <div class="support-modal-content">
+        <div class="support-modal-header">
+            <button class="support-close" onclick="closeSupportModal()">&times;</button>
+            <h3>Support Centre</h3>
+            <p>We're here to help! Choose an option below</p>
+        </div>
+        <div class="support-modal-body">
+            <div class="support-option" onclick="showSupportForm('complaint')">
+                <div class="support-option-title">📢 File a Complaint</div>
+                <div class="support-option-desc">Report an issue with a booking, service, or experience</div>
+            </div>
+            <div class="support-option" onclick="showSupportForm('issue')">
+                <div class="support-option-title">⚠️ Report an Issue</div>
+                <div class="support-option-desc">Technical problem or bug on the website/app</div>
+            </div>
+            <div class="support-option" onclick="showSupportForm('query')">
+                <div class="support-option-title">❓ Ask a Question</div>
+                <div class="support-option-desc">General inquiry about Wayzo services</div>
+            </div>
+            <div class="support-option" onclick="showSupportForm('feedback')">
+                <div class="support-option-title">💡 Give Feedback</div>
+                <div class="support-option-desc">Share your suggestions to improve Wayzo</div>
+            </div>
+            
+            <form id="supportForm" style="display: none;" method="POST" action="#">
+                {% csrf_token %}
+                <input type="hidden" name="ticket_type" id="ticketType">
+                <div class="support-form-group">
+                    <label>Subject *</label>
+                    <input type="text" name="subject" required placeholder="Brief summary of your issue">
+                </div>
+                <div class="support-form-group">
+                    <label>Description *</label>
+                    <textarea name="description" rows="4" required placeholder="Please provide detailed information..."></textarea>
+                </div>
+                <div class="support-form-group">
+                    <label>Priority</label>
+                    <select name="priority">
+                        <option value="low">Low</option>
+                        <option value="medium">Medium</option>
+                        <option value="high">High</option>
+                    </select>
+                </div>
+                <div class="support-form-group">
+                    <label>Attach File (Optional)</label>
+                    <input type="file" name="attachment" accept="image/*,.pdf,.doc,.docx">
+                </div>
+                <button type="submit" class="support-submit-btn">Submit Ticket</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+// Sidebar functionality
+const sidebar = document.getElementById('sidebar');
+const hamburgerBtn = document.getElementById('hamburgerBtn');
+const mainEl = document.getElementById('mainEl');
+const overlay = document.getElementById('sidebarOverlay');
+const MOBILE_BP = 860;
+
+function isMobile() { return window.innerWidth <= MOBILE_BP; }
+
+function setSidebarOpen(open) {
+    if (open) {
+        document.body.classList.add('sidebar-is-open');
+    } else {
+        document.body.classList.remove('sidebar-is-open');
+    }
+    if (isMobile()) {
+        if (open) {
+            sidebar.classList.add('open');
+            overlay.classList.add('visible');
+            hamburgerBtn.classList.add('is-open');
+            document.body.style.overflow = 'hidden';
+        } else {
+            sidebar.classList.remove('open');
+            overlay.classList.remove('visible');
+            hamburgerBtn.classList.remove('is-open');
+            document.body.style.overflow = '';
+        }
+    } else {
+        if (open) {
+            sidebar.classList.remove('collapsed');
+            mainEl.classList.remove('sidebar-collapsed');
+            hamburgerBtn.classList.add('is-open');
+        } else {
+            sidebar.classList.add('collapsed');
+            mainEl.classList.add('sidebar-collapsed');
+            hamburgerBtn.classList.remove('is-open');
+        }
+        overlay.classList.remove('visible');
+    }
+}
+
+function toggleSidebar() {
+    if (isMobile()) {
+        setSidebarOpen(!sidebar.classList.contains('open'));
+    } else {
+        setSidebarOpen(sidebar.classList.contains('collapsed'));
+    }
+}
+
+function closeSidebar() { setSidebarOpen(false); }
+
+if (hamburgerBtn) { hamburgerBtn.addEventListener('click', toggleSidebar); }
+
+if (overlay) { overlay.addEventListener('click', closeSidebar); }
+
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') { closeSidebar(); }
+});
+
+if (!isMobile()) {
+    sidebar.classList.add('collapsed');
+    mainEl.classList.add('sidebar-collapsed');
+    hamburgerBtn.classList.remove('is-open');
+} else {
+    sidebar.classList.remove('open');
+    overlay.classList.remove('visible');
+    hamburgerBtn.classList.remove('is-open');
+}
+
+window.addEventListener('resize', function() {
+    if (!isMobile()) {
+        sidebar.classList.remove('open');
+        overlay.classList.remove('visible');
+        document.body.style.overflow = '';
+        if (!hamburgerBtn.classList.contains('is-open')) {
+            sidebar.classList.add('collapsed');
+            mainEl.classList.add('sidebar-collapsed');
+        }
+    } else {
+        sidebar.classList.remove('collapsed');
+        mainEl.classList.remove('sidebar-collapsed');
+    }
+});
+
+// Avatar Dropdown
+const avatarTrigger = document.getElementById('avatarTrigger');
+const dropdownPopup = document.getElementById('dropdownPopup');
+if (avatarTrigger && dropdownPopup) {
+    avatarTrigger.addEventListener('click', (e) => {
+        e.stopPropagation();
+        dropdownPopup.classList.toggle('show');
+    });
+    document.addEventListener('click', (e) => {
+        if (!avatarTrigger.contains(e.target) && !dropdownPopup.contains(e.target)) {
+            dropdownPopup.classList.remove('show');
+        }
+    });
+}
+
+// Support Centre Modal
+function openSupportModal(event) {
+    if (event) event.preventDefault();
+    document.getElementById('supportModal').classList.add('open');
+    document.getElementById('supportForm').style.display = 'none';
+}
+
+function closeSupportModal() {
+    document.getElementById('supportModal').classList.remove('open');
+}
+
+function showSupportForm(type) {
+    const form = document.getElementById('supportForm');
+    const ticketType = document.getElementById('ticketType');
+    let typeText = '';
+    switch(type) {
+        case 'complaint': typeText = 'Complaint'; break;
+        case 'issue': typeText = 'Issue Report'; break;
+        case 'query': typeText = 'General Query'; break;
+        case 'feedback': typeText = 'Feedback'; break;
+    }
+    ticketType.value = typeText;
+    form.style.display = 'block';
+    form.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+document.getElementById('supportModal')?.addEventListener('click', function(e) {
+    if (e.target === this) closeSupportModal();
+});
+
+// Notification System
+let notifOpen = false;
+function toggleNotifDropdown() {
+    const dropdown = document.getElementById('notifDropdown');
+    notifOpen = !notifOpen;
+    dropdown.classList.toggle('show', notifOpen);
+    if (notifOpen) loadNotifications();
+}
+
+function loadNotifications() {
+    const list = document.getElementById('notifList');
+    list.innerHTML = '<div class="notif-empty">Loading…</div>';
+    fetch('/community/api/recent-notifications/')
+        .then(r => r.json())
+        .then(data => {
+            if (!data.notifications || !data.notifications.length) {
+                list.innerHTML = '<div class="notif-empty">🔔 No new notifications</div>';
+                return;
+            }
+            list.innerHTML = data.notifications.map(n => {
+                const initials = (n.sender_name || '?')[0].toUpperCase();
+                return `<div class="notif-item ${n.is_read ? '' : 'unread'}" onclick="markRead(${n.id}, this)">
+                    <div class="notif-av">${n.sender_avatar ? `<img src="${n.sender_avatar}" alt="">` : initials}</div>
+                    <div class="notif-body">
+                        <div class="notif-msg">${escapeHtml(n.message)}</div>
+                        <div class="notif-time">${timeAgo(n.created_at)}</div>
+                    </div>
+                </div>`;
+            }).join('');
+        })
+        .catch(() => { list.innerHTML = '<div class="notif-empty">Could not load notifications.</div>'; });
+}
+
+function markRead(id, el) {
+    if (!el.classList.contains('unread')) return;
+    el.classList.remove('unread');
+    fetch(`/community/notification/mark-read/${id}/`, {
+        method: 'POST',
+        headers: { 'X-CSRFToken': getCsrfToken() }
+    }).then(() => updateNotifBadge());
+}
+
+function updateNotifBadge() {
+    fetch('/community/api/unread-notifications-count/')
+        .then(r => r.json())
+        .then(data => {
+            const badge = document.getElementById('notifBadge');
+            if (data.unread_count > 0) {
+                badge.textContent = data.unread_count > 99 ? '99+' : data.unread_count;
+                badge.style.display = 'flex';
+            } else {
+                badge.style.display = 'none';
+            }
+        })
+        .catch(() => console.error('Error updating badge'));
+}
+
+function getCsrfToken() {
+    return document.querySelector('[name=csrfmiddlewaretoken]')?.value || 
+           document.cookie.split('; ').find(row => row.startsWith('csrftoken='))?.split('=')[1];
+}
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+function timeAgo(dateStr) {
+    const diff = Date.now() - new Date(dateStr);
+    const m = Math.floor(diff / 60000);
+    if (m < 1) return 'Just now';
+    if (m < 60) return `${m}m ago`;
+    const h = Math.floor(m / 60);
+    if (h < 24) return `${h}h ago`;
+    return `${Math.floor(h / 24)}d ago`;
+}
+
+document.addEventListener('click', e => {
+    const wrap = document.querySelector('.notif-wrap');
+    if (notifOpen && wrap && !wrap.contains(e.target)) {
+        notifOpen = false;
+        document.getElementById('notifDropdown')?.classList.remove('show');
+    }
+});
+
+setInterval(updateNotifBadge, 30000);
+
+// Auto-hide messages after 5 seconds
+setTimeout(function() {
+    document.querySelectorAll('.alert').forEach(function(alert) {
+        alert.style.opacity = '0';
+        setTimeout(function() { alert.remove(); }, 300);
+    });
+}, 5000);
+</script>
+{% block extra_js %}{% endblock %}
+</body>
+</html>

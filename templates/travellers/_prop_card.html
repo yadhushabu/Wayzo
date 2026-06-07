@@ -1,0 +1,66 @@
+<!-- travellers/templates/travellers/_prop_card.html -->
+{% load static %}
+
+<div class="prop-card" onclick="window.location.href='{% url 'travellers:restaurant_detail' restaurant.id %}'">
+    <div class="prop-thumb">
+        {% with restaurant.media.first as first_media %}
+            {% if first_media %}
+                <img src="{{ first_media.image.url }}" alt="{{ restaurant.restaurant_name }}">
+            {% else %}
+                <div class="prop-thumb-placeholder">
+                    🏢
+                    <span>{{ restaurant.restaurant_name|slice:":2" }}</span>
+                </div>
+            {% endif %}
+        {% endwith %}
+        <span class="prop-type-badge">{{ restaurant.property_type }}</span>
+        {% if restaurant.avg_rating > 0 %}
+            <span class="prop-rating-badge">⭐ {{ restaurant.avg_rating|floatformat:1 }}</span>
+        {% endif %}
+        
+        <!-- Wishlist Button on Card - Fixed event parameter -->
+        <button
+    class="wishlist-card-btn {% if restaurant.id in wishlisted_ids %}active{% endif %}"
+    data-url="{% url 'travellers:wishlist_add_restaurant' restaurant.id %}"
+    onclick="toggleRestaurantWishlist(event, this)"
+    title="{% if restaurant.id in wishlisted_ids %}Remove from wishlist{% else %}Add to wishlist{% endif %}"
+>
+    <svg viewBox="0 0 24 24"
+         fill="{% if restaurant.id in wishlisted_ids %}currentColor{% else %}none{% endif %}"
+         stroke="currentColor"
+         stroke-width="2">
+
+        <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+    </svg>
+</button>
+    </div>
+    <div class="prop-body">
+        <h4>{{ restaurant.restaurant_name }}</h4>
+        <div class="prop-location">
+            <svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+            {{ restaurant.city }}{% if restaurant.city and restaurant.state %}, {% endif %}{{ restaurant.state }}
+        </div>
+        <p class="prop-desc">{{ restaurant.description|truncatewords:12 }}</p>
+        <div class="prop-tags">
+            {% if restaurant.has_table_service %}<span class="prop-tag">🍽️ Dining</span>{% endif %}
+            {% if restaurant.has_room_service %}<span class="prop-tag">🛏️ Stay</span>{% endif %}
+        </div>
+    </div>
+    <div class="prop-footer">
+        <div>
+            {% if restaurant.has_room_service %}
+                {% with cheapest=restaurant.room_types.all|dictsort:"price_per_night"|first %}
+                    {% if cheapest %}
+                        <span class="prop-price">₹{{ cheapest.price_per_night|floatformat:0 }}</span>
+                        <span class="prop-price-label">/night</span>
+                    {% else %}
+                        <span class="prop-price-dining">✨ Starting at</span>
+                    {% endif %}
+                {% endwith %}
+            {% else %}
+                <span class="prop-price-dining">🍽️ Fine Dining</span>
+            {% endif %}
+        </div>
+        <span class="view-btn">View →</span>
+    </div>
+</div>

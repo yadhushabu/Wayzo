@@ -1,0 +1,973 @@
+<!-- restaurants/templates/restaurants/manage_property.html -->
+{% extends 'restaurants/base_restaurant.html' %}
+{% load static %}
+
+{% block title %}{{ restaurant.restaurant_name }} — Manage Property{% endblock %}
+{% block page_title %}Manage Property{% endblock %}
+{% block breadcrumb %}Manage Property{% endblock %}
+
+{% block extra_css %}
+<style>
+    :root {
+        --ink: #0f172a; --ink2: #334155; --muted: #64748b;
+        --border: #e2e8f0; --surface: #ffffff; --surface2: #f8fafc; --surface3: #f1f5f9;
+        --accent: #0E8A8A; --accent2: #0a6b6b; --accent-pale: #EAF4F4; --accent-border: #9fd8d8;
+        --green: #16a34a; --green-pale: #dcfce7;
+        --red: #dc2626; --red-pale: #fee2e2;
+        --amber: #d97706; --amber-pale: #fef3c7;
+        --radius: 14px; --radius-sm: 9px;
+        --shadow-sm: 0 1px 3px rgba(0,0,0,.06);
+        --shadow: 0 4px 20px rgba(0,0,0,.09);
+        --canvas-bg: #f0ede6; --canvas-line: #ddd8ce;
+    }
+
+    /* ── TABS ── */
+    .mp-tabs {
+        display: flex; gap: 0.25rem; flex-wrap: wrap;
+        background: var(--surface2); border: 1px solid var(--border);
+        border-radius: var(--radius); padding: 0.3rem; margin-bottom: 1.5rem;
+    }
+    .mp-tab {
+        padding: 0.52rem 1.1rem; border-radius: 10px; border: none;
+        background: transparent; font-size: 0.82rem; font-weight: 500;
+        color: var(--muted); cursor: pointer; transition: all .15s;
+        white-space: nowrap; display: flex; align-items: center; gap: 0.4rem;
+    }
+    .mp-tab:hover { color: var(--ink); background: var(--surface); }
+    .mp-tab.active { background: var(--surface); color: var(--accent); font-weight: 600; box-shadow: var(--shadow-sm); }
+    .tab-count { font-size: 0.65rem; background: var(--surface3); color: var(--muted); padding: 1px 6px; border-radius: 20px; font-weight: 600; }
+    .mp-tab.active .tab-count { background: var(--accent-pale); color: var(--accent); }
+    .tab-pane { display: none; animation: fadeUp .25s ease; }
+    .tab-pane.active { display: block; }
+    @keyframes fadeUp { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+
+    /* ── CARDS ── */
+    .mp-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); margin-bottom: 1.25rem; overflow: hidden; box-shadow: var(--shadow-sm); }
+    .mp-card-head { display: flex; align-items: center; justify-content: space-between; padding: 1rem 1.3rem; border-bottom: 1px solid var(--border); background: var(--surface2); gap: 1rem; flex-wrap: wrap; }
+    .mp-card-head h3 { font-size: 0.9rem; font-weight: 700; color: var(--ink); margin: 0; display: flex; align-items: center; gap: 0.5rem; }
+    .mp-card-body { padding: 1.3rem; }
+
+    /* ── FORMS ── */
+    .fg { margin-bottom: 1rem; }
+    .fg label { display: block; font-size: 0.7rem; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 0.35rem; }
+    .fg input, .fg select, .fg textarea { width: 100%; padding: 0.62rem 0.9rem; border: 1.5px solid var(--border); border-radius: var(--radius-sm); font-size: 0.84rem; color: var(--ink); background: var(--surface); transition: all .15s; box-sizing: border-box; font-family: inherit; }
+    .fg input:focus, .fg select:focus, .fg textarea:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(14,138,138,.10); }
+    .fg .help { font-size: 0.68rem; color: var(--muted); margin-top: 0.25rem; }
+    .fg-row  { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 0.8rem; }
+    .fg-row4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.8rem; }
+    .fg-row3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.8rem; }
+    .fg-row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0.8rem; }
+    .errorlist { color: var(--red); font-size: 0.72rem; list-style: none; padding: 0; margin: 0.25rem 0 0; }
+
+    /* CHECKBOX PILLS */
+    .check-row { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.75rem; }
+    .check-pill { display: flex; align-items: center; gap: 0.38rem; padding: 0.42rem 0.85rem; border: 1.5px solid var(--border); border-radius: 99px; font-size: 0.76rem; color: var(--ink2); cursor: pointer; transition: all .15s; background: var(--surface); user-select: none; }
+    .check-pill:has(input:checked) { background: var(--accent-pale); border-color: var(--accent-border); color: var(--accent); font-weight: 600; }
+    .check-pill input { display: none; }
+
+    /* ── BUTTONS ── */
+    .btn { display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.55rem 1.1rem; border-radius: 9px; font-size: 0.82rem; font-weight: 600; cursor: pointer; border: none; transition: all .15s; text-decoration: none; white-space: nowrap; font-family: inherit; }
+    .btn-primary { background: var(--accent); color: #fff; box-shadow: 0 3px 10px rgba(14,138,138,.25); }
+    .btn-primary:hover { background: var(--accent2); color: #fff; transform: translateY(-1px); }
+    .btn-secondary { background: var(--surface); color: var(--ink2); border: 1.5px solid var(--border); }
+    .btn-secondary:hover { background: var(--surface3); border-color: #94a3b8; }
+    .btn-danger { background: var(--red-pale); color: var(--red); border: 1.5px solid #fca5a5; }
+    .btn-danger:hover { background: var(--red); color: #fff; }
+    .btn-amber { background: var(--amber-pale); color: var(--amber); border: 1.5px solid #fcd34d; }
+    .btn-amber:hover { background: var(--amber); color: #fff; }
+    .btn-sm { padding: 0.34rem 0.75rem; font-size: 0.74rem; }
+    .btn-xs { padding: 0.24rem 0.55rem; font-size: 0.68rem; border-radius: 6px; }
+    .btn-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 1rem; }
+    .delete-form { display: inline; }
+
+    /* ── NOTES ── */
+    .infonote { display: flex; gap: 0.65rem; align-items: flex-start; background: var(--accent-pale); border: 1px solid var(--accent-border); border-radius: var(--radius-sm); padding: 0.75rem 1rem; font-size: 0.8rem; color: var(--accent); margin-bottom: 1.1rem; }
+    .warnnote { display: flex; gap: 0.65rem; align-items: flex-start; background: var(--amber-pale); border: 1px solid #fcd34d; border-radius: var(--radius-sm); padding: 0.75rem 1rem; font-size: 0.8rem; color: var(--amber); margin-bottom: 1.1rem; }
+
+    /* ── SECTION DIVIDER ── */
+    .sec-divider { font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: .6px; color: var(--muted); padding: 0.5rem 0; border-bottom: 1px solid var(--border); margin: 1.3rem 0 1rem; display: flex; align-items: center; gap: 0.5rem; }
+    .sec-divider::after { content:""; flex:1; height:1px; background: var(--border); }
+
+    /* ── BADGES ── */
+    .badge { display: inline-flex; align-items: center; gap: 4px; padding: 0.2rem 0.65rem; border-radius: 99px; font-size: 0.68rem; font-weight: 600; }
+    .badge-green { background: var(--green-pale); color: var(--green); }
+    .badge-red   { background: var(--red-pale);   color: var(--red); }
+    .badge-teal  { background: var(--accent-pale); color: var(--accent); }
+    .badge-amber { background: var(--amber-pale);  color: var(--amber); }
+
+    /* ── STATS ── */
+    .stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 0.75rem; margin-bottom: 1.25rem; }
+    .stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 0.85rem 1rem; }
+    .stat-val { font-size: 1.4rem; font-weight: 800; color: var(--ink); line-height: 1; margin-bottom: 4px; }
+    .stat-lbl { font-size: 0.68rem; color: var(--muted); font-weight: 500; text-transform: uppercase; letter-spacing: .4px; }
+
+    /* ── TABLE CARDS ── */
+    .tbl-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(270px, 1fr)); gap: 1rem; margin-top: 1rem; }
+    .tbl-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1rem; transition: box-shadow .2s, transform .2s; }
+    .tbl-card:hover { box-shadow: var(--shadow); transform: translateY(-2px); }
+    .tbl-card-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.6rem; }
+    .tbl-name { font-size: 0.95rem; font-weight: 700; color: var(--ink); }
+    .tbl-meta { font-size: 0.76rem; color: var(--muted); display: flex; flex-wrap: wrap; gap: 0.4rem 0.7rem; margin-bottom: 0.5rem; }
+    .tbl-tags { display: flex; flex-wrap: wrap; gap: 0.35rem; margin-top: 0.5rem; }
+    .tbl-tag { font-size: 0.66rem; padding: 2px 8px; border-radius: 99px; background: var(--surface3); color: var(--muted); border: 1px solid var(--border); }
+
+    /* ── FLOOR PLAN ── */
+    .fp-wrap { background: var(--canvas-bg); background-image: linear-gradient(var(--canvas-line) 1px, transparent 1px), linear-gradient(90deg, var(--canvas-line) 1px, transparent 1px); background-size: 20px 20px; border-radius: var(--radius); border: 1px solid var(--border); position: relative; overflow: hidden; height: 260px; margin: 1rem 0; }
+    .fp-table { position: absolute; background: #fff; border: 1.5px solid #cbd5e1; display: flex; align-items: center; justify-content: center; flex-direction: column; box-shadow: 0 2px 6px rgba(0,0,0,.08); font-size: 0.7rem; font-weight: 700; color: var(--ink); z-index: 10; }
+    .fp-table.circle { border-radius: 50%; } .fp-table.square,.fp-table.rectangle { border-radius: 8px; }
+    .fp-tnum { font-weight: 800; font-size: 0.72rem; color: var(--accent); } .fp-tcap { font-size: 0.6rem; color: var(--muted); }
+    .fp-badge { position: absolute; top: -5px; right: -5px; width: 11px; height: 11px; border-radius: 50%; border: 2px solid #fff; }
+    .fp-badge.active { background: #22c55e; } .fp-badge.inactive { background: #ef4444; }
+    .fp-legend { display: flex; gap: 1rem; font-size: 0.72rem; color: var(--muted); margin-top: 0.5rem; align-items: center; }
+    .fp-legend-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 4px; }
+    .fp-more { position: absolute; bottom: 8px; right: 8px; background: rgba(15,23,42,.6); color: #fff; font-size: 0.68rem; padding: 3px 8px; border-radius: 5px; font-weight: 600; }
+
+    /* ROOM TYPE CARDS */
+    .rt-list { display: flex; flex-direction: column; gap: 1.5rem; }
+    .rt-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; box-shadow: var(--shadow-sm); transition: box-shadow .2s; }
+    .rt-card:hover { box-shadow: var(--shadow); }
+
+    .rt-card-header {
+        display: flex; align-items: stretch; justify-content: space-between;
+        background: linear-gradient(135deg, var(--accent-pale) 0%, var(--surface2) 100%);
+        border-bottom: 1px solid var(--border); padding: 1.1rem 1.4rem; gap: 1rem; flex-wrap: wrap;
+    }
+    .rt-card-header-left { flex: 1; min-width: 200px; }
+    .rt-name { font-size: 1.15rem; font-weight: 800; color: var(--ink); margin-bottom: 0.3rem; }
+    .rt-badges { display: flex; gap: 0.4rem; flex-wrap: wrap; margin-bottom: 0.5rem; }
+    .rt-quick-meta { display: flex; flex-wrap: wrap; gap: 0.4rem 1.1rem; font-size: 0.78rem; color: var(--muted); }
+    .rt-quick-meta span { display: flex; align-items: center; gap: 0.3rem; }
+
+    .rt-card-header-price { text-align: right; display: flex; flex-direction: column; align-items: flex-end; justify-content: center; }
+    .rt-price-big { font-size: 1.8rem; font-weight: 800; color: var(--accent); line-height: 1; }
+    .rt-price-label { font-size: 0.68rem; color: var(--muted); margin-top: 0.2rem; }
+
+    .rt-card-body { display: grid; grid-template-columns: 1fr 1fr; gap: 0; }
+    .rt-body-left { padding: 1.2rem 1.4rem; border-right: 1px solid var(--border); }
+    .rt-body-right { padding: 1.2rem 1.4rem; }
+
+    .amenity-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.45rem; margin-top: 0.5rem; }
+    .amenity-chip {
+        display: flex; align-items: center; gap: 0.35rem;
+        padding: 0.38rem 0.6rem; border-radius: 8px; font-size: 0.72rem;
+        border: 1px solid var(--border); background: var(--surface3); color: var(--muted);
+        transition: all .15s;
+    }
+    .amenity-chip.on { background: var(--accent-pale); border-color: var(--accent-border); color: var(--accent); font-weight: 600; }
+    .amenity-chip .ac-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; background: var(--border); }
+    .amenity-chip.on .ac-dot { background: var(--accent); }
+
+    .rt-section-lbl { font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; color: var(--muted); margin-bottom: 0.5rem; margin-top: 0.9rem; }
+    .rt-section-lbl:first-child { margin-top: 0; }
+
+    .rt-text { font-size: 0.8rem; color: var(--ink2); line-height: 1.6; white-space: pre-line; }
+
+    .rooms-table { width: 100%; border-collapse: collapse; font-size: 0.8rem; margin-top: 0.4rem; }
+    .rooms-table th { text-align: left; padding: 0.4rem 0.6rem; background: var(--surface3); color: var(--muted); font-size: 0.66rem; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; border-bottom: 1px solid var(--border); }
+    .rooms-table td { padding: 0.5rem 0.6rem; border-bottom: 1px solid var(--surface3); color: var(--ink2); vertical-align: middle; }
+    .rooms-table tr:last-child td { border-bottom: none; }
+    .rooms-table tr:hover td { background: var(--surface2); }
+    .status-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 5px; }
+    .dot-available { background: #22c55e; } .dot-occupied { background: #ef4444; } .dot-maintenance { background: var(--amber); }
+
+    .add-room-bar { display: grid; grid-template-columns: 1fr 1fr auto; gap: 0.5rem; align-items: end; margin-top: 0.8rem; padding-top: 0.8rem; border-top: 1px solid var(--border); }
+    .add-room-bar input, .add-room-bar select { padding: 0.5rem 0.7rem; border: 1.5px solid var(--border); border-radius: var(--radius-sm); font-size: 0.8rem; font-family: inherit; width: 100%; box-sizing: border-box; }
+    .add-room-bar input:focus, .add-room-bar select:focus { outline: none; border-color: var(--accent); }
+
+    .rt-card-footer { padding: 0.8rem 1.4rem; border-top: 1px solid var(--border); background: var(--surface2); display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center; }
+
+    .edit-rt-form { display: none; border-top: 1px solid var(--border); background: var(--surface); }
+    .edit-rt-form.open { display: block; animation: fadeUp .25s ease; }
+    .edit-rt-form-inner { padding: 1.4rem; }
+
+    /* MEDIA */
+    .media-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 1rem; margin-top: 0.75rem; }
+    .media-card { border-radius: var(--radius); border: 1px solid var(--border); overflow: hidden; background: var(--surface); transition: all .2s; }
+    .media-card:hover { box-shadow: var(--shadow); transform: translateY(-2px); }
+    .media-card img { width: 100%; height: 170px; object-fit: cover; display: block; background: var(--surface3); }
+    .media-info { padding: 0.7rem; }
+    .media-title { font-size: 0.82rem; font-weight: 600; color: var(--ink); margin-bottom: 4px; word-break: break-word; }
+    .media-section-row { font-size: 0.68rem; color: var(--muted); display: flex; align-items: center; gap: 0.4rem; flex-wrap: wrap; }
+    .section-badge { display: inline-block; padding: 0.12rem 0.5rem; background: var(--accent-pale); color: var(--accent); border-radius: 20px; font-size: 0.62rem; font-weight: 500; }
+    .media-actions { margin-top: 0.6rem; padding-top: 0.6rem; border-top: 1px solid var(--border); display: flex; gap: 0.5rem; justify-content: flex-end; }
+
+    .multi-upload-area { border: 2px dashed var(--border); border-radius: var(--radius); padding: 1.5rem; text-align: center; background: var(--surface2); transition: all .2s; cursor: pointer; margin-bottom: 1rem; }
+    .multi-upload-area:hover, .multi-upload-area.dragover { border-color: var(--accent); background: var(--accent-pale); }
+    .upload-icon { font-size: 2rem; margin-bottom: 0.5rem; }
+    .upload-text { font-size: 0.84rem; color: var(--muted); }
+    .file-list { margin-top: 1rem; max-height: 200px; overflow-y: auto; }
+    .file-item { display: flex; align-items: center; justify-content: space-between; padding: 0.5rem; background: var(--surface3); border-radius: var(--radius-sm); margin-bottom: 0.5rem; font-size: 0.78rem; }
+    .file-name { color: var(--ink); word-break: break-all; flex: 1; }
+    .remove-file { color: var(--red); cursor: pointer; padding: 0.2rem 0.5rem; border-radius: 4px; }
+    .remove-file:hover { background: var(--red-pale); }
+
+    .empty-state { text-align: center; padding: 2.5rem 1.5rem; color: var(--muted); }
+    .empty-state-ico { font-size: 2.4rem; opacity: .4; margin-bottom: 0.5rem; }
+    .empty-state h4 { font-size: 0.9rem; font-weight: 600; margin: 0 0 .35rem; }
+    .empty-state p { font-size: 0.8rem; margin: 0; }
+
+    .svc-hint { display: none; margin-top: 0.5rem; font-size: 0.75rem; color: var(--accent); background: var(--accent-pale); border: 1px solid var(--accent-border); border-radius: var(--radius-sm); padding: 0.5rem 0.75rem; }
+    .svc-hint.show { display: block; }
+    hr { border: none; border-top: 1px solid var(--border); margin: 1.2rem 0; }
+
+    /* Table Settings Wrapper */
+    .table-settings-wrapper { display: none; }
+    .table-settings-wrapper.show { display: block; }
+
+    @media (max-width: 900px) {
+        .rt-card-body { grid-template-columns: 1fr; }
+        .rt-body-left { border-right: none; border-bottom: 1px solid var(--border); }
+        .amenity-grid { grid-template-columns: repeat(2,1fr); }
+        .fg-row4 { grid-template-columns: repeat(2,1fr); }
+    }
+    @media (max-width: 640px) {
+        .fg-row3, .fg-row2, .fg-row4 { grid-template-columns: 1fr; }
+        .add-room-bar { grid-template-columns: 1fr 1fr; }
+        .add-room-bar .btn { grid-column: span 2; }
+        .amenity-grid { grid-template-columns: repeat(2,1fr); }
+        .mp-tab { padding: .45rem .65rem; font-size: .76rem; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- TABS -->
+<div class="mp-tabs">
+    <button class="mp-tab active" data-tab="profile">🏢 Property Profile</button>
+    <button class="mp-tab" data-tab="tables" id="tabTables"
+            {% if not restaurant.has_table_service %}style="display:none"{% endif %}>
+        🍽️ Tables <span class="tab-count">{{ tables.count }}</span>
+    </button>
+    <button class="mp-tab" data-tab="rooms" id="tabRooms"
+            {% if not restaurant.has_room_service %}style="display:none"{% endif %}>
+        🛏️ Rooms <span class="tab-count">{{ room_types.count }}</span>
+    </button>
+    <button class="mp-tab" data-tab="media">
+        📸 Media <span class="tab-count">{{ media_files.count }}</span>
+    </button>
+</div>
+
+<!-- PROFILE TAB -->
+<div class="tab-pane active" id="profile">
+    <div class="mp-card">
+        <div class="mp-card-head"><h3>🏢 Property Information</h3></div>
+        <div class="mp-card-body">
+            <div class="infonote">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                <div><strong>Active Services:</strong>
+                {% if restaurant.has_table_service and restaurant.has_room_service %}Both Table &amp; Room Service enabled.
+                {% elif restaurant.has_table_service %}Table Service enabled — Tables tab visible.
+                {% elif restaurant.has_room_service %}Room Service enabled — Rooms tab visible.
+                {% else %}<em>No services enabled. Toggle below and save to unlock tabs.</em>{% endif %}</div>
+            </div>
+
+            <form method="POST" enctype="multipart/form-data">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="update_profile">
+
+                <div class="fg"><label>Description</label>{{ profile_form.description }}</div>
+                <div class="fg-row">
+                    <div class="fg"><label>Nearby Area / Landmark</label>{{ profile_form.nearby_area }}</div>
+                    <div class="fg"><label>Latitude</label>{{ profile_form.latitude }}</div>
+                    <div class="fg"><label>Longitude</label>{{ profile_form.longitude }}</div>
+                </div>
+                <div class="fg-row2">
+                    <div class="fg"><label>Website</label>{{ profile_form.website }}</div>
+                    <div class="fg"><label>Instagram</label>{{ profile_form.instagram }}</div>
+                </div>
+
+                <div class="sec-divider">Service Toggles</div>
+                <div class="check-row">
+                    <label class="check-pill">{{ profile_form.has_table_service }} ✅ Table Service</label>
+                    <label class="check-pill">{{ profile_form.has_room_service }} 🛏️ Room Service</label>
+                    <label class="check-pill">{{ profile_form.table_booking_enabled }} 📅 Table Booking</label>
+                    <label class="check-pill">{{ profile_form.room_booking_enabled }} 📅 Room Booking</label>
+                </div>
+                <div class="svc-hint" id="hintTable">💡 Table Service enabled — save to unlock <strong>🍽️ Tables</strong> tab.</div>
+                <div class="svc-hint" id="hintRoom">💡 Room Service enabled — save to unlock <strong>🛏️ Rooms</strong> tab.</div>
+
+                <!-- TABLE SETTINGS - Only show when Table Service is enabled -->
+                <div id="tableSettingsWrapper" class="table-settings-wrapper">
+                    <div class="sec-divider">Table &amp; Restaurant Settings</div>
+                    <div class="fg-row">
+                        <div class="fg"><label>Opening Time</label>{{ profile_form.opening_time }}</div>
+                        <div class="fg"><label>Closing Time</label>{{ profile_form.closing_time }}</div>
+                        <div class="fg"><label>Slot Duration (min)</label>{{ profile_form.default_slot_duration_minutes }}</div>
+                        <div class="fg"><label>Max Prebooking Days</label>{{ profile_form.default_max_prebooking_days }}</div>
+                    </div>
+                    <div class="fg-row2">
+                        <div class="fg">
+                            <label>Dietary Type</label>
+                            {{ profile_form.dietary_type }}
+                        </div>
+                        <div class="fg">
+                            <label>Cuisine Tags</label>
+                            {{ profile_form.cuisine_tags }}
+                            <span class="help">Comma-separated: Italian, Indian, Chinese...</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Advance Payment Toggle -->
+                    <div class="fg-row2">
+                        <div class="fg">
+                            <div class="form-check mb-3" style="margin-top: 0.5rem;">
+                                {{ profile_form.requires_table_advance }}
+                                <label style="font-weight: 600; color: var(--ink); margin-left: 0.25rem;">
+                                    💰 Require Advance Payment for Table Booking
+                                </label>
+                            </div>
+                            <div id="advanceAmountWrapper" style="margin-top: 0.75rem;">
+                                <label style="display: block; font-size: 0.7rem; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 0.35rem;">
+                                    Advance Amount (₹)
+                                </label>
+                                {{ profile_form.table_advance_amount }}
+                                <span class="help">Amount to be paid in advance per table booking</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="btn-actions">
+                    <button type="submit" class="btn btn-primary">💾 Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- TABLES TAB -->
+<div class="tab-pane" id="tables">
+    <div class="stats-row">
+        <div class="stat-card"><div class="stat-val">{{ tables.count }}</div><div class="stat-lbl">Total Tables</div></div>
+        <div class="stat-card"><div class="stat-val" style="color:var(--green)">{{ tables|length }}</div><div class="stat-lbl">Listed</div></div>
+        <div class="stat-card"><div class="stat-val">{{ restaurant.opening_time|time:"g:i A"|default:"—" }}</div><div class="stat-lbl">Opens</div></div>
+        <div class="stat-card"><div class="stat-val">{{ restaurant.closing_time|time:"g:i A"|default:"—" }}</div><div class="stat-lbl">Closes</div></div>
+    </div>
+
+    <div class="mp-card">
+        <div class="mp-card-head"><h3>📐 Floor Plan Preview</h3><a href="{% url 'manage_table_layout' %}" class="btn btn-primary btn-sm">🎨 Open Designer</a></div>
+        <div class="mp-card-body">
+            {% if tables %}
+            <div class="fp-wrap">
+                {% for table in tables|slice:":20" %}
+                <div class="fp-table {{ table.shape|default:'square' }}" style="left:{{ table.pos_x|default:20 }}px;top:{{ table.pos_y|default:20 }}px;width:{{ table.width|default:72 }}px;height:{{ table.height|default:72 }}px;">
+                    <span class="fp-tnum">{{ table.table_number }}</span>
+                    <span class="fp-tcap">👥{{ table.capacity }}</span>
+                    <div class="fp-badge {% if table.is_active %}active{% else %}inactive{% endif %}"></div>
+                </div>
+                {% endfor %}
+                {% if tables.count > 20 %}<div class="fp-more">+{{ tables.count|add:"-20" }} more</div>{% endif %}
+            </div>
+            <div class="fp-legend"><span><span class="fp-legend-dot" style="background:#22c55e"></span>Active</span><span><span class="fp-legend-dot" style="background:#ef4444"></span>Inactive</span></div>
+            {% else %}
+            <div class="empty-state"><div class="empty-state-ico">🗺️</div><h4>No floor plan yet</h4><p>Add tables below then open the Layout Designer.</p></div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="mp-card">
+        <div class="mp-card-head"><h3>➕ Add New Table</h3></div>
+        <div class="mp-card-body">
+            <form method="POST">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="add_table">
+                <div class="fg-row">
+                    <div class="fg"><label>Table Number *</label>{{ table_form.table_number }}<span class="help">e.g. T-01, Window Seat</span></div>
+                    <div class="fg"><label>Capacity *</label>{{ table_form.capacity }}</div>
+                    <div class="fg"><label>Zone / Section</label>{{ table_form.zone }}</div>
+                    <div class="fg"><label>Table Type</label>{{ table_form.table_type }}</div>
+                </div>
+                <div class="check-row">
+                    <label class="check-pill">{{ table_form.has_ac }} ❄️ AC</label>
+                    <label class="check-pill">{{ table_form.has_music }} 🎵 Music</label>
+                    <label class="check-pill">{{ table_form.has_view }} 🌅 View</label>
+                    <label class="check-pill">{{ table_form.smoking_allowed }} 🚬 Smoking</label>
+                    <label class="check-pill">{{ table_form.is_reservable }} 📅 Reservable</label>
+                    <label class="check-pill">{{ table_form.is_active }} ✅ Active</label>
+                </div>
+                <div class="btn-actions"><button type="submit" class="btn btn-primary">➕ Add Table</button></div>
+            </form>
+        </div>
+    </div>
+
+    <div class="mp-card">
+        <div class="mp-card-head"><h3>Your Tables <span style="font-weight:400;color:var(--muted);font-size:0.82rem">({{ tables.count }})</span></h3><a href="{% url 'manage_table_layout' %}" class="btn btn-secondary btn-sm">🎨 Layout Designer</a></div>
+        <div class="mp-card-body">
+            {% if tables %}
+            <div class="tbl-grid">
+                {% for table in tables %}
+                <div class="tbl-card">
+                    <div class="tbl-card-head"><span class="tbl-name">{{ table.table_number }}</span><span class="badge {% if table.is_active %}badge-green{% else %}badge-red{% endif %}">{% if table.is_active %}● Active{% else %}● Inactive{% endif %}</span></div>
+                    <div class="tbl-meta"><span>👥 {{ table.capacity }} seats</span><span>🏷️ {{ table.get_table_type_display }}</span>{% if table.zone %}<span>📍 {{ table.zone }}</span>{% endif %}</div>
+                    <div class="tbl-tags">{% if table.has_ac %}<span class="tbl-tag">❄️ AC</span>{% endif %}{% if table.has_music %}<span class="tbl-tag">🎵 Music</span>{% endif %}{% if table.has_view %}<span class="tbl-tag">🌅 View</span>{% endif %}{% if table.smoking_allowed %}<span class="tbl-tag">🚬 Smoking</span>{% endif %}{% if table.is_reservable %}<span class="tbl-tag">📅 Reservable</span>{% endif %}</div>
+                    <div class="btn-actions">
+                        <a href="{% url 'manage_table_layout' %}" class="btn btn-secondary btn-sm">Edit Position</a>
+                        <form method="POST" action="{% url 'delete_table' table.id %}" class="delete-form" onsubmit="return confirm('Delete table {{ table.table_number }}?')">{% csrf_token %}<button type="submit" class="btn btn-danger btn-sm">Delete</button></form>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="empty-state"><div class="empty-state-ico">🍽️</div><h4>No tables yet</h4><p>Use the form above to add your first table.</p></div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- ROOMS TAB -->
+<div class="tab-pane" id="rooms">
+    <div class="stats-row">
+        <div class="stat-card"><div class="stat-val">{{ room_types.count }}</div><div class="stat-lbl">Room Types</div></div>
+        <div class="stat-card"><div class="stat-val">{% with total=0 %}{% for rt in room_types %}{% with total=total|add:rt.rooms.count %}{% endwith %}{% endfor %}{{ room_types|length }}{% endwith %}</div><div class="stat-lbl">Total Rooms</div></div>
+        <div class="stat-card"><div class="stat-val" style="color:var(--accent)">{% if room_types %}₹{{ room_types.0.price_per_night|floatformat:0 }}{% else %}—{% endif %}</div><div class="stat-lbl">From / Night</div></div>
+        <div class="stat-card"><div class="stat-val">{{ media_files.count }}</div><div class="stat-lbl">Photos</div></div>
+    </div>
+
+    <!-- ADD ROOM TYPE FORM -->
+    <div class="mp-card">
+        <div class="mp-card-head"><h3>➕ Add New Room Type</h3><span style="font-size:0.72rem;color:var(--muted)">Define a room category — e.g. Deluxe AC, Suite</span></div>
+        <div class="mp-card-body">
+            <form method="POST">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="add_room_type">
+
+                <div class="sec-divider">Basic Info</div>
+                <div class="fg-row4">
+                    <div class="fg">
+                        <label>Room Type Name *</label>
+                        {{ room_type_form.name }}
+                        <span class="help">e.g. Deluxe, Suite, Standard AC</span>
+                    </div>
+                    <div class="fg">
+                        <label>Variant *</label>
+                        {{ room_type_form.variant }}
+                    </div>
+                    <div class="fg">
+                        <label>Price / Night (₹) *</label>
+                        {{ room_type_form.price_per_night }}
+                    </div>
+                    <div class="fg">
+                        <label>Max Guests *</label>
+                        {{ room_type_form.max_guests }}
+                    </div>
+                </div>
+
+                <div class="sec-divider">Room Details</div>
+                <div class="fg-row">
+                    <div class="fg">
+                        <label>Size (sq ft)</label>
+                        {{ room_detail_form.size_sqft }}
+                    </div>
+                    <div class="fg">
+                        <label>View Type</label>
+                        {{ room_detail_form.view }}
+                        <span class="help">e.g. City View, Sea View</span>
+                    </div>
+                    <div class="fg">
+                        <label>Bed Type</label>
+                        {{ room_detail_form.bed_type }}
+                        <span class="help">e.g. King, Twin, Double</span>
+                    </div>
+                    <div class="fg">
+                        <label>No. of Bathrooms</label>
+                        {{ room_detail_form.bathrooms }}
+                    </div>
+                </div>
+                <div class="fg-row2">
+                    <div class="fg">
+                        <label>About This Room</label>
+                        {{ room_detail_form.about_room }}
+                    </div>
+                </div>
+
+                <div class="sec-divider">Cancellation Policy</div>
+<div class="fg-row3">
+    <div class="fg">
+        <label>Policy Type</label>
+        <select name="cancellation_policy_type" id="addPolicyType" onchange="togglePolicyFields('add')">
+            <option value="free">Free Cancellation</option>
+            <option value="standard" selected>Standard</option>
+            <option value="strict">Strict</option>
+        </select>
+    </div>
+    <div class="fg" id="addFreeUntilDaysWrapper">
+        <label>Free Until Days</label>
+        <input type="number" name="free_until_days" id="addFreeUntilDays" value="7" min="1" max="30">
+        <span class="help">Days before check-in for free cancellation</span>
+    </div>
+    <div class="fg" id="addRefundPercentWrapper">
+        <label>Refund Percentage After</label>
+        <input type="number" name="refund_percentage_after" id="addRefundPercent" value="30" min="0" max="100">
+        <span class="help">% refund after free period</span>
+    </div>
+</div>
+
+                <div class="sec-divider">Amenities</div>
+                <div class="check-row">
+                    <label class="check-pill">{{ room_detail_form.wifi }} 📶 WiFi</label>
+                    <label class="check-pill">{{ room_detail_form.air_conditioning }} ❄️ AC</label>
+                    <label class="check-pill">{{ room_detail_form.tv }} 📺 TV</label>
+                    <label class="check-pill">{{ room_detail_form.bathroom }} 🚿 Bathroom</label>
+                    <label class="check-pill">{{ room_detail_form.mineral_water }} 💧 Mineral Water</label>
+                    <label class="check-pill">{{ room_detail_form.in_room_dining }} 🍽️ In-Room Dining</label>
+                    <label class="check-pill">{{ room_detail_form.room_service }} 🛎️ Room Service</label>
+                    <label class="check-pill">{{ room_detail_form.laundry_service }} 👕 Laundry</label>
+                    <label class="check-pill">{{ room_detail_form.housekeeping }} 🧹 Housekeeping</label>
+                    <label class="check-pill">{{ room_detail_form.iron_ironing_board }} 🪣 Iron/Board</label>
+                    <label class="check-pill">{{ room_detail_form.couple_friendly }} 💑 Couple Friendly</label>
+                    <label class="check-pill">{{ room_detail_form.smoking_allowed }} 🚬 Smoking</label>
+                </div>
+                <div class="fg">
+                    <label>Other Amenities</label>
+                    {{ room_detail_form.other_amenities }}
+                    <span class="help">One per line — e.g. Balcony, Mini Fridge, Safe Box</span>
+                </div>
+
+                <div class="btn-actions">
+                    <button type="submit" class="btn btn-primary">➕ Add Room Type</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ROOM TYPE CARDS LIST -->
+    {% if room_types %}
+    <div class="rt-list">
+        {% for rt in room_types %}
+        <div class="rt-card" id="rtCard{{ rt.id }}">
+
+            <div class="rt-card-header">
+                <div class="rt-card-header-left">
+                    <div class="rt-name">{{ rt.name }}</div>
+                    <div class="rt-badges">
+                        <span class="badge badge-teal">{{ rt.get_variant_display }}</span>
+                        <span class="badge badge-green">🛏️ {{ rt.rooms.count }} Room{{ rt.rooms.count|pluralize }}</span>
+                        {% if rt.detail.size_sqft %}<span class="badge" style="background:var(--surface3);color:var(--muted);">📐 {{ rt.detail.size_sqft }} sq ft</span>{% endif %}
+                    </div>
+                    <div class="rt-quick-meta">
+                        <span>👥 Max {{ rt.max_guests }} guests</span>
+                        {% if rt.detail.bed_type %}<span>🛏 {{ rt.detail.bed_type }}</span>{% endif %}
+                        {% if rt.detail.view %}<span>🌅 {{ rt.detail.view }}</span>{% endif %}
+                        {% if rt.detail.bathrooms %}<span>🚿 {{ rt.detail.bathrooms }} bath</span>{% endif %}
+                    </div>
+                </div>
+                <div class="rt-card-header-price">
+                    <div class="rt-price-big">₹{{ rt.price_per_night|floatformat:0 }}</div>
+                    <div class="rt-price-label">per night</div>
+                </div>
+            </div>
+
+            <div class="rt-card-body">
+                <div class="rt-body-left">
+                    <div class="rt-section-lbl">Amenities</div>
+                    {% if rt.detail %}
+                    <div class="amenity-grid">
+                        <span class="amenity-chip {% if rt.detail.wifi %}on{% endif %}"><span class="ac-dot"></span>📶 WiFi</span>
+                        <span class="amenity-chip {% if rt.detail.air_conditioning %}on{% endif %}"><span class="ac-dot"></span>❄️ AC</span>
+                        <span class="amenity-chip {% if rt.detail.tv %}on{% endif %}"><span class="ac-dot"></span>📺 TV</span>
+                        <span class="amenity-chip {% if rt.detail.bathroom %}on{% endif %}"><span class="ac-dot"></span>🚿 Bathroom</span>
+                        <span class="amenity-chip {% if rt.detail.mineral_water %}on{% endif %}"><span class="ac-dot"></span>💧 Water</span>
+                        <span class="amenity-chip {% if rt.detail.in_room_dining %}on{% endif %}"><span class="ac-dot"></span>🍽️ Dining</span>
+                        <span class="amenity-chip {% if rt.detail.room_service %}on{% endif %}"><span class="ac-dot"></span>🛎️ Service</span>
+                        <span class="amenity-chip {% if rt.detail.laundry_service %}on{% endif %}"><span class="ac-dot"></span>👕 Laundry</span>
+                        <span class="amenity-chip {% if rt.detail.housekeeping %}on{% endif %}"><span class="ac-dot"></span>🧹 Housekeeping</span>
+                        <span class="amenity-chip {% if rt.detail.iron_ironing_board %}on{% endif %}"><span class="ac-dot"></span>🪣 Iron</span>
+                        <span class="amenity-chip {% if rt.detail.couple_friendly %}on{% endif %}"><span class="ac-dot"></span>💑 Couples</span>
+                        <span class="amenity-chip {% if rt.detail.smoking_allowed %}on{% endif %}"><span class="ac-dot"></span>🚬 Smoking</span>
+                    </div>
+                    {% if rt.detail.other_amenities %}
+                    <div class="rt-section-lbl">Other</div>
+                    <p class="rt-text" style="font-size:0.76rem;">{{ rt.detail.other_amenities }}</p>
+                    {% endif %}
+                    {% if rt.detail.about_room %}
+                    <div class="rt-section-lbl">About</div>
+                    <p class="rt-text">{{ rt.detail.about_room }}</p>
+                    {% endif %}
+                    
+                    <!-- Display Cancellation Policy -->
+{% if rt.cancellation_policy %}
+<div class="rt-section-lbl">Cancellation Policy</div>
+<div class="cancellation-policy-display" style="background: var(--surface3); padding: 0.75rem; border-radius: var(--radius-sm); margin-top: 0.5rem;">
+    <div><strong>Policy:</strong> {{ rt.cancellation_policy.get_policy_type_display }}</div>
+    {% if rt.cancellation_policy.policy_type != 'free' %}
+        <div><strong>Free Cancellation:</strong> Up to {{ rt.cancellation_policy.free_until_days }} days before check-in</div>
+        <div><strong>After Free Period:</strong> {{ rt.cancellation_policy.refund_percentage_after }}% refund</div>
+    {% else %}
+        <div><strong>Full refund up to check-in day</strong></div>
+    {% endif %}
+</div>
+{% endif %}
+                    
+                    {% else %}
+                    <p style="font-size:0.78rem;color:var(--muted);font-style:italic;">No room details added yet. Click Edit to add them.</p>
+                    {% endif %}
+                </div>
+
+                <div class="rt-body-right">
+                    <div class="rt-section-lbl">Rooms in this Type ({{ rt.rooms.count }})</div>
+
+                    {% if rt.rooms.all %}
+                    <table class="rooms-table">
+                        <thead>
+                            <tr>
+                                <th>Room No.</th>
+                                <th>Status</th>
+                                <th style="text-align:right;">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for room in rt.rooms.all %}
+                            <tr>
+                                <td><strong>{{ room.room_number }}</strong></td>
+                                <td>
+                                    <span class="status-dot dot-{{ room.status }}"></span>
+                                    <span class="badge {% if room.status == 'available' %}badge-green{% elif room.status == 'occupied' %}badge-red{% else %}badge-amber{% endif %}">{{ room.get_status_display }}</span>
+                                </td>
+                                <td style="text-align:right;">
+                                    <div style="display:flex;gap:0.3rem;justify-content:flex-end;align-items:center;">
+                                        <form method="POST" action="{% url 'edit_room' room.id %}" style="display:flex;gap:0.3rem;">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="room_number" value="{{ room.room_number }}">
+                                            <select name="status" onchange="this.form.submit()" style="font-size:0.7rem;padding:0.2rem 0.4rem;border:1px solid var(--border);border-radius:6px;background:var(--surface);font-family:inherit;cursor:pointer;">
+                                                <option value="available" {% if room.status == 'available' %}selected{% endif %}>Available</option>
+                                                <option value="occupied"  {% if room.status == 'occupied'  %}selected{% endif %}>Occupied</option>
+                                                <option value="maintenance" {% if room.status == 'maintenance' %}selected{% endif %}>Maintenance</option>
+                                            </select>
+                                        </form>
+                                        <form method="POST" action="{% url 'delete_room' room.id %}" class="delete-form" onsubmit="return confirm('Delete room {{ room.room_number }}?')">
+                                            {% csrf_token %}
+                                            <button type="submit" class="btn btn-danger btn-xs">✕</button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    {% else %}
+                    <p style="font-size:0.78rem;color:var(--muted);font-style:italic;margin-bottom:0.8rem;">No individual rooms added yet.</p>
+                    {% endif %}
+
+                    <div class="add-room-bar">
+                        <form method="POST" action="{% url 'add_room' rt.id %}" style="display:contents;">
+                            {% csrf_token %}
+                            <div><label style="font-size:0.66rem;font-weight:700;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:0.25rem;">Room Number</label><input type="text" name="room_number" placeholder="e.g. 101, A-02" required></div>
+                            <div><label style="font-size:0.66rem;font-weight:700;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:0.25rem;">Status</label>
+                                <select name="status">
+                                    <option value="available">Available</option>
+                                    <option value="occupied">Occupied</option>
+                                    <option value="maintenance">Maintenance</option>
+                                </select>
+                            </div>
+                            <button type="submit" class="btn btn-primary btn-sm" style="align-self:end;">+ Add Room</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <div class="edit-rt-form" id="editForm{{ rt.id }}">
+                <div class="edit-rt-form-inner">
+                    <div class="sec-divider">✏️ Edit Room Type — {{ rt.name }}</div>
+                    <form method="POST" action="{% url 'edit_room_type' rt.id %}">
+                        {% csrf_token %}
+
+                        <div class="sec-divider">Basic Info</div>
+                        <div class="fg-row4">
+                            <div class="fg"><label>Name *</label><input type="text" name="name" value="{{ rt.name }}" required></div>
+                            <div class="fg"><label>Variant *</label>
+                                <select name="variant">
+                                    <option value="ac" {% if rt.variant == 'ac' %}selected{% endif %}>AC</option>
+                                    <option value="non_ac" {% if rt.variant == 'non_ac' %}selected{% endif %}>Non AC</option>
+                                </select>
+                            </div>
+                            <div class="fg"><label>Price / Night (₹) *</label><input type="number" name="price_per_night" value="{{ rt.price_per_night }}" min="0" step="0.01" required></div>
+                            <div class="fg"><label>Max Guests *</label><input type="number" name="max_guests" value="{{ rt.max_guests }}" min="1" required></div>
+                        </div>
+
+                        <div class="sec-divider">Room Details</div>
+                        <div class="fg-row">
+                            <div class="fg"><label>Size (sq ft)</label><input type="number" name="size_sqft" value="{% if rt.detail %}{{ rt.detail.size_sqft|default:'' }}{% endif %}" min="0" placeholder="e.g. 250"></div>
+                            <div class="fg"><label>View Type</label><input type="text" name="view" value="{% if rt.detail %}{{ rt.detail.view }}{% endif %}" placeholder="e.g. City View, Sea View"></div>
+                            <div class="fg"><label>Bed Type</label><input type="text" name="bed_type" value="{% if rt.detail %}{{ rt.detail.bed_type }}{% endif %}" placeholder="e.g. King, Twin"></div>
+                            <div class="fg"><label>No. of Bathrooms</label><input type="number" name="bathrooms" value="{% if rt.detail %}{{ rt.detail.bathrooms|default:1 }}{% else %}1{% endif %}" min="0"></div>
+                        </div>
+                        <div class="fg">
+                            <label>About This Room</label>
+                            <textarea name="about_room" rows="3" placeholder="Describe the room experience…">{% if rt.detail %}{{ rt.detail.about_room }}{% endif %}</textarea>
+                        </div>
+
+                        <div class="sec-divider">Cancellation Policy</div>
+<div class="fg-row3">
+    <div class="fg">
+        <label>Policy Type</label>
+        <select name="cancellation_policy_type" id="editPolicyType{{ rt.id }}" onchange="toggleEditPolicyFields({{ rt.id }})">
+            <option value="free" {% if rt.cancellation_policy and rt.cancellation_policy.policy_type == 'free' %}selected{% endif %}>Free Cancellation</option>
+            <option value="standard" {% if not rt.cancellation_policy or rt.cancellation_policy.policy_type == 'standard' %}selected{% endif %}>Standard</option>
+            <option value="strict" {% if rt.cancellation_policy and rt.cancellation_policy.policy_type == 'strict' %}selected{% endif %}>Strict</option>
+        </select>
+    </div>
+    <div class="fg" id="editFreeUntilDaysWrapper{{ rt.id }}">
+        <label>Free Until Days</label>
+        <input type="number" name="free_until_days" id="editFreeUntilDays{{ rt.id }}" value="{% if rt.cancellation_policy %}{{ rt.cancellation_policy.free_until_days }}{% else %}7{% endif %}" min="1" max="30">
+        <span class="help">Days before check-in for free cancellation</span>
+    </div>
+    <div class="fg" id="editRefundPercentWrapper{{ rt.id }}">
+        <label>Refund Percentage After</label>
+        <input type="number" name="refund_percentage_after" id="editRefundPercent{{ rt.id }}" value="{% if rt.cancellation_policy %}{{ rt.cancellation_policy.refund_percentage_after }}{% else %}30{% endif %}" min="0" max="100">
+        <span class="help">% refund after free period</span>
+    </div>
+</div>
+
+                        <div class="sec-divider">Amenities</div>
+                        <div class="check-row">
+                            <label class="check-pill"><input type="checkbox" name="wifi" {% if rt.detail and rt.detail.wifi %}checked{% endif %}> 📶 WiFi</label>
+                            <label class="check-pill"><input type="checkbox" name="air_conditioning" {% if rt.detail and rt.detail.air_conditioning %}checked{% endif %}> ❄️ AC</label>
+                            <label class="check-pill"><input type="checkbox" name="tv" {% if rt.detail and rt.detail.tv %}checked{% endif %}> 📺 TV</label>
+                            <label class="check-pill"><input type="checkbox" name="bathroom" {% if rt.detail and rt.detail.bathroom %}checked{% endif %}> 🚿 Bathroom</label>
+                            <label class="check-pill"><input type="checkbox" name="mineral_water" {% if rt.detail and rt.detail.mineral_water %}checked{% endif %}> 💧 Mineral Water</label>
+                            <label class="check-pill"><input type="checkbox" name="in_room_dining" {% if rt.detail and rt.detail.in_room_dining %}checked{% endif %}> 🍽️ In-Room Dining</label>
+                            <label class="check-pill"><input type="checkbox" name="room_service" {% if rt.detail and rt.detail.room_service %}checked{% endif %}> 🛎️ Room Service</label>
+                            <label class="check-pill"><input type="checkbox" name="laundry_service" {% if rt.detail and rt.detail.laundry_service %}checked{% endif %}> 👕 Laundry</label>
+                            <label class="check-pill"><input type="checkbox" name="housekeeping" {% if rt.detail and rt.detail.housekeeping %}checked{% endif %}> 🧹 Housekeeping</label>
+                            <label class="check-pill"><input type="checkbox" name="iron_ironing_board" {% if rt.detail and rt.detail.iron_ironing_board %}checked{% endif %}> 🪣 Iron/Board</label>
+                            <label class="check-pill"><input type="checkbox" name="couple_friendly" {% if rt.detail and rt.detail.couple_friendly %}checked{% endif %}> 💑 Couple Friendly</label>
+                            <label class="check-pill"><input type="checkbox" name="smoking_allowed" {% if rt.detail and rt.detail.smoking_allowed %}checked{% endif %}> 🚬 Smoking Allowed</label>
+                        </div>
+                        <div class="fg"><label>Other Amenities</label><textarea name="other_amenities" rows="2" placeholder="One per line — Balcony, Mini Fridge, Safe…">{% if rt.detail %}{{ rt.detail.other_amenities }}{% endif %}</textarea></div>
+
+                        <div class="btn-actions">
+                            <button type="submit" class="btn btn-primary">💾 Save Changes</button>
+                            <button type="button" class="btn btn-secondary" onclick="toggleEditForm({{ rt.id }})">✕ Cancel</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <div class="rt-card-footer">
+                <button type="button" class="btn btn-amber btn-sm" onclick="toggleEditForm({{ rt.id }})" id="editBtn{{ rt.id }}">
+                    ✏️ Edit Room Type
+                </button>
+                <form method="POST" action="{% url 'delete_room_type' rt.id %}" class="delete-form" onsubmit="return confirm('Delete {{ rt.name }}? All rooms will also be deleted.')">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger btn-sm">🗑️ Delete Type</button>
+                </form>
+            </div>
+
+        </div>
+        {% endfor %}
+    </div>
+
+    {% else %}
+    <div class="mp-card">
+        <div class="mp-card-body">
+            <div class="empty-state"><div class="empty-state-ico">🛏️</div><h4>No room types yet</h4><p>Use the form above to add your first room type with full amenity details.</p></div>
+        </div>
+    </div>
+    {% endif %}
+
+</div>
+
+<!-- MEDIA TAB -->
+<div class="tab-pane" id="media">
+    <div class="mp-card">
+        <div class="mp-card-head"><h3>📤 Upload Images</h3></div>
+        <div class="mp-card-body">
+            <form method="POST" enctype="multipart/form-data" id="multiUploadForm">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="upload_media">
+                <div class="fg-row">
+                    <div class="fg"><label>Section *</label>
+                        <select name="section" id="uploadSection" required>
+                            <option value="">Select section…</option>
+                            <option value="rooms">🏨 Rooms</option><option value="dining">🍽️ Dining Area</option>
+                            <option value="reception">🛎️ Reception</option><option value="parking">🅿️ Parking</option>
+                            <option value="pool">🏊 Pool</option><option value="entrance">🚪 Entrance</option>
+                            <option value="activities">🎯 Activities</option><option value="bathroom">🚿 Bathroom</option>
+                            <option value="gym">💪 Gym</option><option value="spa">✨ Spa</option>
+                            <option value="menu">📋 Menu</option><option value="other">📦 Other</option>
+                        </select>
+                    </div>
+                    <div class="fg"><label>Room Type (optional)</label>
+                        <select name="room_type">
+                            <option value="">All / Not room-specific</option>
+                            {% for rt in room_types %}<option value="{{ rt.id }}">{{ rt.name }}</option>{% endfor %}
+                        </select>
+                        <span class="help">Only for room photos</span>
+                    </div>
+                    <div class="fg"><label>Common Title (optional)</label><input type="text" name="common_title" id="commonTitle" placeholder="e.g. Summer Special"></div>
+                </div>
+                <div class="multi-upload-area" id="dropZone">
+                    <div class="upload-icon">📸</div>
+                    <div class="upload-text">Drag &amp; drop images or click to select<br><small>Multiple files · JPG, PNG, WebP · Max 5 MB each</small></div>
+                    <input type="file" name="images" id="fileInput" multiple accept="image/jpeg,image/png,image/webp,image/gif" style="display:none">
+                </div>
+                <div class="file-list" id="fileList"></div>
+                <div class="btn-actions"><button type="submit" class="btn btn-primary" id="uploadBtn" disabled>📤 Upload Images</button></div>
+            </form>
+        </div>
+    </div>
+
+    <div class="mp-card">
+        <div class="mp-card-head">
+            <h3>Gallery <span style="font-weight:400;color:var(--muted);font-size:0.82rem">({{ media_files.count }})</span></h3>
+            <div style="display:flex;gap:0.4rem;flex-wrap:wrap;">
+                <button class="btn btn-secondary btn-sm" onclick="filterMedia('all')">All</button>
+                <button class="btn btn-secondary btn-sm" onclick="filterMedia('rooms')">Rooms</button>
+                <button class="btn btn-secondary btn-sm" onclick="filterMedia('dining')">Dining</button>
+                <button class="btn btn-secondary btn-sm" onclick="filterMedia('menu')">Menu</button>
+            </div>
+        </div>
+        <div class="mp-card-body">
+            {% if media_files %}
+            <div class="media-grid" id="mediaGrid">
+                {% for m in media_files %}
+                <div class="media-card" data-section="{{ m.section }}">
+                    <img src="{{ m.image.url }}" alt="{{ m.title|default:m.get_section_display }}" loading="lazy">
+                    <div class="media-info">
+                        <div class="media-title">{{ m.title|default:m.get_section_display|truncatechars:28 }}</div>
+                        <div class="media-section-row">
+                            <span class="section-badge">{{ m.get_section_display }}</span>
+                            {% if m.room_type %}<span class="section-badge" style="background:var(--green-pale);color:var(--green)">🏨 {{ m.room_type.name }}</span>{% endif %}
+                        </div>
+                        <div class="media-actions">
+                            <form method="POST" action="{% url 'delete_media' m.id %}" class="delete-form" onsubmit="return confirm('Delete this image?')">{% csrf_token %}<button type="submit" class="btn btn-danger btn-sm">Delete</button></form>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="empty-state"><div class="empty-state-ico">📸</div><h4>No media yet</h4><p>Upload photos of rooms, dining area, reception and more.</p></div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script>
+// TAB SWITCHING
+const tabs = document.querySelectorAll('.mp-tab');
+const panes = document.querySelectorAll('.tab-pane');
+function activateTab(id) {
+    tabs.forEach(t  => t.classList.toggle('active', t.dataset.tab === id));
+    panes.forEach(p => p.classList.toggle('active', p.id === id));
+}
+const saved = new URLSearchParams(window.location.search).get('tab');
+if (saved && document.getElementById(saved)) activateTab(saved);
+tabs.forEach(t => t.addEventListener('click', () => {
+    const id = t.dataset.tab;
+    history.pushState({}, '', '?tab=' + id);
+    activateTab(id);
+}));
+
+// SERVICE TOGGLE → live tab visibility + table settings visibility
+const chkTable = document.querySelector('#id_has_table_service');
+const chkRoom  = document.querySelector('#id_has_room_service');
+const tabTableEl = document.getElementById('tabTables');
+const tabRoomEl  = document.getElementById('tabRooms');
+const tableSettingsWrapper = document.getElementById('tableSettingsWrapper');
+
+function syncServiceToggles() {
+    if (chkTable) {
+        const on = chkTable.checked;
+        if (tabTableEl) tabTableEl.style.display = on ? '' : 'none';
+        document.getElementById('hintTable')?.classList.toggle('show', on);
+        
+        // Show/hide table settings (opening time, closing time, etc.)
+        if (tableSettingsWrapper) {
+            tableSettingsWrapper.classList.toggle('show', on);
+        }
+    }
+    if (chkRoom) {
+        const on = chkRoom.checked;
+        if (tabRoomEl) tabRoomEl.style.display = on ? '' : 'none';
+        document.getElementById('hintRoom')?.classList.toggle('show', on);
+    }
+}
+
+// Initial sync
+syncServiceToggles();
+
+// Add event listeners
+if (chkTable) chkTable.addEventListener('change', syncServiceToggles);
+if (chkRoom) chkRoom.addEventListener('change', syncServiceToggles);
+
+// ADVANCE PAYMENT TOGGLE
+const advanceCheckbox = document.querySelector('#id_requires_table_advance');
+const advanceWrapper = document.getElementById('advanceAmountWrapper');
+
+if (advanceCheckbox && advanceWrapper) {
+    function toggleAdvanceField() {
+        advanceWrapper.style.display = advanceCheckbox.checked ? 'block' : 'none';
+    }
+    
+    toggleAdvanceField();
+    advanceCheckbox.addEventListener('change', toggleAdvanceField);
+}
+
+// EDIT ROOM TYPE INLINE TOGGLE
+function toggleEditForm(id) {
+    const form = document.getElementById('editForm' + id);
+    const btn  = document.getElementById('editBtn' + id);
+    const open = form.classList.toggle('open');
+    btn.textContent = open ? '✕ Cancel Edit' : '✏️ Edit Room Type';
+    if (open) form.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+// MULTI IMAGE UPLOAD
+let selectedFiles = [];
+const dropZone  = document.getElementById('dropZone');
+const fileInput = document.getElementById('fileInput');
+const fileList  = document.getElementById('fileList');
+const uploadBtn = document.getElementById('uploadBtn');
+
+dropZone?.addEventListener('click', () => fileInput.click());
+dropZone?.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('dragover'); });
+dropZone?.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+dropZone?.addEventListener('drop', e => { e.preventDefault(); dropZone.classList.remove('dragover'); addFiles(Array.from(e.dataTransfer.files)); });
+fileInput?.addEventListener('change', e => { addFiles(Array.from(e.target.files)); fileInput.value = ''; });
+
+function addFiles(newFiles) {
+    const valid = newFiles.filter(f => {
+        const ok = ['image/jpeg','image/png','image/webp','image/gif'].includes(f.type) && f.size <= 5*1024*1024;
+        if (!ok) alert(f.name + ' is invalid or exceeds 5 MB.');
+        return ok;
+    });
+    selectedFiles.push(...valid);
+    renderFileList();
+}
+function renderFileList() {
+    if (!selectedFiles.length) { fileList.innerHTML=''; uploadBtn.disabled=true; return; }
+    fileList.innerHTML = `<div style="margin-bottom:.5rem;font-size:.72rem;color:var(--muted);display:flex;justify-content:space-between;align-items:center;"><span>📁 ${selectedFiles.length} file(s) selected</span><button type="button" class="btn btn-secondary btn-sm" onclick="clearFiles()">Clear All</button></div>${selectedFiles.map((f,i)=>`<div class="file-item"><span class="file-name">📷 ${f.name}</span><span class="remove-file" onclick="removeFile(${i})">✖</span></div>`).join('')}`;
+    uploadBtn.disabled = false;
+}
+function removeFile(i) { selectedFiles.splice(i,1); renderFileList(); }
+function clearFiles()  { selectedFiles=[]; renderFileList(); }
+
+document.getElementById('multiUploadForm')?.addEventListener('submit', async e => {
+    e.preventDefault();
+    const sec = document.getElementById('uploadSection').value;
+    if (!sec) { alert('Please select a section.'); return; }
+    if (!selectedFiles.length) { alert('Select at least one image.'); return; }
+    const fd = new FormData();
+    fd.append('action','upload_media'); fd.append('section',sec);
+    fd.append('room_type', document.querySelector('select[name="room_type"]').value);
+    fd.append('common_title', document.getElementById('commonTitle').value);
+    fd.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
+    selectedFiles.forEach(f => fd.append('images', f));
+    uploadBtn.disabled=true; uploadBtn.textContent='📤 Uploading…';
+    try {
+        const r = await fetch(window.location.href, { method:'POST', body:fd });
+        if (r.ok) { alert('Uploaded successfully!'); window.location.reload(); }
+        else      { alert('Upload failed.'); uploadBtn.disabled=false; uploadBtn.textContent='📤 Upload Images'; }
+    } catch { alert('Network error.'); uploadBtn.disabled=false; uploadBtn.textContent='📤 Upload Images'; }
+});
+
+// MEDIA FILTER
+function filterMedia(section) {
+    document.querySelectorAll('.media-card').forEach(c => {
+        c.style.display = (section==='all' || c.dataset.section===section) ? '' : 'none';
+    });
+}
+</script>
+{% endblock %}

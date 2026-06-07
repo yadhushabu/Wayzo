@@ -1,936 +1,698 @@
+{% extends "travellers/base.html" %}
 {% load static %}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Wayzo | Edit Profile</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
-    <style>
-        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
-        :root {
-            --gray-100:     #F8F9FC;
-            --gray-150:     #F1F3F8;
-            --gray-200:     #E9EDF2;
-            --gray-300:     #DCE2EA;
-            --gray-400:     #BEC7D1;
-            --gray-500:     #9AA3AF;
-            --gray-600:     #6E7682;
-            --gray-700:     #4A515C;
-            --gray-800:     #2E343D;
-            --gray-850:     #21262E;
-            --gray-900:     #191E24;
-            --gray-950:     #0F1217;
-            --accent-muted: #5B6E8C;
-            --accent-deep:  #3A4A67;
-            --accent-light: #8A9CBA;
-            --accent-pale:  #EFF2F9;
-            --white:        #FFFFFF;
-            --text-dark:    #1E242C;
-            --text-soft:    #3C4350;
-            --text-light:   #6F7886;
-            --green:        #22C55E;
-            --amber:        #F59E0B;
-            --rose:         #F43F5E;
-            --sidebar-w:    260px;
-        }
+{% block title %}Edit Profile | Wayzo{% endblock %}
+{% block nav_edit_profile %}active{% endblock %}
 
-        html { height: 100%; }
-        body {
-            font-family: 'Inter', sans-serif;
-            background: var(--gray-100);
-            color: var(--text-dark);
-            display: flex;
-            min-height: 100vh;
-            overflow-x: hidden;
-        }
+{% block extra_styles %}
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,400&family=DM+Sans:wght@300;400;500;600&display=swap');
 
-        /* ══ SIDEBAR ══ */
-        .sidebar {
-            width: var(--sidebar-w);
-            background: var(--gray-950);
-            height: 100vh;
-            position: fixed; top: 0; left: 0;
-            display: flex; flex-direction: column;
-            z-index: 300;
-            border-right: 1px solid rgba(255,255,255,0.06);
-            transform: translateX(0);
-            transition: transform 0.32s cubic-bezier(0.4,0,0.2,1), box-shadow 0.32s ease;
-            overflow: hidden;
-        }
-        .sidebar.collapsed { transform: translateX(calc(-1 * var(--sidebar-w))); }
-        .sidebar-overlay {
-            display: none;
-            position: fixed; inset: 0;
-            background: rgba(0,0,0,0.45);
-            z-index: 290; opacity: 0;
-            transition: opacity 0.3s ease;
-            backdrop-filter: blur(2px);
-        }
-        .sidebar-overlay.visible { opacity: 1; }
+/* ── override base body bg so page feels warmer ── */
+body { font-family:'DM Sans',sans-serif; }
 
-        .sidebar-brand {
-            padding: 1.8rem 1.6rem 1.4rem;
-            border-bottom: 1px solid rgba(255,255,255,0.06);
-        }
-        .sidebar-logo {
-            font-family: 'Playfair Display', serif;
-            font-size: 1.5rem; font-weight: 600; letter-spacing: -0.01em;
-            color: white; text-decoration: none; display: block; margin-bottom: 0.2rem;
-        }
-        .sidebar-sub {
-            font-size: 0.68rem; color: rgba(255,255,255,0.3);
-            letter-spacing: 0.08em; text-transform: uppercase;
-        }
-        .sidebar-profile {
-            padding: 1.2rem 1.6rem;
-            border-bottom: 1px solid rgba(255,255,255,0.06);
-            display: flex; align-items: center; gap: 0.85rem;
-        }
-        .sidebar-avatar {
-            width: 38px; height: 38px; border-radius: 50%;
-            background: var(--accent-deep);
-            display: flex; align-items: center; justify-content: center;
-            font-size: 0.85rem; font-weight: 600; color: white;
-            overflow: hidden; flex-shrink: 0;
-            border: 2px solid rgba(255,255,255,0.08);
-        }
-        .sidebar-avatar img { width: 100%; height: 100%; object-fit: cover; }
-        .sidebar-profile-info { overflow: hidden; }
-        .sidebar-profile-name {
-            font-size: 0.82rem; font-weight: 600; color: white;
-            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-        }
-        .sidebar-profile-role { font-size: 0.68rem; color: rgba(255,255,255,0.35); }
+:root {
+    --ep-teal:#0e8a8a; --ep-teal-dark:#0a6e6e; --ep-teal-pale:#e6f3f3;
+    --ep-ink:#0f172a; --ep-ink2:#1e293b; --ep-muted:#64748b;
+    --ep-border:#e2e8f0; --ep-surface:#fff; --ep-surface2:#f8fafc; --ep-surface3:#f1f5f9;
+    --ep-red:#dc2626; --ep-red-pale:#fee2e2;
+    --ep-green:#16a34a; --ep-green-pale:#dcfce7;
+    --ep-radius:16px;
+    --ep-shadow:0 2px 12px rgba(0,0,0,.06),0 1px 3px rgba(0,0,0,.04);
+    --ep-shadow-md:0 6px 24px rgba(0,0,0,.09);
+}
 
-        .sidebar-nav { flex: 1; padding: 1rem 0.8rem; overflow-y: auto; }
-        .nav-group-label {
-            font-size: 0.62rem; font-weight: 600; letter-spacing: 0.12em;
-            text-transform: uppercase; color: rgba(255,255,255,0.22);
-            padding: 0.6rem 0.8rem 0.4rem; display: block;
-        }
-        .nav-item {
-            display: flex; align-items: center; gap: 0.75rem;
-            padding: 0.65rem 0.8rem; border-radius: 8px;
-            text-decoration: none; color: rgba(255,255,255,0.5);
-            font-size: 0.82rem; font-weight: 500;
-            transition: all 0.2s; margin-bottom: 2px;
-            cursor: pointer; border: none; background: none;
-            width: 100%; text-align: left;
-        }
-        .nav-item svg { width: 16px; height: 16px; stroke: currentColor; stroke-width: 1.8; fill: none; flex-shrink: 0; }
-        .nav-item:hover { background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.85); }
-        .nav-item.active { background: rgba(138,156,186,0.14); color: var(--accent-light); }
-        .nav-item.active svg { stroke: var(--accent-light); }
+/* ════════════════════════════════════════════
+   COVER HERO  (sits right below the base topbar)
+════════════════════════════════════════════ */
+.cover-hero {
+    position:relative;
+    height:380px;
+    overflow:hidden;
+    background:linear-gradient(160deg,#0a3d3d 0%,#0e5a5a 40%,#1a7a5a 70%,#0d3d2a 100%);
+}
 
-        .sidebar-footer { padding: 0.8rem; border-top: 1px solid rgba(255,255,255,0.06); }
-        .logout-btn {
-            display: flex; align-items: center; gap: 0.75rem;
-            padding: 0.65rem 0.8rem; border-radius: 8px;
-            text-decoration: none; color: rgba(255,255,255,0.35);
-            font-size: 0.82rem; font-weight: 500; transition: all 0.2s; width: 100%;
-        }
-        .logout-btn svg { width: 16px; height: 16px; stroke: currentColor; stroke-width: 1.8; fill: none; }
-        .logout-btn:hover { background: rgba(239,68,68,0.1); color: #F87171; }
+/* Real cover image layer */
+.cover-bg {
+    position:absolute; inset:0; z-index:0;
+    background-size:cover; background-position:center;
+}
+.cover-bg::after {
+    content:''; position:absolute; inset:0;
+    background:linear-gradient(to bottom,
+        rgba(0,0,0,.06) 0%,
+        rgba(0,0,0,.04) 30%,
+        rgba(0,0,0,.48) 68%,
+        rgba(0,0,0,.80) 100%);
+}
 
-        /* ══ MAIN ══ */
-        .main {
-            margin-left: var(--sidebar-w);
-            flex: 1; display: flex; flex-direction: column;
-            min-height: 100vh;
-            transition: margin-left 0.32s cubic-bezier(0.4,0,0.2,1);
-        }
-        .main.sidebar-collapsed { margin-left: 0; }
+/* SVG illustrated fallback */
+.cover-art {
+    position:absolute; inset:0; z-index:0; overflow:hidden;
+    background:linear-gradient(160deg,#0a3d3d 0%,#0e5555 35%,#14685a 65%,#0b3228 100%);
+}
+.cover-art svg { position:absolute; bottom:0; left:0; width:100%; height:100%; }
 
-        /* Topbar */
-        .topbar {
-            background: var(--white);
-            border-bottom: 1px solid var(--gray-200);
-            padding: 0 2rem; height: 64px;
-            display: flex; align-items: center; justify-content: space-between;
-            position: sticky; top: 0; z-index: 200; gap: 1rem;
-        }
-        .topbar-left { display: flex; align-items: center; gap: 1rem; flex: 1; min-width: 0; }
-        .topbar-left h1 {
-            font-family: 'Playfair Display', serif;
-            font-size: 1.2rem; font-weight: 500; color: var(--gray-900); white-space: nowrap;
-        }
-        .topbar-left p { font-size: 0.75rem; color: var(--text-light); margin-top: 1px; white-space: nowrap; }
-        .topbar-right { display: flex; align-items: center; gap: 0.75rem; flex-shrink: 0; }
+/* Fade into page bg */
+.cover-fade {
+    position:absolute; bottom:0; left:0; right:0; height:130px;
+    background:linear-gradient(to bottom, transparent 0%, var(--gray-100,#f8f9fc) 100%);
+    z-index:3; pointer-events:none;
+}
 
-        .hamburger {
-            width: 36px; height: 36px;
-            display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px;
-            background: transparent; border: none; cursor: pointer; padding: 4px; border-radius: 8px;
-            flex-shrink: 0; transition: background 0.2s;
-        }
-        .hamburger:hover { background: var(--gray-150); }
-        .hamburger span {
-            display: block; width: 20px; height: 2px;
-            background: var(--gray-700); border-radius: 2px;
-            transition: transform 0.3s cubic-bezier(0.4,0,0.2,1), opacity 0.3s ease, width 0.3s ease;
-            transform-origin: center;
-        }
-        .hamburger.is-open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
-        .hamburger.is-open span:nth-child(2) { opacity: 0; width: 0; }
-        .hamburger.is-open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+/* ── Change cover button — moved to TOP-RIGHT of cover ── */
+.change-cover-btn {
+    position:absolute; top:80px; right:2rem; z-index:20;
+    display:inline-flex; align-items:center; gap:.45rem;
+    padding:.48rem 1.05rem; border-radius:40px;
+    background:rgba(0,0,0,.5); backdrop-filter:blur(10px);
+    border:1px solid rgba(255,255,255,.22); color:#fff;
+    font-size:.75rem; font-weight:600; cursor:pointer;
+    transition:all .2s; font-family:'DM Sans',sans-serif;
+}
+.change-cover-btn:hover { background:rgba(0,0,0,.72); transform:translateY(-1px); }
+.change-cover-btn svg { width:13px; height:13px; stroke:#fff; fill:none; stroke-width:2.2; }
 
-        .topbar-btn {
-            display: flex; align-items: center; gap: 0.5rem;
-            padding: 0.5rem 1.1rem; border-radius: 40px;
-            font-size: 0.78rem; font-weight: 500; cursor: pointer;
-            text-decoration: none; border: none; font-family: 'Inter', sans-serif;
-            transition: all 0.2s;
-        }
-        .topbar-btn svg { width: 14px; height: 14px; stroke: currentColor; stroke-width: 2; fill: none; }
-        .topbar-btn.outline {
-            border: 1.5px solid var(--gray-300); background: transparent; color: var(--gray-700);
-        }
-        .topbar-btn.outline:hover { border-color: var(--accent-muted); color: var(--accent-deep); }
-        .topbar-btn.solid {
-            background: var(--gray-900); color: white; box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-        }
-        .topbar-btn.solid:hover { background: var(--accent-deep); }
+/* ── Profile identity strip at bottom of cover ── */
+.profile-identity {
+    position:absolute; bottom:0; left:0; right:0; z-index:4;
+    padding:0 2.5rem 1.6rem;
+    display:flex; align-items:flex-end; gap:1.4rem;
+}
+.profile-avatar-xl {
+    width:106px; height:106px; border-radius:18px;
+    background:linear-gradient(135deg,var(--ep-teal),var(--ep-teal-dark));
+    overflow:hidden; flex-shrink:0;
+    border:3px solid rgba(255,255,255,.18);
+    box-shadow:0 10px 36px rgba(0,0,0,.3);
+    display:flex; align-items:center; justify-content:center;
+    font-family:'Playfair Display',serif; font-size:2.2rem; font-weight:500; color:#fff;
+    position:relative; cursor:pointer;
+}
+.profile-avatar-xl img { width:100%; height:100%; object-fit:cover; position:absolute; inset:0; border-radius:inherit; }
+.avatar-edit-overlay {
+    position:absolute; inset:0; background:rgba(0,0,0,.48); backdrop-filter:blur(2px);
+    display:flex; align-items:center; justify-content:center; opacity:0;
+    transition:opacity .2s; border-radius:inherit;
+}
+.avatar-edit-overlay svg { width:22px; height:22px; stroke:#fff; fill:none; stroke-width:2; }
+.profile-avatar-xl:hover .avatar-edit-overlay { opacity:1; }
 
-        /* ══ PAGE CONTENT ══ */
-        .content { padding: 2rem 2.5rem 3rem; }
+.profile-identity-info { flex:1; min-width:0; padding-bottom:.2rem; }
+.profile-name {
+    font-family:'Playfair Display',serif; font-size:1.7rem; font-weight:600;
+    color:#fff; text-shadow:0 2px 12px rgba(0,0,0,.4); margin-bottom:.18rem;
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+}
+.profile-sub { font-size:.78rem; color:rgba(255,255,255,.6); font-weight:300; }
 
-        /* ══ SETTINGS LAYOUT ══ */
-        .settings-wrap {
-            display: grid;
-            grid-template-columns: 200px 1fr;
-            gap: 1.6rem;
-            align-items: start;
-        }
+.profile-identity-actions { display:flex; gap:.6rem; align-items:center; padding-bottom:.2rem; flex-shrink:0; flex-wrap:wrap; }
+.hero-btn {
+    display:inline-flex; align-items:center; gap:.4rem;
+    padding:.55rem 1.2rem; border-radius:40px;
+    font-size:.8rem; font-weight:600; cursor:pointer;
+    font-family:'DM Sans',sans-serif; text-decoration:none; transition:all .2s; border:none;
+}
+.hero-btn svg { width:14px; height:14px; stroke:currentColor; fill:none; stroke-width:2.2; }
+.hero-btn-primary { background:var(--ep-teal); color:#fff; box-shadow:0 4px 14px rgba(14,138,138,.4); }
+.hero-btn-primary:hover { background:var(--ep-teal-dark); transform:translateY(-1px); }
+.hero-btn-ghost { background:rgba(255,255,255,.12); backdrop-filter:blur(8px); color:#fff; border:1px solid rgba(255,255,255,.22); }
+.hero-btn-ghost:hover { background:rgba(255,255,255,.22); }
 
-        /* Left sub-nav */
-        .settings-subnav {
-            background: var(--white);
-            border: 1px solid var(--gray-200);
-            border-radius: 14px;
-            overflow: hidden;
-            position: sticky;
-            top: 80px;
-        }
-        .subnav-section {
-            padding: 0.5rem 0.5rem;
-            border-bottom: 1px solid var(--gray-200);
-        }
-        .subnav-section:last-child { border-bottom: none; }
-        .subnav-label {
-            font-size: 0.6rem; font-weight: 700; letter-spacing: 0.12em;
-            text-transform: uppercase; color: var(--gray-400);
-            padding: 0.5rem 0.6rem 0.35rem; display: block;
-        }
-        .subnav-item {
-            display: flex; align-items: center; gap: 0.6rem;
-            padding: 0.6rem 0.7rem; border-radius: 8px;
-            font-size: 0.8rem; font-weight: 500;
-            color: var(--text-light); text-decoration: none;
-            transition: all 0.18s; cursor: pointer; margin-bottom: 1px;
-        }
-        .subnav-item svg { width: 14px; height: 14px; stroke: currentColor; stroke-width: 1.8; fill: none; flex-shrink: 0; }
-        .subnav-item:hover { background: var(--gray-150); color: var(--text-dark); }
-        .subnav-item.active { background: var(--accent-pale); color: var(--accent-deep); font-weight: 600; }
-        .subnav-item.active svg { stroke: var(--accent-deep); }
-        .subnav-item.danger { color: #DC2626; }
-        .subnav-item.danger:hover { background: rgba(239,68,68,0.06); color: #DC2626; }
+/* ════════════════════════════════════════════
+   PAGE BODY — full width, generous padding
+════════════════════════════════════════════ */
+.ep-page-body {
+    padding:2rem 2.5rem 4rem;
+    background:var(--gray-100,#f8f9fc);
+}
 
-        /* Right panel */
-        .settings-panel { display: flex; flex-direction: column; gap: 1.4rem; }
+/* Alerts */
+.ep-alert {
+    padding:.9rem 1.15rem; border-radius:12px; margin-bottom:1.5rem;
+    font-size:.84rem; display:flex; align-items:center; gap:.55rem;
+    max-width:100%;
+}
+.ep-alert svg { width:16px; height:16px; stroke:currentColor; fill:none; stroke-width:2; flex-shrink:0; }
+.ep-alert.success { background:var(--ep-green-pale); border:1px solid #bbf7d0; color:#166534; }
+.ep-alert.error   { background:var(--ep-red-pale);   border:1px solid #fecaca; color:#991b1b; }
 
-        /* Section card */
-        .settings-card {
-            background: var(--white);
-            border: 1px solid var(--gray-200);
-            border-radius: 16px;
-            overflow: hidden;
-            animation: fadeUp 0.45s ease both;
-        }
-        .settings-card:nth-child(1) { animation-delay: 0.05s; }
-        .settings-card:nth-child(2) { animation-delay: 0.1s; }
-        .settings-card:nth-child(3) { animation-delay: 0.15s; }
-        .settings-card:nth-child(4) { animation-delay: 0.2s; }
+/* ── Two-column layout ── */
+.ep-grid {
+    display:grid;
+    grid-template-columns:300px 1fr;
+    gap:2rem;
+    align-items:start;
+}
 
-        .card-header {
-            padding: 1.3rem 1.6rem;
-            border-bottom: 1px solid var(--gray-200);
-        }
-        .card-header h2 {
-            font-family: 'Playfair Display', serif;
-            font-size: 1.05rem; font-weight: 500; color: var(--gray-900);
-            margin-bottom: 0.2rem;
-        }
-        .card-header p { font-size: 0.78rem; color: var(--text-light); }
+/* ════════════════════════════════════════════
+   LEFT COLUMN — sticky profile card
+════════════════════════════════════════════ */
+.ep-sidebar-col { /* sticky handled on inner card */ }
 
-        .card-body { padding: 1.6rem; }
+.ep-profile-card {
+    background:var(--ep-surface);
+    border:1px solid var(--ep-border);
+    border-radius:var(--ep-radius);
+    overflow:hidden;
+    position:sticky;
+    top:24px;
+    box-shadow:var(--ep-shadow-md);
+}
 
-        /* ── Avatar upload ── */
-        .avatar-row {
-            display: flex; align-items: center; gap: 1.4rem;
-            padding-bottom: 1.4rem;
-            border-bottom: 1px solid var(--gray-200);
-            margin-bottom: 1.4rem;
-        }
-        .avatar-preview {
-            width: 72px; height: 72px; border-radius: 50%; flex-shrink: 0;
-            background: var(--accent-deep);
-            display: flex; align-items: center; justify-content: center;
-            font-family: 'Playfair Display', serif;
-            font-size: 1.6rem; font-weight: 500; color: white;
-            overflow: hidden;
-            border: 3px solid var(--gray-200);
-        }
-        .avatar-preview img { width: 100%; height: 100%; object-fit: cover; }
-        .avatar-actions { display: flex; flex-direction: column; gap: 0.4rem; }
-        .avatar-actions p { font-size: 0.72rem; color: var(--text-light); }
-        .avatar-btn-row { display: flex; gap: 0.6rem; }
-        .btn-upload {
-            display: inline-flex; align-items: center; gap: 0.4rem;
-            background: var(--gray-900); color: white;
-            padding: 0.45rem 1rem; border-radius: 8px;
-            font-size: 0.76rem; font-weight: 500; cursor: pointer;
-            border: none; font-family: 'Inter', sans-serif; transition: background 0.2s;
-        }
-        .btn-upload svg { width: 13px; height: 13px; stroke: currentColor; stroke-width: 2; fill: none; }
-        .btn-upload:hover { background: var(--accent-deep); }
-        .btn-remove {
-            display: inline-flex; align-items: center; gap: 0.4rem;
-            background: transparent; color: var(--gray-600);
-            padding: 0.45rem 1rem; border-radius: 8px;
-            font-size: 0.76rem; font-weight: 500; cursor: pointer;
-            border: 1.5px solid var(--gray-300); font-family: 'Inter', sans-serif;
-            transition: all 0.2s;
-        }
-        .btn-remove:hover { border-color: #DC2626; color: #DC2626; background: rgba(220,38,38,0.04); }
+/* Avatar zone */
+.pc-avatar-zone {
+    text-align:center;
+    padding:2rem 1.5rem 1.5rem;
+    background:linear-gradient(160deg, var(--ep-teal-pale) 0%, var(--ep-surface) 100%);
+    border-bottom:1px solid var(--ep-border);
+}
+.pc-avatar {
+    width:92px; height:92px; border-radius:50%; overflow:hidden;
+    margin:0 auto 1rem; cursor:pointer; position:relative;
+    border:3px solid var(--ep-surface);
+    box-shadow:0 4px 20px rgba(0,0,0,.14);
+    background:linear-gradient(135deg,var(--ep-teal),var(--ep-teal-dark));
+    display:flex; align-items:center; justify-content:center;
+    font-family:'Playfair Display',serif; font-size:1.9rem; color:#fff;
+}
+.pc-avatar img { width:100%; height:100%; object-fit:cover; position:absolute; inset:0; border-radius:50%; }
+.pc-av-overlay {
+    position:absolute; inset:0; border-radius:50%;
+    background:rgba(0,0,0,.46);
+    display:flex; align-items:center; justify-content:center;
+    opacity:0; transition:opacity .2s;
+}
+.pc-av-overlay svg { width:18px; height:18px; stroke:#fff; fill:none; stroke-width:2; }
+.pc-avatar:hover .pc-av-overlay { opacity:1; }
 
-        /* ── Form grid ── */
-        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.1rem; }
-        .form-grid.single { grid-template-columns: 1fr; }
-        .form-grid.triple { grid-template-columns: 1fr 1fr 1fr; }
+.pc-name  { font-family:'Playfair Display',serif; font-size:1.1rem; font-weight:600; color:var(--ep-ink); margin-bottom:.2rem; }
+.pc-email { font-size:.76rem; color:var(--ep-muted); }
+.pc-photo-btn {
+    display:inline-flex; align-items:center; gap:.4rem;
+    margin-top:1rem; padding:.46rem 1.1rem; border-radius:40px;
+    background:var(--ep-ink); color:#fff; border:none; cursor:pointer;
+    font-size:.74rem; font-weight:600; font-family:'DM Sans',sans-serif;
+    transition:background .15s;
+}
+.pc-photo-btn:hover { background:var(--ep-teal); }
+.pc-photo-btn svg { width:13px; height:13px; stroke:#fff; fill:none; stroke-width:2; }
 
-        .form-group { display: flex; flex-direction: column; gap: 0.4rem; }
-        .form-group.full { grid-column: 1 / -1; }
+/* Nav links */
+.pc-nav { padding:.75rem .65rem; }
+.pc-nav-link {
+    display:flex; align-items:center; gap:.7rem;
+    padding:.78rem 1rem; border-radius:10px; font-size:.84rem;
+    font-weight:500; color:var(--ep-muted); text-decoration:none;
+    transition:all .15s; cursor:pointer; border:none; background:transparent;
+    width:100%; font-family:'DM Sans',sans-serif; text-align:left;
+}
+.pc-nav-link svg { width:16px; height:16px; stroke:currentColor; fill:none; stroke-width:2; flex-shrink:0; }
+.pc-nav-link:hover  { background:var(--ep-teal-pale); color:var(--ep-teal); }
+.pc-nav-link.active { background:var(--ep-teal-pale); color:var(--ep-teal); font-weight:600; }
+.pc-nav-divider { height:1px; background:var(--ep-border); margin:.4rem 1rem; }
 
-        .form-label {
-            font-size: 0.76rem; font-weight: 600; color: var(--gray-700);
-            letter-spacing: 0.01em;
-        }
-        .form-label .req { color: var(--rose); margin-left: 2px; }
+/* ════════════════════════════════════════════
+   RIGHT COLUMN — settings cards
+════════════════════════════════════════════ */
+.ep-right-col { min-width:0; }
 
-        .form-input, .form-select, .form-textarea {
-            width: 100%;
-            padding: 0.6rem 0.85rem;
-            border: 1.5px solid var(--gray-300);
-            border-radius: 9px;
-            font-size: 0.84rem; font-family: 'Inter', sans-serif;
-            color: var(--text-dark);
-            background: var(--white);
-            outline: none;
-            transition: border-color 0.2s, box-shadow 0.2s;
-            appearance: none;
-        }
-        .form-input::placeholder, .form-textarea::placeholder { color: var(--gray-400); }
-        .form-input:focus, .form-select:focus, .form-textarea:focus {
-            border-color: var(--accent-muted);
-            box-shadow: 0 0 0 3px rgba(91,110,140,0.12);
-        }
-        .form-input.readonly {
-            background: var(--gray-150); color: var(--text-light); cursor: not-allowed;
-        }
-        .form-textarea { resize: vertical; min-height: 90px; line-height: 1.55; }
-        .form-select {
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236E7682' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
-            background-repeat: no-repeat;
-            background-position: right 0.85rem center;
-            padding-right: 2.2rem;
-        }
-        .form-hint { font-size: 0.7rem; color: var(--text-light); margin-top: 0.2rem; }
-        .form-error { font-size: 0.7rem; color: #DC2626; margin-top: 0.2rem; display: flex; align-items: center; gap: 0.3rem; }
-        .form-error svg { width: 11px; height: 11px; stroke: currentColor; stroke-width: 2; fill: none; }
+.ep-card {
+    background:var(--ep-surface);
+    border:1px solid var(--ep-border);
+    border-radius:var(--ep-radius);
+    margin-bottom:1.5rem;
+    overflow:hidden;
+    box-shadow:var(--ep-shadow);
+}
+/* Coloured top stripe per card */
+.ep-card::before {
+    content:''; display:block; height:3px;
+    background:linear-gradient(90deg, var(--ep-teal) 0%, var(--ep-teal-dark) 100%);
+}
 
-        /* ── Card footer (save button row) ── */
-        .card-footer {
-            padding: 1rem 1.6rem;
-            border-top: 1px solid var(--gray-200);
-            display: flex; align-items: center; justify-content: flex-end; gap: 0.75rem;
-            background: var(--gray-100);
-        }
-        .btn-cancel {
-            padding: 0.55rem 1.3rem; border-radius: 40px;
-            font-size: 0.8rem; font-weight: 500;
-            border: 1.5px solid var(--gray-300); background: transparent;
-            color: var(--gray-700); cursor: pointer; font-family: 'Inter', sans-serif;
-            text-decoration: none; display: inline-flex; align-items: center; gap: 0.4rem;
-            transition: all 0.2s;
-        }
-        .btn-cancel:hover { border-color: var(--gray-400); color: var(--gray-900); }
-        .btn-save {
-            padding: 0.55rem 1.4rem; border-radius: 40px;
-            font-size: 0.8rem; font-weight: 500;
-            border: none; background: var(--gray-900);
-            color: white; cursor: pointer; font-family: 'Inter', sans-serif;
-            display: inline-flex; align-items: center; gap: 0.4rem;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-            transition: background 0.2s;
-        }
-        .btn-save svg { width: 13px; height: 13px; stroke: currentColor; stroke-width: 2; fill: none; }
-        .btn-save:hover { background: var(--accent-deep); }
+.ep-card-head {
+    display:flex; align-items:center; gap:.8rem;
+    padding:1.25rem 1.75rem;
+    border-bottom:1px solid var(--ep-border);
+    background:var(--ep-surface2);
+}
+.ep-card-head-icon {
+    width:36px; height:36px; border-radius:10px;
+    background:var(--ep-teal-pale);
+    display:flex; align-items:center; justify-content:center; flex-shrink:0;
+}
+.ep-card-head-icon svg { width:16px; height:16px; stroke:var(--ep-teal); fill:none; stroke-width:2; }
+.ep-card-head h2 { font-family:'Playfair Display',serif; font-size:1rem; font-weight:600; color:var(--ep-ink); margin:0 0 .1rem; }
+.ep-card-head p  { font-size:.74rem; color:var(--ep-muted); margin:0; }
 
-        /* ── Security row ── */
-        .security-row {
-            display: flex; align-items: center; justify-content: space-between;
-            padding: 1rem 0;
-            border-bottom: 1px solid var(--gray-100);
-            gap: 1rem;
-        }
-        .security-row:last-child { border-bottom: none; padding-bottom: 0; }
-        .security-info { flex: 1; }
-        .security-label { font-size: 0.84rem; font-weight: 600; color: var(--text-dark); margin-bottom: 0.15rem; }
-        .security-value { font-size: 0.78rem; color: var(--text-light); }
-        .security-value.masked { letter-spacing: 0.12em; font-size: 0.7rem; }
-        .btn-secondary {
-            padding: 0.48rem 1.1rem; border-radius: 8px;
-            font-size: 0.76rem; font-weight: 500; cursor: pointer;
-            border: 1.5px solid var(--gray-300); background: transparent;
-            color: var(--gray-700); font-family: 'Inter', sans-serif;
-            white-space: nowrap; transition: all 0.2s; flex-shrink: 0;
-        }
-        .btn-secondary:hover { border-color: var(--accent-muted); color: var(--accent-deep); }
+.ep-card-body { padding:1.75rem; }
+.ep-card-foot {
+    display:flex; justify-content:flex-end; align-items:center; gap:.85rem;
+    padding:1.1rem 1.75rem;
+    border-top:1px solid var(--ep-border);
+    background:var(--ep-surface2);
+}
 
-        /* Toggle switch */
-        .toggle-wrap {
-            display: flex; align-items: center; justify-content: space-between;
-            padding: 1rem 0; border-bottom: 1px solid var(--gray-100);
-            gap: 1rem;
-        }
-        .toggle-wrap:last-child { border-bottom: none; padding-bottom: 0; }
-        .toggle-info { flex: 1; }
-        .toggle-label { font-size: 0.84rem; font-weight: 600; color: var(--text-dark); margin-bottom: 0.18rem; }
-        .toggle-desc { font-size: 0.76rem; color: var(--text-light); line-height: 1.5; }
-        .toggle {
-            position: relative; display: inline-block;
-            width: 42px; height: 24px; flex-shrink: 0;
-        }
-        .toggle input { opacity: 0; width: 0; height: 0; }
-        .toggle-slider {
-            position: absolute; cursor: pointer; inset: 0;
-            background: var(--gray-300); border-radius: 40px;
-            transition: 0.25s;
-        }
-        .toggle-slider::before {
-            content: ''; position: absolute;
-            width: 18px; height: 18px; border-radius: 50%;
-            background: white; left: 3px; top: 3px;
-            transition: 0.25s; box-shadow: 0 1px 3px rgba(0,0,0,0.15);
-        }
-        .toggle input:checked + .toggle-slider { background: var(--gray-900); }
-        .toggle input:checked + .toggle-slider::before { transform: translateX(18px); }
+/* ── Form grid & fields ── */
+.ep-form-grid   { display:grid; grid-template-columns:repeat(2,1fr); gap:1.4rem; margin-bottom:1.4rem; }
+.ep-form-grid-3 { display:grid; grid-template-columns:repeat(3,1fr); gap:1.4rem; margin-bottom:1.4rem; }
+.ep-form-grid:last-child, .ep-form-grid-3:last-child { margin-bottom:0; }
 
-        /* Danger zone */
-        .danger-row {
-            display: flex; align-items: center; justify-content: space-between;
-            padding: 1rem 0; border-bottom: 1px solid var(--gray-100); gap: 1rem;
-        }
-        .danger-row:last-child { border-bottom: none; padding-bottom: 0; }
-        .danger-info .danger-label {
-            font-size: 0.84rem; font-weight: 600; color: #DC2626; margin-bottom: 0.15rem;
-        }
-        .danger-info .danger-desc { font-size: 0.76rem; color: var(--text-light); line-height: 1.5; }
-        .btn-danger {
-            padding: 0.48rem 1.1rem; border-radius: 8px;
-            font-size: 0.76rem; font-weight: 500; cursor: pointer;
-            border: 1.5px solid rgba(220,38,38,0.3);
-            background: transparent; color: #DC2626;
-            font-family: 'Inter', sans-serif; white-space: nowrap;
-            flex-shrink: 0; transition: all 0.2s;
-        }
-        .btn-danger:hover { background: rgba(220,38,38,0.06); border-color: #DC2626; }
-        .btn-danger-solid {
-            padding: 0.48rem 1.1rem; border-radius: 8px;
-            font-size: 0.76rem; font-weight: 500; cursor: pointer;
-            border: none; background: #DC2626; color: white;
-            font-family: 'Inter', sans-serif; white-space: nowrap;
-            flex-shrink: 0; transition: background 0.2s;
-        }
-        .btn-danger-solid:hover { background: #B91C1C; }
+.ep-fg { display:flex; flex-direction:column; gap:.4rem; }
+.ep-fg.full  { grid-column:1/-1; }
+.ep-fg label {
+    font-size:.72rem; font-weight:700; color:var(--ep-muted);
+    text-transform:uppercase; letter-spacing:.45px;
+}
+.ep-fg label .req { color:var(--ep-red); }
 
-        /* ══ FOOTER ══ */
-        .site-footer {
-            background: var(--gray-950); color: rgba(255,255,255,0.6);
-            padding: 4rem 5% 2rem;
-        }
-        .footer-grid {
-            display: grid; grid-template-columns: 2fr 1fr 1fr 1fr;
-            gap: 2.5rem; margin-bottom: 2.8rem;
-        }
-        .footer-logo {
-            font-family: 'Playfair Display', serif;
-            font-size: 1.55rem; font-weight: 600; letter-spacing: -0.01em;
-            color: white; display: block; margin-bottom: 1rem; text-decoration: none;
-        }
-        .footer-logo:hover { color: rgba(255,255,255,0.75); }
-        .footer-desc { font-size: 0.85rem; color: rgba(255,255,255,0.45); line-height: 1.7; max-width: 240px; }
-        .footer-col h5 {
-            font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase;
-            font-weight: 600; color: var(--gray-300); margin-bottom: 1.2rem;
-        }
-        .footer-col ul { list-style: none; display: flex; flex-direction: column; gap: 0.7rem; }
-        .footer-col ul a { font-size: 0.85rem; color: rgba(255,255,255,0.5); text-decoration: none; transition: color 0.2s; }
-        .footer-col ul a:hover { color: white; }
-        .footer-bottom {
-            border-top: 1px solid rgba(255,255,255,0.08); padding-top: 2rem;
-            display: flex; justify-content: space-between; align-items: center;
-            font-size: 0.75rem; color: rgba(255,255,255,0.3);
-        }
+/* All form inputs share this class (added via JS too) */
+.ep-input {
+    width:100%; padding:.72rem 1rem;
+    border:1.5px solid var(--ep-border); border-radius:10px;
+    font-size:.86rem; font-family:'DM Sans',sans-serif;
+    color:var(--ep-ink); background:var(--ep-surface);
+    transition:border-color .15s, box-shadow .15s;
+    box-sizing:border-box;
+}
+.ep-input:focus {
+    outline:none; border-color:var(--ep-teal);
+    box-shadow:0 0 0 3px rgba(14,138,138,.1);
+}
+.ep-input.textarea { min-height:96px; resize:vertical; }
+.ep-hint { font-size:.69rem; color:var(--ep-muted); margin-top:.18rem; }
 
-        /* ══ RESPONSIVE ══ */
-        @media (max-width: 860px) {
-            .sidebar-overlay { display: block; }
-            .sidebar { transform: translateX(calc(-1 * var(--sidebar-w))); }
-            .sidebar.open { transform: translateX(0); box-shadow: 8px 0 40px rgba(0,0,0,0.35); }
-            .main { margin-left: 0 !important; }
-            .settings-wrap { grid-template-columns: 1fr; }
-            .settings-subnav { position: static; display: flex; overflow-x: auto; gap: 0; border-radius: 12px; }
-            .subnav-section { border-bottom: none; border-right: 1px solid var(--gray-200); display: flex; flex-wrap: nowrap; padding: 0.4rem; }
-            .subnav-label { display: none; }
-            .subnav-item { white-space: nowrap; }
-        }
-        @media (max-width: 700px) {
-            .form-grid { grid-template-columns: 1fr; }
-            .form-grid.triple { grid-template-columns: 1fr 1fr; }
-        }
-        @media (max-width: 600px) {
-            .content { padding: 1.2rem 1rem 2rem; }
-            .topbar { padding: 0 1rem; }
-            .footer-grid { grid-template-columns: 1fr; }
-            .footer-bottom { flex-direction: column; gap: 0.6rem; text-align: center; }
-        }
-        @media (max-width: 1000px) { .footer-grid { grid-template-columns: 1fr 1fr; gap: 2rem; } }
+/* Gender pills */
+.ep-gender-row { display:flex; gap:.65rem; flex-wrap:wrap; }
+.ep-gender-pill {
+    display:flex; align-items:center; gap:.4rem;
+    padding:.5rem 1rem; border-radius:40px;
+    border:1.5px solid var(--ep-border); cursor:pointer;
+    font-size:.82rem; font-weight:500; color:var(--ep-muted);
+    background:transparent; transition:all .15s;
+    font-family:'DM Sans',sans-serif;
+}
+.ep-gender-pill:has(input:checked) {
+    background:var(--ep-teal-pale); border-color:rgba(14,138,138,.38);
+    color:var(--ep-teal); font-weight:700;
+}
+.ep-gender-pill input { display:none; }
 
-        @keyframes fadeUp { from { opacity:0; transform:translateY(14px); } to { opacity:1; transform:translateY(0); } }
-        .content { animation: fadeUp 0.4s ease both; }
-    </style>
-</head>
-<body>
+/* Section divider inside card body */
+.ep-section-label {
+    font-size:.68rem; font-weight:700; text-transform:uppercase;
+    letter-spacing:.6px; color:var(--ep-muted);
+    padding:.2rem 0 .6rem;
+    border-bottom:1px solid var(--ep-border);
+    margin-bottom:1.2rem; margin-top:.4rem;
+}
 
-<div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+/* ── Buttons ── */
+.ep-btn-save {
+    display:inline-flex; align-items:center; gap:.45rem;
+    padding:.68rem 1.7rem; background:var(--ep-teal); color:#fff;
+    border:none; border-radius:40px; font-size:.86rem; font-weight:700;
+    cursor:pointer; font-family:'DM Sans',sans-serif; transition:all .2s;
+}
+.ep-btn-save:hover { background:var(--ep-teal-dark); transform:translateY(-1px); box-shadow:0 4px 14px rgba(14,138,138,.32); }
+.ep-btn-save svg { width:15px; height:15px; stroke:#fff; fill:none; stroke-width:2.2; }
 
-<!-- ══ SIDEBAR ══ -->
-<aside class="sidebar" id="sidebar">
-    <div class="sidebar-brand">
-        <a class="sidebar-logo" href="{% url 'index' %}">Wayzo</a>
-        <span class="sidebar-sub">Traveller Portal</span>
+.ep-btn-cancel {
+    display:inline-flex; align-items:center; gap:.4rem;
+    padding:.68rem 1.4rem; background:transparent; color:var(--ep-muted);
+    border:1.5px solid var(--ep-border); border-radius:40px;
+    font-size:.84rem; font-weight:500; cursor:pointer;
+    text-decoration:none; font-family:'DM Sans',sans-serif; transition:all .2s;
+}
+.ep-btn-cancel:hover { border-color:var(--ep-teal); color:var(--ep-teal); background:var(--ep-teal-pale); }
+
+.ep-btn-outline {
+    display:inline-flex; align-items:center; gap:.38rem;
+    padding:.46rem 1.05rem; background:transparent; color:var(--ep-muted);
+    border:1.5px solid var(--ep-border); border-radius:40px;
+    font-size:.78rem; font-weight:600; cursor:pointer;
+    text-decoration:none; font-family:'DM Sans',sans-serif; transition:all .15s;
+    white-space:nowrap;
+}
+.ep-btn-outline:hover { border-color:var(--ep-teal); color:var(--ep-teal); background:var(--ep-teal-pale); }
+.ep-btn-outline svg { width:13px; height:13px; stroke:currentColor; fill:none; stroke-width:2; }
+
+/* ── Responsive ── */
+@media (max-width:1024px) {
+    .ep-grid { grid-template-columns:1fr; }
+    .ep-profile-card { position:static; }
+}
+@media (max-width:768px) {
+    .ep-page-body { padding:1.25rem 1rem 3rem; }
+    .ep-form-grid, .ep-form-grid-3 { grid-template-columns:1fr; }
+    .profile-identity { padding:0 1.2rem 1.4rem; flex-wrap:wrap; }
+    .cover-hero { height:320px; }
+    .change-cover-btn { top:72px; right:1.2rem; }
+    .ep-card-body { padding:1.25rem; }
+}
+</style>
+{% endblock %}
+
+{% block topbar_title %}Edit Profile{% endblock %}
+{% block topbar_subtitle %}Manage your personal information &amp; settings{% endblock %}
+
+{% block content %}
+
+<!-- ════════ COVER HERO ════════ -->
+<div class="cover-hero">
+
+    {% if profile.cover_image %}
+    <div class="cover-bg" id="coverBg"
+         style="background-image:url('{{ profile.cover_image.url }}');"></div>
+    {% else %}
+    <!-- Illustrated SVG night-scene fallback -->
+    <div class="cover-art" id="coverArt">
+        <svg viewBox="0 0 1440 380" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+                <radialGradient id="epGA" cx="22%" cy="55%" r="42%">
+                    <stop offset="0%" stop-color="#1aa8a8" stop-opacity=".2"/>
+                    <stop offset="100%" stop-color="transparent" stop-opacity="0"/>
+                </radialGradient>
+                <radialGradient id="epGB" cx="78%" cy="28%" r="38%">
+                    <stop offset="0%" stop-color="#d97706" stop-opacity=".12"/>
+                    <stop offset="100%" stop-color="transparent" stop-opacity="0"/>
+                </radialGradient>
+                <filter id="epBlur"><feGaussianBlur stdDeviation="3.5"/></filter>
+            </defs>
+            <rect width="1440" height="380" fill="#0a3d3d"/>
+            <rect width="1440" height="380" fill="url(#epGA)"/>
+            <rect width="1440" height="380" fill="url(#epGB)"/>
+            <!-- Stars -->
+            <g opacity=".42" fill="#fff">
+                <circle cx="75" cy="38" r="1.1"/><circle cx="220" cy="25" r=".8"/>
+                <circle cx="420" cy="55" r="1"/><circle cx="650" cy="18" r="1.3"/>
+                <circle cx="880" cy="42" r=".9"/><circle cx="1100" cy="32" r="1"/>
+                <circle cx="1330" cy="50" r=".7"/><circle cx="140" cy="85" r=".75"/>
+                <circle cx="530" cy="90" r="1"/><circle cx="780" cy="68" r=".6"/>
+                <circle cx="1180" cy="78" r="1.1"/>
+            </g>
+            <!-- Moon -->
+            <circle cx="1300" cy="62" r="28" fill="#fef3c7" opacity=".16" filter="url(#epBlur)"/>
+            <circle cx="1300" cy="62" r="16" fill="#fef9e7" opacity=".38"/>
+            <!-- Hills -->
+            <ellipse cx="180" cy="380" rx="290" ry="165" fill="#0d3228" opacity=".72"/>
+            <ellipse cx="1260" cy="380" rx="260" ry="150" fill="#0d3228" opacity=".65"/>
+            <ellipse cx="720" cy="380" rx="480" ry="110" fill="#0a2a1e" opacity=".82"/>
+            <!-- Trees left -->
+            <g fill="#071810" opacity=".88">
+                <rect x="50" y="234" width="7" height="94" rx="3.5"/>
+                <ellipse cx="53" cy="224" rx="26" ry="36"/>
+                <rect x="95" y="248" width="6" height="78" rx="3"/>
+                <ellipse cx="98" cy="239" rx="20" ry="29"/>
+                <rect x="130" y="256" width="5" height="68" rx="2.5"/>
+                <ellipse cx="133" cy="248" rx="16" ry="23"/>
+            </g>
+            <!-- Trees right -->
+            <g fill="#071810" opacity=".82">
+                <rect x="1290" y="236" width="7" height="90" rx="3.5"/>
+                <ellipse cx="1293" cy="226" rx="28" ry="37"/>
+                <rect x="1328" y="249" width="6" height="78" rx="3"/>
+                <ellipse cx="1331" cy="239" rx="21" ry="30"/>
+                <rect x="1362" y="258" width="5" height="67" rx="2.5"/>
+                <ellipse cx="1365" cy="250" rx="16" ry="23"/>
+            </g>
+            <!-- Ground path -->
+            <path d="M0,348 Q180,298 360,320 Q540,342 720,308 Q900,274 1080,315 Q1260,352 1440,336 L1440,380 L0,380Z" fill="#071810" opacity=".72"/>
+            <!-- Firefly glows -->
+            <g opacity=".5" filter="url(#epBlur)">
+                <circle cx="380" cy="258" r="3" fill="#fef3c7"/>
+                <circle cx="620" cy="275" r="2.5" fill="#fef3c7"/>
+                <circle cx="850" cy="242" r="3" fill="#fef3c7"/>
+                <circle cx="1050" cy="270" r="2.5" fill="#fef3c7"/>
+            </g>
+        </svg>
     </div>
-    <div class="sidebar-profile">
-        <div class="sidebar-avatar">
-            {% if profile.profile_picture %}
-                <img src="{{ profile.profile_picture.url }}" alt="{{ profile.first_name }}">
+    <!-- JS will swap this in when user picks a new cover image -->
+    <div class="cover-bg" id="coverBg" style="display:none;"></div>
+    {% endif %}
+
+    <div class="cover-fade"></div>
+
+    <!-- Change cover photo — top-right, well above the identity strip -->
+    <label class="change-cover-btn" for="coverInput">
+        <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+        Change Cover Photo
+    </label>
+    <input type="file" id="coverInput" name="cover_image" accept="image/*" style="display:none" form="profileForm">
+
+    <!-- Identity strip (avatar + name + hero action buttons) -->
+    <div class="profile-identity">
+        <label for="profilePictureInput" class="profile-avatar-xl" title="Change profile photo">
+            {% if request.user.profile_picture %}
+                <img src="{{ request.user.profile_picture.url }}" alt="{{ profile.first_name }}" id="heroAvatarImg">
             {% else %}
-                {{ profile.first_name|first|upper }}{{ profile.last_name|first|upper }}
+                <span id="heroAvatarInitials">{{ profile.first_name|first|upper }}{{ profile.last_name|first|upper }}</span>
+                <img id="heroAvatarImg" src="" alt="" style="display:none;">
             {% endif %}
-        </div>
-        <div class="sidebar-profile-info">
-            <div class="sidebar-profile-name">{{ profile.first_name }} {{ profile.last_name }}</div>
-            <div class="sidebar-profile-role">Explorer</div>
-        </div>
-    </div>
-    <nav class="sidebar-nav">
-        <span class="nav-group-label">Main</span>
-        <a href="{% url 'travellers:user_profile' request.user.id %}" class="nav-item">
-            <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
-            Home
-        </a>
-        <a href="{% url 'travellers:all_packages' %}" class="nav-item">
-            <svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-            Tour Packages
-        </a>
-        <a href="{% url 'travellers:all_restaurants' %}" class="nav-item">
-            <svg viewBox="0 0 24 24"><line x1="12" y1="2" x2="12" y2="6"/><line x1="12" y1="18" x2="12" y2="22"/><path d="M4.93 4.93l2.83 2.83"/><path d="M16.24 16.24l2.83 2.83"/><line x1="2" y1="12" x2="6" y2="12"/><line x1="18" y1="12" x2="22" y2="12"/></svg>
-            Restaurants
-        </a>
-        <a href="{% url 'travellers:my_bookings' %}" class="nav-item">
-            <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
-            My Bookings
-        </a>
-        <a href="{% url 'travellers:wishlist' %}" class="nav-item">
-            <svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
-            Wishlist
-        </a>
-        <span class="nav-group-label" style="margin-top:0.6rem;">Account</span>
-        <a href="{% url 'travellers:edit_profile' %}" class="nav-item active">
-            <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-            Edit Profile
-        </a>
-        <a href="{% url 'community_home' %}" class="nav-item">
-            <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-            Community
-        </a>
-    </nav>
-    <div class="sidebar-footer">
-        <a href="{% url 'logout' %}" class="logout-btn">
-            <svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-            Sign Out
-        </a>
-    </div>
-</aside>
-
-<!-- ══ MAIN ══ -->
-<div class="main">
-    <!-- Topbar -->
-    <div class="topbar">
-        <div class="topbar-left">
-            <button class="hamburger is-open" id="hamburgerBtn" onclick="toggleSidebar()" aria-label="Toggle navigation">
-                <span></span><span></span><span></span>
-            </button>
-            <div>
-                <h1>Account Settings</h1>
-                <p>Manage your profile and preferences</p>
+            <div class="avatar-edit-overlay">
+                <svg viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
             </div>
+        </label>
+        <input type="file" id="profilePictureInput" name="profile_picture" accept="image/*" style="display:none" form="profileForm">
+
+        <div class="profile-identity-info">
+            <div class="profile-name" id="heroName">{{ profile.first_name }} {{ profile.last_name }}</div>
+            <div class="profile-sub">{{ request.user.email }}</div>
         </div>
-        <div class="topbar-right">
-            <a href="{% url 'travellers:user_profile' request.user.id %}" class="topbar-btn outline">
+
+        <div class="profile-identity-actions">
+            <button type="submit" form="profileForm" class="hero-btn hero-btn-primary">
+                <svg viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+                Save Changes
+            </button>
+            <a href="{% url 'travellers:user_profile' request.user.id %}" class="hero-btn hero-btn-ghost">
                 <svg viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
-                Back to Dashboard
+                Back to Profile
             </a>
         </div>
     </div>
+</div>
 
-    <!-- Content -->
-    <div class="content">
-        <div class="settings-wrap">
+<!-- ════════ PAGE BODY ════════ -->
+<div class="ep-page-body">
 
-            <!-- ── Left sub-nav ── -->
-            <nav class="settings-subnav">
-                <div class="subnav-section">
-                    <span class="subnav-label">Profile</span>
-                    <a href="#my-profile" class="subnav-item active" onclick="scrollTo('my-profile', this)">
+    {% if messages %}
+    {% for message in messages %}
+    <div class="ep-alert {% if 'success' in message.tags %}success{% else %}error{% endif %}">
+        <svg viewBox="0 0 24 24">{% if 'success' in message.tags %}<polyline points="20 6 9 17 4 12"/>{% else %}<circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>{% endif %}</svg>
+        {{ message }}
+    </div>
+    {% endfor %}
+    {% endif %}
+
+    <div class="ep-grid">
+
+        <!-- ── LEFT: Profile Card ── -->
+        <div class="ep-sidebar-col">
+            <div class="ep-profile-card">
+
+                <div class="pc-avatar-zone">
+                    <label for="profilePictureInput" class="pc-avatar" title="Change photo">
+                        {% if request.user.profile_picture %}
+                            <img src="{{ request.user.profile_picture.url }}" alt="{{ profile.first_name }}" id="pcAvatarImg">
+                        {% else %}
+                            <span id="pcAvatarInitials">{{ profile.first_name|first|upper }}{{ profile.last_name|first|upper }}</span>
+                            <img id="pcAvatarImg" src="" alt="" style="display:none;">
+                        {% endif %}
+                        <div class="pc-av-overlay">
+                            <svg viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                        </div>
+                    </label>
+                    <div class="pc-name"  id="pcName">{{ profile.first_name }} {{ profile.last_name }}</div>
+                    <div class="pc-email">{{ request.user.email }}</div>
+                    <label class="pc-photo-btn" for="profilePictureInput">
+                        <svg viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                        Change Photo
+                    </label>
+                </div>
+
+                <nav class="pc-nav">
+                    <button class="pc-nav-link active" onclick="scrollTo('ep-personal')">
                         <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-                        My Profile
+                        Personal Info
+                    </button>
+                    <div class="pc-nav-divider"></div>
+                    <a href="{% url 'travellers:change_email' %}" class="pc-nav-link">
+                        <svg viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+                        Change Email
                     </a>
-                    <a href="#account-security" class="subnav-item" onclick="scrollTo('account-security', this)">
+                    <a href="{% url 'travellers:change_password' %}" class="pc-nav-link">
                         <svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-                        Security
+                        Change Password
                     </a>
-                </div>
-                <div class="subnav-section">
-                    <span class="subnav-label">Preferences</span>
-                    <a href="#notifications" class="subnav-item" onclick="scrollTo('notifications', this)">
-                        <svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
-                        Notifications
+                    <div class="pc-nav-divider"></div>
+                    <a href="{% url 'travellers:user_profile' request.user.id %}" class="pc-nav-link">
+                        <svg viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+                        Back to Profile
                     </a>
-                </div>
-            </nav>
+                </nav>
 
-            <!-- ── Right panel ── -->
-            <div class="settings-panel">
-                <form method="POST" enctype="multipart/form-data">
-                    {% csrf_token %}
-
-                    <!-- ── My Profile ── -->
-                    <div class="settings-card" id="my-profile">
-                        <div class="card-header">
-                            <h2>My Profile</h2>
-                            <p>Update your personal information and profile photo</p>
-                        </div>
-                        <div class="card-body">
-
-                            <!-- Avatar -->
-                            <div class="avatar-row">
-                                <div class="avatar-preview" id="avatarPreview">
-                                    {% if profile.profile_picture %}
-                                        <img src="{{ profile.profile_picture.url }}" alt="Profile" id="avatarImg">
-                                    {% else %}
-                                        <span id="avatarInitials">{{ profile.first_name|first|upper }}{{ profile.last_name|first|upper }}</span>
-                                    {% endif %}
-                                </div>
-                                <div class="avatar-actions">
-                                    <div class="avatar-btn-row">
-                                        <label class="btn-upload" for="id_profile_picture">
-                                            <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-                                            Change Image
-                                        </label>
-                                        <input type="file" id="id_profile_picture" name="profile_picture" accept="image/*" style="display:none" onchange="previewAvatar(this)">
-                                        <button type="button" class="btn-remove" onclick="removeAvatar()">Remove</button>
-                                    </div>
-                                    <p>We support PNG, JPG, JPEG and GIFs under 2MB</p>
-                                </div>
-                            </div>
-
-                            <!-- Name -->
-                            <div class="form-grid" style="margin-bottom:1.1rem;">
-                                <div class="form-group">
-                                    <label class="form-label" for="id_first_name">First Name <span class="req">*</span></label>
-                                    {{ form.first_name }}
-                                </div>
-                                <div class="form-group">
-                                    <label class="form-label" for="id_last_name">Last Name <span class="req">*</span></label>
-                                    {{ form.last_name }}
-                                </div>
-                            </div>
-
-                            <!-- Contact -->
-                            <div class="form-grid" style="margin-bottom:1.1rem;">
-                                <div class="form-group">
-                                    <label class="form-label" for="id_mobile">Mobile Number</label>
-                                    {{ form.mobile }}
-                                </div>
-                                <div class="form-group">
-                                    <label class="form-label" for="id_date_of_birth">Date of Birth</label>
-                                    {{ form.date_of_birth }}
-                                </div>
-                            </div>
-
-                            <!-- Location -->
-                            <div class="form-grid" style="margin-bottom:1.1rem;">
-                                <div class="form-group">
-                                    <label class="form-label" for="id_city">City</label>
-                                    {{ form.city }}
-                                </div>
-                                <div class="form-group">
-                                    <label class="form-label" for="id_country">Country</label>
-                                    {{ form.country }}
-                                </div>
-                            </div>
-
-                            <!-- Bio -->
-                            <div class="form-group">
-                                <label class="form-label" for="id_bio">Bio</label>
-                                {{ form.bio }}
-                                <span class="form-hint">A brief description about yourself — shown on your profile.</span>
-                            </div>
-
-                        </div>
-                        <div class="card-footer">
-                            <a href="{% url 'travellers:user_profile' request.user.id %}" class="btn-cancel">Cancel</a>
-                            <button type="submit" class="btn-save">
-                                <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
-                                Save Changes
-                            </button>
-                        </div>
-                    </div>
-
-                </form>
-
-                <!-- ── Account Security ── -->
-                <div class="settings-card" id="account-security">
-                    <div class="card-header">
-                        <h2>Account Security</h2>
-                        <p>Manage your email, password and two-step verification</p>
-                    </div>
-                    <div class="card-body">
-                        <div class="security-row">
-                            <div class="security-info">
-                                <div class="security-label">Email Address</div>
-                                <div class="security-value">{{ profile.email }}</div>
-                            </div>
-                            <a href="{% url 'travellers:change_email' %}" class="btn-secondary">Change email</a>
-                        </div>
-                        <div class="security-row">
-                            <div class="security-info">
-                                <div class="security-label">Password</div>
-                                <div class="security-value masked">••••••••••••</div>
-                            </div>
-                            <a href="{% url 'travellers:change_password' %}" class="btn-secondary">Change password</a>
-                        </div>
-                        <div class="toggle-wrap">
-                            <div class="toggle-info">
-                                <div class="toggle-label">2-Step Verification</div>
-                                <div class="toggle-desc">Add an additional layer of security to your account during login.</div>
-                            </div>
-                            <label class="toggle">
-                                <input type="checkbox" checked>
-                                <span class="toggle-slider"></span>
-                            </label>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- ── Notifications ── -->
-                <div class="settings-card" id="notifications">
-                    <div class="card-header">
-                        <h2>Notifications</h2>
-                        <p>Control which emails and alerts you receive</p>
-                    </div>
-                    <div class="card-body">
-                        <div class="toggle-wrap">
-                            <div class="toggle-info">
-                                <div class="toggle-label">Booking Confirmations</div>
-                                <div class="toggle-desc">Receive email notifications when your booking is confirmed or updated.</div>
-                            </div>
-                            <label class="toggle">
-                                <input type="checkbox" checked>
-                                <span class="toggle-slider"></span>
-                            </label>
-                        </div>
-                        <div class="toggle-wrap">
-                            <div class="toggle-info">
-                                <div class="toggle-label">New Package Alerts</div>
-                                <div class="toggle-desc">Get notified when new tour packages matching your interests are added.</div>
-                            </div>
-                            <label class="toggle">
-                                <input type="checkbox">
-                                <span class="toggle-slider"></span>
-                            </label>
-                        </div>
-                        <div class="toggle-wrap">
-                            <div class="toggle-info">
-                                <div class="toggle-label">Community Updates</div>
-                                <div class="toggle-desc">Receive updates on replies and activity in the Wayzo community.</div>
-                            </div>
-                            <label class="toggle">
-                                <input type="checkbox" checked>
-                                <span class="toggle-slider"></span>
-                            </label>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- ── Danger Zone ── -->
-                <div class="settings-card" id="danger-zone">
-                    <div class="card-header">
-                        <h2>Danger Zone</h2>
-                        <p>Irreversible actions — please proceed carefully</p>
-                    </div>
-                    <div class="card-body">
-                        <div class="danger-row">
-                            <div class="danger-info">
-                                <div class="danger-label" style="color:var(--text-dark);font-size:0.84rem;">Log out of all devices</div>
-                                <div class="danger-desc">Log out of all other active sessions on other devices besides this one.</div>
-                            </div>
-                            <button class="btn-secondary">Log out</button>
-                        </div>
-                        
-                    </div>
-                </div>
-
-            </div><!-- /settings-panel -->
-        </div><!-- /settings-wrap -->
-    </div><!-- /content -->
-
-    <!-- ══ FOOTER ══ -->
-    <footer class="site-footer">
-        <div class="footer-grid">
-            <div>
-                <a class="footer-logo" href="{% url 'index' %}">Wayzo</a>
-                <p class="footer-desc">Your smart travel companion. Discover, plan, and experience the world beautifully.</p>
-            </div>
-            <div class="footer-col">
-                <h5>Explore</h5>
-                <ul>
-                    <li><a href="{% url 'travellers:all_packages' %}">Destinations</a></li>
-                    <li><a href="{% url 'travellers:all_restaurants' %}">Restaurants</a></li>
-                    <li><a href="#">Hotels</a></li>
-                    <li><a href="{% url 'travellers:all_packages' %}">Packages</a></li>
-                </ul>
-            </div>
-            <div class="footer-col">
-                <h5>My Account</h5>
-                <ul>
-                    <li><a href="{% url 'travellers:my_bookings' %}">My Bookings</a></li>
-                    <li><a href="{% url 'travellers:wishlist' %}">Wishlist</a></li>
-                    <li><a href="{% url 'travellers:edit_profile' %}">Profile Settings</a></li>
-                    <li><a href="{% url 'community_home' %}">Community</a></li>
-                </ul>
-            </div>
-            <div class="footer-col">
-                <h5>Support</h5>
-                <ul>
-                    <li><a href="#">Help Center</a></li>
-                    <li><a href="#">FAQs</a></li>
-                    <li><a href="#">Contact Us</a></li>
-                    <li><a href="#">Terms &amp; Privacy</a></li>
-                </ul>
             </div>
         </div>
-        <div class="footer-bottom">
-            <span>© 2025 Wayzo. All rights reserved.</span>
-            <span>Made for explorers everywhere</span>
-        </div>
-    </footer>
-</div><!-- /main -->
+
+        <!-- ── RIGHT: Personal Information Form Only ── -->
+        <div class="ep-right-col">
+
+            <!-- ── Personal Information ── -->
+            <form method="POST" enctype="multipart/form-data" id="profileForm">
+                {% csrf_token %}
+
+                <div class="ep-card" id="ep-personal">
+                    <div class="ep-card-head">
+                        <div class="ep-card-head-icon">
+                            <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                        </div>
+                        <div>
+                            <h2>Personal Information</h2>
+                            <p>Your name, contact details and location</p>
+                        </div>
+                    </div>
+
+                    <div class="ep-card-body">
+
+                        <div class="ep-section-label">Basic Details</div>
+                        <div class="ep-form-grid">
+                            <div class="ep-fg">
+                                <label>First Name <span class="req">*</span></label>
+                                {{ form.first_name }}
+                            </div>
+                            <div class="ep-fg">
+                                <label>Last Name <span class="req">*</span></label>
+                                {{ form.last_name }}
+                            </div>
+                        </div>
+
+                        <div class="ep-form-grid">
+                            <div class="ep-fg">
+                                <label>Mobile Number</label>
+                                {{ form.mobile }}
+                                <span class="ep-hint">10-digit mobile number</span>
+                            </div>
+                            <div class="ep-fg">
+                                <label>Age</label>
+                                {{ form.age }}
+                            </div>
+                        </div>
+
+                        <div class="ep-fg" style="margin-bottom:1.4rem">
+                            <label>Gender</label>
+                            <div class="ep-gender-row">
+                                <label class="ep-gender-pill">
+                                    <input type="radio" name="gender" value="male"   {% if profile.gender == 'male'   %}checked{% endif %}> ♂ Male
+                                </label>
+                                <label class="ep-gender-pill">
+                                    <input type="radio" name="gender" value="female" {% if profile.gender == 'female' %}checked{% endif %}> ♀ Female
+                                </label>
+                                <label class="ep-gender-pill">
+                                    <input type="radio" name="gender" value="other"  {% if profile.gender == 'other'  %}checked{% endif %}> ◎ Other
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="ep-section-label">Location</div>
+                        <div class="ep-fg full" style="margin-bottom:1.4rem">
+                            <label>Address</label>
+                            {{ form.address }}
+                        </div>
+                        <div class="ep-form-grid">
+                            <div class="ep-fg">
+                                <label>City</label>
+                                {{ form.city }}
+                            </div>
+                            <div class="ep-fg">
+                                <label>State</label>
+                                {{ form.state }}
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <div class="ep-card-foot">
+                        <a href="{% url 'travellers:user_profile' request.user.id %}" class="ep-btn-cancel">Discard</a>
+                        <button type="submit" class="ep-btn-save">
+                            <svg viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+                            Save Personal Info
+                        </button>
+                    </div>
+                </div>
+
+            </form>
+
+        </div><!-- /right -->
+    </div><!-- /ep-grid -->
+</div><!-- /ep-page-body -->
 
 <script>
-    /* ── Sidebar toggle (identical to dashboard) ── */
-    const sidebar      = document.getElementById('sidebar');
-    const hamburgerBtn = document.getElementById('hamburgerBtn');
-    const mainEl       = document.querySelector('.main');
-    const overlay      = document.getElementById('sidebarOverlay');
-    const MOBILE_BP    = 860;
+// ── Profile photo preview (updates hero + card simultaneously) ──
+document.getElementById('profilePictureInput').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = ev => {
+        const url = ev.target.result;
+        // Hero avatar
+        const hImg  = document.getElementById('heroAvatarImg');
+        const hInit = document.getElementById('heroAvatarInitials');
+        if (hImg) { hImg.src = url; hImg.style.display = 'block'; }
+        if (hInit) hInit.style.display = 'none';
+        // Card avatar
+        const pcImg  = document.getElementById('pcAvatarImg');
+        const pcInit = document.getElementById('pcAvatarInitials');
+        if (pcImg) { pcImg.src = url; pcImg.style.display = 'block'; }
+        if (pcInit) pcInit.style.display = 'none';
+    };
+    reader.readAsDataURL(file);
+});
 
-    function isMobile() { return window.innerWidth <= MOBILE_BP; }
-    function setSidebarOpen(open) {
-        if (isMobile()) {
-            sidebar.classList.toggle('open', open);
-            overlay.classList.toggle('visible', open);
-            hamburgerBtn.classList.toggle('is-open', open);
-        } else {
-            open ? (sidebar.classList.remove('collapsed'), mainEl.classList.remove('sidebar-collapsed'))
-                 : (sidebar.classList.add('collapsed'), mainEl.classList.add('sidebar-collapsed'));
-            overlay.classList.remove('visible');
-            hamburgerBtn.classList.toggle('is-open', open);
-        }
-    }
-    function toggleSidebar() {
-        isMobile() ? setSidebarOpen(!sidebar.classList.contains('open'))
-                   : setSidebarOpen(sidebar.classList.contains('collapsed'));
-    }
-    function closeSidebar() { setSidebarOpen(false); }
+// ── Cover photo preview ──
+document.getElementById('coverInput').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = ev => {
+        const art = document.getElementById('coverArt');
+        const bg  = document.getElementById('coverBg');
+        if (art) art.style.display = 'none';
+        if (bg)  { bg.style.backgroundImage = `url('${ev.target.result}')`; bg.style.display = 'block'; }
+    };
+    reader.readAsDataURL(file);
+});
 
-    if (isMobile()) {
-        sidebar.classList.remove('open'); sidebar.classList.add('collapsed');
-        overlay.classList.remove('visible'); hamburgerBtn.classList.remove('is-open');
-    } else {
-        sidebar.classList.add('collapsed'); mainEl.classList.add('sidebar-collapsed');
-        hamburgerBtn.classList.remove('is-open');
-    }
-    window.addEventListener('resize', () => {
-        if (!isMobile()) {
-            sidebar.classList.remove('open'); overlay.classList.remove('visible');
-            sidebar.classList.add('collapsed'); mainEl.classList.add('sidebar-collapsed');
-            hamburgerBtn.classList.remove('is-open');
-        }
-    });
-    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeSidebar(); });
+// ── Live name preview (hero + card) ──
+function syncName() {
+    const f = document.querySelector('[name="first_name"]')?.value || '';
+    const l = document.querySelector('[name="last_name"]')?.value  || '';
+    const full = (f + ' ' + l).trim() || '—';
+    const heroName = document.getElementById('heroName');
+    const pcName   = document.getElementById('pcName');
+    if (heroName) heroName.textContent = full;
+    if (pcName)   pcName.textContent   = full;
+}
+document.querySelector('[name="first_name"]')?.addEventListener('input', syncName);
+document.querySelector('[name="last_name"]')?.addEventListener('input',  syncName);
 
-    /* ── Sub-nav scroll ── */
-    function scrollTo(id, el) {
-        event.preventDefault();
-        document.querySelectorAll('.subnav-item').forEach(i => i.classList.remove('active'));
-        el.classList.add('active');
-        const target = document.getElementById(id);
-        if (target) {
-            const offset = 80;
-            window.scrollTo({ top: target.getBoundingClientRect().top + window.scrollY - offset, behavior: 'smooth' });
-        }
-    }
+// ── Smooth scroll to section + active nav ──
+function scrollTo(id) {
+    document.getElementById(id)?.scrollIntoView({ behavior:'smooth', block:'start' });
+    document.querySelectorAll('.pc-nav-link').forEach(b => b.classList.remove('active'));
+    event.currentTarget.classList.add('active');
+}
 
-    /* ── Avatar preview ── */
-    function previewAvatar(input) {
-        if (!input.files || !input.files[0]) return;
-        const reader = new FileReader();
-        reader.onload = e => {
-            const preview = document.getElementById('avatarPreview');
-            preview.innerHTML = `<img src="${e.target.result}" alt="Preview" style="width:100%;height:100%;object-fit:cover;">`;
-        };
-        reader.readAsDataURL(input.files[0]);
-    }
-    function removeAvatar() {
-        const preview = document.getElementById('avatarPreview');
-        const initials = '{{ profile.first_name|first|upper }}{{ profile.last_name|first|upper }}';
-        preview.innerHTML = `<span>${initials}</span>`;
-        document.getElementById('id_profile_picture').value = '';
-    }
-
-    /* ── Style Django form fields ── */
-    document.querySelectorAll('input[type=text], input[type=email], input[type=number], input[type=date], input[type=tel], textarea, select').forEach(el => {
-        if (el.tagName === 'TEXTAREA') el.classList.add('form-textarea');
-        else if (el.tagName === 'SELECT') el.classList.add('form-select');
-        else el.classList.add('form-input');
-        if (!el.closest('.avatar-row')) el.removeAttribute('style');
-    });
+// ── Apply ep-input class to all Django-rendered form fields ──
+document.querySelectorAll(
+    '#profileForm input:not([type="radio"]):not([type="file"]):not([type="checkbox"]),' +
+    '#profileForm select,' +
+    '#profileForm textarea'
+).forEach(el => {
+    el.classList.add('ep-input');
+    if (el.tagName === 'TEXTAREA') el.classList.add('textarea');
+});
 </script>
-</body>
-</html>
+
+{% endblock %}

@@ -1,0 +1,822 @@
+{% extends 'travellers/base.html' %}
+{% load static %}
+
+{% block title %}Live Tracking | {{ trip.title }} | Wayzo{% endblock %}
+
+{% block nav_community %}active{% endblock %}
+
+{% block extra_styles %}
+<style>
+/* Hero Section - Dark Theme for Better Visibility */
+.tracking-hero {
+    background: linear-gradient(135deg, #0a2a2a 0%, #051515 100%);
+    position: relative;
+    overflow: hidden;
+    padding: 2rem 2.5rem;
+    margin-bottom: 2rem;
+    border-radius: 0 0 24px 24px;
+    border-bottom: 2px solid rgba(14,138,138,0.3);
+}
+.tracking-hero::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    background: radial-gradient(ellipse 60% 80% at 15% 50%, rgba(14,138,138,0.2) 0%, transparent 65%),
+                radial-gradient(ellipse 50% 70% at 85% 50%, rgba(14,138,138,0.1) 0%, transparent 65%);
+}
+.hero-inner {
+    position: relative;
+    z-index: 2;
+}
+.hero-eyebrow {
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: #5FC5C5;
+    margin-bottom: 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+}
+.hero-eyebrow::before {
+    content: '';
+    width: 24px;
+    height: 2px;
+    background: #5FC5C5;
+    flex-shrink: 0;
+}
+.hero-inner h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(1.5rem, 2.5vw, 2rem);
+    font-weight: 700;
+    color: white;
+    line-height: 1.2;
+    margin-bottom: 0.5rem;
+}
+.hero-inner p {
+    font-size: 0.85rem;
+    color: rgba(255,255,255,0.8);
+    line-height: 1.6;
+}
+.hero-stats {
+    display: flex;
+    gap: 1.5rem;
+    margin-top: 1rem;
+    flex-wrap: wrap;
+}
+.hero-stat {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: rgba(0,0,0,0.5);
+    backdrop-filter: blur(10px);
+    padding: 0.4rem 1rem;
+    border-radius: 40px;
+    border: 1px solid rgba(255,255,255,0.15);
+}
+.hero-stat span {
+    font-size: 0.7rem;
+    color: rgba(255,255,255,0.8);
+}
+.hero-stat strong {
+    font-size: 0.9rem;
+    color: white;
+    font-weight: 700;
+}
+
+/* Page Body */
+.page-body {
+    padding: 0 2rem 3rem;
+    max-width: 1600px;
+    margin: 0 auto;
+}
+
+/* Tracking Grid - Map takes more space */
+.tracking-grid {
+    display: grid;
+    grid-template-columns: 1fr 320px;
+    gap: 1.5rem;
+}
+
+/* Map Container - Larger */
+.map-container {
+    background: white;
+    border-radius: 20px;
+    overflow: hidden;
+    border: 1px solid var(--gray-200);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.08);
+}
+#map {
+    height: 600px;
+    width: 100%;
+}
+
+/* Participants Sidebar */
+.participants-sidebar {
+    background: white;
+    border-radius: 20px;
+    border: 1px solid var(--gray-200);
+    overflow: hidden;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.08);
+}
+.sidebar-header {
+    padding: 1rem 1.2rem;
+    background: var(--s2);
+    border-bottom: 1px solid var(--gray-200);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+.sidebar-header h3 {
+    font-size: 0.9rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+.sidebar-header .online-count {
+    background: var(--green);
+    color: white;
+    font-size: 0.65rem;
+    padding: 0.15rem 0.5rem;
+    border-radius: 20px;
+}
+.participants-list {
+    max-height: 540px;
+    overflow-y: auto;
+}
+.participant-item {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    padding: 0.8rem 1.2rem;
+    border-bottom: 1px solid var(--gray-100);
+    transition: background 0.2s;
+}
+.participant-item:hover {
+    background: var(--gray-100);
+}
+.participant-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: var(--teal-pale);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    flex-shrink: 0;
+}
+.participant-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+.participant-avatar span {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--teal);
+}
+.participant-info {
+    flex: 1;
+}
+.participant-name {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--ink);
+    margin-bottom: 0.2rem;
+}
+.participant-status {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    font-size: 0.65rem;
+}
+.status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--green);
+    animation: pulse 2s infinite;
+}
+.status-dot.offline {
+    background: var(--gray-400);
+    animation: none;
+}
+@keyframes pulse {
+    0% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(1.2); }
+    100% { opacity: 1; transform: scale(1); }
+}
+.status-text {
+    color: var(--green);
+    font-weight: 500;
+}
+.status-text.offline {
+    color: var(--gray-500);
+}
+.location-time {
+    font-size: 0.6rem;
+    color: var(--muted);
+}
+.participant-last-seen {
+    font-size: 0.65rem;
+    color: var(--text-light);
+}
+
+/* Live Badge */
+.live-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    background: rgba(239,68,68,0.2);
+    padding: 0.2rem 0.6rem;
+    border-radius: 20px;
+    margin-left: 0.5rem;
+}
+.live-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #ef4444;
+    animation: pulse-red 1.5s infinite;
+}
+@keyframes pulse-red {
+    0% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(1.3); }
+    100% { opacity: 1; transform: scale(1); }
+}
+.live-text {
+    font-size: 0.6rem;
+    font-weight: 700;
+    color: #ef4444;
+    text-transform: uppercase;
+}
+
+/* Share Location Banner */
+.share-banner {
+    background: var(--teal-pale);
+    border: 1px solid var(--teal);
+    border-radius: 12px;
+    padding: 0.75rem 1rem;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+.share-banner p {
+    font-size: 0.75rem;
+    color: var(--teal-dark);
+    font-weight: 500;
+}
+.share-toggle {
+    background: var(--teal);
+    color: white;
+    border: none;
+    padding: 0.3rem 1rem;
+    border-radius: 40px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.share-toggle:hover {
+    background: var(--teal-dark);
+    transform: translateY(-1px);
+}
+.share-toggle.active {
+    background: var(--red);
+}
+
+/* Legend */
+.map-legend {
+    margin-top: 1rem;
+    background: white;
+    border: 1px solid var(--gray-200);
+    border-radius: 12px;
+    padding: 0.75rem 1rem;
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.7rem;
+    color: var(--text-soft);
+}
+.legend-marker {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+}
+.legend-marker.online {
+    background: var(--teal);
+    animation: pulse 2s infinite;
+}
+.legend-marker.offline {
+    background: var(--gray-400);
+}
+
+/* Toast */
+#toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(10px);
+    background: var(--ink);
+    color: white;
+    padding: 0.55rem 1.2rem;
+    border-radius: 40px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    z-index: 9999;
+    opacity: 0;
+    transition: all 0.25s;
+    pointer-events: none;
+    white-space: nowrap;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+/* Custom Map Marker Animation */
+.custom-div-icon {
+    background: transparent;
+    border: none;
+}
+@keyframes markerPulse {
+    0% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.3); opacity: 0.7; }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+/* Responsive */
+@media (max-width: 1200px) {
+    #map {
+        height: 500px;
+    }
+}
+@media (max-width: 992px) {
+    .tracking-grid {
+        grid-template-columns: 1fr;
+    }
+    .participants-sidebar {
+        order: 2;
+    }
+    .map-container {
+        order: 1;
+    }
+}
+@media (max-width: 768px) {
+    .tracking-hero {
+        padding: 1.5rem;
+        margin-bottom: 1rem;
+    }
+    .page-body {
+        padding: 0 1rem 2rem;
+    }
+    #map {
+        height: 400px;
+    }
+    .hero-stats {
+        gap: 0.8rem;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- Hero Section - Dark Theme -->
+<div class="tracking-hero">
+    <div class="hero-inner">
+        <div class="hero-eyebrow">📍 Live Location Tracking</div>
+        <h1>
+            {{ trip.title }}
+            <span class="live-badge">
+                <span class="live-dot"></span>
+                <span class="live-text">LIVE</span>
+            </span>
+        </h1>
+        <p>Track your travel companions in real-time on an interactive map</p>
+        <div class="hero-stats">
+            <div class="hero-stat">
+                <span>📍 Destination</span>
+                <strong>{{ trip.places_covered|truncatechars:35 }}</strong>
+            </div>
+            <div class="hero-stat">
+                <span>👥 Active Sharers</span>
+                <strong id="onlineCount">0</strong>
+            </div>
+            <div class="hero-stat">
+                <span>🔄 Update Interval</span>
+                <strong>5 seconds</strong>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="page-body">
+    
+    <!-- Share Location Banner -->
+    <div class="share-banner" id="shareBanner" style="display: none;">
+        <p>📍 You're not sharing your location. Enable live tracking to appear on the map.</p>
+        <button class="share-toggle" onclick="toggleLocationSharing()">📍 Enable Location Sharing</button>
+    </div>
+
+    <div class="tracking-grid">
+        <!-- Map Container - Larger -->
+        <div class="map-container">
+            <div id="map"></div>
+        </div>
+
+        <!-- Participants Sidebar -->
+        <div class="participants-sidebar">
+            <div class="sidebar-header">
+                <h3>
+                    👥 Trip Participants
+                    <span class="online-count" id="participantCount">0</span>
+                </h3>
+                <div class="map-legend" style="margin: 0; border: none; padding: 0;">
+                    <div class="legend-item">
+                        <div class="legend-marker online"></div>
+                        <span>Active</span>
+                    </div>
+                </div>
+            </div>
+            <div class="participants-list" id="participantsList">
+                <div style="text-align: center; padding: 2rem; color: var(--muted);">
+                    <div style="font-size: 2rem; margin-bottom: 0.5rem;">📍</div>
+                    <p>Loading participants...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Map Legend (full width) -->
+    <div class="map-legend">
+        <div class="legend-item">
+            <div class="legend-marker online"></div>
+            <span>Active participants (showing live location with pulsing effect)</span>
+        </div>
+        <div class="legend-item">
+            📍 Map updates every 5 seconds in real-time
+        </div>
+        <div class="legend-item">
+            🟢 Green pulsing dot = Currently sharing location
+        </div>
+        <div class="legend-item">
+            🧭 Map automatically zooms to fit all participants
+        </div>
+    </div>
+</div>
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+<script>
+    // Map configuration
+    let map;
+    let markers = {};
+    let userLocationMarker = null;
+    let isSharingLocation = false;
+    let watchId = null;
+    let participantsData = [];
+    
+    // Get user's current location
+    function getUserLocation() {
+        if (!navigator.geolocation) {
+            console.log("Geolocation not supported");
+            showToast("Geolocation is not supported by your browser", "error");
+            return;
+        }
+        
+        navigator.geolocation.getCurrentPosition(
+            (position) => {
+                const location = {
+                    latitude: position.coords.latitude,
+                    longitude: position.coords.longitude,
+                    accuracy: position.coords.accuracy
+                };
+                
+                // Center map on user's location
+                if (map) {
+                    map.setView([location.latitude, location.longitude], 13);
+                }
+                
+                // Add user marker
+                if (userLocationMarker) {
+                    userLocationMarker.setLatLng([location.latitude, location.longitude]);
+                } else {
+                    const userIcon = L.divIcon({
+                        className: 'custom-div-icon',
+                        html: '<div style="background-color: #0e8a8a; width: 18px; height: 18px; border-radius: 50%; border: 3px solid white; box-shadow: 0 0 0 2px #0e8a8a; animation: markerPulse 2s infinite;"></div>',
+                        iconSize: [18, 18],
+                        popupAnchor: [0, -9]
+                    });
+                    userLocationMarker = L.marker([location.latitude, location.longitude], { icon: userIcon })
+                        .addTo(map)
+                        .bindPopup("<strong>📍 You are here</strong><br>Your current location");
+                }
+            },
+            (error) => {
+                console.log("Error getting location:", error);
+                if (error.code === 1) {
+                    showToast("Please enable location access to share your position", "error");
+                }
+            }
+        );
+    }
+    
+    // Initialize map
+    function initMap() {
+        // Default center (India)
+        map = L.map('map').setView([20.5937, 78.9629], 5);
+        
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors',
+            maxZoom: 19
+        }).addTo(map);
+        
+        // Get user location on load
+        getUserLocation();
+    }
+    
+    // Fetch locations from server
+    function fetchLocations() {
+        fetch("{% url 'community:get_trip_locations' trip.id %}")
+            .then(response => response.json())
+            .then(data => {
+                if (!Array.isArray(data)) {
+                    console.log("Unauthorized or error:", data);
+                    return;
+                }
+                
+                participantsData = data;
+                let bounds = [];
+                let onlineUsers = data.length;
+                
+                // Update online count
+                document.getElementById('onlineCount').textContent = onlineUsers;
+                document.getElementById('participantCount').textContent = onlineUsers;
+                
+                // Update participants list
+                updateParticipantsList(data);
+                
+                // Update markers on map
+                data.forEach(user => {
+                    let latlng = [user.latitude, user.longitude];
+                    bounds.push(latlng);
+                    
+                    if (markers[user.username]) {
+                        // Smooth update existing marker
+                        markers[user.username].setLatLng(latlng);
+                    } else {
+                        // Create custom marker for participant with pulsing animation
+                        const customIcon = L.divIcon({
+                            className: 'custom-div-icon',
+                            html: `<div style="background-color: #0e8a8a; width: 14px; height: 14px; border-radius: 50%; border: 2px solid white; box-shadow: 0 0 0 2px rgba(14,138,138,0.5); animation: markerPulse 2s infinite;"></div>`,
+                            iconSize: [14, 14],
+                            popupAnchor: [0, -8]
+                        });
+                        
+                        markers[user.username] = L.marker(latlng, { icon: customIcon })
+                            .addTo(map)
+                            .bindPopup(`
+                                <div style="font-family: 'DM Sans', sans-serif;">
+                                    <strong style="color: #0e8a8a;">👤 ${escapeHtml(user.username)}</strong><br>
+                                    <span style="font-size: 0.7rem;">🟢 Live now • Sharing location</span>
+                                </div>
+                            `);
+                    }
+                });
+                
+                // Remove markers for users no longer sharing
+                Object.keys(markers).forEach(username => {
+                    if (!data.find(u => u.username === username)) {
+                        map.removeLayer(markers[username]);
+                        delete markers[username];
+                    }
+                });
+                
+                // Auto zoom to fit all markers
+                if (bounds.length > 0) {
+                    map.fitBounds(bounds, { padding: [50, 50] });
+                }
+            })
+            .catch(error => {
+                console.error("Location fetch error:", error);
+            });
+    }
+    
+    // Update participants list in sidebar
+    function updateParticipantsList(activeUsers) {
+        const container = document.getElementById('participantsList');
+        
+        if (activeUsers.length === 0) {
+            container.innerHTML = `
+                <div style="text-align: center; padding: 2rem; color: var(--muted);">
+                    <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">📍</div>
+                    <p style="font-weight: 600; margin-bottom: 0.3rem;">No participants sharing location</p>
+                    <p style="font-size: 0.7rem;">Enable location sharing to appear on map</p>
+                </div>
+            `;
+            return;
+        }
+        
+        let html = '';
+        activeUsers.forEach(user => {
+            html += `
+                <div class="participant-item">
+                    <div class="participant-avatar">
+                        <span>${escapeHtml(user.username.charAt(0).toUpperCase())}</span>
+                    </div>
+                    <div class="participant-info">
+                        <div class="participant-name">${escapeHtml(user.username)}</div>
+                        <div class="participant-status">
+                            <span class="status-dot"></span>
+                            <span class="status-text">Sharing location</span>
+                        </div>
+                    </div>
+                    <div class="participant-last-seen">
+                        <span style="color: var(--green);">●</span> Live
+                    </div>
+                </div>
+            `;
+        });
+        
+        container.innerHTML = html;
+    }
+    
+    // Send current location to server
+    function sendLocation(position) {
+        if (!isSharingLocation) return;
+        
+        const locationData = {
+            trip_id: {{ trip.id }},
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude,
+            accuracy: position.coords.accuracy
+        };
+        
+        fetch("{% url 'community:update_location' %}", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCsrfToken()
+            },
+            body: JSON.stringify(locationData)
+        }).then(response => response.json())
+          .then(data => {
+              if (data.status === 'success') {
+                  // Update user marker if exists
+                  if (userLocationMarker) {
+                      userLocationMarker.setLatLng([locationData.latitude, locationData.longitude]);
+                  }
+              }
+          })
+          .catch(error => console.error('Error sending location:', error));
+    }
+    
+    // Start sharing location
+    function startSharing() {
+        if (!navigator.geolocation) {
+            showToast("Geolocation is not supported by your browser", "error");
+            return;
+        }
+        
+        // Show loading
+        const shareBtn = document.querySelector('.share-toggle');
+        if (shareBtn) {
+            shareBtn.textContent = '⏳ Enabling...';
+            shareBtn.disabled = true;
+        }
+        
+        navigator.geolocation.getCurrentPosition(
+            (position) => {
+                // Success - start watching
+                watchId = navigator.geolocation.watchPosition(
+                    (newPosition) => {
+                        sendLocation(newPosition);
+                    },
+                    (error) => {
+                        console.error("Geolocation watch error:", error);
+                        showToast("Error tracking location", "error");
+                    },
+                    {
+                        enableHighAccuracy: true,
+                        timeout: 5000,
+                        maximumAge: 0
+                    }
+                );
+                
+                // Send initial location
+                sendLocation(position);
+                
+                isSharingLocation = true;
+                document.getElementById('shareBanner').style.display = 'none';
+                showToast("📍 Location sharing enabled successfully", "success");
+                
+                // Center map on user's location
+                map.setView([position.coords.latitude, position.coords.longitude], 13);
+                
+                // Update user marker
+                if (userLocationMarker) {
+                    userLocationMarker.setLatLng([position.coords.latitude, position.coords.longitude]);
+                }
+            },
+            (error) => {
+                console.error("Geolocation error:", error);
+                showToast("Unable to get your location. Please check permissions.", "error");
+                if (shareBtn) {
+                    shareBtn.textContent = '📍 Enable Location Sharing';
+                    shareBtn.disabled = false;
+                }
+            },
+            {
+                enableHighAccuracy: true,
+                timeout: 10000,
+                maximumAge: 0
+            }
+        );
+    }
+    
+    // Stop sharing location
+    function stopSharing() {
+        if (watchId) {
+            navigator.geolocation.clearWatch(watchId);
+            watchId = null;
+        }
+        isSharingLocation = false;
+        showToast("Location sharing disabled", "info");
+    }
+    
+    // Toggle location sharing
+    function toggleLocationSharing() {
+        if (isSharingLocation) {
+            stopSharing();
+        } else {
+            startSharing();
+        }
+    }
+    
+    // Get CSRF token
+    function getCsrfToken() {
+        return document.querySelector('[name=csrfmiddlewaretoken]')?.value || 
+               document.cookie.split('; ').find(row => row.startsWith('csrftoken='))?.split('=')[1];
+    }
+    
+    // Show toast notification
+    function showToast(message, type = 'info') {
+        let toast = document.getElementById('toast');
+        if (!toast) {
+            toast = document.createElement('div');
+            toast.id = 'toast';
+            document.body.appendChild(toast);
+        }
+        
+        if (type === 'success') {
+            toast.style.background = '#10B981';
+        } else if (type === 'error') {
+            toast.style.background = '#EF4444';
+        } else {
+            toast.style.background = '#1E242C';
+        }
+        
+        toast.textContent = message;
+        toast.style.opacity = '1';
+        toast.style.transform = 'translateX(-50%) translateY(0)';
+        
+        setTimeout(() => {
+            toast.style.opacity = '0';
+            toast.style.transform = 'translateX(-50%) translateY(10px)';
+        }, 3000);
+    }
+    
+    // Escape HTML
+    function escapeHtml(text) {
+        if (!text) return '';
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+    
+    // Initialize everything
+    initMap();
+    
+    // Start fetching locations after map is ready
+    setTimeout(() => {
+        fetchLocations();
+        setInterval(fetchLocations, 5000);
+    }, 1000);
+</script>
+
+<div id="toast"></div>
+
+{% endblock %}

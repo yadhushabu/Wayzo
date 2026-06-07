@@ -1,0 +1,967 @@
+{% extends "travellers/base.html" %}
+{% load static %}
+
+{% block title %}Reserve a Table at {{ property.restaurant_name }} | Wayzo{% endblock %}
+
+{% block extra_styles %}
+<style>
+    :root {
+        --teal: #0e8a8a;
+        --teal-dark: #0a6e6e;
+        --teal-pale: #e6f3f3;
+        --teal-light: #b9f5f5;
+        --empty-bg: #DBEAFE;
+        --empty-border: #93C5FD;
+        --empty-chair: #7DB8F0;
+        --pink: #F72585;
+        --pink-soft: #FF6BA8;
+        --pink-pale: #FFF0F6;
+        --orange: #F4A500;
+        --canvas-bg: #F8F9FC;
+        --canvas-grid: #E2E8F0;
+        --chair-neutral: #7DB8F0;
+    }
+
+    /* ── Hero ── */
+    .booking-hero {
+        background: linear-gradient(135deg, #1a3c34 0%, #0d2b2a 100%);
+        padding: 3rem 2rem;
+        text-align: center;
+        color: white;
+        margin-bottom: -40px;
+        position: relative;
+    }
+    .booking-hero h1 { font-size: 2rem; font-weight: 700; margin-bottom: 0.5rem; }
+    .booking-hero p { font-size: 0.95rem; opacity: 0.9; }
+
+    /* ── Container ── */
+    .booking-container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 2.5rem 2rem 3rem;
+    }
+
+    .booking-layout {
+        display: grid;
+        grid-template-columns: 1fr 380px;
+        gap: 2rem;
+        align-items: start;
+    }
+
+    /* ── Floor plan section ── */
+    .floor-plan-section {
+        background: white;
+        border-radius: 20px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        overflow: hidden;
+    }
+
+    .floor-plan-header {
+        background: var(--teal);
+        color: white;
+        padding: 1rem 1.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+    }
+
+    .floor-plan-header h3 {
+        margin: 0;
+        font-size: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .table-count-badge {
+        background: rgba(255,255,255,0.2);
+        color: white;
+        font-size: 0.72rem;
+        font-weight: 700;
+        padding: 2px 10px;
+        border-radius: 20px;
+    }
+
+    /* Legend */
+    .legend {
+        display: flex;
+        gap: 1.2rem;
+        align-items: center;
+        flex-wrap: wrap;
+    }
+
+    .legend-item {
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+        font-size: 0.72rem;
+        color: rgba(255,255,255,0.9);
+        font-weight: 500;
+    }
+
+    .legend-color {
+        width: 14px;
+        height: 14px;
+        border-radius: 4px;
+        flex-shrink: 0;
+    }
+
+    /* Canvas area */
+    .floor-plan {
+        background: var(--canvas-bg);
+        padding: 1.5rem;
+        overflow: auto;
+        min-height: 520px;
+    }
+
+    .floor-canvas {
+        position: relative;
+        min-height: 480px;
+        min-width: 700px;
+        background-image:
+            linear-gradient(var(--canvas-grid) 1px, transparent 1px),
+            linear-gradient(90deg, var(--canvas-grid) 1px, transparent 1px);
+        background-size: 28px 28px;
+        border-radius: 12px;
+    }
+
+    /* Zone labels */
+    .zone-label {
+        position: absolute;
+        font-size: 0.62rem;
+        font-weight: 800;
+        letter-spacing: 2.5px;
+        text-transform: uppercase;
+        color: #94A3B8;
+        pointer-events: none;
+        user-select: none;
+    }
+
+    /* Divider wall */
+    .canvas-wall {
+        position: absolute;
+        background: #CBD5E1;
+        border-radius: 2px;
+        pointer-events: none;
+    }
+
+    /* ── Table objects ── */
+    .t-obj {
+        position: absolute;
+        cursor: pointer;
+        user-select: none;
+        z-index: 10;
+        transition: transform 0.15s ease;
+    }
+
+    .t-obj:hover:not(.t-booked) { z-index: 20; transform: scale(1.05); }
+    .t-obj.t-selected { z-index: 30; transform: scale(1.05); }
+
+    /* Chair indicators */
+    .t-chairs {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+    }
+
+    .chair {
+        position: absolute;
+        background: var(--empty-chair);
+        border-radius: 3px;
+        transition: background 0.2s;
+    }
+
+    /* Table shell */
+    .t-shell {
+        position: absolute;
+        inset: 0;
+        background: var(--empty-bg);
+        border: 2px solid var(--empty-border);
+        border-radius: 10px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s ease;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    }
+
+    .t-shell.circle { border-radius: 50%; }
+
+    /* Available hover */
+    .t-obj.t-available:hover .t-shell {
+        border-color: var(--teal);
+        background: var(--teal-pale);
+        box-shadow: 0 4px 20px rgba(14,138,138,0.2);
+    }
+    .t-obj.t-available:hover .chair { background: var(--teal); opacity: 0.5; }
+
+    /* Selected */
+    .t-obj.t-selected .t-shell {
+        background: var(--teal);
+        border-color: var(--teal-dark);
+        box-shadow: 0 4px 24px rgba(14,138,138,0.4);
+    }
+    .t-obj.t-selected .t-num,
+    .t-obj.t-selected .t-cap { color: white !important; }
+    .t-obj.t-selected .chair { background: rgba(255,255,255,0.45); }
+
+    /* Booked */
+    .t-obj.t-booked .t-shell {
+        background: #FEE2E2;
+        border-color: #FCA5A5;
+        cursor: not-allowed;
+    }
+    .t-obj.t-booked .t-num { color: #DC2626 !important; }
+    .t-obj.t-booked .t-cap { color: #EF4444 !important; }
+    .t-obj.t-booked .chair { background: #FCA5A5; }
+
+    .t-num {
+        font-size: 0.88rem;
+        font-weight: 700;
+        color: #1E3A5F;
+        line-height: 1.1;
+    }
+
+    .t-cap {
+        font-size: 0.62rem;
+        color: #5B8DB8;
+        margin-top: 2px;
+    }
+
+    .t-status {
+        font-size: 0.58rem;
+        font-weight: 700;
+        color: #DC2626;
+        margin-top: 1px;
+    }
+
+    /* Tick badge */
+    .t-tick {
+        position: absolute;
+        top: -8px;
+        right: -8px;
+        width: 22px;
+        height: 22px;
+        background: #10B981;
+        border-radius: 50%;
+        border: 2px solid white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 11px;
+        color: white;
+        font-weight: 900;
+        z-index: 50;
+        box-shadow: 0 2px 6px rgba(16,185,129,0.4);
+        animation: tickPop 0.25s cubic-bezier(0.34,1.56,0.64,1);
+    }
+
+    @keyframes tickPop {
+        0% { transform: scale(0); opacity: 0; }
+        60% { transform: scale(1.2); }
+        100% { transform: scale(1); opacity: 1; }
+    }
+
+    /* ── Right sidebar ── */
+    .property-sidebar {
+        position: sticky;
+        top: 90px;
+    }
+
+    /* Property card - matches book_room */
+    .property-card {
+        background: white;
+        border-radius: 20px;
+        overflow: hidden;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        margin-bottom: 1.5rem;
+    }
+
+    .property-image {
+        height: 180px;
+        overflow: hidden;
+    }
+
+    .property-image img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .property-image-placeholder {
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(135deg, #1a3c34, #0d2b2a);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 3rem;
+    }
+
+    .property-info { padding: 1.25rem 1.5rem; }
+
+    .property-name {
+        font-size: 1.2rem;
+        font-weight: 700;
+        margin-bottom: 0.4rem;
+        color: #111827;
+    }
+
+    .property-location {
+        font-size: 0.82rem;
+        color: #6b7280;
+        margin-bottom: 0.5rem;
+    }
+
+    .property-hours {
+        font-size: 0.82rem;
+        color: #6b7280;
+    }
+
+    /* Selected table info */
+    .selected-table-info {
+        background: var(--teal-pale);
+        border-radius: 12px;
+        padding: 0.9rem 1rem;
+        margin-bottom: 1rem;
+        border: 1px solid var(--teal-light);
+        display: none;
+    }
+    .selected-table-info.visible { display: block; }
+    .selected-table-info strong { font-size: 0.85rem; color: var(--teal-dark); }
+    .selected-table-info div { font-size: 0.78rem; color: var(--teal); margin-top: 0.25rem; }
+
+    /* Booking card - matches book_room */
+    .booking-card {
+        background: white;
+        border-radius: 20px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        overflow: hidden;
+    }
+
+    .booking-header {
+        background: var(--teal);
+        color: white;
+        padding: 1.5rem;
+        text-align: center;
+    }
+
+    .booking-header h2 {
+        font-size: 1.4rem;
+        font-weight: 700;
+        margin-bottom: 0.2rem;
+    }
+
+    .booking-header p {
+        font-size: 0.82rem;
+        opacity: 0.9;
+    }
+
+    .booking-form { padding: 1.5rem; }
+
+    /* Form groups - matches book_room */
+    .form-group { margin-bottom: 1.1rem; }
+
+    .form-group label {
+        display: block;
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: #333;
+        margin-bottom: 0.45rem;
+    }
+
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+        width: 100%;
+        padding: 0.7rem 1rem;
+        border: 2px solid #e2e8f0;
+        border-radius: 12px;
+        font-size: 0.88rem;
+        transition: all 0.2s;
+        font-family: inherit;
+        color: #1e293b;
+        background: white;
+    }
+
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus {
+        outline: none;
+        border-color: var(--teal);
+        box-shadow: 0 0 0 3px rgba(14,138,138,0.1);
+    }
+
+    .form-group input[readonly] {
+        background: #f8fafc;
+        color: #64748b;
+    }
+
+    .form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+    }
+
+    /* Time slots */
+    .time-slots {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 0.45rem;
+        margin-top: 0.4rem;
+    }
+
+    .time-slot {
+        padding: 0.5rem 0.2rem;
+        text-align: center;
+        font-size: 0.74rem;
+        font-weight: 600;
+        border: 1.5px solid #e2e8f0;
+        border-radius: 9px;
+        cursor: pointer;
+        transition: all 0.15s;
+        background: white;
+        color: #374151;
+        font-family: inherit;
+    }
+
+    .time-slot:hover:not(.slot-booked) {
+        border-color: var(--teal);
+        color: var(--teal);
+        background: var(--teal-pale);
+    }
+
+    .time-slot.slot-selected {
+        background: var(--teal);
+        border-color: var(--teal);
+        color: white;
+    }
+
+    .time-slot.slot-booked {
+        background: #f8f9fa;
+        border-color: #e2e8f0;
+        color: #CBD5E1;
+        cursor: not-allowed;
+        text-decoration: line-through;
+    }
+
+    .slot-hint {
+        font-size: 0.78rem;
+        color: #94a3b8;
+        padding: 0.85rem;
+        background: #f8fafc;
+        border-radius: 10px;
+        text-align: center;
+    }
+
+    .loading-spinner {
+        display: inline-block;
+        width: 18px; height: 18px;
+        border: 2px solid var(--teal-pale);
+        border-top-color: var(--teal);
+        border-radius: 50%;
+        animation: spin 0.6s linear infinite;
+        vertical-align: middle;
+        margin-right: 6px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Advance notice */
+    .alert-info {
+        background: var(--teal-pale);
+        border: 1px solid var(--teal-light);
+        border-radius: 12px;
+        padding: 0.9rem 1rem;
+        margin-bottom: 1rem;
+        color: var(--teal-dark);
+        font-size: 0.82rem;
+    }
+
+    /* Submit button - matches book_room */
+    .btn-submit {
+        width: 100%;
+        padding: 0.9rem;
+        background: var(--teal);
+        color: white;
+        border: none;
+        border-radius: 12px;
+        font-size: 0.95rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+        margin-top: 0.5rem;
+        font-family: inherit;
+    }
+
+    .btn-submit:hover:not(:disabled) {
+        background: var(--teal-dark);
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(14,138,138,0.3);
+    }
+
+    .btn-submit:disabled {
+        background: #9ca3af;
+        cursor: not-allowed;
+        transform: none;
+    }
+
+    /* Summary card - matches book_room */
+    .selected-card {
+        background: var(--teal-pale);
+        border-radius: 20px;
+        padding: 1.5rem;
+    }
+
+    .selected-title {
+        font-size: 1rem;
+        font-weight: 700;
+        margin-bottom: 1rem;
+        color: var(--teal);
+    }
+
+    .selected-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem 0;
+        font-size: 0.85rem;
+        border-bottom: 1px solid rgba(14,138,138,0.2);
+    }
+
+    .selected-item:last-child { border-bottom: none; }
+    .selected-icon { font-size: 1.1rem; }
+
+    /* Scrollbar */
+    .floor-plan::-webkit-scrollbar { width: 5px; height: 5px; }
+    .floor-plan::-webkit-scrollbar-track { background: transparent; }
+    .floor-plan::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 3px; }
+
+    @media (max-width: 992px) {
+        .booking-layout { grid-template-columns: 1fr; }
+        .property-sidebar { position: static; order: -1; }
+    }
+    @media (max-width: 768px) {
+        .booking-container { padding: 1.5rem 1rem; }
+        .form-row { grid-template-columns: 1fr; }
+        .time-slots { grid-template-columns: repeat(2, 1fr); }
+        .floor-plan-header { flex-direction: column; align-items: flex-start; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Hero - matches book_room -->
+<div class="booking-hero">
+    <h1>🍽️ Reserve a Table</h1>
+    <p>Secure your table at {{ property.restaurant_name }}</p>
+</div>
+
+<div class="booking-container">
+    <div class="booking-layout">
+
+        <!-- ── Left: Floor Plan ── -->
+        <div>
+            <div class="floor-plan-section">
+                <div class="floor-plan-header">
+                    <h3>
+                        📐 Table Layout
+                        <span class="table-count-badge" id="availableCount">{{ available_tables|length }} tables</span>
+                    </h3>
+                    <div class="legend">
+                        <div class="legend-item">
+                            <div class="legend-color" style="background:#DBEAFE;border:1.5px solid #93C5FD;"></div>
+                            <span>Available</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background:#FEE2E2;border:1.5px solid #FCA5A5;"></div>
+                            <span>Booked</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background:var(--teal);"></div>
+                            <span>Selected</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="floor-plan">
+                    <div class="floor-canvas" id="floorCanvas">
+
+                        <!-- Wall divider -->
+                        <div class="canvas-wall" style="left:420px;top:24px;width:2px;height:90%;opacity:0.5;"></div>
+
+                        {% for table in available_tables %}
+                        <div class="t-obj {% if table.is_booked_today %}t-booked{% else %}t-available{% endif %}"
+                             data-id="{{ table.id }}"
+                             data-number="{{ table.table_number }}"
+                             data-capacity="{{ table.capacity }}"
+                             data-shape="{{ table.shape|default:'square' }}"
+                             data-zone="{{ table.zone|default:'' }}"
+                             data-ac="{{ table.has_ac|yesno:'true,false' }}"
+                             data-view="{{ table.has_view|yesno:'true,false' }}"
+                             data-booked="{{ table.is_booked_today|yesno:'true,false' }}"
+                             style="left:{{ table.pos_x|default:60 }}px;
+                                    top:{{ table.pos_y|default:60 }}px;
+                                    width:{{ table.width|default:100 }}px;
+                                    height:{{ table.height|default:100 }}px;">
+
+                            <div class="t-chairs" id="chairs-{{ table.id }}"></div>
+
+                            <div class="t-shell {% if table.shape == 'circle' %}circle{% endif %}">
+                                <div class="t-num">{{ table.table_number }}</div>
+                                <div class="t-cap">{{ table.capacity }} seats</div>
+                                {% if table.is_booked_today %}
+                                <div class="t-status">Booked</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endfor %}
+
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── Right: Booking Form ── -->
+        <div class="property-sidebar">
+
+            <!-- Property card - matches book_room -->
+            <div class="property-card">
+                <div class="property-image">
+                    {% if property.media.first %}
+                        <img src="{{ property.media.first.image.url }}" alt="{{ property.restaurant_name }}">
+                    {% else %}
+                        <div class="property-image-placeholder">🍽️</div>
+                    {% endif %}
+                </div>
+                <div class="property-info">
+                    <h3 class="property-name">{{ property.restaurant_name }}</h3>
+                    <div class="property-location">📍 {{ property.city }}, {{ property.state }}</div>
+                    {% if property.opening_time and property.closing_time %}
+                    <div class="property-hours">🕐 {{ property.opening_time|time:"g:i A" }} – {{ property.closing_time|time:"g:i A" }}</div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Booking form card -->
+            <div class="booking-card">
+                <div class="booking-header">
+                    <h2>Table Reservation</h2>
+                    <p>Fill in all required information</p>
+                </div>
+
+                <div class="booking-form">
+                    <form method="POST" id="bookingForm">
+                        {% csrf_token %}
+                        <input type="hidden" name="table_id" id="tableId">
+                        <input type="hidden" name="start_time" id="startTime">
+                        <input type="hidden" name="end_time" id="endTime">
+
+                        <!-- Selected table display -->
+                        <div class="selected-table-info" id="selectedTableInfo">
+                            <strong>✅ Selected: <span id="selectedTableNumber">–</span></strong>
+                            <div id="selectedTableDetails"></div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>📅 Booking Date *</label>
+                            <input type="date" name="booking_date" id="bookingDate" required>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>👤 Adults *</label>
+                                <input type="number" name="adults" id="adults" min="1" value="2" required>
+                            </div>
+                            <div class="form-group">
+                                <label>🧒 Children</label>
+                                <input type="number" name="children" id="children" min="0" value="0">
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>👥 Total Guests</label>
+                            <input type="number" name="guests" id="guests" readonly>
+                        </div>
+
+                        <div class="form-group">
+                            <label>⏰ Select Time Slot *</label>
+                            <div id="slotHint" class="slot-hint">👆 Select a table from the floor plan first</div>
+                            <div class="time-slots" id="timeSlots" style="display:none;"></div>
+                            <div id="slotLoading" style="display:none;text-align:center;padding:0.75rem;font-size:0.82rem;color:#64748b;">
+                                <span class="loading-spinner"></span> Loading slots…
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>📝 Special Request (Optional)</label>
+                            <textarea name="special_request" rows="2" placeholder="Any special requirements?" style="resize:none;"></textarea>
+                        </div>
+
+                        {% if property.requires_table_advance %}
+                        <div class="alert-info">
+                            💳 <strong>Advance payment required: ₹{{ property.table_advance_amount|floatformat:0 }}</strong>
+                        </div>
+                        {% endif %}
+
+                        <button type="submit" class="btn-submit" id="submitBtn" disabled>
+                            ✓ Confirm Table Reservation
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Summary card - matches book_room -->
+            <div class="selected-card" style="margin-top:1.5rem;">
+                <div class="selected-title">Booking Summary</div>
+                <div class="selected-item">
+                    <span class="selected-icon">🏠</span>
+                    <span>{{ property.restaurant_name }}</span>
+                </div>
+                <div class="selected-item">
+                    <span class="selected-icon">📅</span>
+                    <span id="summaryDate">Date not selected</span>
+                </div>
+                <div class="selected-item">
+                    <span class="selected-icon">👥</span>
+                    <span id="summaryGuests">Guests not specified</span>
+                </div>
+                <div class="selected-item" id="summaryTableRow">
+                    <span class="selected-icon">🍽️</span>
+                    <span>Select a table</span>
+                </div>
+                <div class="selected-item" id="summaryTimeRow">
+                    <span class="selected-icon">⏰</span>
+                    <span>Time not selected</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+(function () {
+    // ── Dates ──
+    const today = new Date().toISOString().split('T')[0];
+    const bookingDateInput = document.getElementById('bookingDate');
+    bookingDateInput.min = today;
+    bookingDateInput.value = today;
+    updateSummaryDate(today);
+
+    bookingDateInput.addEventListener('change', () => {
+        updateSummaryDate(bookingDateInput.value);
+        if (selectedTable) loadTimeSlots();
+    });
+
+    function updateSummaryDate(val) {
+        if (!val) return;
+        const d = new Date(val + 'T00:00:00');
+        document.getElementById('summaryDate').textContent = d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+    }
+
+    // ── Guests ──
+    const adultsInput   = document.getElementById('adults');
+    const childrenInput = document.getElementById('children');
+    const guestsInput   = document.getElementById('guests');
+
+    function updateGuests() {
+        const total = (parseInt(adultsInput.value) || 0) + (parseInt(childrenInput.value) || 0);
+        guestsInput.value = total;
+        document.getElementById('summaryGuests').textContent = total + ' guest(s)';
+    }
+
+    adultsInput.addEventListener('input', updateGuests);
+    childrenInput.addEventListener('input', updateGuests);
+    updateGuests();
+
+    // ── Draw chairs ──
+    const CHAIR_W = 13, CHAIR_H = 7, CHAIR_GAP = 5;
+
+    function drawChairs(tableEl, capacity) {
+        const cont = tableEl.querySelector('.t-chairs');
+        if (!cont) return;
+        cont.innerHTML = '';
+
+        const w = tableEl.offsetWidth || parseInt(tableEl.style.width);
+        const h = tableEl.offsetHeight || parseInt(tableEl.style.height);
+        const perSide = Math.ceil(capacity / 4);
+        const sides = ['top', 'bottom', 'left', 'right'];
+        let placed = 0;
+
+        sides.forEach(side => {
+            const count = Math.min(perSide, capacity - placed);
+            if (count <= 0) return;
+            placed += count;
+            for (let i = 0; i < count; i++) {
+                const chair = document.createElement('div');
+                chair.className = 'chair';
+                const isH = (side === 'top' || side === 'bottom');
+                chair.style.width  = isH ? CHAIR_W + 'px' : CHAIR_H + 'px';
+                chair.style.height = isH ? CHAIR_H + 'px' : CHAIR_W + 'px';
+
+                if (isH) {
+                    const totalW = count * (CHAIR_W + 4) - 4;
+                    const startX = (w - totalW) / 2 + i * (CHAIR_W + 4);
+                    chair.style.left = startX + 'px';
+                    chair.style.top  = side === 'top' ? (-CHAIR_H - CHAIR_GAP) + 'px' : (h + CHAIR_GAP) + 'px';
+                } else {
+                    const totalH = count * (CHAIR_W + 4) - 4;
+                    const startY = (h - totalH) / 2 + i * (CHAIR_W + 4);
+                    chair.style.top  = startY + 'px';
+                    chair.style.left = side === 'left' ? (-CHAIR_H - CHAIR_GAP) + 'px' : (w + CHAIR_GAP) + 'px';
+                }
+
+                cont.appendChild(chair);
+            }
+        });
+    }
+
+    // ── Selection ──
+    let selectedTable = null;
+
+    function clearSelection() {
+        document.querySelectorAll('.t-obj.t-selected').forEach(el => {
+            el.classList.remove('t-selected');
+            el.classList.add('t-available');
+            const tick = el.querySelector('.t-tick');
+            if (tick) tick.remove();
+            drawChairs(el, parseInt(el.dataset.capacity));
+        });
+    }
+
+    function selectTable(el) {
+        if (el.dataset.booked === 'true') return;
+        clearSelection();
+
+        el.classList.remove('t-available');
+        el.classList.add('t-selected');
+
+        const tick = document.createElement('div');
+        tick.className = 't-tick';
+        tick.innerHTML = '✓';
+        el.appendChild(tick);
+
+        drawChairs(el, parseInt(el.dataset.capacity));
+
+        selectedTable = {
+            id: parseInt(el.dataset.id),
+            number: el.dataset.number,
+            capacity: parseInt(el.dataset.capacity),
+            zone: el.dataset.zone,
+            hasAc: el.dataset.ac === 'true',
+            hasView: el.dataset.view === 'true',
+        };
+
+        document.getElementById('tableId').value = selectedTable.id;
+
+        // Show selected info
+        const info = document.getElementById('selectedTableInfo');
+        info.classList.add('visible');
+        document.getElementById('selectedTableNumber').textContent = 'Table ' + selectedTable.number;
+        let details = '👥 ' + selectedTable.capacity + ' guests';
+        if (selectedTable.zone) details += '  ·  📍 ' + selectedTable.zone;
+        if (selectedTable.hasAc) details += '  ·  ❄️ AC';
+        document.getElementById('selectedTableDetails').textContent = details;
+
+        // Summary
+        document.getElementById('summaryTableRow').innerHTML =
+            '<span class="selected-icon">🍽️</span><span>Table ' + selectedTable.number + ' (' + selectedTable.capacity + ' seats)</span>';
+
+        // Constrain guests
+        guestsInput.max = selectedTable.capacity;
+        if (parseInt(guestsInput.value) > selectedTable.capacity) {
+            adultsInput.value = selectedTable.capacity;
+            childrenInput.value = 0;
+            updateGuests();
+        }
+
+        // Reset time
+        document.getElementById('startTime').value = '';
+        document.getElementById('endTime').value = '';
+        document.getElementById('summaryTimeRow').innerHTML = '<span class="selected-icon">⏰</span><span>Time not selected</span>';
+        document.getElementById('submitBtn').disabled = true;
+
+        loadTimeSlots();
+    }
+
+    // ── Init tables ──
+    document.querySelectorAll('.t-obj').forEach(el => {
+        drawChairs(el, parseInt(el.dataset.capacity));
+        if (el.dataset.booked !== 'true') {
+            el.addEventListener('click', () => selectTable(el));
+        }
+    });
+
+    // ── Auto-position zone labels ──
+    const zones = {};
+    document.querySelectorAll('.t-obj').forEach(el => {
+        const z = el.dataset.zone;
+        if (!z) return;
+        if (!zones[z]) zones[z] = { minX: Infinity, minY: Infinity };
+        const x = parseInt(el.style.left), y = parseInt(el.style.top);
+        if (x < zones[z].minX) zones[z].minX = x;
+        if (y < zones[z].minY) zones[z].minY = y;
+    });
+
+    const canvas = document.getElementById('floorCanvas');
+    Object.entries(zones).forEach(([zone, pos]) => {
+        const lbl = document.createElement('div');
+        lbl.className = 'zone-label';
+        lbl.textContent = zone;
+        lbl.style.left = pos.minX + 'px';
+        lbl.style.top  = Math.max(0, pos.minY - 22) + 'px';
+        canvas.appendChild(lbl);
+    });
+
+    // ── Time slots ──
+    async function loadTimeSlots() {
+        const date = bookingDateInput.value;
+        if (!date || !selectedTable) return;
+
+        const hint    = document.getElementById('slotHint');
+        const slotsEl = document.getElementById('timeSlots');
+        const loadEl  = document.getElementById('slotLoading');
+
+        hint.style.display    = 'none';
+        slotsEl.style.display = 'none';
+        loadEl.style.display  = 'block';
+
+        try {
+            const res  = await fetch(`/traveller/api/table-slots/?date=${date}&table_id=${selectedTable.id}`);
+            const data = await res.json();
+            loadEl.style.display  = 'none';
+            slotsEl.style.display = 'grid';
+
+            if (!data.slots || data.slots.length === 0) {
+                slotsEl.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:1rem;color:#dc2626;font-size:0.8rem;">❌ No slots available for this date</div>';
+                return;
+            }
+
+            slotsEl.innerHTML = data.slots.map(slot => `
+                <div class="time-slot ${slot.is_booked ? 'slot-booked' : ''}"
+                     ${!slot.is_booked ? `onclick="pickSlot(this,'${slot.start}','${slot.end}')"` : ''}>
+                    ${slot.time}
+                </div>
+            `).join('');
+        } catch (e) {
+            loadEl.style.display  = 'none';
+            slotsEl.style.display = 'grid';
+            slotsEl.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:1rem;color:#dc2626;font-size:0.8rem;">⚠️ Error loading slots</div>';
+        }
+    }
+
+    window.pickSlot = function (el, start, end) {
+        document.querySelectorAll('.time-slot').forEach(s => s.classList.remove('slot-selected'));
+        el.classList.add('slot-selected');
+        document.getElementById('startTime').value = start;
+        document.getElementById('endTime').value   = end;
+        document.getElementById('summaryTimeRow').innerHTML =
+            '<span class="selected-icon">⏰</span><span>' + el.textContent.trim() + '</span>';
+        document.getElementById('submitBtn').disabled = false;
+    };
+
+})();
+</script>
+{% endblock %}

@@ -1,136 +1,860 @@
+{% extends "travellers/base.html" %}
 {% load static %}
 
-<div style="display:flex; height:80vh; border:1px solid #ccc;">
+{% block title %}Messages | Wayzo{% endblock %}
+{% block nav_inbox %}active{% endblock %}
 
-    <!-- LEFT SIDEBAR -->
-    <div style="width:30%; border-right:1px solid #ccc; overflow-y:auto;">
-        <h4 style="padding:10px;">Chats</h4>
-
-        {% for room in rooms %}
-            <a href="?room={{ room.id }}"
-   style="display:flex; align-items:center; gap:10px; padding:10px;
-   text-decoration:none; color:black;
-   {% if selected_room and selected_room.id == room.id %}
-       background:#f0f0f0;
-   {% endif %}">
-
-    {% if room.type == 'group' %}
-        <!-- Trip Image -->
-        {% if room.trip.image %}
-            <img src="{{ room.trip.image.url }}"
-                 style="width:40px; height:40px; border-radius:50%; object-fit:cover;">
-        {% else %}
-            <img src="/static/images/default_trip.png"
-                 style="width:40px; height:40px; border-radius:50%;">
-        {% endif %}
-
-        <span>🏕 {{ room.name }}</span>
-
-    {% else %}
-        {% for user in room.participants.all %}
-            {% if user != request.user %}
-
-                <!-- Profile Picture -->
-                {% if user.profile.profile_picture %}
-                    <img src="{{ user.profile.profile_picture.url }}"
-                         style="width:40px; height:40px; border-radius:50%; object-fit:cover;">
-                {% else %}
-                    <img src="/static/images/default.png"
-                         style="width:40px; height:40px; border-radius:50%;">
-                {% endif %}
-
-                <!-- Name -->
-                <span>
-                    {{ user.first_name|default:user.username }} {{ user.last_name }}
-                </span>
-
-            {% endif %}
-        {% endfor %}
-    {% endif %}
-
-</a>
-            </a>
-        {% empty %}
-            <p style="padding:10px;">No chats yet</p>
-        {% endfor %}
-    </div>
-    {% if selected_room %}
+{% block extra_styles %}
+<style>
+    /* Hero Section */
+    .messages-hero {
+        background: linear-gradient(135deg, #0B6B4F 0%, #0E8A8A 100%);
+        border-radius: 24px;
+        margin-bottom: 2rem;
+        padding: 2rem 2rem;
+        color: white;
+        box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1);
+    }
     
-{% else %}
-    <h3>Select a conversation</h3>
-{% endif %}
+    .messages-hero h1 {
+        font-family: 'Playfair Display', serif;
+        font-size: 1.8rem;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+    }
+    
+    .messages-hero p {
+        font-size: 0.9rem;
+        opacity: 0.9;
+        margin-bottom: 1rem;
+    }
+    
+    .hero-stats {
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+    }
+    
+    .hero-stat {
+        background: rgba(255,255,255,0.2);
+        backdrop-filter: blur(8px);
+        padding: 0.3rem 1rem;
+        border-radius: 40px;
+        font-size: 0.75rem;
+        font-weight: 500;
+    }
+    
+    /* Professional Chat Container */
+    .chat-container {
+        display: flex;
+        height: calc(100vh - 280px);
+        min-height: 550px;
+        background: white;
+        border-radius: 20px;
+        overflow: hidden;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        border: 1px solid var(--gray-200);
+    }
+    
+    /* Sidebar - Professional Layout */
+    .rooms-sidebar {
+        width: 380px;
+        border-right: 1px solid var(--gray-200);
+        background: white;
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .rooms-header {
+        padding: 1.2rem 1.5rem;
+        border-bottom: 1px solid var(--gray-200);
+        background: white;
+    }
+    
+    .rooms-header h3 {
+        font-size: 1.1rem;
+        font-weight: 700;
+        margin: 0 0 0.5rem 0;
+        color: var(--gray-800);
+    }
+    
+    .rooms-header p {
+        font-size: 0.75rem;
+        color: var(--text-light);
+        margin: 0;
+    }
+    
+    .search-box {
+        margin-top: 1rem;
+        position: relative;
+    }
+    
+    .search-box input {
+        width: 100%;
+        padding: 0.6rem 1rem 0.6rem 2.3rem;
+        border: 1px solid var(--gray-200);
+        border-radius: 10px;
+        font-size: 0.8rem;
+        background: var(--gray-100);
+        transition: all 0.2s;
+    }
+    
+    .search-box input:focus {
+        outline: none;
+        border-color: var(--teal);
+        background: white;
+    }
+    
+    .search-icon {
+        position: absolute;
+        left: 0.8rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--text-light);
+        font-size: 0.8rem;
+    }
+    
+    /* Rooms List - Properly Ordered */
+    .rooms-list {
+        flex: 1;
+        overflow-y: auto;
+        background: white;
+    }
+    
+    /* Sort options */
+    .sort-options {
+        padding: 0.8rem 1.5rem;
+        border-bottom: 1px solid var(--gray-100);
+        display: flex;
+        gap: 0.8rem;
+        background: var(--gray-50);
+    }
+    
+    .sort-btn {
+        background: none;
+        border: none;
+        font-size: 0.7rem;
+        padding: 0.3rem 0.8rem;
+        border-radius: 20px;
+        cursor: pointer;
+        color: var(--text-light);
+        transition: all 0.2s;
+    }
+    
+    .sort-btn.active {
+        background: var(--teal);
+        color: white;
+    }
+    
+    .sort-btn:hover:not(.active) {
+        background: var(--gray-200);
+    }
+    
+    /* Room Item - Professional Card */
+    .room-item {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        padding: 1rem 1.5rem;
+        cursor: pointer;
+        transition: all 0.2s;
+        text-decoration: none;
+        border-bottom: 1px solid var(--gray-100);
+        background: white;
+    }
+    
+    .room-item:hover {
+        background: var(--gray-100);
+        transform: translateX(2px);
+    }
+    
+    .room-item.active {
+        background: var(--teal-pale);
+        border-left: 3px solid var(--teal);
+    }
+    
+    /* Professional Avatar */
+    .room-avatar {
+        width: 52px;
+        height: 52px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--teal), var(--teal-dark));
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: 600;
+        font-size: 1.1rem;
+        flex-shrink: 0;
+        overflow: hidden;
+        cursor: pointer;
+        transition: all 0.2s;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }
+    
+    .room-avatar:hover {
+        transform: scale(1.03);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+    
+    .room-avatar img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+    
+    .room-info {
+        flex: 1;
+        min-width: 0;
+    }
+    
+    .room-name {
+        font-weight: 600;
+        font-size: 0.95rem;
+        color: var(--gray-900);
+        margin-bottom: 0.3rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+    
+    .room-name a {
+        text-decoration: none;
+        color: inherit;
+    }
+    
+    .room-name a:hover {
+        color: var(--teal);
+    }
+    
+    .room-last-msg {
+        font-size: 0.75rem;
+        color: var(--text-light);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        margin-bottom: 0.2rem;
+    }
+    
+    .room-time {
+        font-size: 0.65rem;
+        color: var(--text-light);
+    }
+    
+    .unread-badge {
+        background: var(--teal);
+        color: white;
+        font-size: 0.7rem;
+        padding: 0.15rem 0.55rem;
+        border-radius: 20px;
+        font-weight: 600;
+        min-width: 24px;
+        text-align: center;
+    }
+    
+    /* Badge for online status */
+    .online-indicator {
+        position: absolute;
+        bottom: 2px;
+        right: 2px;
+        width: 12px;
+        height: 12px;
+        background: #10B981;
+        border-radius: 50%;
+        border: 2px solid white;
+    }
+    
+    .avatar-wrapper {
+        position: relative;
+    }
+    
+    /* Chat Area */
+    .chat-area {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        background: #F8F9FC;
+    }
+    
+    .chat-header {
+        padding: 1rem 1.5rem;
+        border-bottom: 1px solid var(--gray-200);
+        background: white;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+    
+    .chat-header-avatar {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--teal), var(--teal-dark));
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: 600;
+        font-size: 1rem;
+        overflow: hidden;
+        cursor: pointer;
+        flex-shrink: 0;
+    }
+    
+    .chat-header-avatar img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+    
+    .chat-header-info {
+        flex: 1;
+    }
+    
+    .chat-header-info h3 {
+        font-size: 1rem;
+        font-weight: 700;
+        margin: 0;
+    }
+    
+    .chat-header-info p {
+        font-size: 0.7rem;
+        color: var(--text-light);
+        margin: 0.2rem 0 0;
+    }
+    
+    /* Messages Area */
+    .messages-area {
+        flex: 1;
+        overflow-y: auto;
+        padding: 1.5rem;
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    .message {
+        display: flex;
+        max-width: 70%;
+    }
+    
+    .message.sent {
+        align-self: flex-end;
+    }
+    
+    .message.received {
+        align-self: flex-start;
+    }
+    
+    .message-wrapper {
+        display: flex;
+        gap: 0.5rem;
+        align-items: flex-end;
+        width: 100%;
+    }
+    
+    .message.received .message-wrapper {
+        flex-direction: row;
+    }
+    
+    .message.sent .message-wrapper {
+        flex-direction: row-reverse;
+    }
+    
+    .message-avatar {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background: var(--teal);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 0.7rem;
+        font-weight: 600;
+        flex-shrink: 0;
+        overflow: hidden;
+        cursor: pointer;
+    }
+    
+    .message-avatar img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+    
+    .message-content {
+        flex: 1;
+        max-width: calc(100% - 40px);
+    }
+    
+    .message-sender-name {
+        font-size: 0.7rem;
+        font-weight: 600;
+        color: var(--gray-700);
+        margin-bottom: 0.2rem;
+        padding-left: 0.3rem;
+    }
+    
+    .message-bubble {
+        padding: 0.6rem 1rem;
+        border-radius: 18px;
+        font-size: 0.85rem;
+        line-height: 1.4;
+        word-wrap: break-word;
+    }
+    
+    .message.sent .message-bubble {
+        background: var(--teal);
+        color: white;
+        border-bottom-right-radius: 4px;
+    }
+    
+    .message.received .message-bubble {
+        background: white;
+        color: var(--gray-800);
+        border: 1px solid var(--gray-200);
+        border-bottom-left-radius: 4px;
+    }
+    
+    .message-meta {
+        font-size: 0.6rem;
+        color: var(--text-light);
+        margin-top: 0.2rem;
+        padding: 0 0.5rem;
+    }
+    
+    /* Input Area */
+    .message-input-area {
+        padding: 1rem 1.5rem;
+        border-top: 1px solid var(--gray-200);
+        background: white;
+        display: flex;
+        gap: 0.75rem;
+        align-items: center;
+    }
+    
+    .message-input {
+        flex: 1;
+        padding: 0.7rem 1rem;
+        border: 1px solid var(--gray-200);
+        border-radius: 24px;
+        font-size: 0.85rem;
+        font-family: 'Inter', sans-serif;
+        resize: none;
+        background: var(--gray-100);
+    }
+    
+    .message-input:focus {
+        outline: none;
+        border-color: var(--teal);
+        background: white;
+    }
+    
+    .send-btn {
+        background: var(--teal);
+        color: white;
+        border: none;
+        border-radius: 50%;
+        width: 38px;
+        height: 38px;
+        cursor: pointer;
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.1rem;
+    }
+    
+    .send-btn:hover {
+        background: var(--teal-dark);
+        transform: scale(1.05);
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 3rem;
+        color: var(--text-light);
+    }
+    
+    /* Scrollbar */
+    .messages-area::-webkit-scrollbar,
+    .rooms-list::-webkit-scrollbar {
+        width: 4px;
+    }
+    
+    .messages-area::-webkit-scrollbar-track,
+    .rooms-list::-webkit-scrollbar-track {
+        background: var(--gray-200);
+    }
+    
+    .messages-area::-webkit-scrollbar-thumb,
+    .rooms-list::-webkit-scrollbar-thumb {
+        background: var(--teal);
+        border-radius: 4px;
+    }
+    
+    @media (max-width: 768px) {
+        .rooms-sidebar {
+            width: 320px;
+        }
+        .message {
+            max-width: 85%;
+        }
+        .messages-hero {
+            padding: 1.2rem;
+        }
+        .messages-hero h1 {
+            font-size: 1.4rem;
+        }
+    }
+</style>
+{% endblock %}
 
-    <!-- RIGHT CHAT AREA -->
-    <div style="width:70%; display:flex; flex-direction:column;">
-
-    {% if selected_room %}
-
-        <!-- Header -->
-        <div style="padding:10px; border-bottom:1px solid #ccc;">
-            <h4>
-
-                {% if selected_room.type == 'group' %}
-                    <a href="{% url 'trip_detail' selected_room.trip.id %}"
-                       style="display:flex; align-items:center; gap:10px; text-decoration:none; color:black;">
-
-                        {% if selected_room.trip.image %}
-                            <img src="{{ selected_room.trip.image.url }}"
-                                 style="width:40px; height:40px; border-radius:50%;">
-                        {% else %}
-                            <img src="{% static 'images/default_trip.png' %}"
-                                 style="width:40px; height:40px; border-radius:50%;">
-                        {% endif %}
-
-                        <b>{{ selected_room.name }}</b>
+{% block content %}
+<div class="page-body" style="padding: 1.5rem 2rem;">
+    <!-- Hero Section -->
+    <div class="messages-hero">
+        <h1>💬 Messages</h1>
+        <p>Connect with your travel buddies and plan amazing adventures together</p>
+        <div class="hero-stats">
+            <span class="hero-stat">✨ {{ rooms|length }} Conversations</span>
+            {% if unread_total > 0 %}
+            <span class="hero-stat">📬 {{ unread_total }} Unread</span>
+            {% endif %}
+        </div>
+    </div>
+    
+    <div class="chat-container">
+        <!-- Professional Sidebar -->
+        <div class="rooms-sidebar">
+            <div class="rooms-header">
+                <h3>All Messages</h3>
+                <p>Your conversations with fellow travellers</p>
+                <div class="search-box">
+                    <span class="search-icon">🔍</span>
+                    <input type="text" id="searchInput" placeholder="Search by name...">
+                </div>
+            </div>
+            
+            <div class="sort-options">
+                <button class="sort-btn active" data-sort="recent">Recent</button>
+                <button class="sort-btn" data-sort="unread">Unread first</button>
+                <button class="sort-btn" data-sort="name">Name A-Z</button>
+            </div>
+            
+            <div class="rooms-list" id="roomsList">
+                {% for room in rooms %}
+                <div class="room-item-wrapper" 
+                     data-room-id="{{ room.id }}" 
+                     data-unread="{{ room.unread_count|default:0 }}" 
+                     data-name="{% if room.type == 'group' %}{{ room.name|default:'Group Chat' }}{% else %}{% if room.other_user %}{{ room.other_user.full_name|default:room.other_user.username }}{% else %}Unknown User{% endif %}{% endif %}" 
+                     data-time="{{ room.last_message_time|date:'U'|default:'0' }}">
+                    <a href="?room={{ room.id }}" class="room-item {% if selected_room and selected_room.id == room.id %}active{% endif %}">
+                        <div class="avatar-wrapper">
+                            <div class="room-avatar" 
+                                 onclick="event.preventDefault(); event.stopPropagation(); 
+                                          {% if room.type == 'dm' and room.other_user %}
+                                              window.location.href='{% url 'travellers:user_profile' user_id=room.other_user.id %}'
+                                          {% else %}
+                                              event.preventDefault()
+                                          {% endif %}">
+                                {% if room.type == 'group' %}
+                                    👥
+                                {% else %}
+                                    {% if room.other_user and room.other_user.profile_picture %}
+                                        <img src="{{ room.other_user.profile_picture.url }}" alt="{{ room.other_user.full_name|default:room.other_user.username }}">
+                                    {% else %}
+                                        {% if room.other_user %}
+                                            {{ room.other_user.first_letter|default:"U" }}
+                                        {% else %}
+                                            👤
+                                        {% endif %}
+                                    {% endif %}
+                                {% endif %}
+                            </div>
+                            {% if room.type == 'dm' and room.other_user and room.other_user.is_online %}
+                            <span class="online-indicator"></span>
+                            {% endif %}
+                        </div>
+                        <div class="room-info">
+                            <div class="room-name">
+                                {% if room.type == 'group' %}
+                                    {{ room.name|default:"Group Chat" }}
+                                {% else %}
+                                    {% if room.other_user %}
+                                        <a href="{% url 'travellers:user_profile' user_id=room.other_user.id %}" 
+                                           style="text-decoration: none;"
+                                           onclick="event.stopPropagation()">
+                                            {{ room.other_user.full_name|default:room.other_user.username }}
+                                        </a>
+                                    {% else %}
+                                        Unknown User
+                                    {% endif %}
+                                {% endif %}
+                                {% if room.unread_count > 0 %}
+                                <span class="unread-badge">{{ room.unread_count }}</span>
+                                {% endif %}
+                            </div>
+                            <div class="room-last-msg">
+                                {% if room.last_message %}
+                                    {{ room.last_message|truncatechars:50 }}
+                                {% else %}
+                                    ✨ No messages yet
+                                {% endif %}
+                            </div>
+                            <div class="room-time">
+                                {% if room.last_message_time %}
+                                    {{ room.last_message_time|timesince }} ago
+                                {% endif %}
+                            </div>
+                        </div>
                     </a>
-
-                {% else %}
-                    {% for user in selected_room.participants.all %}
-                        {% if user != request.user %}
-                            <a href="{% url 'travellers:user_profile' user.id %}"
-                               style="text-decoration:none; color:black;">
-                                {{ user.first_name|default:user.username }} {{ user.last_name }}
-                            </a>
-                        {% endif %}
-                    {% endfor %}
-                {% endif %}
-
-            </h4>
+                </div>
+                {% empty %}
+                <div class="empty-state">
+                    <p>💭 No conversations yet</p>
+                    <p style="font-size: 0.7rem; margin-top: 0.5rem;">Find travellers and start chatting!</p>
+                </div>
+                {% endfor %}
+            </div>
         </div>
-
-        <!-- Messages -->
-        <div id="chat-box" style="flex:1; overflow-y:auto; padding:10px;">
-            {% for msg in messages %}
-                <p style="text-align:{% if msg.sender == request.user %}right{% else %}left{% endif %};">
-                    <b>
-                        {% if msg.sender == request.user %}You
-                        {% else %}{{ msg.sender.first_name|default:msg.sender.username }}
+        
+        <!-- Chat Area -->
+        <div class="chat-area">
+            {% if selected_room %}
+            <div class="chat-header">
+                <div class="chat-header-avatar" 
+                     onclick="{% if selected_room.type == 'dm' and selected_room_info.other_user %}window.location.href='{% url 'travellers:user_profile' user_id=selected_room_info.other_user.id %}'{% else %}event.preventDefault(){% endif %}">
+                    {% if selected_room.type == 'group' %}
+                        👥
+                    {% else %}
+                        {% if selected_room_info.other_user and selected_room_info.other_user.profile_picture %}
+                            <img src="{{ selected_room_info.other_user.profile_picture.url }}" alt="{{ selected_room_info.other_user.full_name }}">
+                        {% else %}
+                            {% if selected_room_info.other_user %}
+                                {{ selected_room_info.other_user.full_name|default:selected_room_info.other_user.username|make_list|first|upper }}
+                            {% else %}
+                                👤
+                            {% endif %}
                         {% endif %}
-                    </b>: {{ msg.text }}
-                </p>
-            {% empty %}
-                <p>No messages yet</p>
-            {% endfor %}
+                    {% endif %}
+                </div>
+                <div class="chat-header-info">
+                    <h3>
+                        {% if selected_room.type == 'group' %}
+                            {{ selected_room.name|default:"Group Chat" }}
+                        {% else %}
+                            {% if selected_room_info.other_user %}
+                                <a href="{% url 'travellers:user_profile' user_id=selected_room_info.other_user.id %}" 
+                                   style="text-decoration: none; color: inherit;">
+                                    {{ selected_room_info.other_user.full_name|default:selected_room_info.other_user.username }}
+                                </a>
+                            {% else %}
+                                Unknown User
+                            {% endif %}
+                        {% endif %}
+                    </h3>
+                    <p>
+                        {% if selected_room.type == 'group' %}
+                            Group conversation
+                        {% else %}
+                            {% if selected_room_info.other_user %}
+                                @{{ selected_room_info.other_user.username|default:"traveller" }}
+                            {% endif %}
+                        {% endif %}
+                    </p>
+                </div>
+            </div>
+            
+            <div class="messages-area" id="messagesArea">
+                {% for message in messages %}
+                <div class="message {% if message.sender == request.user %}sent{% else %}received{% endif %}">
+                    <div class="message-wrapper">
+                        {% if message.sender != request.user %}
+                        <div class="message-avatar" 
+                             onclick="window.location.href='{% url 'travellers:user_profile' user_id=message.sender.id %}'">
+                            {% if message.sender.profile_picture %}
+                                <img src="{{ message.sender.profile_picture.url }}" alt="{{ message.sender.get_full_name|default:message.sender.username }}">
+                            {% else %}
+                                {{ message.sender.username|first|upper }}
+                            {% endif %}
+                        </div>
+                        {% endif %}
+                        <div class="message-content">
+                            {% if message.sender != request.user and selected_room.type == 'group' %}
+                            <div class="message-sender-name">
+                                <a href="{% url 'travellers:user_profile' user_id=message.sender.id %}" 
+                                   style="text-decoration: none; color: var(--teal);">
+                                    {{ message.sender.get_full_name|default:message.sender.username }}
+                                </a>
+                            </div>
+                            {% endif %}
+                            <div class="message-bubble">
+                                {{ message.text|linebreaksbr }}
+                            </div>
+                            <div class="message-meta">
+                                {{ message.created_at|date:"g:i A" }}
+                                {% if message.sender == request.user and message.is_read %}
+                                    • Read
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="empty-state">
+                    <p>✨ No messages yet</p>
+                    <p style="font-size: 0.7rem;">Send a message to start the conversation!</p>
+                </div>
+                {% endfor %}
+            </div>
+            
+            <form method="POST" class="message-input-area" id="messageForm">
+                {% csrf_token %}
+                <textarea class="message-input" name="message" rows="1" placeholder="Type a message..." required></textarea>
+                <button type="submit" class="send-btn">→</button>
+            </form>
+            {% else %}
+            <div class="empty-state" style="display: flex; flex-direction: column; justify-content: center; height: 100%;">
+                <p style="font-size: 3rem; margin-bottom: 1rem;">💬</p>
+                <p style="font-size: 1rem; font-weight: 500;">Select a conversation</p>
+                <p style="font-size: 0.8rem; margin-top: 0.5rem;">Choose a chat from the left panel to start messaging</p>
+            </div>
+            {% endif %}
         </div>
-
-        <!-- Input -->
-        <form method="POST" style="padding:10px; display:flex; gap:10px;">
-            {% csrf_token %}
-            <input type="text" name="message" placeholder="Type a message..." style="flex:1;" required>
-            <button type="submit">Send</button>
-        </form>
-
-    {% else %}
-        <p style="padding:20px;">Select a chat to start messaging</p>
-    {% endif %}
-
-</div>
-
+    </div>
 </div>
 
 <script>
-    const chatBox = document.getElementById('chat-box');
-    if (chatBox) {
-        chatBox.scrollTop = chatBox.scrollHeight;
+    // Auto-scroll to bottom of messages
+    const messagesArea = document.getElementById('messagesArea');
+    if (messagesArea) {
+        messagesArea.scrollTop = messagesArea.scrollHeight;
+    }
+    
+    // Auto-resize textarea
+    const textarea = document.querySelector('.message-input');
+    if (textarea) {
+        textarea.addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = Math.min(this.scrollHeight, 100) + 'px';
+        });
+        if (document.getElementById('messageForm')) {
+            textarea.focus();
+        }
+    }
+    
+    // Search functionality
+    const searchInput = document.getElementById('searchInput');
+    if (searchInput) {
+        searchInput.addEventListener('input', function() {
+            const searchTerm = this.value.toLowerCase();
+            const roomWrappers = document.querySelectorAll('.room-item-wrapper');
+            
+            roomWrappers.forEach(wrapper => {
+                const roomName = wrapper.getAttribute('data-name') || '';
+                if (roomName.toLowerCase().includes(searchTerm)) {
+                    wrapper.style.display = '';
+                } else {
+                    wrapper.style.display = 'none';
+                }
+            });
+        });
+    }
+    
+    // Sort functionality
+    let currentSort = 'recent';
+    const sortBtns = document.querySelectorAll('.sort-btn');
+    const roomsList = document.getElementById('roomsList');
+    
+    function sortRooms(sortType) {
+        const wrappers = Array.from(document.querySelectorAll('.room-item-wrapper'));
+        
+        wrappers.sort((a, b) => {
+            if (sortType === 'recent') {
+                const timeA = parseInt(a.getAttribute('data-time') || '0');
+                const timeB = parseInt(b.getAttribute('data-time') || '0');
+                return timeB - timeA;
+            } else if (sortType === 'unread') {
+                const unreadA = parseInt(a.getAttribute('data-unread') || '0');
+                const unreadB = parseInt(b.getAttribute('data-unread') || '0');
+                if (unreadA !== unreadB) return unreadB - unreadA;
+                const timeA = parseInt(a.getAttribute('data-time') || '0');
+                const timeB = parseInt(b.getAttribute('data-time') || '0');
+                return timeB - timeA;
+            } else if (sortType === 'name') {
+                const nameA = (a.getAttribute('data-name') || '').toLowerCase();
+                const nameB = (b.getAttribute('data-name') || '').toLowerCase();
+                return nameA.localeCompare(nameB);
+            }
+            return 0;
+        });
+        
+        wrappers.forEach(wrapper => {
+            if (roomsList) {
+                roomsList.appendChild(wrapper);
+            }
+        });
+    }
+    
+    sortBtns.forEach(btn => {
+        btn.addEventListener('click', function() {
+            sortBtns.forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            currentSort = this.getAttribute('data-sort');
+            sortRooms(currentSort);
+        });
+    });
+    
+    // Enter to send message (Shift+Enter for new line)
+    if (textarea && document.getElementById('messageForm')) {
+        textarea.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                if (this.value.trim()) {
+                    document.getElementById('messageForm').submit();
+                }
+            }
+        });
+    }
+    
+    // Prevent navigation propagation from avatars
+    document.querySelectorAll('.room-avatar, .chat-header-avatar, .message-avatar').forEach(avatar => {
+        avatar.addEventListener('click', function(e) {
+            e.stopPropagation();
+        });
+    });
+    
+    // Mark messages as read when viewing room
+    {% if selected_room %}
+    fetch('/community/api/mark-room-read/', {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': '{{ csrf_token }}',
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ room_id: '{{ selected_room.id }}' })
+    }).catch(err => console.log('Error marking read:', err));
+    {% endif %}
+</script>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    // Update unread count in sidebar navigation
+    const unreadTotal = {{ unread_total|default:0 }};
+    if (unreadTotal > 0) {
+        const inboxNav = document.querySelector('.nav-item.active');
+        if (inboxNav) {
+            let badge = inboxNav.querySelector('.nav-badge');
+            if (!badge) {
+                badge = document.createElement('span');
+                badge.className = 'nav-badge';
+                inboxNav.appendChild(badge);
+            }
+            badge.textContent = unreadTotal > 99 ? '99+' : unreadTotal;
+        }
     }
 </script>
+{% endblock %}

@@ -1,0 +1,791 @@
+{% extends "travellers/base.html" %}
+{% load static %}
+
+{% block title %}Payment Successful | Wayzo{% endblock %}
+
+{% block nav_bookings %}active{% endblock %}
+
+{% block extra_styles %}
+<style>
+    /* Hero Section - Matching My Bookings */
+    .hero-section {
+        position: relative;
+        height: 320px;
+        overflow: hidden;
+        flex-shrink: 0;
+    }
+    
+    .hero-bg {
+        position: absolute;
+        inset: 0;
+        background-image: url("{% static 'images/felix.jpg' %}");
+        background-size: cover;
+        background-position: center 40%;
+        z-index: 0;
+    }
+    
+    .hero-bg::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background-image: radial-gradient(circle, rgba(255,255,255,0.04) 1px, transparent 1px);
+        background-size: 28px 28px;
+        z-index: 1;
+    }
+    
+    .hero-bg::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(ellipse at 30% 60%, rgba(14,138,138,0.18) 0%, transparent 60%);
+        z-index: 1;
+    }
+    
+    .hero-fade {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 100px;
+        background: linear-gradient(to bottom, transparent 0%, var(--gray-100) 100%);
+        z-index: 3;
+        pointer-events: none;
+    }
+    
+    .hero-content {
+        position: relative;
+        z-index: 4;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        justify-content: center;
+        padding: 4rem 3rem 5rem;
+    }
+    
+    .hero-eyebrow {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        background: rgba(255,255,255,0.08);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255,255,255,0.14);
+        color: rgba(255,255,255,0.85);
+        font-size: 0.68rem;
+        font-weight: 500;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        padding: 0.38rem 1rem;
+        border-radius: 40px;
+        margin-bottom: 1rem;
+    }
+    
+    .hero-eyebrow::before {
+        content: "";
+        display: inline-block;
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: #5FC5C5;
+        flex-shrink: 0;
+    }
+    
+    .hero-section h1 {
+        font-family: 'Playfair Display', serif;
+        font-size: 2.8rem;
+        font-weight: 600;
+        line-height: 1.1;
+        color: white;
+        margin-bottom: 0.6rem;
+        letter-spacing: -0.01em;
+    }
+    
+    .hero-section h1 em {
+        font-style: italic;
+        color: #8DE8E8;
+    }
+    
+    .hero-section p {
+        font-size: 0.88rem;
+        color: rgba(255,255,255,0.6);
+        line-height: 1.65;
+        font-weight: 300;
+    }
+    
+    /* Success Wrapper - Centered */
+    .success-wrapper {
+        position: relative;
+        z-index: 10;
+        margin-top: -60px;
+        padding: 0 2rem 3rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: calc(100vh - 400px);
+    }
+    
+    .success-card {
+        max-width: 600px;
+        width: 100%;
+        background: white;
+        border-radius: 28px;
+        overflow: hidden;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08), 0 4px 12px rgba(0, 0, 0, 0.04);
+        animation: slideUp 0.5s ease-out;
+        position: relative;
+        margin: 0 auto;
+    }
+    
+    .success-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(90deg, var(--teal), #10B981, var(--teal));
+    }
+    
+    @keyframes slideUp {
+        from {
+            opacity: 0;
+            transform: translateY(30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    .success-header {
+        text-align: center;
+        padding: 2rem 2rem 1rem;
+    }
+    
+    .success-icon {
+        width: 90px;
+        height: 90px;
+        margin: 0 auto 1.2rem;
+        background: linear-gradient(135deg, #10B981, #059669);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 48px;
+        font-weight: bold;
+        color: white;
+        animation: pulse 0.6s ease-out 0.2s both;
+        box-shadow: 0 10px 25px -5px rgba(16, 185, 129, 0.3);
+    }
+    
+    @keyframes pulse {
+        0% {
+            transform: scale(0);
+            opacity: 0;
+        }
+        50% {
+            transform: scale(1.1);
+        }
+        100% {
+            transform: scale(1);
+            opacity: 1;
+        }
+    }
+    
+    .success-header h2 {
+        font-family: 'Playfair Display', serif;
+        font-size: 1.8rem;
+        font-weight: 700;
+        color: var(--gray-800);
+        margin-bottom: 0.5rem;
+    }
+    
+    .success-header p {
+        color: var(--text-light);
+        font-size: 0.85rem;
+    }
+    
+    /* Booking Details Card */
+    .booking-details {
+        background: var(--gray-100);
+        margin: 1rem 2rem;
+        border-radius: 20px;
+        padding: 1.2rem;
+    }
+    
+    .detail-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.9rem 0;
+        border-bottom: 1px solid var(--gray-200);
+    }
+    
+    .detail-row:last-child {
+        border-bottom: none;
+    }
+    
+    .detail-label {
+        font-size: 0.8rem;
+        color: var(--text-light);
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .detail-value {
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: var(--gray-800);
+    }
+    
+    .detail-value.amount {
+        font-size: 1.2rem;
+        color: var(--teal);
+    }
+    
+    .detail-value.paid {
+        color: #10B981;
+        background: rgba(16, 185, 129, 0.1);
+        padding: 0.2rem 0.6rem;
+        border-radius: 20px;
+        font-size: 0.75rem;
+    }
+    
+    /* Status Badge */
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        background: #D1FAE5;
+        color: #065F46;
+        padding: 0.25rem 0.75rem;
+        border-radius: 40px;
+        font-size: 0.7rem;
+        font-weight: 600;
+    }
+    
+    .status-badge svg {
+        width: 12px;
+        height: 12px;
+        stroke: #065F46;
+    }
+    
+    /* Booking Type Specific Banner */
+    .booking-type-banner {
+        background: var(--teal-pale);
+        margin: 0 2rem 1rem;
+        border-radius: 14px;
+        padding: 0.8rem 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.8rem;
+        font-size: 0.8rem;
+    }
+    
+    .booking-type-banner .type-icon {
+        font-size: 1.3rem;
+    }
+    
+    .booking-type-banner .type-text {
+        color: var(--teal-dark);
+        font-weight: 500;
+    }
+    
+    .booking-type-banner .type-detail {
+        margin-left: auto;
+        font-weight: 600;
+        color: var(--teal);
+    }
+    
+    /* Next Steps */
+    .next-steps {
+        padding: 1rem 2rem 1.5rem;
+    }
+    
+    .next-steps h4 {
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        color: var(--text-light);
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .steps-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1rem;
+        margin-bottom: 1rem;
+    }
+    
+    .step-item {
+        text-align: center;
+        padding: 0.75rem;
+        background: var(--gray-100);
+        border-radius: 14px;
+        transition: all 0.2s;
+    }
+    
+    .step-item:hover {
+        transform: translateY(-2px);
+        background: var(--teal-pale);
+    }
+    
+    .step-icon {
+        width: 40px;
+        height: 40px;
+        background: white;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 0.5rem;
+        font-size: 1.2rem;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+    }
+    
+    .step-label {
+        font-size: 0.65rem;
+        color: var(--text-light);
+        font-weight: 500;
+        line-height: 1.4;
+    }
+    
+    /* Action Buttons */
+    .action-buttons {
+        padding: 0 2rem 2rem;
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+    }
+    
+    .btn-action {
+        flex: 1;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        padding: 0.7rem 1.2rem;
+        border-radius: 12px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        text-decoration: none;
+        transition: all 0.2s;
+        cursor: pointer;
+    }
+    
+    .btn-primary {
+        background: var(--teal);
+        color: white;
+        border: none;
+    }
+    
+    .btn-primary:hover {
+        background: var(--teal-dark);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(14, 138, 138, 0.3);
+    }
+    
+    .btn-secondary {
+        background: var(--gray-200);
+        color: var(--gray-800);
+        border: 1px solid var(--gray-300);
+    }
+    
+    .btn-secondary:hover {
+        background: var(--gray-300);
+        transform: translateY(-2px);
+    }
+    
+    .btn-invoice {
+        background: white;
+        color: var(--teal);
+        border: 2px solid var(--teal);
+    }
+    
+    .btn-invoice:hover {
+        background: var(--teal-pale);
+        transform: translateY(-2px);
+    }
+    
+    /* Invoice Banner */
+    .invoice-banner {
+        background: linear-gradient(135deg, var(--teal-pale), var(--gray-100));
+        padding: 1rem 2rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 1rem;
+        border-top: 1px solid var(--gray-200);
+    }
+    
+    .invoice-info {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        font-size: 0.75rem;
+    }
+    
+    .invoice-info code {
+        background: white;
+        padding: 0.3rem 0.7rem;
+        border-radius: 8px;
+        font-family: monospace;
+        font-size: 0.7rem;
+        color: var(--teal);
+    }
+    
+    .btn-invoice-sm {
+        background: var(--teal);
+        color: white;
+        padding: 0.4rem 1rem;
+        border-radius: 8px;
+        font-size: 0.7rem;
+        font-weight: 600;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+    }
+    
+    .btn-invoice-sm:hover {
+        background: var(--teal-dark);
+    }
+    
+    @media (max-width: 768px) {
+        .hero-section h1 {
+            font-size: 2rem;
+        }
+        .hero-content {
+            padding: 3rem 1.5rem 4rem;
+        }
+        .success-wrapper {
+            padding: 0 1rem 2rem;
+        }
+    }
+    
+    @media (max-width: 640px) {
+        .steps-grid {
+            grid-template-columns: 1fr;
+            gap: 0.5rem;
+        }
+        .step-item {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            text-align: left;
+        }
+        .step-icon {
+            margin: 0;
+        }
+        .action-buttons {
+            flex-direction: column;
+        }
+        .booking-details {
+            margin: 1rem;
+        }
+        .next-steps {
+            padding: 1rem;
+        }
+        .action-buttons {
+            padding: 0 1rem 1.5rem;
+        }
+        .booking-type-banner {
+            margin: 0 1rem 1rem;
+            flex-wrap: wrap;
+        }
+        .booking-type-banner .type-detail {
+            margin-left: 0;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Hero Section - Matching My Bookings -->
+<div class="hero-section">
+    <div class="hero-bg"></div>
+    <div class="hero-fade"></div>
+    <div class="hero-content">
+        <div class="hero-eyebrow">Payment Confirmed</div>
+        <h1>Payment <em>successful</em><br>Thank you!</h1>
+        <p>Your booking is now confirmed. Get ready for an amazing journey!</p>
+    </div>
+</div>
+
+<!-- Centered Success Card -->
+<div class="success-wrapper">
+    <div class="success-card">
+        <div class="success-header">
+            <div class="success-icon">✓</div>
+            <h2>Payment Successful! 🎉</h2>
+            <p>Your payment has been processed successfully</p>
+        </div>
+        
+        <!-- Booking Type Specific Banner -->
+        {% if booking_type == "package" %}
+        <div class="booking-type-banner">
+            <span class="type-icon">🏖️</span>
+            <span class="type-text">Tour Package Booking</span>
+            <span class="type-detail">{{ booking.package.title }}</span>
+        </div>
+        {% elif booking_type == "room" %}
+        <div class="booking-type-banner">
+            <span class="type-icon">🏨</span>
+            <span class="type-text">Hotel Room Booking</span>
+            <span class="type-detail">{{ booking.room.room_type.name }} - Room {{ booking.room.room_number }}</span>
+        </div>
+        {% elif booking_type == "table" %}
+        <div class="booking-type-banner">
+            <span class="type-icon">🍽️</span>
+            <span class="type-text">Table Reservation</span>
+            <span class="type-detail">{{ booking.table.restaurant.restaurant_name }} - Table {{ booking.table.table_number }}</span>
+        </div>
+        {% endif %}
+        
+        <!-- Booking Details -->
+        <div class="booking-details">
+            <div class="detail-row">
+                <span class="detail-label">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                        <line x1="16" y1="2" x2="16" y2="6"/>
+                        <line x1="8" y1="2" x2="8" y2="6"/>
+                        <line x1="3" y1="10" x2="21" y2="10"/>
+                    </svg>
+                    Booking ID
+                </span>
+                <span class="detail-value">#{{ booking.id }}</span>
+            </div>
+            
+            {% if booking_type == "package" %}
+            <div class="detail-row">
+                <span class="detail-label">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
+                        <circle cx="12" cy="10" r="3"/>
+                    </svg>
+                    Package
+                </span>
+                <span class="detail-value">{{ booking.package.title }}</span>
+            </div>
+            {% elif booking_type == "room" %}
+            <div class="detail-row">
+                <span class="detail-label">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                        <polyline points="9 22 9 12 15 12 15 22"/>
+                    </svg>
+                    Room Type
+                </span>
+                <span class="detail-value">{{ booking.room.room_type.name }}</span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"/>
+                        <polyline points="12 6 12 12 16 14"/>
+                    </svg>
+                    Room Number
+                </span>
+                <span class="detail-value">{{ booking.room.room_number }}</span>
+            </div>
+            {% elif booking_type == "table" %}
+            <div class="detail-row">
+                <span class="detail-label">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"/>
+                        <line x1="7" y1="2" x2="7" y2="22"/>
+                        <line x1="17" y1="2" x2="17" y2="22"/>
+                    </svg>
+                    Restaurant
+                </span>
+                <span class="detail-value">{{ booking.table.restaurant.restaurant_name }}</span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"/>
+                        <polyline points="12 6 12 12 16 14"/>
+                    </svg>
+                    Table & Time
+                </span>
+                <span class="detail-value">Table {{ booking.table.table_number }} | {{ booking.start_time|time:"g:i A" }}</span>
+            </div>
+            {% endif %}
+            
+            <div class="detail-row">
+                <span class="detail-label">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/>
+                        <line x1="1" y1="10" x2="23" y2="10"/>
+                    </svg>
+                    Payment Type
+                </span>
+                <span class="detail-value">{{ payment_type|default:"Full Payment" }}</span>
+            </div>
+            
+            <div class="detail-row">
+                <span class="detail-label">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="12" y1="1" x2="12" y2="23"/>
+                        <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+                    </svg>
+                    Amount Paid
+                </span>
+                <span class="detail-value amount">₹{{ amount|floatformat:2 }}</span>
+            </div>
+            
+            <div class="detail-row">
+                <span class="detail-label">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="20 6 9 17 4 12"/>
+                    </svg>
+                    Payment Status
+                </span>
+                <span class="detail-value paid">
+                    <span class="status-badge">
+                        <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+                        {{ booking.get_payment_status_display }}
+                    </span>
+                </span>
+            </div>
+            
+            {% if booking.travel_date or booking.start_time %}
+            <div class="detail-row">
+                <span class="detail-label">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"/>
+                        <polyline points="12 6 12 12 16 14"/>
+                    </svg>
+                    {% if booking_type == "package" %}Travel Date{% else %}Booking Date{% endif %}
+                </span>
+                <span class="detail-value">
+                    {% if booking.travel_date %}
+                        {{ booking.travel_date }}
+                    {% elif booking.start_time %}
+                        {{ booking.start_time|date:"M d, Y" }}
+                    {% endif %}
+                </span>
+            </div>
+            {% endif %}
+        </div>
+        
+        <!-- Next Steps -->
+        <div class="next-steps">
+            <h4>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"/>
+                    <polyline points="12 6 12 12 16 14"/>
+                </svg>
+                What's Next?
+            </h4>
+            <div class="steps-grid">
+                <div class="step-item">
+                    <div class="step-icon">📧</div>
+                    <div class="step-label">Check your email for confirmation</div>
+                </div>
+                <div class="step-item">
+                    <div class="step-icon">📋</div>
+                    <div class="step-label">Review booking in "My Bookings"</div>
+                </div>
+                <div class="step-item">
+                    <div class="step-icon">🤝</div>
+                    <div class="step-label">Connect with travel buddies</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Action Buttons -->
+        <div class="action-buttons">
+            <a href="{% url 'travellers:dashboard' %}" class="btn-action btn-primary">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="3" width="7" height="7"/>
+                    <rect x="14" y="3" width="7" height="7"/>
+                    <rect x="14" y="14" width="7" height="7"/>
+                    <rect x="3" y="14" width="7" height="7"/>
+                </svg>
+                Dashboard
+            </a>
+            <a href="{% url 'travellers:my_bookings' %}" class="btn-action btn-secondary">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                    <polyline points="14 2 14 8 20 8"/>
+                </svg>
+                My Bookings
+            </a>
+        </div>
+        
+        <!-- Invoice Banner -->
+        {% if booking.invoice_number %}
+        <div class="invoice-banner">
+            <div class="invoice-info">
+                <span>📄 Invoice Generated</span>
+                <code>{{ booking.invoice_number }}</code>
+            </div>
+            <a href="{% url 'travellers:download_invoice' booking.id %}" class="btn-invoice-sm">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                    <polyline points="7 10 12 15 17 10"/>
+                    <line x1="12" y1="15" x2="12" y2="3"/>
+                </svg>
+                Download Invoice
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Confetti Effect Script -->
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1"></script>
+<script>
+    // Trigger celebration effect
+    function celebrate() {
+        canvasConfetti({
+            particleCount: 120,
+            spread: 70,
+            origin: { y: 0.6 },
+            colors: ['#0E8A8A', '#10B981', '#059669', '#F59E0B']
+        });
+        
+        setTimeout(() => {
+            canvasConfetti({
+                particleCount: 60,
+                angle: 60,
+                spread: 55,
+                origin: { x: 0, y: 0.7 }
+            });
+        }, 200);
+        
+        setTimeout(() => {
+            canvasConfetti({
+                particleCount: 60,
+                angle: 120,
+                spread: 55,
+                origin: { x: 1, y: 0.7 }
+            });
+        }, 400);
+    }
+    
+    // Fire confetti on load
+    window.addEventListener('load', () => {
+        celebrate();
+        
+        // Track conversion (if analytics is configured)
+        if (typeof gtag !== 'undefined') {
+            gtag('event', 'purchase', {
+                'transaction_id': '{{ booking.id }}',
+                'value': {{ amount|default:0 }},
+                'currency': 'INR',
+                'payment_type': '{{ payment_type }}'
+            });
+        }
+    });
+</script>
+{% endblock %}

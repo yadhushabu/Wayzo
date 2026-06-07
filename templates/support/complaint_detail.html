@@ -1,0 +1,232 @@
+{% extends base_template %}
+{% load static %}
+
+{% block title %}Wayzo | Ticket #SR{{ complaint.id|stringformat:"09d" }}{% endblock %}
+
+{# ── Traveller base: fine-grained topbar blocks ── #}
+{% block topbar_title %}Ticket Detail{% endblock %}
+{% block topbar_subtitle %}#SR{{ complaint.id|stringformat:"09d" }}{% endblock %}
+
+{# ── Agency base: page_title block ── #}
+{% block page_title %}Ticket Detail{% endblock %}
+
+{# ── CSS: traveller → extra_styles | agency+restaurant → extra_css ── #}
+{% block extra_styles %}{{ block.super }}
+{% include "support/_complaint_detail_css.html" %}
+{% endblock %}
+
+{% block extra_css %}{{ block.super }}
+{% include "support/_complaint_detail_css.html" %}
+{% endblock %}
+
+{% block content %}
+
+{% if base_template == "travellers/base.html" %}
+    {# Tall hero under transparent overlay topbar #}
+    <div class="detail-hero detail-hero--traveller">
+        <div class="detail-hero-content">
+            <a href="{% url 'support:support_center' %}" class="back-link">
+                <svg viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+                Back to Support Center
+            </a>
+            <div class="hero-eyebrow">Ticket #SR{{ complaint.id|stringformat:"09d" }}</div>
+            <h1>{{ complaint.title }}</h1>
+        </div>
+        <div class="detail-hero-fade"></div>
+    </div>
+    <div class="page-body page-body--traveller">
+{% else %}
+    {# Compact rounded hero inside .dashboard-layout #}
+    <div class="detail-hero detail-hero--portal">
+        <div class="detail-hero-content">
+            <a href="{% url 'support:support_center' %}" class="back-link">
+                <svg viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+                Back to Support Center
+            </a>
+            <div class="hero-eyebrow">Ticket #SR{{ complaint.id|stringformat:"09d" }}</div>
+            <h1>{{ complaint.title }}</h1>
+        </div>
+        <div class="detail-hero-fade"></div>
+    </div>
+    <div class="page-body page-body--portal">
+{% endif %}
+
+        <div class="detail-layout">
+
+            <!-- LEFT — MAIN CONTENT -->
+            <div style="display:flex;flex-direction:column;gap:1.6rem;">
+
+                <!-- COMPLAINT DETAILS CARD -->
+                <div class="support-card">
+                    <div class="card-header">
+                        <div class="card-header-left">
+                            <h3>Complaint Details</h3>
+                            <p>Your submitted issue</p>
+                        </div>
+                        <span class="status-badge status-{{ complaint.status }}">
+                            {% if complaint.status == "open" %}Open
+                            {% elif complaint.status == "in_progress" %}In Progress
+                            {% elif complaint.status == "resolved" %}Resolved
+                            {% else %}Closed{% endif %}
+                        </span>
+                    </div>
+                    <div class="card-body">
+                        <p style="font-size:0.72rem;font-weight:600;text-transform:uppercase;letter-spacing:0.07em;color:#9AA3AF;margin-bottom:0.5rem;">Description</p>
+                        <div class="description-block">{{ complaint.description }}</div>
+
+                        <div class="meta-grid">
+                            <div class="meta-item">
+                                <span class="meta-label">Submitted On</span>
+                                <span class="meta-value">{{ complaint.created_at|date:"d M Y, H:i" }}</span>
+                            </div>
+                            <div class="meta-item">
+                                <span class="meta-label">Last Updated</span>
+                                <span class="meta-value">{{ complaint.updated_at|date:"d M Y, H:i" }}</span>
+                            </div>
+                        </div>
+
+                        {% if complaint.attachment %}
+                            <a href="{{ complaint.attachment.url }}" target="_blank" class="attachment-link">
+                                <svg viewBox="0 0 24 24"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+                                View Attachment
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- ADMIN RESPONSE CARD -->
+                <div class="support-card">
+                    <div class="card-header">
+                        <div class="card-header-left">
+                            <h3>Admin Response</h3>
+                            <p>Official reply from the Wayzo team</p>
+                        </div>
+                        {% if complaint.admin_response %}
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0E8A8A" stroke-width="1.8"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                        {% else %}
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#BEC7D1" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                        {% endif %}
+                    </div>
+                    <div class="card-body response-block">
+                        {% if complaint.admin_response %}
+                            <div class="response-present">
+                                <div class="response-avatar">
+                                    <div class="response-avatar-icon">
+                                        <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                                    </div>
+                                    <div class="response-avatar-info">
+                                        <strong>Wayzo Support Team</strong>
+                                        <span>Official Response · {{ complaint.updated_at|date:"d M Y" }}</span>
+                                    </div>
+                                </div>
+                                {{ complaint.admin_response|linebreaks }}
+                            </div>
+                        {% else %}
+                            <div class="response-empty">
+                                <div class="response-empty-icon">
+                                    <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                                </div>
+                                <strong>Awaiting Response</strong>
+                                <p>Our support team will respond within 24–48 business hours. Thank you for your patience.</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- RIGHT — SIDEBAR -->
+            <div class="sidebar-section">
+
+                <!-- TICKET STATUS CARD -->
+                <div class="support-card">
+                    <div class="card-header">
+                        <div class="card-header-left"><h3>Ticket Progress</h3></div>
+                    </div>
+                    <div class="card-body">
+                        <div class="timeline-item">
+                            <div class="timeline-dot done">
+                                <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+                            </div>
+                            <div class="timeline-text">
+                                <strong>Ticket Submitted</strong>
+                                <span>{{ complaint.created_at|date:"d M Y, H:i" }}</span>
+                            </div>
+                        </div>
+                        <div class="timeline-item">
+                            <div class="timeline-dot {% if complaint.status == 'in_progress' or complaint.status == 'resolved' or complaint.status == 'closed' %}done{% elif complaint.status == 'open' %}active{% endif %}">
+                                <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                            </div>
+                            <div class="timeline-text">
+                                <strong>Under Review</strong>
+                                <span>{% if complaint.status == 'open' %}Pending assignment{% else %}Team is reviewing{% endif %}</span>
+                            </div>
+                        </div>
+                        <div class="timeline-item">
+                            <div class="timeline-dot {% if complaint.status == 'resolved' or complaint.status == 'closed' %}done{% elif complaint.status == 'in_progress' %}active{% endif %}">
+                                <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                            </div>
+                            <div class="timeline-text">
+                                <strong>Response Sent</strong>
+                                <span>{% if complaint.admin_response %}Response received{% else %}Awaiting response{% endif %}</span>
+                            </div>
+                        </div>
+                        <div class="timeline-item">
+                            <div class="timeline-dot {% if complaint.status == 'resolved' or complaint.status == 'closed' %}done{% endif %}">
+                                <svg viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                            </div>
+                            <div class="timeline-text">
+                                <strong>Resolved</strong>
+                                <span>{% if complaint.status == 'resolved' or complaint.status == 'closed' %}Issue closed{% else %}Pending resolution{% endif %}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TICKET INFO CARD -->
+                <div class="support-card">
+                    <div class="card-header">
+                        <div class="card-header-left"><h3>Ticket Info</h3></div>
+                    </div>
+                    <div class="card-body" style="padding-top:0.6rem;padding-bottom:0.6rem;">
+                        <div class="info-row">
+                            <span>Ticket ID</span>
+                            <span>#SR{{ complaint.id|stringformat:"09d" }}</span>
+                        </div>
+                        <div class="info-row">
+                            <span>Status</span>
+                            <span class="status-badge status-{{ complaint.status }}" style="font-size:0.6rem;padding:0.2rem 0.6rem;">
+                                {% if complaint.status == "open" %}Open
+                                {% elif complaint.status == "in_progress" %}In Progress
+                                {% elif complaint.status == "resolved" %}Resolved
+                                {% else %}Closed{% endif %}
+                            </span>
+                        </div>
+                        <div class="info-row">
+                            <span>Opened</span>
+                            <span>{{ complaint.created_at|date:"d M Y" }}</span>
+                        </div>
+                        <div class="info-row">
+                            <span>Updated</span>
+                            <span>{{ complaint.updated_at|date:"d M Y" }}</span>
+                        </div>
+                        <div class="info-row">
+                            <span>Attachment</span>
+                            <span>{% if complaint.attachment %}Yes{% else %}None{% endif %}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- BACK BUTTON -->
+                <a href="{% url 'support:support_center' %}" class="back-btn">
+                    <svg viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+                    Back to Support Center
+                </a>
+
+            </div>
+        </div>
+    </div>
+
+{% endblock %}
+
+{% block extra_js %}{% endblock %}

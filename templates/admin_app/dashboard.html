@@ -1,0 +1,935 @@
+{% extends "admin_app/base.html" %}
+{% load static %}
+
+{% block title %}Admin Dashboard | Wayzo{% endblock %}
+{% block nav_dashboard %}active{% endblock %}
+
+{% block topbar_title %}Admin Dashboard{% endblock %}
+{% block topbar_subtitle %}Overview of platform activity and user management{% endblock %}
+
+{% block extra_styles %}
+<style>
+  /* ── FONTS ── */
+  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=Syne:wght@600;700;800&display=swap');
+
+  :root {
+    --teal:       #0E8A8A;
+    --teal-dark:  #0A6B6B;
+    --teal-pale:  #EAF4F4;
+    --teal-mid:   #1aafaf;
+    --ink:        #111827;
+    --muted:      #6B7280;
+    --s2:         #F9FAFB;
+    --s3:         #F3F4F6;
+    --border:     #E5E7EB;
+    --amber:      #F59E0B;
+    --rose:       #F43F5E;
+    --green:      #10B981;
+    --indigo:     #4F46E5;
+    --card-shadow: 0 1px 4px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.04);
+  }
+
+  /* ── HERO ── */
+  .dash-hero {
+    background: linear-gradient(135deg, #0d1117 0%, #0b3d4a 40%, #0a3d2e 100%);
+    border-radius: 20px;
+    padding: 2.2rem 2.5rem 2.8rem;
+    position: relative;
+    overflow: hidden;
+    margin-bottom: 2rem;
+  }
+  .dash-hero::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.025'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+  }
+  .dash-hero::after {
+    content: '';
+    position: absolute;
+    top: -80px; right: -80px;
+    width: 320px; height: 320px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(14,138,138,0.25) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .hero-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: wrap;
+    position: relative;
+    z-index: 1;
+  }
+  .hero-greeting {
+    font-family: 'Syne', sans-serif;
+    font-size: 1.7rem;
+    font-weight: 700;
+    color: white;
+    line-height: 1.2;
+    margin-bottom: 0.4rem;
+  }
+  .hero-sub {
+    color: rgba(255,255,255,0.55);
+    font-size: 0.82rem;
+    font-family: 'DM Sans', sans-serif;
+  }
+  .hero-date-pill {
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.15);
+    backdrop-filter: blur(8px);
+    border-radius: 50px;
+    padding: 0.5rem 1.1rem;
+    color: rgba(255,255,255,0.8);
+    font-size: 0.75rem;
+    font-family: 'DM Sans', sans-serif;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    white-space: nowrap;
+  }
+
+  /* ── QUICK STATS ROW inside hero ── */
+  .hero-stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1rem;
+    margin-top: 1.8rem;
+    position: relative;
+    z-index: 1;
+  }
+  .hero-stat {
+    background: rgba(255,255,255,0.07);
+    border: 1px solid rgba(255,255,255,0.1);
+    backdrop-filter: blur(8px);
+    border-radius: 14px;
+    padding: 1.1rem 1.3rem;
+    transition: background 0.2s;
+  }
+  .hero-stat:hover { background: rgba(255,255,255,0.12); }
+  .hero-stat-label {
+    font-size: 0.7rem;
+    color: rgba(255,255,255,0.45);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 0.5rem;
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 600;
+  }
+  .hero-stat-value {
+    font-family: 'Syne', sans-serif;
+    font-size: 2rem;
+    font-weight: 700;
+    color: white;
+    line-height: 1;
+    margin-bottom: 0.3rem;
+  }
+  .hero-stat-change {
+    font-size: 0.7rem;
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+  }
+  .change-up { color: #34d399; }
+  .change-down { color: #f87171; }
+  .change-neutral { color: rgba(255,255,255,0.4); }
+  .hero-stat-icon {
+    font-size: 1.2rem;
+    margin-bottom: 0.6rem;
+  }
+
+  /* ── SECTION HEADER ── */
+  .section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.2rem;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+  .section-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--ink);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .section-title i { color: var(--teal); font-size: 0.9rem; }
+
+  /* ── OVERVIEW CARDS ── */
+  .overview-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+  }
+  .overview-card {
+    background: white;
+    border-radius: 16px;
+    padding: 1.3rem 1.4rem;
+    box-shadow: var(--card-shadow);
+    border: 1px solid var(--border);
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.25s, box-shadow 0.25s;
+  }
+  .overview-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 28px rgba(0,0,0,0.1);
+  }
+  .overview-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    border-radius: 16px 16px 0 0;
+  }
+  .ov-teal::before   { background: linear-gradient(90deg, #0E8A8A, #1aafaf); }
+  .ov-green::before  { background: linear-gradient(90deg, #10B981, #34d399); }
+  .ov-amber::before  { background: linear-gradient(90deg, #F59E0B, #fbbf24); }
+  .ov-indigo::before { background: linear-gradient(90deg, #4F46E5, #818cf8); }
+  .ov-rose::before   { background: linear-gradient(90deg, #F43F5E, #fb7185); }
+
+  .ov-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 0.8rem;
+  }
+  .ov-icon {
+    width: 40px; height: 40px;
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.1rem;
+  }
+  .ov-icon.teal   { background: #e6f4f4; }
+  .ov-icon.green  { background: #d1fae5; }
+  .ov-icon.amber  { background: #fef3c7; }
+  .ov-icon.indigo { background: #e0e7ff; }
+  .ov-icon.rose   { background: #ffe4e6; }
+
+  .ov-trend {
+    font-size: 0.68rem;
+    font-weight: 600;
+    padding: 0.2rem 0.55rem;
+    border-radius: 20px;
+  }
+  .ov-trend.up   { background: #d1fae5; color: #065f46; }
+  .ov-trend.down { background: #ffe4e6; color: #9b1c2e; }
+  .ov-trend.neutral { background: #f3f4f6; color: #6b7280; }
+
+  .ov-value {
+    font-family: 'Syne', sans-serif;
+    font-size: 1.9rem;
+    font-weight: 700;
+    color: var(--ink);
+    line-height: 1;
+    margin-bottom: 0.2rem;
+  }
+  .ov-label {
+    font-size: 0.75rem;
+    color: var(--muted);
+    font-weight: 500;
+  }
+
+  /* ── TWO-COL LAYOUT ── */
+  .dash-two-col {
+    display: grid;
+    grid-template-columns: 1fr 340px;
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+    align-items: start;
+  }
+
+  /* ── CARD ── */
+  .dash-card {
+    background: white;
+    border-radius: 16px;
+    padding: 1.4rem 1.5rem;
+    box-shadow: var(--card-shadow);
+    border: 1px solid var(--border);
+  }
+  .dash-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.2rem;
+    padding-bottom: 0.9rem;
+    border-bottom: 1px solid var(--border);
+  }
+
+  /* ── SEARCH + FILTER ── */
+  .search-filter-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+  .search-box {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: var(--s2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 0.5rem 1rem;
+    transition: border-color 0.2s;
+  }
+  .search-box:focus-within {
+    border-color: var(--teal);
+    box-shadow: 0 0 0 3px rgba(14,138,138,0.1);
+  }
+  .search-box input {
+    border: none;
+    background: none;
+    outline: none;
+    font-size: 0.82rem;
+    width: 200px;
+    color: var(--ink);
+    font-family: 'DM Sans', sans-serif;
+  }
+  .search-box i { color: var(--muted); font-size: 0.8rem; }
+
+  .filter-tabs {
+    display: flex;
+    gap: 0.4rem;
+    flex-wrap: wrap;
+  }
+  .filter-tab {
+    padding: 0.35rem 0.85rem;
+    border-radius: 20px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    cursor: pointer;
+    background: var(--s2);
+    border: 1px solid var(--border);
+    color: var(--muted);
+    transition: all 0.18s;
+    font-family: 'DM Sans', sans-serif;
+  }
+  .filter-tab.active {
+    background: var(--teal);
+    border-color: var(--teal);
+    color: white;
+  }
+  .filter-tab:hover:not(.active) { background: var(--s3); color: var(--ink); }
+
+  /* ── USER TABLE ── */
+  .user-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  .user-table thead th {
+    padding: 0.65rem 0.85rem;
+    text-align: left;
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    background: var(--s2);
+    border-bottom: 1px solid var(--border);
+    font-family: 'DM Sans', sans-serif;
+  }
+  .user-table thead th:first-child { border-radius: 8px 0 0 8px; }
+  .user-table thead th:last-child  { border-radius: 0 8px 8px 0; }
+  .user-table tbody td {
+    padding: 0.75rem 0.85rem;
+    font-size: 0.82rem;
+    color: var(--ink);
+    border-bottom: 1px solid #f3f4f6;
+    vertical-align: middle;
+  }
+  .user-table tbody tr:last-child td { border-bottom: none; }
+  .user-table tbody tr:hover { background: #fafbfc; }
+
+  .user-avatar {
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--teal), var(--teal-mid));
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: white;
+    margin-right: 0.5rem;
+    flex-shrink: 0;
+  }
+  .user-cell { display: flex; align-items: center; }
+  .user-name { font-weight: 600; color: var(--ink); font-size: 0.82rem; }
+  .user-email { font-size: 0.7rem; color: var(--muted); margin-top: 1px; }
+
+  /* ── BADGES ── */
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.22rem 0.65rem;
+    border-radius: 20px;
+    font-size: 0.68rem;
+    font-weight: 700;
+    font-family: 'DM Sans', sans-serif;
+  }
+  .badge-teal     { background: #e6f4f4; color: var(--teal); }
+  .badge-amber    { background: #fef3c7; color: #92400e; }
+  .badge-purple   { background: #f3e8ff; color: #7e22ce; }
+  .badge-green    { background: #dcfce7; color: #166534; }
+  .badge-rose     { background: #ffe4e6; color: #9f1239; }
+  .badge-gray     { background: #f3f4f6; color: #6b7280; }
+
+  /* ── ACTION BTN ── */
+  .btn-view {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.3rem 0.75rem;
+    border-radius: 7px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    background: var(--teal-pale);
+    color: var(--teal);
+    border: 1px solid rgba(14,138,138,0.2);
+    text-decoration: none;
+    transition: all 0.18s;
+    font-family: 'DM Sans', sans-serif;
+  }
+  .btn-view:hover { background: var(--teal); color: white; }
+
+  /* ── SIDEBAR QUICK STATS (right col) ── */
+  .quick-panel { display: flex; flex-direction: column; gap: 1rem; }
+
+  .pending-list { display: flex; flex-direction: column; gap: 0.6rem; }
+  .pending-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.8rem 1rem;
+    background: var(--s2);
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    transition: background 0.2s;
+  }
+  .pending-item:hover { background: var(--s3); }
+  .pending-left { display: flex; align-items: center; gap: 0.65rem; }
+  .pending-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .dot-amber  { background: var(--amber); box-shadow: 0 0 0 3px rgba(245,158,11,0.2); }
+  .dot-indigo { background: var(--indigo); box-shadow: 0 0 0 3px rgba(79,70,229,0.2); }
+  .dot-rose   { background: var(--rose); box-shadow: 0 0 0 3px rgba(244,63,94,0.2); }
+  .dot-teal   { background: var(--teal); box-shadow: 0 0 0 3px rgba(14,138,138,0.2); }
+
+  .pending-label { font-size: 0.78rem; font-weight: 600; color: var(--ink); }
+  .pending-sub   { font-size: 0.68rem; color: var(--muted); }
+  .pending-count {
+    font-family: 'Syne', sans-serif;
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--ink);
+  }
+
+  /* ── ACTIVITY FEED ── */
+  .activity-feed { display: flex; flex-direction: column; gap: 0; }
+  .activity-item {
+    display: flex;
+    gap: 0.75rem;
+    padding: 0.85rem 0;
+    border-bottom: 1px solid #f3f4f6;
+    align-items: flex-start;
+  }
+  .activity-item:last-child { border-bottom: none; }
+  .activity-dot-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0;
+    padding-top: 3px;
+    flex-shrink: 0;
+  }
+  .activity-dot {
+    width: 9px; height: 9px;
+    border-radius: 50%;
+    background: var(--teal);
+    flex-shrink: 0;
+  }
+  .activity-line {
+    width: 1px;
+    flex: 1;
+    background: #e5e7eb;
+    min-height: 20px;
+  }
+  .activity-content { flex: 1; min-width: 0; }
+  .activity-msg {
+    font-size: 0.78rem;
+    color: var(--ink);
+    line-height: 1.4;
+    font-weight: 500;
+  }
+  .activity-msg strong { color: var(--teal); }
+  .activity-time {
+    font-size: 0.68rem;
+    color: var(--muted);
+    margin-top: 2px;
+  }
+
+  /* ── DISTRIBUTION BARS ── */
+  .distrib-row {
+    display: flex;
+    flex-direction: column;
+    gap: 0.9rem;
+    margin-top: 0.5rem;
+  }
+  .distrib-item {}
+  .distrib-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.35rem;
+  }
+  .distrib-name { font-size: 0.78rem; font-weight: 600; color: var(--ink); }
+  .distrib-pct  { font-size: 0.72rem; color: var(--muted); font-weight: 600; }
+  .distrib-bar-bg {
+    height: 6px;
+    background: #f3f4f6;
+    border-radius: 99px;
+    overflow: hidden;
+  }
+  .distrib-bar-fill {
+    height: 100%;
+    border-radius: 99px;
+    transition: width 0.8s cubic-bezier(0.4,0,0.2,1);
+  }
+
+  /* ── EMPTY STATE ── */
+  .empty-state {
+    text-align: center;
+    padding: 2.5rem 1rem;
+    color: var(--muted);
+  }
+  .empty-state i { font-size: 2rem; margin-bottom: 0.5rem; display: block; opacity: 0.4; }
+  .empty-state p { font-size: 0.82rem; }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 1100px) {
+    .dash-two-col { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 768px) {
+    .hero-stats { grid-template-columns: 1fr 1fr; }
+    .overview-grid { grid-template-columns: 1fr 1fr; }
+    .search-box input { width: 130px; }
+    .dash-hero { padding: 1.4rem 1.4rem 2rem; }
+    .hero-greeting { font-size: 1.3rem; }
+  }
+  @media (max-width: 480px) {
+    .hero-stats { grid-template-columns: 1fr 1fr; }
+    .overview-grid { grid-template-columns: 1fr; }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- ═══════════════════════════════ HERO ═══════════════════════════════ -->
+<div class="dash-hero">
+  <div class="hero-top">
+    <div>
+      <div class="hero-greeting">Good day, {{ request.user.first_name }} 👋</div>
+      <div class="hero-sub">Here's what's happening on your platform today.</div>
+    </div>
+    <div class="hero-date-pill">
+      <i class="fas fa-calendar-alt"></i>
+      <span id="heroDate">Loading...</span>
+    </div>
+  </div>
+
+  <div class="hero-stats">
+    <div class="hero-stat">
+      <div class="hero-stat-icon">👥</div>
+      <div class="hero-stat-value">{{ total_users }}</div>
+      <div class="hero-stat-label">Total Users</div>
+      <div class="hero-stat-change change-up">
+        <i class="fas fa-arrow-up" style="font-size:0.6rem;"></i> {{ new_users }} new this week
+      </div>
+    </div>
+    <div class="hero-stat">
+      <div class="hero-stat-icon">📦</div>
+      <div class="hero-stat-value">{{ total_bookings }}</div>
+      <div class="hero-stat-label">Total Bookings</div>
+      <div class="hero-stat-change change-neutral">All time</div>
+    </div>
+    <div class="hero-stat">
+      <div class="hero-stat-icon">✅</div>
+      <div class="hero-stat-value">{{ active_users }}</div>
+      <div class="hero-stat-label">Active Users</div>
+      <div class="hero-stat-change change-up">
+        <i class="fas fa-circle" style="font-size:0.5rem;"></i> Online now
+      </div>
+    </div>
+    <div class="hero-stat">
+      <div class="hero-stat-icon">⏳</div>
+      <div class="hero-stat-value">{{ pending_agencies|add:pending_restaurants|add:pending_destinations|add:pending_places }}</div>
+      <div class="hero-stat-label">Pending Approvals</div>
+      <div class="hero-stat-change change-down">
+        <i class="fas fa-clock" style="font-size:0.6rem;"></i> Needs attention
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════ OVERVIEW CARDS ════════════════════════ -->
+<div class="overview-grid">
+
+  <div class="overview-card ov-teal">
+    <div class="ov-header">
+      <div class="ov-icon teal">🧳</div>
+      <span class="ov-trend neutral">Total</span>
+    </div>
+    <div class="ov-value">{{ travellers_count }}</div>
+    <div class="ov-label">Travellers</div>
+  </div>
+
+  <div class="overview-card ov-amber">
+    <div class="ov-header">
+      <div class="ov-icon amber">🏢</div>
+      <span class="ov-trend neutral">Total</span>
+    </div>
+    <div class="ov-value">{{ agencies_count }}</div>
+    <div class="ov-label">Agencies</div>
+  </div>
+
+  <div class="overview-card ov-indigo">
+    <div class="ov-header">
+      <div class="ov-icon indigo">🍽️</div>
+      <span class="ov-trend neutral">Total</span>
+    </div>
+    <div class="ov-value">{{ restaurants_count }}</div>
+    <div class="ov-label">Restaurants</div>
+  </div>
+
+  <div class="overview-card ov-green">
+    <div class="ov-header">
+      <div class="ov-icon green">🗺️</div>
+      <span class="ov-trend up">Live</span>
+    </div>
+    <div class="ov-value">{{ total_destinations }}</div>
+    <div class="ov-label">Destinations</div>
+  </div>
+
+  <div class="overview-card ov-rose">
+    <div class="ov-header">
+      <div class="ov-icon rose">❌</div>
+      <span class="ov-trend {% if inactive_users > 0 %}down{% else %}up{% endif %}">
+        {% if inactive_users > 0 %}Watch{% else %}Good{% endif %}
+      </span>
+    </div>
+    <div class="ov-value">{{ inactive_users }}</div>
+    <div class="ov-label">Inactive Users</div>
+  </div>
+
+</div>
+
+<!-- ════════════════════ TWO-COLUMN LAYOUT ════════════════════════════ -->
+<div class="dash-two-col">
+
+  <!-- LEFT: USER MANAGEMENT TABLE -->
+  <div class="dash-card">
+    <div class="dash-card-header">
+      <div class="section-title">
+        <i class="fas fa-users"></i> User Management
+      </div>
+      <a href="{% url 'admin_app:user_management' %}" style="font-size:0.75rem;color:var(--teal);text-decoration:none;font-weight:600;">
+        View All <i class="fas fa-arrow-right" style="font-size:0.65rem;"></i>
+      </a>
+    </div>
+
+    <!-- Search + Filters -->
+    <div class="search-filter-row">
+      <div class="search-box">
+        <i class="fas fa-search"></i>
+        <input type="text" id="searchInput" placeholder="Search username or email…">
+      </div>
+      <div class="filter-tabs">
+        <button class="filter-tab active" data-filter="all">All</button>
+        <button class="filter-tab" data-filter="traveller">Travellers</button>
+        <button class="filter-tab" data-filter="agency">Agencies</button>
+        <button class="filter-tab" data-filter="restaurant">Restaurants</button>
+        <button class="filter-tab" data-filter="active">Active</button>
+        <button class="filter-tab" data-filter="inactive">Inactive</button>
+        <button class="filter-tab" data-filter="verified">Verified</button>
+        <button class="filter-tab" data-filter="unverified">Unverified</button>
+      </div>
+    </div>
+
+    <div style="overflow-x:auto;">
+      <table class="user-table" id="userTable">
+        <thead>
+          <tr>
+            <th>User</th>
+            <th>Role</th>
+            <th>Joined</th>
+            <th>Status</th>
+            <th>Verified</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for user in users %}
+          <tr
+            data-role="{{ user.role }}"
+            data-status="{% if user.is_active %}active{% else %}inactive{% endif %}"
+            data-verified="{{ user.is_verified|yesno:'true,false' }}"
+          >
+            <td>
+              <div class="user-cell">
+                <div class="user-avatar">
+                  {{ user.username|slice:":2"|upper }}
+                </div>
+                <div>
+                  <div class="user-name">{{ user.username }}</div>
+                  <div class="user-email">{{ user.email|default:"—" }}</div>
+                </div>
+              </div>
+            </td>
+            <td>
+              {% if user.role == 'traveller' %}
+                <span class="badge badge-teal">🧳 Traveller</span>
+              {% elif user.role == 'agency' %}
+                <span class="badge badge-amber">🏢 Agency</span>
+              {% else %}
+                <span class="badge badge-purple">🍽️ Restaurant</span>
+              {% endif %}
+            </td>
+            <td style="color:var(--muted);font-size:0.78rem;">{{ user.date_joined|date:"M d, Y" }}</td>
+            <td>
+              {% if user.is_active %}
+                <span class="badge badge-green">● Active</span>
+              {% else %}
+                <span class="badge badge-rose">● Inactive</span>
+              {% endif %}
+            </td>
+            <td>
+              {% if user.is_verified %}
+                <span class="badge badge-green">✓ Verified</span>
+              {% else %}
+                <span class="badge badge-gray">✗ Not Yet</span>
+              {% endif %}
+            </td>
+            <td>
+              <a href="{% url 'admin_app:user_profile' user.id %}" class="btn-view">
+                <i class="fas fa-eye"></i> View
+              </a>
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="6">
+              <div class="empty-state">
+                <i class="fas fa-users"></i>
+                <p>No users found.</p>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- RIGHT COLUMN -->
+  <div class="quick-panel">
+
+    <!-- Pending Approvals -->
+    <div class="dash-card">
+      <div class="dash-card-header">
+        <div class="section-title">
+          <i class="fas fa-clock"></i> Pending Approvals
+        </div>
+        <a href="{% url 'admin_app:admin_approvals' %}" style="font-size:0.72rem;color:var(--teal);text-decoration:none;font-weight:600;">See all</a>
+      </div>
+      <div class="pending-list">
+        <a href="{% url 'admin_app:admin_approvals' %}?type=destination" style="text-decoration:none;">
+          <div class="pending-item">
+            <div class="pending-left">
+              <div class="pending-dot dot-amber"></div>
+              <div>
+                <div class="pending-label">Destinations</div>
+                <div class="pending-sub">Awaiting review</div>
+              </div>
+            </div>
+            <div class="pending-count">{{ pending_destinations }}</div>
+          </div>
+        </a>
+        <a href="{% url 'admin_app:admin_approvals' %}?type=place" style="text-decoration:none;">
+          <div class="pending-item">
+            <div class="pending-left">
+              <div class="pending-dot dot-indigo"></div>
+              <div>
+                <div class="pending-label">Places</div>
+                <div class="pending-sub">Awaiting review</div>
+              </div>
+            </div>
+            <div class="pending-count">{{ pending_places }}</div>
+          </div>
+        </a>
+        <a href="{% url 'admin_app:user_management' %}?role=agency" style="text-decoration:none;">
+          <div class="pending-item">
+            <div class="pending-left">
+              <div class="pending-dot dot-teal"></div>
+              <div>
+                <div class="pending-label">Agencies</div>
+                <div class="pending-sub">Profile approvals</div>
+              </div>
+            </div>
+            <div class="pending-count">{{ pending_agencies }}</div>
+          </div>
+        </a>
+        <a href="{% url 'admin_app:user_management' %}?role=restaurant" style="text-decoration:none;">
+          <div class="pending-item">
+            <div class="pending-left">
+              <div class="pending-dot dot-rose"></div>
+              <div>
+                <div class="pending-label">Restaurants</div>
+                <div class="pending-sub">Profile approvals</div>
+              </div>
+            </div>
+            <div class="pending-count">{{ pending_restaurants }}</div>
+          </div>
+        </a>
+      </div>
+    </div>
+
+    <!-- User Distribution -->
+    <div class="dash-card">
+      <div class="dash-card-header">
+        <div class="section-title">
+          <i class="fas fa-chart-pie"></i> User Distribution
+        </div>
+      </div>
+      <div class="distrib-row">
+        {% with total=total_users|add:"0" %}
+        <div class="distrib-item">
+          <div class="distrib-top">
+            <span class="distrib-name">🧳 Travellers</span>
+            <span class="distrib-pct">{{ travellers_count }}</span>
+          </div>
+          <div class="distrib-bar-bg">
+            <div class="distrib-bar-fill" style="width:{% widthratio travellers_count total_users 100 %}%;background:linear-gradient(90deg,#0E8A8A,#1aafaf);"></div>
+          </div>
+        </div>
+        <div class="distrib-item">
+          <div class="distrib-top">
+            <span class="distrib-name">🏢 Agencies</span>
+            <span class="distrib-pct">{{ agencies_count }}</span>
+          </div>
+          <div class="distrib-bar-bg">
+            <div class="distrib-bar-fill" style="width:{% widthratio agencies_count total_users 100 %}%;background:linear-gradient(90deg,#F59E0B,#fbbf24);"></div>
+          </div>
+        </div>
+        <div class="distrib-item">
+          <div class="distrib-top">
+            <span class="distrib-name">🍽️ Restaurants</span>
+            <span class="distrib-pct">{{ restaurants_count }}</span>
+          </div>
+          <div class="distrib-bar-bg">
+            <div class="distrib-bar-fill" style="width:{% widthratio restaurants_count total_users 100 %}%;background:linear-gradient(90deg,#9333ea,#a855f7);"></div>
+          </div>
+        </div>
+        {% endwith %}
+        <div style="margin-top:0.6rem;padding-top:0.8rem;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;">
+          <span style="font-size:0.72rem;color:var(--muted);font-weight:600;">Active vs Inactive</span>
+          <span style="font-size:0.72rem;color:var(--muted);">{{ active_users }} / {{ inactive_users }}</span>
+        </div>
+        <div class="distrib-bar-bg">
+          <div class="distrib-bar-fill" style="width:{% widthratio active_users total_users 100 %}%;background:linear-gradient(90deg,#10B981,#34d399);"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Recent Activity -->
+    <div class="dash-card">
+      <div class="dash-card-header">
+        <div class="section-title">
+          <i class="fas fa-bolt"></i> Recent Activity
+        </div>
+        <a href="{% url 'admin_app:audit_logs' %}" style="font-size:0.72rem;color:var(--teal);text-decoration:none;font-weight:600;">All logs</a>
+      </div>
+      <div class="activity-feed">
+        {% for log in recent_logs|slice:":6" %}
+        <div class="activity-item">
+          <div class="activity-dot-wrap">
+            <div class="activity-dot" style="background:{% cycle '#0E8A8A' '#F59E0B' '#4F46E5' '#10B981' '#F43F5E' %};"></div>
+            {% if not forloop.last %}<div class="activity-line"></div>{% endif %}
+          </div>
+          <div class="activity-content">
+            <div class="activity-msg">
+              {% if log.user %}<strong>{{ log.user.username }}</strong>{% else %}<strong>System</strong>{% endif %}
+              — {{ log.action|truncatechars:55 }}
+            </div>
+            <div class="activity-time">{{ log.created_at|timesince }} ago</div>
+          </div>
+        </div>
+        {% empty %}
+        <div class="empty-state" style="padding:1.5rem 0;">
+          <i class="fas fa-history"></i>
+          <p>No recent activity.</p>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+  </div><!-- /quick-panel -->
+</div><!-- /dash-two-col -->
+
+<script>
+  // Hero date
+  const d = new Date();
+  document.getElementById('heroDate').textContent = d.toLocaleDateString('en-US',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+
+  // Table search + filter
+  const searchInput = document.getElementById('searchInput');
+  const userRows    = document.querySelectorAll('#userTable tbody tr');
+
+  function filterTable() {
+    const term   = searchInput.value.toLowerCase();
+    const active = document.querySelector('.filter-tab.active');
+    const f      = active ? active.dataset.filter : 'all';
+
+    userRows.forEach(row => {
+      if (row.cells.length < 5) return;
+      const username = row.cells[0]?.textContent.toLowerCase() || '';
+      const role     = row.dataset.role;
+      const status   = row.dataset.status;
+      const verified = row.dataset.verified;
+
+      let ok = true;
+      if (f === 'traveller')  ok = role    === 'traveller';
+      else if (f === 'agency')     ok = role    === 'agency';
+      else if (f === 'restaurant') ok = role    === 'restaurant';
+      else if (f === 'active')     ok = status  === 'active';
+      else if (f === 'inactive')   ok = status  === 'inactive';
+      else if (f === 'verified')   ok = verified === 'true';
+      else if (f === 'unverified') ok = verified === 'false';
+
+      const matchSearch = username.includes(term);
+      row.style.display = (ok && matchSearch) ? '' : 'none';
+    });
+  }
+
+  searchInput.addEventListener('input', filterTable);
+  document.querySelectorAll('.filter-tab').forEach(btn => {
+    btn.addEventListener('click', function() {
+      document.querySelectorAll('.filter-tab').forEach(b => b.classList.remove('active'));
+      this.classList.add('active');
+      filterTable();
+    });
+  });
+</script>
+{% endblock %}

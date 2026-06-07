@@ -1,0 +1,411 @@
+<!-- travellers/templates/travellers/search_travellers.html -->
+{% extends "travellers/base.html" %}
+{% load static %}
+
+{% block title %}Find Travellers | Wayzo{% endblock %}
+
+{% block extra_styles %}
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,400&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap');
+
+:root {
+  --teal: #0e8a8a; --teal-dark: #0a6e6e; --teal-pale: #e6f3f3; --teal-light: #1aa8a8;
+  --amber: #d97706; --amber-pale: #fef3c7;
+  --green: #16a34a; --green-pale: #dcfce7;
+  --red: #dc2626; --red-pale: #fee2e2;
+  --rose: #f43f5e; --rose-pale: #ffe4e6;
+  --orange: #f97316; --orange-pale: #fff0e6;
+  --gray-100: #f8f9fc; --gray-150: #f1f5f9; --gray-200: #e2e8f0;
+  --gray-300: #cbd5e1; --gray-400: #94a3b8; --gray-500: #64748b;
+  --gray-700: #334155; --gray-800: #1e293b; --gray-900: #0f172a;
+  --text-light: #94a3b8; --text-soft: #64748b;
+  --shadow: 0 4px 24px rgba(0,0,0,.07);
+  --radius: 18px;
+}
+
+/* ── COVER HERO ── */
+.cover-hero {
+  position: relative; height: 360px; overflow: hidden; flex-shrink: 0;
+}
+.cover-bg {
+  position: absolute; inset: 0; z-index: 0;
+  background-size: cover; background-position: center 40%;
+  background-image: url("{% static 'images/search.jpg' %}");
+}
+.cover-bg::after {
+  content: ""; position: absolute; inset: 0;
+  background: linear-gradient(to bottom, rgba(0,0,0,.15) 0%, rgba(0,0,0,.08) 25%, rgba(0,0,0,.55) 65%, rgba(0,0,0,.85) 100%);
+}
+.cover-fade {
+  position: absolute; bottom: 0; left: 0; right: 0; height: 130px;
+  background: linear-gradient(to bottom, transparent 0%, var(--gray-100) 100%);
+  z-index: 3; pointer-events: none;
+}
+.cover-content {
+  position: absolute; inset: 0; z-index: 4;
+  display: flex; flex-direction: column;
+  align-items: flex-start; justify-content: flex-end;
+  padding: 0 2.5rem 2.2rem;
+}
+.cover-badge-pill {
+  display: inline-flex; align-items: center; gap: .45rem;
+  background: rgba(14,138,138,.35); border: 1px solid rgba(95,197,197,.4);
+  color: #8DE8E8; font-size: .65rem; font-weight: 700;
+  padding: .28rem .85rem; border-radius: 40px;
+  letter-spacing: .06em; text-transform: uppercase; backdrop-filter: blur(6px);
+  margin-bottom: .65rem;
+}
+.cover-content h1 {
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(1.9rem, 3.8vw, 2.6rem); font-weight: 700;
+  color: #fff; text-shadow: 0 2px 20px rgba(0,0,0,.4);
+  line-height: 1.12; margin-bottom: .4rem;
+}
+.cover-content h1 em {
+  font-style: italic; color: #8DE8E8;
+}
+.cover-content p {
+  font-size: .84rem; color: rgba(255,255,255,.65); font-weight: 300; margin-bottom: 1.2rem;
+}
+
+/* Search bar INSIDE hero */
+.hero-search-form {
+  display: flex; gap: 0; width: 100%; max-width: 560px;
+  background: rgba(255,255,255,.12); backdrop-filter: blur(16px);
+  border: 1px solid rgba(255,255,255,.28); border-radius: 14px; overflow: hidden;
+}
+.hero-search-form input {
+  flex: 1; padding: .8rem 1.2rem; background: transparent;
+  border: none; font-size: .9rem; color: #fff;
+  font-family: 'DM Sans', sans-serif; outline: none;
+}
+.hero-search-form input::placeholder { color: rgba(255,255,255,.55); }
+.hero-search-btn {
+  padding: .8rem 1.6rem; background: var(--teal); color: #fff;
+  border: none; font-size: .85rem; font-weight: 700; cursor: pointer;
+  font-family: 'DM Sans', sans-serif; transition: background .2s; white-space: nowrap;
+}
+.hero-search-btn:hover { background: var(--teal-dark); }
+
+/* ── PAGE BODY ── */
+.page-body {
+  position: relative; z-index: 10;
+  max-width: 1100px; margin: 0 auto;
+  padding: 0 2rem 5rem;
+}
+
+/* ── RESULTS HEADER ── */
+.results-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 1.4rem; flex-wrap: wrap; gap: .5rem;
+}
+.results-title {
+  font-family: 'Playfair Display', serif; font-size: 1.1rem;
+  font-weight: 600; color: var(--gray-900);
+  display: flex; align-items: center; gap: .55rem;
+}
+.results-title::before {
+  content: ''; width: 3px; height: 18px;
+  background: var(--teal); border-radius: 2px;
+}
+.results-count {
+  display: inline-flex; align-items: center;
+  background: var(--teal-pale); color: var(--teal-dark);
+  border: 1px solid rgba(14,138,138,.2); border-radius: 99px;
+  padding: .2rem .75rem; font-size: .72rem; font-weight: 700;
+}
+.results-meta { font-size: .78rem; color: var(--text-light); }
+
+/* ── TRAVELLER CARD ── */
+.travellers-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(310px, 1fr));
+  gap: 1rem;
+}
+.traveller-card {
+  background: #fff; border: 1px solid var(--gray-200);
+  border-radius: var(--radius); overflow: hidden;
+  transition: all .25s;
+  box-shadow: 0 2px 8px rgba(0,0,0,.04);
+  animation: fadeUpIn .3s ease both;
+}
+.traveller-card:hover {
+  border-color: rgba(14,138,138,.3);
+  box-shadow: 0 8px 30px rgba(14,138,138,.1);
+  transform: translateY(-2px);
+}
+.traveller-card:nth-child(1){animation-delay:.05s}
+.traveller-card:nth-child(2){animation-delay:.1s}
+.traveller-card:nth-child(3){animation-delay:.15s}
+.traveller-card:nth-child(4){animation-delay:.2s}
+.traveller-card:nth-child(5){animation-delay:.25s}
+.traveller-card:nth-child(6){animation-delay:.3s}
+
+@keyframes fadeUpIn { from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)} }
+
+/* Card cover strip */
+.tc-cover {
+  height: 72px;
+  background: linear-gradient(135deg, #0a3d3d 0%, #1a5a40 60%, #0d4a4a 100%);
+  position: relative;
+}
+.tc-cover-img { width: 100%; height: 100%; object-fit: cover; }
+
+/* Avatar overlapping cover */
+.tc-body { padding: 0 1.2rem 1.2rem; position: relative; }
+.tc-avatar-wrap {
+  position: absolute; top: -26px; left: 1.2rem;
+}
+.tc-avatar {
+  width: 52px; height: 52px; border-radius: 14px;
+  background: linear-gradient(135deg, var(--teal), var(--teal-dark));
+  display: flex; align-items: center; justify-content: center;
+  color: #fff; font-family: 'Playfair Display', serif;
+  font-size: 1.2rem; font-weight: 600; overflow: hidden;
+  border: 3px solid #fff; box-shadow: 0 4px 12px rgba(0,0,0,.15);
+}
+.tc-avatar img { width: 100%; height: 100%; object-fit: cover; }
+
+/* Name / info */
+.tc-info { padding-top: 32px; }
+.tc-name {
+  font-size: .92rem; font-weight: 700; color: var(--gray-900);
+  margin-bottom: .1rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.tc-username { font-size: .7rem; color: var(--text-light); margin-bottom: .45rem; }
+.tc-meta { display: flex; flex-wrap: wrap; gap: .4rem; margin-bottom: .75rem; }
+.tc-meta-chip {
+  display: inline-flex; align-items: center; gap: .28rem;
+  background: var(--gray-150); border: 1px solid var(--gray-200);
+  color: var(--gray-500); border-radius: 99px;
+  padding: .18rem .6rem; font-size: .68rem; font-weight: 500;
+}
+
+/* Action row */
+.tc-actions { display: flex; gap: .45rem; flex-wrap: wrap; }
+
+/* Status-aware buttons */
+.btn-send-request {
+  flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: .35rem;
+  padding: .5rem 1rem; background: var(--teal); color: #fff;
+  border: none; border-radius: 40px; font-size: .75rem; font-weight: 700;
+  cursor: pointer; font-family: 'DM Sans', sans-serif;
+  box-shadow: 0 3px 10px rgba(14,138,138,.25); transition: all .2s;
+}
+.btn-send-request:hover { background: var(--teal-dark); transform: translateY(-1px); }
+
+.btn-pending {
+  flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: .35rem;
+  padding: .5rem 1rem; background: var(--amber-pale); color: var(--amber);
+  border: 1px solid #fcd34d; border-radius: 40px; font-size: .75rem; font-weight: 700;
+  cursor: default; font-family: 'DM Sans', sans-serif;
+}
+
+.btn-buddies {
+  flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: .35rem;
+  padding: .5rem 1rem; background: var(--green-pale); color: var(--green);
+  border: 1px solid #86efac; border-radius: 40px; font-size: .75rem; font-weight: 700;
+  cursor: default; font-family: 'DM Sans', sans-serif;
+}
+
+.btn-accept-here {
+  flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: .35rem;
+  padding: .5rem 1rem; background: var(--green); color: #fff;
+  border: none; border-radius: 40px; font-size: .75rem; font-weight: 700;
+  cursor: pointer; font-family: 'DM Sans', sans-serif; transition: all .2s;
+}
+.btn-accept-here:hover { background: #15803d; }
+
+.btn-profile {
+  display: inline-flex; align-items: center; justify-content: center;
+  padding: .5rem .85rem; background: var(--gray-150); color: var(--gray-700);
+  border: 1px solid var(--gray-300); border-radius: 40px; font-size: .75rem; font-weight: 600;
+  text-decoration: none; font-family: 'DM Sans', sans-serif; transition: all .2s;
+}
+.btn-profile:hover { background: var(--gray-200); }
+
+/* ── EMPTY / INITIAL STATE ── */
+.state-card {
+  text-align: center; padding: 4rem 2rem;
+  background: #fff; border: 1.5px dashed var(--gray-300);
+  border-radius: var(--radius);
+}
+.state-emoji { font-size: 3rem; opacity: .45; margin-bottom: .8rem; }
+.state-card h3 { font-family: 'Playfair Display', serif; font-size: 1.1rem; color: var(--gray-700); margin-bottom: .4rem; }
+.state-card p  { font-size: .82rem; color: var(--text-light); max-width: 340px; margin: 0 auto; }
+
+/* ── INLINE SEARCH BAR (below hero for refinement) ── */
+.refine-bar {
+  background: #fff; border: 1px solid var(--gray-200);
+  border-radius: var(--radius); padding: .9rem 1.2rem;
+  display: flex; gap: .6rem; align-items: center;
+  box-shadow: var(--shadow); margin-bottom: 1.6rem; flex-wrap: wrap;
+}
+.refine-bar-label { font-size: .72rem; font-weight: 700; color: var(--text-light); text-transform: uppercase; letter-spacing: .06em; white-space: nowrap; }
+.refine-input {
+  flex: 1; min-width: 160px; padding: .55rem 1rem;
+  border: 1px solid var(--gray-200); border-radius: 40px;
+  font-size: .82rem; font-family: 'DM Sans', sans-serif; color: var(--gray-800);
+  transition: border-color .2s;
+}
+.refine-input:focus { outline: none; border-color: var(--teal); box-shadow: 0 0 0 3px rgba(14,138,138,.1); }
+.refine-btn {
+  padding: .55rem 1.3rem; background: var(--teal); color: #fff;
+  border: none; border-radius: 40px; font-size: .8rem; font-weight: 700;
+  cursor: pointer; font-family: 'DM Sans', sans-serif; transition: background .2s;
+  white-space: nowrap;
+}
+.refine-btn:hover { background: var(--teal-dark); }
+.clear-btn {
+  padding: .55rem 1rem; background: var(--gray-150); color: var(--gray-700);
+  border: 1px solid var(--gray-300); border-radius: 40px; font-size: .8rem; font-weight: 600;
+  cursor: pointer; font-family: 'DM Sans', sans-serif; text-decoration: none; transition: all .2s;
+}
+.clear-btn:hover { background: var(--gray-200); }
+
+@media (max-width: 768px) {
+  .cover-content { padding: 0 1.2rem 1.6rem; }
+  .page-body { padding: 0 1rem 3rem; }
+  .travellers-grid { grid-template-columns: 1fr; }
+  .hero-search-form { max-width: 100%; }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- ── COVER HERO ── -->
+<div class="cover-hero">
+  <div class="cover-bg"></div>
+  <div class="cover-fade"></div>
+  <div class="cover-content">
+    <div class="cover-badge-pill">
+      <svg width="9" height="9" viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2.5">
+        <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+      </svg>
+      Discover People
+    </div>
+    <h1>Find your<br><em>travel tribe</em></h1>
+    <p>Search for travellers by name, city or username</p>
+    <form method="GET" action="{% url 'travellers:search_travellers' %}" class="hero-search-form">
+      <input
+        type="text"
+        name="q"
+        value="{{ query }}"
+        placeholder="Search by name, city, username…"
+        autocomplete="off"
+        autofocus
+      >
+      <button type="submit" class="hero-search-btn">Search →</button>
+    </form>
+  </div>
+</div>
+
+<!-- ── PAGE BODY ── -->
+<div class="page-body">
+
+  {% if query %}
+  <!-- REFINE BAR -->
+  <div class="refine-bar">
+    <span class="refine-bar-label">🔍 Results for</span>
+    <form method="GET" action="{% url 'travellers:search_travellers' %}" style="display:contents;">
+      <input class="refine-input" type="text" name="q" value="{{ query }}" placeholder="Refine search…">
+      <button type="submit" class="refine-btn">Search</button>
+    </form>
+    <a href="{% url 'travellers:search_travellers' %}" class="clear-btn">✕ Clear</a>
+  </div>
+
+  <!-- RESULTS HEADER -->
+  <div class="results-header">
+    <div class="results-title">
+      Travellers
+      <span class="results-count">{{ results_count }} found</span>
+    </div>
+    <div class="results-meta">Showing results for "<strong>{{ query }}</strong>"</div>
+  </div>
+
+  <!-- RESULTS GRID -->
+  {% if travellers %}
+  <div class="travellers-grid">
+    {% for item in travellers %}
+    {% with user=item.user profile=item.profile status=item.buddy_status req=item.buddy_request %}
+    <div class="traveller-card">
+      <!-- Cover strip -->
+      <div class="tc-cover">
+        {% if profile.cover_image %}
+          <img class="tc-cover-img" src="{{ profile.cover_image.url }}" alt="">
+        {% endif %}
+      </div>
+      <!-- Body -->
+      <div class="tc-body">
+        <div class="tc-avatar-wrap">
+          <div class="tc-avatar">
+            {% if user.profile_picture %}
+              <img src="{{ user.profile_picture.url }}" alt="{{ user.username }}">
+            {% else %}
+              {% if profile.first_name %}{{ profile.first_name|first|upper }}{% if profile.last_name %}{{ profile.last_name|first|upper }}{% endif %}{% else %}{{ user.username|first|upper }}{% endif %}
+            {% endif %}
+          </div>
+        </div>
+        <div class="tc-info">
+          <div class="tc-name">{{ profile.first_name|default:"" }} {{ profile.last_name|default:"" }}{% if not profile.first_name %}{{ user.username }}{% endif %}</div>
+          <div class="tc-username">@{{ user.username }}</div>
+          <div class="tc-meta">
+            {% if profile.city %}<span class="tc-meta-chip">📍 {{ profile.city }}{% if profile.state %}, {{ profile.state }}{% endif %}</span>{% endif %}
+            {% if profile.created_at %}<span class="tc-meta-chip">🗓 Joined {{ profile.created_at|date:"M Y" }}</span>{% endif %}
+          </div>
+          <div class="tc-actions">
+
+            {% if status == 'accepted' %}
+              <span class="btn-buddies">✓ Buddies</span>
+              <a href="{% url 'travellers:public_profile' user.id %}" class="btn-profile">Profile</a>
+
+            {% elif status == 'sent' %}
+              <span class="btn-pending">⏳ Request Sent</span>
+              <a href="{% url 'travellers:public_profile' user.id %}" class="btn-profile">Profile</a>
+
+            {% elif status == 'received' %}
+              {# They sent US a request — let user accept right here #}
+              <form method="POST" action="{% url 'travellers:accept_buddy_request' req.id %}" style="flex:1;">
+                {% csrf_token %}
+                <button type="submit" class="btn-accept-here" style="width:100%;">✓ Accept Request</button>
+              </form>
+              <a href="{% url 'travellers:public_profile' user.id %}" class="btn-profile">Profile</a>
+
+            {% else %}
+              {# No relationship — send request #}
+              <form method="POST" action="{% url 'travellers:send_buddy_request' user.id %}" style="flex:1;">
+                {% csrf_token %}
+                <button type="submit" class="btn-send-request" style="width:100%;">🤝 Add Buddy</button>
+              </form>
+              <a href="{% url 'travellers:public_profile' user.id %}" class="btn-profile">Profile</a>
+            {% endif %}
+
+          </div>
+        </div>
+      </div>
+    </div>
+    {% endwith %}
+    {% endfor %}
+  </div>
+
+  {% else %}
+  <div class="state-card">
+    <div class="state-emoji">🔍</div>
+    <h3>No travellers found</h3>
+    <p>No results for "{{ query }}". Try a different name, city or username.</p>
+  </div>
+  {% endif %}
+
+  {% else %}
+  <!-- Initial state – no query yet -->
+  <div class="state-card">
+    <div class="state-emoji">🌍</div>
+    <h3>Discover Fellow Travellers</h3>
+    <p>Search by name, city or username to find and connect with travellers who share your spirit of adventure.</p>
+  </div>
+  {% endif %}
+
+</div>{# /page-body #}
+
+{% endblock %}

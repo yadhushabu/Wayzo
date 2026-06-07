@@ -1,22 +1,1099 @@
-{% for booking in bookings %}
-<div class="booking-card">
+<!-- restaurants/templates/restaurants/bookings.html -->
+{% extends 'restaurants/base_restaurant.html' %}
+{% load static %}
 
-    <p><strong>User:</strong> {{ booking.user.username }}</p>
-    <p><strong>Type:</strong> {{ booking.booking_type }}</p>
-    <p><strong>Check-in:</strong> {{ booking.check_in }}</p>
-    <p><strong>Status:</strong> {{ booking.status }}</p>
+{% block title %}Bookings Management{% endblock %}
 
-    {% if booking.status == "pending" %}
-        <a href="{% url 'confirm_booking' booking.id %}" class="btn btn-success">
-            Confirm
-        </a>
+{% block page_title %}Bookings Management{% endblock %}
 
-        <a href="{% url 'reject_booking' booking.id %}" class="btn btn-danger">
-            Reject
-        </a>
-    {% else %}
-        <span class="badge">{{ booking.status }}</span>
-    {% endif %}
+{% block breadcrumb %}Bookings{% endblock %}
 
+{% block extra_css %}
+<style>
+    :root {
+        --primary: #0E8A8A;
+        --primary-dark: #0a6b6b;
+        --primary-light: #EAF4F4;
+        --success: #10B981;
+        --warning: #F59E0B;
+        --danger: #EF4444;
+        --info: #3B82F6;
+        --gray-50: #F9FAFB;
+        --gray-100: #F3F4F6;
+        --gray-200: #E5E7EB;
+        --gray-300: #D1D5DB;
+        --gray-400: #9CA3AF;
+        --gray-500: #6B7280;
+        --gray-600: #4B5563;
+        --gray-700: #374151;
+        --gray-800: #1F2937;
+        --gray-900: #111827;
+    }
+    
+    /* Stats Grid */
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+    
+    .stat-card {
+        background: white;
+        border-radius: 16px;
+        padding: 1.25rem;
+        transition: all 0.3s ease;
+        border: 1px solid var(--gray-200);
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .stat-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+        border-color: var(--primary-light);
+    }
+    
+    .stat-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 1rem;
+        transition: all 0.3s ease;
+    }
+    
+    .stat-card:hover .stat-icon {
+        transform: scale(1.05);
+    }
+    
+    .stat-value {
+        font-size: 1.75rem;
+        font-weight: 800;
+        color: var(--gray-900);
+        margin-bottom: 0.25rem;
+    }
+    
+    .stat-label {
+        font-size: 0.75rem;
+        color: var(--gray-500);
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    /* Tab Bar */
+    .tab-bar {
+        background: white;
+        border-radius: 16px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+        border: 1px solid var(--gray-200);
+        display: flex;
+        align-items: center;
+        gap: 0.3rem;
+        padding: 0.4rem;
+        margin-bottom: 2rem;
+        overflow-x: auto;
+        scrollbar-width: none;
+    }
+    
+    .tab-bar::-webkit-scrollbar {
+        display: none;
+    }
+    
+    .tab-btn {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.6rem 1.2rem;
+        border-radius: 10px;
+        font-size: 0.82rem;
+        font-weight: 500;
+        cursor: pointer;
+        border: none;
+        background: none;
+        color: var(--gray-600);
+        transition: all 0.2s;
+        white-space: nowrap;
+    }
+    
+    .tab-btn svg {
+        width: 15px;
+        height: 15px;
+        stroke: currentColor;
+        fill: none;
+        stroke-width: 1.8;
+    }
+    
+    .tab-btn .tab-count {
+        background: var(--gray-100);
+        color: var(--gray-600);
+        font-size: 0.65rem;
+        font-weight: 700;
+        padding: 0.15rem 0.5rem;
+        border-radius: 40px;
+        min-width: 20px;
+        text-align: center;
+    }
+    
+    .tab-btn:hover {
+        background: var(--gray-100);
+        color: var(--gray-800);
+    }
+    
+    .tab-btn.active {
+        background: var(--primary);
+        color: white;
+    }
+    
+    .tab-btn.active .tab-count {
+        background: rgba(255, 255, 255, 0.25);
+        color: white;
+    }
+    
+    /* Dashboard Card */
+    .dashboard-card {
+        background: white;
+        border-radius: 20px;
+        border: 1px solid var(--gray-200);
+        margin-bottom: 1.5rem;
+        overflow: hidden;
+        transition: all 0.3s ease;
+    }
+    
+    .dashboard-card:hover {
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
+    }
+    
+    .card-header {
+        padding: 1.25rem 1.5rem;
+        border-bottom: 1px solid var(--gray-200);
+        background: var(--gray-50);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+    
+    .card-header h3 {
+        font-size: 1rem;
+        font-weight: 700;
+        color: var(--gray-900);
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .card-header svg {
+        width: 20px;
+        height: 20px;
+        stroke: var(--primary);
+        stroke-width: 1.5;
+    }
+    
+    .card-body {
+        padding: 1.5rem;
+    }
+    
+    /* Table Styles */
+    .booking-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    
+    .booking-table th {
+        text-align: left;
+        padding: 0.875rem 0.5rem;
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: var(--gray-500);
+        border-bottom: 1px solid var(--gray-200);
+    }
+    
+    .booking-table td {
+        padding: 1rem 0.5rem;
+        font-size: 0.8rem;
+        color: var(--gray-700);
+        border-bottom: 1px solid var(--gray-100);
+        vertical-align: middle;
+    }
+    
+    .booking-table tr:last-child td {
+        border-bottom: none;
+    }
+    
+    .booking-table tr:hover td {
+        background: var(--gray-50);
+    }
+    
+    /* Status Badges */
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.375rem;
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.7rem;
+        font-weight: 600;
+    }
+    
+    .status-badge::before {
+        content: '';
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        display: inline-block;
+    }
+    
+    .status-badge.confirmed {
+        background: rgba(16, 185, 129, 0.1);
+        color: var(--success);
+    }
+    
+    .status-badge.confirmed::before {
+        background: var(--success);
+    }
+    
+    .status-badge.pending {
+        background: rgba(245, 158, 11, 0.1);
+        color: var(--warning);
+    }
+    
+    .status-badge.pending::before {
+        background: var(--warning);
+    }
+    
+    .status-badge.cancelled {
+        background: rgba(239, 68, 68, 0.1);
+        color: var(--danger);
+    }
+    
+    .status-badge.cancelled::before {
+        background: var(--danger);
+    }
+    
+    .status-badge.completed {
+        background: rgba(59, 130, 246, 0.1);
+        color: var(--info);
+    }
+    
+    .status-badge.completed::before {
+        background: var(--info);
+    }
+    
+    /* Action Buttons */
+    .action-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        padding: 0.35rem 0.85rem;
+        border-radius: 8px;
+        font-size: 0.7rem;
+        font-weight: 600;
+        text-decoration: none;
+        transition: all 0.2s ease;
+        cursor: pointer;
+        border: none;
+    }
+    
+    .action-btn.complete {
+        background: var(--success);
+        color: white;
+    }
+    
+    .action-btn.complete:hover {
+        background: #059669;
+        transform: translateY(-1px);
+    }
+    
+    .action-btn.view {
+        background: var(--primary);
+        color: white;
+    }
+    
+    .action-btn.view:hover {
+        background: var(--primary-dark);
+        transform: translateY(-1px);
+    }
+    
+    /* Empty State */
+    .empty-state {
+        text-align: center;
+        padding: 3rem;
+        color: var(--gray-500);
+    }
+    
+    .empty-state svg {
+        width: 48px;
+        height: 48px;
+        stroke: var(--gray-400);
+        margin-bottom: 1rem;
+    }
+    
+    /* Modal Styles */
+    .modal-overlay {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.55);
+        backdrop-filter: blur(4px);
+        z-index: 1000;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .modal-overlay.open {
+        display: flex;
+    }
+    
+    .modal-box {
+        background: white;
+        border-radius: 20px;
+        width: 500px;
+        max-width: 95vw;
+        padding: 2rem;
+        box-shadow: 0 32px 64px rgba(0, 0, 0, 0.22);
+        position: relative;
+        animation: popIn 0.25s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+        max-height: 85vh;
+        overflow-y: auto;
+    }
+    
+    @keyframes popIn {
+        from {
+            opacity: 0;
+            transform: scale(0.92);
+        }
+        to {
+            opacity: 1;
+            transform: scale(1);
+        }
+    }
+    
+    .modal-close {
+        position: absolute;
+        top: 1rem;
+        right: 1rem;
+        width: 30px;
+        height: 30px;
+        background: var(--gray-100);
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.2rem;
+        color: var(--gray-500);
+        transition: background 0.2s;
+    }
+    
+    .modal-close:hover {
+        background: var(--gray-200);
+    }
+    
+    .modal-title {
+        font-family: 'Playfair Display', serif;
+        font-size: 1.3rem;
+        font-weight: 600;
+        margin-bottom: 1.5rem;
+        color: var(--gray-900);
+    }
+    
+    .modal-loading {
+        text-align: center;
+        padding: 2rem;
+        color: var(--gray-500);
+    }
+    
+    .detail-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 0.75rem 0;
+        border-bottom: 1px solid var(--gray-100);
+    }
+    
+    .detail-label {
+        font-size: 0.75rem;
+        color: var(--gray-500);
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .detail-value {
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: var(--gray-800);
+        text-align: right;
+        max-width: 60%;
+        word-break: break-word;
+    }
+    
+    /* Responsive */
+    @media (max-width: 1024px) {
+        .stats-grid {
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+        }
+    }
+    
+    @media (max-width: 768px) {
+        .stats-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .card-header {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+        
+        .booking-table {
+            display: block;
+            overflow-x: auto;
+        }
+        
+        .detail-row {
+            flex-direction: column;
+        }
+        
+        .detail-value {
+            text-align: left;
+            margin-top: 0.25rem;
+            max-width: 100%;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- Stats Grid -->
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-icon" style="background: rgba(16, 185, 129, 0.1);">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--success)" stroke-width="2">
+                <path d="M2 12h20M12 2v20"/>
+            </svg>
+        </div>
+        <div class="stat-value">{{ room_confirmed|default:"0" }}</div>
+        <div class="stat-label">Room Bookings</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon" style="background: rgba(16, 185, 129, 0.1);">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--success)" stroke-width="2">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                <line x1="16" y1="2" x2="16" y2="6"/>
+                <line x1="8" y1="2" x2="8" y2="6"/>
+                <line x1="3" y1="10" x2="21" y2="10"/>
+            </svg>
+        </div>
+        <div class="stat-value">{{ table_confirmed|default:"0" }}</div>
+        <div class="stat-label">Table Bookings</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon" style="background: rgba(59, 130, 246, 0.1);">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--info)" stroke-width="2">
+                <polyline points="20 6 9 17 4 12"/>
+            </svg>
+        </div>
+        <div class="stat-value">{{ room_completed|default:"0" }}</div>
+        <div class="stat-label">Room Completed</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon" style="background: rgba(59, 130, 246, 0.1);">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--info)" stroke-width="2">
+                <polyline points="20 6 9 17 4 12"/>
+            </svg>
+        </div>
+        <div class="stat-value">{{ table_completed|default:"0" }}</div>
+        <div class="stat-label">Table Completed</div>
+    </div>
 </div>
-{% endfor %}
+
+<!-- Tab Bar -->
+<div class="tab-bar" id="tabBar">
+    <button class="tab-btn active" data-tab="all" onclick="switchTab('all', this)">
+        <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+        All Bookings
+        <span class="tab-count">{{ room_bookings.count|add:table_bookings.count }}</span>
+    </button>
+    <button class="tab-btn" data-tab="room" onclick="switchTab('room', this)">
+        <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+        Room Bookings
+        <span class="tab-count">{{ room_bookings.count }}</span>
+    </button>
+    <button class="tab-btn" data-tab="table" onclick="switchTab('table', this)">
+        <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/></svg>
+        Table Bookings
+        <span class="tab-count">{{ table_bookings.count }}</span>
+    </button>
+    <button class="tab-btn" data-tab="pending" onclick="switchTab('pending', this)">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        Pending
+        <span class="tab-count">{% with pending=0 %}{% for b in room_bookings %}{% if b.status == "pending" %}{% with pending=pending|add:1 %}{% endwith %}{% endif %}{% endfor %}{% for b in table_bookings %}{% if b.status == "pending" %}{% with pending=pending|add:1 %}{% endwith %}{% endif %}{% endfor %}{{ pending }}{% endwith %}</span>
+    </button>
+    <button class="tab-btn" data-tab="confirmed" onclick="switchTab('confirmed', this)">
+        <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+        Confirmed
+        <span class="tab-count">{{ room_confirmed|add:table_confirmed }}</span>
+    </button>
+    <button class="tab-btn" data-tab="completed" onclick="switchTab('completed', this)">
+        <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+        Completed
+        <span class="tab-count">{{ room_completed|add:table_completed }}</span>
+    </button>
+    <button class="tab-btn" data-tab="cancelled" onclick="switchTab('cancelled', this)">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+        Cancelled
+        <span class="tab-count">{{ room_cancelled|add:table_cancelled }}</span>
+    </button>
+</div>
+
+<!-- Room Bookings Section -->
+<div class="dashboard-card" id="roomBookingsCard">
+    <div class="card-header">
+        <h3>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                <polyline points="9 22 9 12 15 12 15 22"/>
+            </svg>
+            Room Bookings
+        </h3>
+    </div>
+    <div class="card-body">
+        {% if room_bookings %}
+        <div style="overflow-x: auto;">
+            <table class="booking-table">
+                <thead>
+                    <tr>
+                        <th>Booking ID</th>
+                        <th>Guest</th>
+                        <th>Room Type</th>
+                        <th>Room No.</th>
+                        <th>Check In</th>
+                        <th>Check Out</th>
+                        <th>Guests</th>
+                        <th>Total Amount</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for booking in room_bookings %}
+                    <tr data-status="{{ booking.status }}" data-type="room">
+                        <td>#{{ booking.id }}</td>
+                        <td>
+                            <strong>{{ booking.user.get_full_name|default:booking.user.username }}</strong><br>
+                            <small style="font-size: 0.65rem; color: var(--gray-400);">@{{ booking.user.username }}</small>
+                        </td>
+                        <td>{{ booking.room.room_type.name }}</td>
+                        <td>{{ booking.room.room_number }}</td>
+                        <td>{{ booking.check_in|date:"M d, Y" }}</td>
+                        <td>{{ booking.check_out|date:"M d, Y" }}</td>
+                        <td>{{ booking.guests }}</td>
+                        <td><strong>₹{{ booking.total_amount|floatformat:2 }}</strong></td>
+                        <td>
+                            <span class="status-badge {{ booking.status }}">
+                                {{ booking.get_status_display }}
+                            </span>
+                        </td>
+                        <td>
+                            <div style="display: flex; gap: 0.5rem;">
+                                {% if booking.status == "confirmed" %}
+                                <form method="POST" action="{% url 'complete_room_booking' booking.id %}" style="display: inline;">
+                                    {% csrf_token %}
+                                    <button type="submit" class="action-btn complete" onclick="return confirm('Mark this booking as completed?')">
+                                        ✓ Complete
+                                    </button>
+                                </form>
+                                {% endif %}
+                                <button class="action-btn view" onclick="viewBookingDetails('room', {{ booking.id }})">
+                                    View
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                <polyline points="9 22 9 12 15 12 15 22"/>
+            </svg>
+            <h4>No room bookings yet</h4>
+            <p>When guests book rooms, they'll appear here.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Table Bookings Section -->
+<div class="dashboard-card" id="tableBookingsCard" style="display: none;">
+    <div class="card-header">
+        <h3>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="3" width="18" height="18" rx="2"/>
+                <circle cx="8.5" cy="8.5" r="1.5"/>
+                <polyline points="21 15 16 10 5 21"/>
+            </svg>
+            Table Bookings
+        </h3>
+    </div>
+    <div class="card-body">
+        {% if table_bookings %}
+        <div style="overflow-x: auto;">
+            <table class="booking-table">
+                <thead>
+                    <tr>
+                        <th>Booking ID</th>
+                        <th>Guest</th>
+                        <th>Table No.</th>
+                        <th>Zone</th>
+                        <th>Date & Time</th>
+                        <th>Guests</th>
+                        <th>Advance Paid</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for booking in table_bookings %}
+                    <tr data-status="{{ booking.status }}" data-type="table">
+                        <td>#{{ booking.id }}</td>
+                        <td>
+                            <strong>{{ booking.user.get_full_name|default:booking.user.username }}</strong><br>
+                            <small style="font-size: 0.65rem; color: var(--gray-400);">@{{ booking.user.username }}</small>
+                        </td>
+                        <td>{{ booking.table.table_number }}</td>
+                        <td>{{ booking.table.zone|default:"General" }}</td>
+                        <td>{{ booking.start_time|date:"M d, Y" }}<br><small>{{ booking.start_time|time:"g:i A" }}</small></td>
+                        <td>{{ booking.guests }}</td>
+                        <td><strong>₹{{ booking.advance_paid|floatformat:2|default:"0" }}</strong></td>
+                        <td>
+                            <span class="status-badge {{ booking.status }}">
+                                {{ booking.get_status_display }}
+                            </span>
+                        </td>
+                        <td>
+                            <div style="display: flex; gap: 0.5rem;">
+                                {% if booking.status == "confirmed" %}
+                                <form method="POST" action="{% url 'complete_table_booking' booking.id %}" style="display: inline;">
+                                    {% csrf_token %}
+                                    <button type="submit" class="action-btn complete" onclick="return confirm('Mark this booking as completed?')">
+                                        ✓ Complete
+                                    </button>
+                                </form>
+                                {% endif %}
+                                <button class="action-btn view" onclick="viewBookingDetails('table', {{ booking.id }})">
+                                    View
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="3" width="18" height="18" rx="2"/>
+                <circle cx="8.5" cy="8.5" r="1.5"/>
+            </svg>
+            <h4>No table bookings yet</h4>
+            <p>When guests reserve tables, they'll appear here.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- All Bookings Section (Combined) -->
+<div class="dashboard-card" id="allBookingsCard">
+    <div class="card-header">
+        <h3>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                <line x1="16" y1="2" x2="16" y2="6"/>
+                <line x1="8" y1="2" x2="8" y2="6"/>
+                <line x1="3" y1="10" x2="21" y2="10"/>
+            </svg>
+            All Bookings
+        </h3>
+    </div>
+    <div class="card-body">
+        {% if room_bookings or table_bookings %}
+        <div style="overflow-x: auto;">
+            <table class="booking-table">
+                <thead>
+                    <tr>
+                        <th>Type</th>
+                        <th>Booking ID</th>
+                        <th>Guest</th>
+                        <th>Item</th>
+                        <th>Date</th>
+                        <th>Guests</th>
+                        <th>Amount</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for booking in room_bookings %}
+                    <tr data-status="{{ booking.status }}" data-type="room">
+                        <td><span style="display: inline-flex; align-items: center; gap: 0.25rem;">🛏️ Room</span></td>
+                        <td>#{{ booking.id }}</td>
+                        <td>{{ booking.user.get_full_name|default:booking.user.username }}</td>
+                        <td>{{ booking.room.room_type.name }} ({{ booking.room.room_number }})</td>
+                        <td>{{ booking.check_in|date:"M d" }} - {{ booking.check_out|date:"M d" }}</td>
+                        <td>{{ booking.guests }}</td>
+                        <td>₹{{ booking.total_amount|floatformat:2 }}</td>
+                        <td><span class="status-badge {{ booking.status }}">{{ booking.get_status_display }}</span></td>
+                        <td>
+                            <div style="display: flex; gap: 0.5rem;">
+                                {% if booking.status == "confirmed" %}
+                                <form method="POST" action="{% url 'complete_room_booking' booking.id %}" style="display: inline;">
+                                    {% csrf_token %}
+                                    <button type="submit" class="action-btn complete" onclick="return confirm('Mark this booking as completed?')">
+                                        ✓ Complete
+                                    </button>
+                                </form>
+                                {% endif %}
+                                <button class="action-btn view" onclick="viewBookingDetails('room', {{ booking.id }})">
+                                    View
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                    {% for booking in table_bookings %}
+                    <tr data-status="{{ booking.status }}" data-type="table">
+                        <td><span style="display: inline-flex; align-items: center; gap: 0.25rem;">🍽️ Table</span></td>
+                        <td>#{{ booking.id }}</td>
+                        <td>{{ booking.user.get_full_name|default:booking.user.username }}</td>
+                        <td>Table {{ booking.table.table_number }} ({{ booking.table.zone|default:"General" }})</td>
+                        <td>{{ booking.start_time|date:"M d, Y" }}<br><small>{{ booking.start_time|time:"g:i A" }}</small></td>
+                        <td>{{ booking.guests }}</td>
+                        <td>₹{{ booking.advance_paid|floatformat:2|default:"0" }}</td>
+                        <td><span class="status-badge {{ booking.status }}">{{ booking.get_status_display }}</span></td>
+                        <td>
+                            <div style="display: flex; gap: 0.5rem;">
+                                {% if booking.status == "confirmed" %}
+                                <form method="POST" action="{% url 'complete_table_booking' booking.id %}" style="display: inline;">
+                                    {% csrf_token %}
+                                    <button type="submit" class="action-btn complete" onclick="return confirm('Mark this booking as completed?')">
+                                        ✓ Complete
+                                    </button>
+                                </form>
+                                {% endif %}
+                                <button class="action-btn view" onclick="viewBookingDetails('table', {{ booking.id }})">
+                                    View
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                <line x1="16" y1="2" x2="16" y2="6"/>
+                <line x1="8" y1="2" x2="8" y2="6"/>
+                <line x1="3" y1="10" x2="21" y2="10"/>
+            </svg>
+            <h4>No bookings yet</h4>
+            <p>When guests book your property, they'll appear here.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Booking Details Modal -->
+<div class="modal-overlay" id="bookingModal">
+    <div class="modal-box">
+        <button class="modal-close" onclick="closeModal()">&times;</button>
+        <div class="modal-title" id="modalTitle">Booking Details</div>
+        <div id="modalContent">
+            <div class="modal-loading">Loading...</div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Tab switching
+    function switchTab(tab, btn) {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        
+        const roomCard = document.getElementById('roomBookingsCard');
+        const tableCard = document.getElementById('tableBookingsCard');
+        const allCard = document.getElementById('allBookingsCard');
+        
+        if (tab === 'room') {
+            roomCard.style.display = 'block';
+            tableCard.style.display = 'none';
+            allCard.style.display = 'none';
+        } else if (tab === 'table') {
+            roomCard.style.display = 'none';
+            tableCard.style.display = 'block';
+            allCard.style.display = 'none';
+        } else {
+            roomCard.style.display = 'block';
+            tableCard.style.display = 'block';
+            allCard.style.display = 'block';
+        }
+        
+        // Filter by status if needed
+        if (tab === 'pending' || tab === 'confirmed' || tab === 'completed' || tab === 'cancelled') {
+            filterByStatus(tab);
+        } else {
+            showAllRows();
+        }
+    }
+    
+    function filterByStatus(status) {
+        const allRows = document.querySelectorAll('.booking-table tbody tr');
+        allRows.forEach(row => {
+            const rowStatus = row.getAttribute('data-status');
+            if (rowStatus === status) {
+                row.style.display = '';
+            } else {
+                row.style.display = 'none';
+            }
+        });
+    }
+    
+    function showAllRows() {
+        const allRows = document.querySelectorAll('.booking-table tbody tr');
+        allRows.forEach(row => {
+            row.style.display = '';
+        });
+    }
+    
+    // Get CSRF token
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+    
+    // Escape HTML
+    function escapeHtml(text) {
+        if (!text) return '';
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+    
+    // View Booking Details
+    function viewBookingDetails(type, id) {
+        const modal = document.getElementById('bookingModal');
+        const modalContent = document.getElementById('modalContent');
+        const modalTitle = document.getElementById('modalTitle');
+        
+        modalTitle.textContent = type === 'room' ? 'Room Booking Details' : 'Table Booking Details';
+        modalContent.innerHTML = '<div class="modal-loading">Loading booking details...</div>';
+        modal.classList.add('open');
+        
+        // Get CSRF token
+        const csrftoken = getCookie('csrftoken');
+        
+        // Fetch booking details via API
+        fetch(`/restaurant/api/booking-details/${type}/${id}/`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrftoken
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                let html = '';
+                if (type === 'room') {
+                    html = `
+                        <div class="detail-row">
+                            <span class="detail-label">Booking ID</span>
+                            <span class="detail-value">#${data.id}</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Guest Name</span>
+                            <span class="detail-value">${escapeHtml(data.guest_name)}</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Guest Email</span>
+                            <span class="detail-value">${escapeHtml(data.guest_email)}</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Room Type</span>
+                            <span class="detail-value">${escapeHtml(data.room_type)}</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Room Number</span>
+                            <span class="detail-value">${escapeHtml(data.room_number)}</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Check In</span>
+                            <span class="detail-value">${escapeHtml(data.check_in)}</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Check Out</span>
+                            <span class="detail-value">${escapeHtml(data.check_out)}</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Nights</span>
+                            <span class="detail-value">${data.nights}</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Guests</span>
+                            <span class="detail-value">${data.guests} (Adults: ${data.adults}, Children: ${data.children})</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Price Per Night</span>
+                            <span class="detail-value">₹${data.price_per_night.toFixed(2)}</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Total Amount</span>
+                            <span class="detail-value">₹${data.total_amount.toFixed(2)}</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Status</span>
+                            <span class="detail-value"><span class="status-badge ${data.status}">${escapeHtml(data.status_display)}</span></span>
+                        </div>
+                        ${data.special_request ? `
+                        <div class="detail-row">
+                            <span class="detail-label">Special Request</span>
+                            <span class="detail-value">${escapeHtml(data.special_request)}</span>
+                        </div>
+                        ` : ''}
+                        <div class="detail-row">
+                            <span class="detail-label">Booked On</span>
+                            <span class="detail-value">${escapeHtml(data.created_at)}</span>
+                        </div>
+                    `;
+                } else {
+                    let features = [];
+                    if (data.has_ac) features.push('❄️ AC');
+                    if (data.has_view) features.push('🌅 View');
+                    if (data.has_music) features.push('🎵 Music');
+                    if (data.smoking_allowed) features.push('🚬 Smoking Allowed');
+                    
+                    html = `
+                        <div class="detail-row">
+                            <span class="detail-label">Booking ID</span>
+                            <span class="detail-value">#${data.id}</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Guest Name</span>
+                            <span class="detail-value">${escapeHtml(data.guest_name)}</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Guest Email</span>
+                            <span class="detail-value">${escapeHtml(data.guest_email)}</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Table Number</span>
+                            <span class="detail-value">${escapeHtml(data.table_number)}</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Zone</span>
+                            <span class="detail-value">${escapeHtml(data.zone)}</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Capacity</span>
+                            <span class="detail-value">${data.capacity} guests</span>
+                        </div>
+                        ${features.length > 0 ? `
+                        <div class="detail-row">
+                            <span class="detail-label">Features</span>
+                            <span class="detail-value">${features.join(' · ')}</span>
+                        </div>
+                        ` : ''}
+                        <div class="detail-row">
+                            <span class="detail-label">Date & Time</span>
+                            <span class="detail-value">${escapeHtml(data.start_time)}</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Guests</span>
+                            <span class="detail-value">${data.guests}</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Advance Paid</span>
+                            <span class="detail-value">₹${data.advance_paid.toFixed(2)}</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Status</span>
+                            <span class="detail-value"><span class="status-badge ${data.status}">${escapeHtml(data.status_display)}</span></span>
+                        </div>
+                        ${data.special_request ? `
+                        <div class="detail-row">
+                            <span class="detail-label">Special Request</span>
+                            <span class="detail-value">${escapeHtml(data.special_request)}</span>
+                        </div>
+                        ` : ''}
+                        <div class="detail-row">
+                            <span class="detail-label">Booked On</span>
+                            <span class="detail-value">${escapeHtml(data.created_at)}</span>
+                        </div>
+                    `;
+                }
+                modalContent.innerHTML = html;
+            } else {
+                modalContent.innerHTML = `<div class="modal-loading">Error: ${data.error || 'Could not load booking details'}</div>`;
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            modalContent.innerHTML = '<div class="modal-loading">Error loading booking details. Please try again.</div>';
+        });
+    }
+    
+    function closeModal() {
+        document.getElementById('bookingModal').classList.remove('open');
+    }
+    
+    // Close modal when clicking outside
+    document.getElementById('bookingModal').addEventListener('click', function(e) {
+        if (e.target === this) {
+            closeModal();
+        }
+    });
+    
+    // Initialize - show all bookings
+    document.addEventListener('DOMContentLoaded', function() {
+        // Set initial active tab
+        const activeTab = document.querySelector('.tab-btn.active');
+        if (activeTab) {
+            const tabType = activeTab.getAttribute('data-tab');
+            if (tabType === 'room') {
+                document.getElementById('tableBookingsCard').style.display = 'none';
+                document.getElementById('allBookingsCard').style.display = 'none';
+            } else if (tabType === 'table') {
+                document.getElementById('roomBookingsCard').style.display = 'none';
+                document.getElementById('allBookingsCard').style.display = 'none';
+            }
+        }
+    });
+</script>
+{% endblock %}

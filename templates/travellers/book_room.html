@@ -1,0 +1,622 @@
+{% extends "travellers/base.html" %}
+{% load static %}
+
+{% block title %}Book a Room at {{ property.restaurant_name }} | Wayzo{% endblock %}
+
+{% block extra_styles %}
+<style>
+    :root {
+        --teal: #0e8a8a;
+        --teal-dark: #0a6e6e;
+        --teal-pale: #e6f3f3;
+        --teal-light: #b9f5f5;
+    }
+
+    .booking-hero {
+        background: linear-gradient(135deg, #1a3c34 0%, #0d2b2a 100%);
+        padding: 3rem 2rem;
+        text-align: center;
+        color: white;
+        margin-bottom: -40px;
+    }
+    .booking-hero h1 { font-size: 2rem; font-weight: 700; margin-bottom: 0.5rem; }
+    .booking-hero p  { font-size: 0.95rem; opacity: 0.9; }
+
+    .booking-container { max-width: 1200px; margin: 0 auto; padding: 2rem; }
+
+    .booking-layout {
+        display: grid;
+        grid-template-columns: 1fr 380px;
+        gap: 2rem;
+        align-items: start;
+    }
+
+    /* ── Form card ── */
+    .booking-card {
+        background: white;
+        border-radius: 20px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        overflow: hidden;
+    }
+    .booking-header {
+        background: var(--teal);
+        color: white;
+        padding: 1.5rem;
+        text-align: center;
+    }
+    .booking-header h2 { font-size: 1.5rem; font-weight: 700; margin-bottom: 0.25rem; }
+    .booking-header p  { font-size: 0.85rem; opacity: 0.9; }
+
+    .booking-form { padding: 2rem; }
+
+    .form-group { margin-bottom: 1.25rem; }
+    .form-group label {
+        display: block; font-size: 0.8rem; font-weight: 600;
+        color: #333; margin-bottom: 0.5rem;
+    }
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+        width: 100%; padding: 0.75rem 1rem;
+        border: 2px solid #e2e8f0; border-radius: 12px;
+        font-size: 0.9rem; transition: all 0.2s; font-family: inherit;
+    }
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus {
+        outline: none; border-color: var(--teal);
+        box-shadow: 0 0 0 3px rgba(14,138,138,0.1);
+    }
+    .form-group input[readonly] { background: #f8fafc; color: #64748b; }
+
+    .form-row   { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+    .form-row-3 { display: grid; grid-template-columns: repeat(3,1fr); gap: 1rem; }
+
+    .btn-submit {
+        width: 100%; padding: 1rem;
+        background: var(--teal); color: white; border: none;
+        border-radius: 12px; font-size: 1rem; font-weight: 600;
+        cursor: pointer; transition: all 0.2s; margin-top: 0.5rem;
+        font-family: inherit;
+    }
+    .btn-submit:hover { background: var(--teal-dark); transform: translateY(-1px); }
+
+    /* ── Sidebar ── */
+    .property-sidebar { position: sticky; top: 100px; }
+
+    .property-card {
+        background: white;
+        border-radius: 20px;
+        overflow: hidden;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        margin-bottom: 1.5rem;
+    }
+
+    /* ── Room slideshow ── */
+    .room-slideshow {
+        position: relative;
+        height: 220px;
+        background: linear-gradient(135deg, #1a3c34, #0d2b2a);
+        overflow: hidden;
+    }
+
+    .room-slide {
+        position: absolute; inset: 0;
+        background-size: cover; background-position: center;
+        opacity: 0;
+        transition: opacity 0.8s ease-in-out;
+        z-index: 0;
+    }
+    .room-slide.active { opacity: 1; z-index: 1; }
+    .room-slide::after {
+        content: '';
+        position: absolute; inset: 0;
+        background: linear-gradient(to bottom, transparent 35%, rgba(0,0,0,0.6) 100%);
+    }
+
+    /* Placeholder */
+    .room-slide-placeholder {
+        position: absolute; inset: 0; z-index: 2;
+        display: flex; flex-direction: column;
+        align-items: center; justify-content: center;
+        gap: 0.5rem; color: rgba(255,255,255,0.4); font-size: 0.82rem;
+    }
+    .room-slide-placeholder .ph-icon { font-size: 2.8rem; line-height: 1; }
+
+    /* Label overlay */
+    .room-slide-label {
+        position: absolute; bottom: 0; left: 0; right: 0; z-index: 10;
+        padding: 0.75rem 1rem;
+        display: flex; align-items: flex-end; justify-content: space-between;
+        pointer-events: none;
+    }
+    .room-slide-name {
+        font-size: 0.88rem; font-weight: 700; color: white;
+        text-shadow: 0 1px 6px rgba(0,0,0,0.6);
+    }
+    .room-slide-price {
+        font-size: 0.78rem; font-weight: 700;
+        background: rgba(14,138,138,0.9); color: white;
+        padding: 0.2rem 0.65rem; border-radius: 20px;
+    }
+
+    /* Dots */
+    .room-slide-dots {
+        position: absolute; bottom: 40px; left: 50%; transform: translateX(-50%);
+        z-index: 15; display: flex; gap: 5px; align-items: center;
+    }
+    .room-sdot {
+        width: 6px; height: 6px; border-radius: 99px;
+        background: rgba(255,255,255,0.4); border: none;
+        cursor: pointer; transition: all 0.3s; padding: 0;
+    }
+    .room-sdot.active { width: 18px; background: white; }
+
+    /* Counter */
+    .room-slide-counter {
+        position: absolute; top: 0.6rem; right: 0.75rem; z-index: 15;
+        background: rgba(0,0,0,0.38); backdrop-filter: blur(6px);
+        color: white; font-size: 0.65rem; font-weight: 600;
+        padding: 0.2rem 0.6rem; border-radius: 99px;
+        border: 1px solid rgba(255,255,255,0.15);
+    }
+
+    /* Arrows */
+    .room-slide-arrow {
+        position: absolute; top: 50%; transform: translateY(-50%);
+        z-index: 15; width: 30px; height: 30px; border-radius: 50%;
+        background: rgba(255,255,255,0.2); backdrop-filter: blur(6px);
+        border: 1px solid rgba(255,255,255,0.3); color: white;
+        display: flex; align-items: center; justify-content: center;
+        cursor: pointer; font-size: 1rem; transition: background 0.2s;
+    }
+    .room-slide-arrow:hover { background: rgba(255,255,255,0.35); }
+    .room-slide-arrow.prev { left: 0.6rem; }
+    .room-slide-arrow.next { right: 0.6rem; }
+
+    /* Property info below image */
+    .property-info { padding: 1.25rem 1.5rem; }
+    .property-name { font-size: 1.2rem; font-weight: 700; margin-bottom: 0.3rem; color: #111827; }
+    .property-room-badge {
+        display: inline-flex; align-items: center; gap: 0.35rem;
+        font-size: 0.78rem; font-weight: 600; color: var(--teal);
+        background: var(--teal-pale); padding: 0.2rem 0.75rem;
+        border-radius: 20px; border: 1px solid var(--teal-light);
+        margin-bottom: 0.35rem; display: none;
+    }
+    .property-room-badge.visible { display: inline-flex; }
+    .property-location { font-size: 0.82rem; color: #6b7280; }
+
+    /* Summary card */
+    .selected-card { background: var(--teal-pale); border-radius: 20px; padding: 1.5rem; }
+    .selected-title { font-size: 1rem; font-weight: 700; margin-bottom: 1rem; color: var(--teal); }
+    .selected-item {
+        display: flex; align-items: center; gap: 0.5rem;
+        padding: 0.5rem 0; font-size: 0.85rem;
+        border-bottom: 1px solid rgba(14,138,138,0.2);
+    }
+    .selected-item:last-child { border-bottom: none; }
+    .selected-icon { font-size: 1.1rem; }
+
+    /* Cancellation Policy Display */
+    .cancellation-policy-info {
+        background: #fef3c7;
+        border-left: 3px solid #d97706;
+        padding: 0.75rem 1rem;
+        border-radius: 8px;
+        margin-bottom: 1rem;
+        font-size: 0.75rem;
+        color: #92400e;
+    }
+
+    @media (max-width: 992px) {
+        .booking-layout { grid-template-columns: 1fr; }
+        .property-sidebar { position: static; order: -1; }
+    }
+    @media (max-width: 768px) {
+        .booking-container { padding: 1rem; }
+        .booking-form { padding: 1.5rem; }
+        .form-row, .form-row-3 { grid-template-columns: 1fr; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="booking-hero">
+    <h1>🛏️ Book a Room</h1>
+    <p>Book your stay at {{ property.restaurant_name }}</p>
+</div>
+
+<div class="booking-container">
+    <div class="booking-layout">
+
+        <!-- ── Left: Form ── -->
+        <div class="booking-card">
+            <div class="booking-header">
+                <h2>Room Booking Details</h2>
+                <p>Please fill in all required information</p>
+            </div>
+            <div class="booking-form">
+                <form method="POST">
+                    {% csrf_token %}
+
+                    <div class="form-group">
+                        <label>🏨 Select Room Type</label>
+                        <select name="room_type_id" id="roomTypeSelect" required>
+                            <option value="">Choose a room type</option>
+                            {% for room_type in available_rooms %}
+                            <option value="{{ room_type.id }}"
+                                    data-price="{{ room_type.price_per_night }}"
+                                    data-max-guests="{{ room_type.max_guests }}"
+                                    data-name="{{ room_type.name }}"
+                                    data-variant="{{ room_type.get_variant_display }}"
+                                    data-cancel-policy="{% if room_type.cancellation_policy %}{{ room_type.cancellation_policy.policy_type }}{% endif %}"
+                                    data-cancel-days="{% if room_type.cancellation_policy %}{{ room_type.cancellation_policy.free_until_days }}{% endif %}"
+                                    data-cancel-refund="{% if room_type.cancellation_policy %}{{ room_type.cancellation_policy.refund_percentage_after }}{% endif %}"
+                                    data-images="{% with imgs=room_type.images.all %}
+                                        {% for img in imgs %}{{ img.image.url }}{% if not forloop.last %}|{% endif %}{% endfor %}
+                                    {% endwith %}">
+                                {{ room_type.name }} ({{ room_type.get_variant_display }}) — ₹{{ room_type.price_per_night|floatformat:0 }}/night
+                                ({{ room_type.available_rooms|default:0 }} available)
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="form-row-3">
+                        <div class="form-group">
+                            <label>👤 Adults *</label>
+                            <input type="number" name="adults" id="adults" min="1" value="2" required>
+                        </div>
+                        <div class="form-group">
+                            <label>🧒 Children</label>
+                            <input type="number" name="children" id="children" min="0" value="0">
+                        </div>
+                        <div class="form-group">
+                            <label>👥 Total Guests</label>
+                            <input type="number" name="guests" id="guests" readonly>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>📅 Check-in Date *</label>
+                            <input type="date" name="check_in" id="checkInDate" required>
+                        </div>
+                        <div class="form-group">
+                            <label>📅 Check-out Date *</label>
+                            <input type="date" name="check_out" id="checkOutDate" required>
+                        </div>
+                    </div>
+
+                    <!-- Cancellation Policy Display -->
+                    <div id="cancellationPolicyDisplay" class="cancellation-policy-info" style="display: none;"></div>
+
+                    <div class="form-group" id="priceDisplay" style="display:none;">
+                        <div style="background:var(--teal-pale);padding:1rem;border-radius:12px;border:1px solid var(--teal-light);">
+                            <div style="display:flex;justify-content:space-between;align-items:center;">
+                                <span style="font-size:0.85rem;color:var(--teal-dark);">💰 Total Amount</span>
+                                <strong id="totalAmount" style="color:var(--teal);font-size:1.05rem;">₹0</strong>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>📝 Special Request (Optional)</label>
+                        <textarea name="special_request" rows="3" placeholder="Any special requirements?" style="resize:none;"></textarea>
+                    </div>
+
+                    <button type="submit" class="btn-submit">✓ Confirm Room Booking</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- ── Right: Sidebar ── -->
+        <div class="property-sidebar">
+
+            <div class="property-card">
+                <!-- Slideshow -->
+                <div class="room-slideshow" id="roomSlideshow">
+
+                    <div class="room-slide-placeholder" id="slidePlaceholder">
+                        <span class="ph-icon">🛏️</span>
+                        Select a room to see photos
+                    </div>
+
+                    <!-- Slides container -->
+                    <div id="slideTrack"></div>
+                    <div class="room-slide-dots"    id="slideDots"    style="display:none;"></div>
+                    <div class="room-slide-counter" id="slideCounter" style="display:none;"></div>
+                    <button class="room-slide-arrow prev" id="slideArrowPrev" style="display:none;">‹</button>
+                    <button class="room-slide-arrow next" id="slideArrowNext" style="display:none;">›</button>
+
+                    <div class="room-slide-label">
+                        <div class="room-slide-name"  id="slideName"></div>
+                        <div class="room-slide-price" id="slidePrice" style="display:none;"></div>
+                    </div>
+                </div>
+
+                <div class="property-info">
+                    <h3 class="property-name">{{ property.restaurant_name }}</h3>
+                    <div class="property-room-badge" id="roomBadge"></div>
+                    <div class="property-location">📍 {{ property.city }}, {{ property.state }}</div>
+                </div>
+            </div>
+
+            <div class="selected-card">
+                <div class="selected-title">Booking Summary</div>
+                <div class="selected-item">
+                    <span class="selected-icon">🏠</span>
+                    <span>{{ property.restaurant_name }}</span>
+                </div>
+                <div class="selected-item">
+                    <span class="selected-icon">📅</span>
+                    <span id="summaryDate">Dates not selected</span>
+                </div>
+                <div class="selected-item">
+                    <span class="selected-icon">👥</span>
+                    <span id="summaryGuests">Guests not specified</span>
+                </div>
+                <div id="summarySpecific" class="selected-item">
+                    <span class="selected-icon">🏨</span>
+                    <span>Select a room type</span>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<script>
+(function () {
+    // ── Dates ──
+    const today = new Date().toISOString().split('T')[0];
+    const checkInInput  = document.getElementById('checkInDate');
+    const checkOutInput = document.getElementById('checkOutDate');
+    checkInInput.min = today;
+
+    checkInInput.addEventListener('change', () => {
+        checkOutInput.min = checkInInput.value;
+        if (checkOutInput.value && checkOutInput.value <= checkInInput.value) checkOutInput.value = '';
+        updateRoomPrice();
+        updateSummaryDate();
+    });
+    checkOutInput.addEventListener('change', () => { updateRoomPrice(); updateSummaryDate(); });
+
+    function updateSummaryDate() {
+        if (checkInInput.value && checkOutInput.value) {
+            const ci = new Date(checkInInput.value).toLocaleDateString('en-US', { month:'short', day:'numeric' });
+            const co = new Date(checkOutInput.value).toLocaleDateString('en-US', { month:'short', day:'numeric' });
+            document.getElementById('summaryDate').textContent = ci + ' – ' + co;
+        }
+    }
+
+    // ── Guests ──
+    const adultsInput    = document.getElementById('adults');
+    const childrenInput  = document.getElementById('children');
+    const guestsInput    = document.getElementById('guests');
+    const roomTypeSelect = document.getElementById('roomTypeSelect');
+
+    function updateTotalGuests() {
+        const total = (parseInt(adultsInput.value) || 0) + (parseInt(childrenInput.value) || 0);
+        guestsInput.value = total;
+        document.getElementById('summaryGuests').textContent = total + ' guest(s)';
+        const maxGuests = roomTypeSelect.options[roomTypeSelect.selectedIndex]?.dataset.maxGuests;
+        if (maxGuests && total > parseInt(maxGuests)) {
+            alert('Maximum ' + maxGuests + ' guests allowed for this room.');
+            adultsInput.value = parseInt(maxGuests);
+            childrenInput.value = 0;
+            updateTotalGuests();
+        }
+    }
+    adultsInput.addEventListener('change', updateTotalGuests);
+    childrenInput.addEventListener('change', updateTotalGuests);
+    updateTotalGuests();
+
+    // ── Price ──
+    function updateRoomPrice() {
+        const opt = roomTypeSelect.options[roomTypeSelect.selectedIndex];
+        if (!roomTypeSelect.value || !checkInInput.value || !checkOutInput.value) return;
+        const pricePerNight = parseFloat(opt.dataset.price);
+        const nights = Math.round((new Date(checkOutInput.value) - new Date(checkInInput.value)) / 86400000);
+        if (nights > 0) {
+            const total = pricePerNight * nights;
+            document.getElementById('totalAmount').textContent = '₹' + total.toFixed(0);
+            document.getElementById('priceDisplay').style.display = 'block';
+            document.getElementById('summarySpecific').innerHTML =
+                '<span class="selected-icon">🏨</span><span>' + opt.dataset.name + ' · ' + nights + ' night' + (nights > 1 ? 's' : '') + '</span>';
+        }
+    }
+
+    // ── Cancellation Policy Display ──
+    function updateCancellationPolicy() {
+        const opt = roomTypeSelect.options[roomTypeSelect.selectedIndex];
+        const policyDiv = document.getElementById('cancellationPolicyDisplay');
+        
+        if (!roomTypeSelect.value || !opt) {
+            policyDiv.style.display = 'none';
+            return;
+        }
+        
+        const policyType = opt.dataset.cancelPolicy;
+        const freeDays = opt.dataset.cancelDays;
+        const refundPercent = opt.dataset.cancelRefund;
+        
+        let policyHtml = '';
+        if (policyType === 'free') {
+            policyHtml = '<strong>📋 Cancellation Policy:</strong> Free cancellation up to check-in day. Full refund.';
+        } else if (policyType === 'standard') {
+            policyHtml = `<strong>📋 Cancellation Policy:</strong> Free cancellation up to ${freeDays} days before check-in. After that, ${refundPercent}% refund.`;
+        } else if (policyType === 'strict') {
+            policyHtml = `<strong>📋 Cancellation Policy:</strong> Free cancellation up to ${freeDays} days before check-in. After that, ${refundPercent}% refund.`;
+        } else {
+            policyHtml = '<strong>📋 Cancellation Policy:</strong> Standard cancellation policy applies.';
+        }
+        
+        policyDiv.innerHTML = policyHtml;
+        policyDiv.style.display = 'block';
+    }
+
+    // ══════════════════════════════════
+    // SLIDESHOW ENGINE
+    // ══════════════════════════════════
+    const slideTrackEl   = document.getElementById('slideTrack');
+    const slideDotsEl    = document.getElementById('slideDots');
+    const slideCounterEl = document.getElementById('slideCounter');
+    const slidePlaceholder = document.getElementById('slidePlaceholder');
+    const slideNameEl    = document.getElementById('slideName');
+    const slidePriceEl   = document.getElementById('slidePrice');
+    const prevBtn        = document.getElementById('slideArrowPrev');
+    const nextBtn        = document.getElementById('slideArrowNext');
+    const roomBadgeEl    = document.getElementById('roomBadge');
+
+    let slides = [], dots = [], curSlide = 0, slideTimer = null;
+
+    function buildSlideshow(images, name, priceText, variant = '') {
+        // Clear existing timer
+        if (slideTimer) {
+            clearInterval(slideTimer);
+            slideTimer = null;
+        }
+        
+        slideTrackEl.innerHTML = '';
+        slideDotsEl.innerHTML  = '';
+        slides = []; dots = []; curSlide = 0;
+
+        if (!images || images.length === 0) {
+            // No images — show placeholder
+            slidePlaceholder.style.display = 'flex';
+            slideDotsEl.style.display      = 'none';
+            slideCounterEl.style.display   = 'none';
+            prevBtn.style.display          = 'none';
+            nextBtn.style.display          = 'none';
+            slidePriceEl.style.display     = 'none';
+            slideNameEl.textContent        = '';
+            return;
+        }
+
+        slidePlaceholder.style.display = 'none';
+
+        // Build slide divs
+        images.forEach((url, i) => {
+            const s = document.createElement('div');
+            s.className = 'room-slide' + (i === 0 ? ' active' : '');
+            s.style.backgroundImage = 'url(' + url + ')';
+            slideTrackEl.appendChild(s);
+            slides.push(s);
+        });
+
+        // Overlay label
+        slideNameEl.textContent    = name;
+        slidePriceEl.textContent   = priceText;
+        slidePriceEl.style.display = 'block';
+
+        // Counter
+        slideCounterEl.style.display = 'block';
+        refreshCounter();
+
+        if (images.length > 1) {
+            // Dots
+            images.forEach((_, i) => {
+                const d = document.createElement('button');
+                d.className = 'room-sdot' + (i === 0 ? ' active' : '');
+                d.addEventListener('click', () => goTo(i));
+                slideDotsEl.appendChild(d);
+                dots.push(d);
+            });
+            slideDotsEl.style.display = 'flex';
+            prevBtn.style.display = 'flex';
+            nextBtn.style.display = 'flex';
+
+            // Auto-advance every 5 seconds
+            slideTimer = setInterval(() => goTo(curSlide + 1), 5000);
+        } else {
+            slideDotsEl.style.display = 'none';
+            prevBtn.style.display     = 'none';
+            nextBtn.style.display     = 'none';
+        }
+    }
+
+    function goTo(n) {
+        if (!slides.length) return;
+        slides[curSlide].classList.remove('active');
+        if (dots[curSlide]) dots[curSlide].classList.remove('active');
+        curSlide = (n + slides.length) % slides.length;
+        slides[curSlide].classList.add('active');
+        if (dots[curSlide]) dots[curSlide].classList.add('active');
+        refreshCounter();
+        
+        // Reset auto-timer on manual nav
+        if (slideTimer) {
+            clearInterval(slideTimer);
+            if (slides.length > 1) {
+                slideTimer = setInterval(() => goTo(curSlide + 1), 5000);
+            }
+        }
+    }
+
+    function refreshCounter() {
+        slideCounterEl.textContent = (curSlide + 1) + ' / ' + slides.length;
+    }
+
+    window.roomSlide = function(dir) {
+        goTo(curSlide + dir);
+    };
+
+    // ── Room type change → rebuild slideshow ──
+    roomTypeSelect.addEventListener('change', function () {
+        const opt = this.options[this.selectedIndex];
+        if (!this.value) {
+            buildSlideshow([], '', '');
+            roomBadgeEl.textContent = '';
+            roomBadgeEl.classList.remove('visible');
+            return;
+        }
+
+        const rawImgs = opt.dataset.images || '';
+        const images  = rawImgs ? rawImgs.split('|').filter(Boolean) : [];
+        const name    = opt.dataset.name || opt.text.split(' — ')[0];
+        const variant = opt.dataset.variant || '';
+        const price   = '₹' + parseFloat(opt.dataset.price).toFixed(0) + '/night';
+
+        buildSlideshow(images, name, price, variant);
+
+        // Badge under property name
+        roomBadgeEl.textContent = '🛏️ ' + name + (variant ? ' (' + variant + ')' : '');
+        roomBadgeEl.classList.add('visible');
+
+        // Update cancellation policy
+        updateCancellationPolicy();
+        
+        // Update price and summary
+        updateRoomPrice();
+        document.getElementById('summarySpecific').innerHTML =
+            '<span class="selected-icon">🏨</span><span>' + name + '</span>';
+    });
+
+    // ── Auto-preselect: URL param OR first room if only one ──
+    (function autoPreselect() {
+        // 1. URL param ?room_type=ID  (coming from restaurant_detail Book button)
+        const urlId = new URLSearchParams(window.location.search).get('room_type');
+        // 2. Auto-select first if only one room type exists
+        const onlyOne = roomTypeSelect.options.length === 2; // 1 real + empty placeholder
+
+        const targetId = urlId || (onlyOne ? roomTypeSelect.options[1].value : null);
+        if (!targetId) return;
+
+        for (let i = 0; i < roomTypeSelect.options.length; i++) {
+            if (roomTypeSelect.options[i].value === String(targetId)) {
+                roomTypeSelect.selectedIndex = i;
+                roomTypeSelect.dispatchEvent(new Event('change'));
+                break;
+            }
+        }
+    })();
+
+    // Initialize with any pre-selected value
+    if (roomTypeSelect.value) {
+        roomTypeSelect.dispatchEvent(new Event('change'));
+    }
+})();
+</script>
+{% endblock %}

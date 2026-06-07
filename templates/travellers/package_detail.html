@@ -1,1601 +1,925 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>Wayzo | {{ package.title }} — Package Detail</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+<!-- travellers/templates/travellers/package_detail.html -->
+{% extends "travellers/base.html" %}
+{% load static %}
+{% load custom_filters %}
 
-        :root {
-            --gray-100: #F8F9FC;
-            --gray-150: #F1F3F8;
-            --gray-200: #E9EDF2;
-            --gray-300: #DCE2EA;
-            --gray-400: #BEC7D1;
-            --gray-500: #9AA3AF;
-            --gray-600: #6E7682;
-            --gray-700: #4A515C;
-            --gray-800: #2E343D;
-            --gray-850: #21262E;
-            --gray-900: #191E24;
-            --gray-950: #0F1217;
-            --accent-muted: #5B6E8C;
-            --accent-deep: #3A4A67;
-            --accent-light: #8A9CBA;
-            --accent-pale: #EFF2F9;
-            --white: #FFFFFF;
-            --text-dark: #1E242C;
-            --text-soft: #3C4350;
-            --text-light: #6F7886;
-            --green: #22C55E;
-            --amber: #F59E0B;
-            --blue-start: #3B82F6;
-            --blue-mid: #2563EB;
-            --blue-deep: #1E3A8A;
-            --gradient-primary: linear-gradient(135deg, #3B82F6 0%, #1E3A8A 100%);
-            --gradient-soft: linear-gradient(135deg, #60A5FA 0%, #3B82F6 50%, #2563EB 100%);
-            --gradient-glow: linear-gradient(135deg, #4F46E5 0%, #3B82F6 50%, #1E3A8A 100%);
-            --sidebar-w: 270px;
-        }
+{% block title %}{{ package.title }} | Wayzo{% endblock %}
+{% block nav_packages %}active{% endblock %}
 
-        body {
-            font-family: 'Inter', sans-serif;
-            background: var(--gray-100);
-            color: var(--text-dark);
-            display: flex;
-            min-height: 100vh;
-            overflow-x: hidden;
-        }
+{% block extra_styles %}
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600&family=DM+Sans:wght@300;400;500;600&display=swap');
 
-        /* ========= SIDEBAR ========= */
-        .sidebar {
-            width: var(--sidebar-w);
-            background: var(--gray-950);
-            height: 100vh;
-            position: fixed;
-            top: 0; left: 0;
-            display: flex;
-            flex-direction: column;
-            z-index: 300;
-            border-right: 1px solid rgba(255,255,255,0.06);
-            transform: translateX(0);
-            transition: transform 0.3s cubic-bezier(0.4,0,0.2,1);
-            overflow-y: auto;
-        }
-        .sidebar.collapsed { transform: translateX(calc(-1 * var(--sidebar-w))); }
-        .sidebar-overlay {
-            display: none;
-            position: fixed; inset: 0;
-            background: rgba(0,0,0,0.45);
-            z-index: 290;
-            backdrop-filter: blur(2px);
-            transition: opacity 0.3s;
-        }
-        .sidebar-overlay.visible { display: block; opacity: 1; }
-        .sidebar-brand {
-            padding: 1.6rem 1.6rem 1rem;
-            border-bottom: 1px solid rgba(255,255,255,0.06);
-        }
-        .sidebar-logo {
-            font-family: 'Playfair Display', serif;
-            font-size: 1.5rem; font-weight: 600;
-            color: white; text-decoration: none; display: block;
-        }
-        .sidebar-sub {
-            font-size: 0.65rem; color: rgba(255,255,255,0.35);
-            letter-spacing: 0.08em; text-transform: uppercase;
-        }
-        .sidebar-nav { flex: 1; padding: 1.2rem 0.8rem; }
-        .nav-group-label {
-            font-size: 0.6rem; font-weight: 600;
-            letter-spacing: 0.12em; text-transform: uppercase;
-            color: rgba(255,255,255,0.25);
-            padding: 0.5rem 0.8rem; margin-top: 0.4rem;
-        }
-        .nav-item {
-            display: flex; align-items: center; gap: 0.75rem;
-            padding: 0.65rem 0.8rem; border-radius: 10px;
-            text-decoration: none; color: rgba(255,255,255,0.55);
-            font-size: 0.82rem; font-weight: 500;
-            transition: all 0.2s; margin-bottom: 2px;
-        }
-        .nav-item svg { width: 18px; height: 18px; stroke: currentColor; stroke-width: 1.7; fill: none; }
-        .nav-item:hover { background: rgba(255,255,255,0.07); color: rgba(255,255,255,0.9); }
-        .nav-item.active { background: rgba(138,156,186,0.18); color: var(--accent-light); }
-        /* Sidebar user profile block */
-        .sidebar-user {
-            padding: 1rem 1.2rem 1rem;
-            border-bottom: 1px solid rgba(255,255,255,0.06);
-            display: flex; align-items: center; gap: 0.75rem;
-        }
-        .sidebar-user-avatar {
-            width: 42px; height: 42px; border-radius: 50%;
-            background: #0d9488;
-            display: flex; align-items: center; justify-content: center;
-            font-weight: 700; color: white; font-size: 0.95rem;
-            flex-shrink: 0; overflow: hidden;
-            border: 2px solid rgba(255,255,255,0.15);
-        }
-        .sidebar-user-avatar img { width: 100%; height: 100%; object-fit: cover; }
-        .sidebar-user-name { font-size: 0.88rem; font-weight: 600; color: white; line-height: 1.2; }
-        .sidebar-user-role { font-size: 0.68rem; color: rgba(255,255,255,0.4); margin-top: 2px; }
+:root {
+    --ink:#0f172a; --ink2:#1e293b; --muted:#64748b;
+    --border:#e2e8f0; --surface:#fff; --s2:#f8fafc; --s3:#f1f5f9;
+    --teal:#0e8a8a; --teal-dark:#0a6e6e; --teal-pale:#e6f3f3;
+    --amber:#d97706; --amber-pale:#fef3c7;
+    --green:#16a34a; --green-pale:#dcfce7;
+    --red:#dc2626; --red-pale:#fee2e2;
+    --rose:#f43f5e; --rose-pale:#ffe4e6;
+    --r:16px; --sh:0 2px 12px rgba(0,0,0,.06); --sh-lg:0 12px 40px rgba(0,0,0,.12);
+}
+*{box-sizing:border-box;} body{font-family:'DM Sans',sans-serif;}
 
-        .logout-sidebar {
-            border-top: 1px solid rgba(255,255,255,0.06);
-            padding: 0.8rem;
-        }
-        .logout-sidebar a {
-            display: flex; align-items: center; gap: 0.65rem;
-            color: rgba(255,255,255,0.45); text-decoration: none;
-            padding: 0.5rem 0.7rem; border-radius: 8px;
-            font-size: 0.78rem; font-weight: 500; transition: all 0.2s;
-        }
-        .logout-sidebar a svg { width: 16px; height: 16px; }
-        .logout-sidebar a:hover { background: rgba(239,68,68,0.1); color: #F87171; }
+/* ══════════════════════════════════════
+   HERO — full-viewport slideshow
+══════════════════════════════════════ */
+.pd-hero {
+    position:relative; height:100vh; min-height:640px; max-height:900px;
+    overflow:hidden; background:#0a1628;
+    display:flex; flex-direction:column;
+}
 
-        /* ========= MAIN LAYOUT ========= */
-        .main-wrapper {
-            margin-left: var(--sidebar-w);
-            flex: 1;
-            transition: margin-left 0.3s;
-            min-height: 100vh;
-            display: flex; flex-direction: column;
-        }
-        .main-wrapper.sidebar-collapsed { margin-left: 0; }
+/* Individual slide layers */
+.pd-slide {
+    position:absolute; inset:0; z-index:0;
+    background-size:cover; background-position:center;
+    opacity:0; transition:opacity 1.4s ease;
+}
+.pd-slide.active { opacity:1; z-index:1; }
+.pd-slide::after {
+    content:''; position:absolute; inset:0;
+    background:linear-gradient(
+        135deg,
+        rgba(0,0,0,.75) 0%,
+        rgba(0,0,0,.42) 50%,
+        rgba(0,0,0,.20) 100%
+    );
+}
+.pd-hero-bg-fade {
+    position:absolute; bottom:0; left:0; right:0; height:200px; z-index:2;
+    background:linear-gradient(to bottom, transparent, rgba(0,0,0,.60));
+    pointer-events:none;
+}
 
-        /* TOPBAR */
-        .topbar {
-            background: var(--white);
-            border-bottom: 1px solid var(--gray-200);
-            padding: 0 1.8rem; height: 70px;
-            display: flex; align-items: center; justify-content: space-between;
-            position: sticky; top: 0; z-index: 200;
-        }
-        .topbar-left { display: flex; align-items: center; gap: 1rem; }
-        .hamburger {
-            background: transparent; border: none; cursor: pointer;
-            display: flex; flex-direction: column; gap: 5px; padding: 6px;
-        }
-        .hamburger span { width: 20px; height: 2px; background: var(--gray-700); border-radius: 2px; transition: 0.2s; }
-        .topbar-breadcrumb {
-            display: flex; align-items: center; gap: 0.4rem;
-            font-size: 0.75rem; color: var(--text-light);
-        }
-        .topbar-breadcrumb a { color: var(--accent-muted); text-decoration: none; }
-        .topbar-breadcrumb a:hover { text-decoration: underline; }
-        .topbar-breadcrumb span { color: var(--gray-400); }
-        .topbar-title { font-size: 1.15rem; font-family: 'Playfair Display', serif; color: var(--text-dark); }
-        .topbar-right { display: flex; align-items: center; gap: 1.2rem; }
-        .notification-btn {
-            background: var(--gray-150); border: none; border-radius: 40px;
-            width: 38px; height: 38px; display: flex; align-items: center; justify-content: center;
-            cursor: pointer; transition: 0.2s; position: relative;
-        }
-        .notification-btn:hover { background: var(--gray-200); }
-        .notification-btn svg { width: 18px; stroke: var(--gray-700); fill: none; }
-        .notification-badge {
-            position: absolute; top: -2px; right: -2px;
-            background: #EF4444; color: white; font-size: 0.6rem; font-weight: bold;
-            width: 16px; height: 16px; border-radius: 50%;
-            display: flex; align-items: center; justify-content: center;
-        }
-        .avatar-menu { position: relative; cursor: pointer; }
-        .avatar-trigger {
-            display: flex; align-items: center; gap: 0.5rem;
-            background: var(--gray-150); padding: 0.3rem 0.8rem 0.3rem 0.4rem;
-            border-radius: 40px; transition: 0.2s;
-        }
-        .avatar-trigger:hover { background: var(--gray-200); }
-        .avatar-img {
-            width: 36px; height: 36px; border-radius: 50%;
-            display: flex; align-items: center; justify-content: center;
-            font-weight: 600; color: white; font-size: 0.9rem;
-            background: var(--accent-deep); overflow: hidden;
-        }
-        .avatar-img img { width: 100%; height: 100%; object-fit: cover; }
-        .avatar-name { font-size: 0.8rem; font-weight: 500; color: var(--gray-800); }
-        .dropdown-popup {
-            position: absolute; top: 50px; right: 0;
-            background: white; border-radius: 16px;
-            box-shadow: 0 20px 35px -12px rgba(0,0,0,0.15);
-            width: 240px; padding: 0.8rem 0; z-index: 400;
-            border: 1px solid var(--gray-200);
-            opacity: 0; visibility: hidden; transform: translateY(-6px);
-            transition: all 0.2s;
-        }
-        .dropdown-popup.show { opacity: 1; visibility: visible; transform: translateY(0); }
-        .dropdown-info { padding: 0.5rem 1rem; border-bottom: 1px solid var(--gray-200); margin-bottom: 0.4rem; }
-        .dropdown-info p { font-size: 0.85rem; font-weight: 600; color: var(--gray-900); }
-        .dropdown-info span { font-size: 0.7rem; color: var(--text-light); display: block; margin-top: 2px; }
-        .dropdown-item {
-            display: flex; align-items: center; gap: 0.7rem;
-            padding: 0.6rem 1rem; color: var(--gray-700);
-            text-decoration: none; font-size: 0.8rem; transition: background 0.1s;
-        }
-        .dropdown-item:hover { background: var(--gray-150); }
+/* ── Floating pill nav — centered, overlays hero ── */
+.pd-pill-nav {
+    position:absolute; top:1.4rem; left:50%; transform:translateX(-50%);
+    z-index:20; display:flex; gap:.3rem; align-items:center;
+    background:rgba(255,255,255,.12); backdrop-filter:blur(16px);
+    border:1px solid rgba(255,255,255,.2); border-radius:40px;
+    padding:.35rem .4rem;
+    white-space:nowrap;
+}
+.pd-pill-tab {
+    padding:.42rem 1.1rem; border-radius:40px;
+    font-size:.76rem; font-weight:600;
+    color:rgba(255,255,255,.75); background:transparent;
+    border:none; cursor:pointer; transition:all .2s;
+    font-family:'DM Sans',sans-serif;
+}
+.pd-pill-tab:hover { color:#fff; background:rgba(255,255,255,.14); }
+.pd-pill-tab.active { background:#fff; color:var(--ink); box-shadow:0 2px 8px rgba(0,0,0,.18); }
 
-        /* ========= PAGE CONTENT ========= */
-        .page-content { flex: 1; padding: 2rem 2.2rem 3rem; max-width: 1100px; }
+/* Slide dots */
+.pd-slide-dots {
+    position:absolute; bottom:1.5rem; left:50%; transform:translateX(-50%);
+    z-index:20; display:flex; gap:.55rem; align-items:center;
+}
+.pd-sdot {
+    width:7px; height:7px; border-radius:99px;
+    background:rgba(255,255,255,.35); border:none; cursor:pointer; padding:0;
+    transition:all .3s;
+}
+.pd-sdot.active { width:22px; background:#fff; }
 
-        /* Hero */
-        .hero-section {
-            position: relative; border-radius: 24px; overflow: hidden;
-            margin-bottom: 1.8rem; height: 420px;
-            background: var(--gray-200);
-            box-shadow: 0 8px 32px rgba(0,0,0,0.12);
-        }
-        .hero-img { width: 100%; height: 100%; object-fit: cover; display: block; }
-        .hero-placeholder {
-            width: 100%; height: 100%;
-            display: flex; align-items: center; justify-content: center;
-            background: linear-gradient(135deg, var(--gray-200), var(--gray-300));
-            color: var(--gray-500);
-        }
-        .hero-overlay {
-            position: absolute; inset: 0;
-            background: linear-gradient(to top, rgba(15,18,23,0.78) 0%, rgba(15,18,23,0.15) 50%, transparent 75%);
-        }
-        .hero-badges {
-            position: absolute; top: 1.2rem; left: 1.2rem;
-            display: flex; gap: 0.5rem; flex-wrap: wrap;
-        }
-        .badge-featured {
-            background: linear-gradient(135deg, #F59E0B, #D97706);
-            color: white; font-size: 0.68rem; font-weight: 600;
-            padding: 0.3rem 0.8rem; border-radius: 20px;
-            display: flex; align-items: center; gap: 0.3rem;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.18);
-        }
-        .badge-featured svg { width: 12px; height: 12px; fill: gold; stroke: none; }
-        .badge-discount {
-            background: linear-gradient(135deg, #EF4444, #DC2626);
-            color: white; font-size: 0.68rem; font-weight: 700;
-            padding: 0.3rem 0.8rem; border-radius: 20px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.18);
-        }
-        .hero-meta {
-            position: absolute; bottom: 1.6rem; left: 1.8rem; right: 1.8rem;
-        }
-        .hero-title {
-            font-family: 'Playfair Display', serif;
-            font-size: 2.2rem; font-weight: 600;
-            color: white; line-height: 1.2;
-            margin-bottom: 0.6rem;
-            text-shadow: 0 2px 14px rgba(0,0,0,0.35);
-        }
-        .hero-meta-row {
-            display: flex; align-items: center; gap: 1.2rem; flex-wrap: wrap;
-        }
-        .hero-places {
-            font-size: 0.85rem; color: rgba(255,255,255,0.85);
-            display: flex; align-items: center; gap: 0.4rem;
-        }
-        .hero-places svg { width: 14px; height: 14px; stroke: rgba(255,255,255,0.85); fill: none; flex-shrink: 0; }
-        .hero-duration {
-            font-size: 0.85rem; color: rgba(255,255,255,0.7);
-            display: flex; align-items: center; gap: 0.4rem;
-        }
-        .hero-duration svg { width: 14px; height: 14px; stroke: rgba(255,255,255,0.7); fill: none; flex-shrink: 0; }
+/* ── Hero main content ── */
+.pd-hero-body {
+    flex:1; position:relative; z-index:5;
+    display:grid; grid-template-columns:1fr 420px;
+    align-items:flex-end; gap:2rem;
+    padding:0 3.5rem 4.5rem;
+    max-width:1440px; margin:0 auto; width:100%;
+    align-self:flex-end;
+}
+.pd-hero-left { display:flex; flex-direction:column; justify-content:flex-end; }
+.pd-hero-eyebrow {
+    display:inline-flex; align-items:center; gap:.5rem;
+    background:rgba(255,255,255,.15); backdrop-filter:blur(8px);
+    border:1px solid rgba(255,255,255,.22); border-radius:40px;
+    padding:.3rem 1rem; font-size:.72rem; color:rgba(255,255,255,.9);
+    font-weight:500; margin-bottom:1rem; width:fit-content;
+}
+.pd-hero-title {
+    font-family:'Cormorant Garamond',serif;
+    font-size:clamp(2.2rem,4.5vw,3.6rem);
+    font-weight:700; color:#fff; line-height:1.1;
+    margin-bottom:1rem; letter-spacing:-.01em;
+    text-shadow:0 2px 20px rgba(0,0,0,.35);
+}
+.pd-hero-title em { font-style:italic; color:#8DE8E8; }
+.pd-hero-meta { display:flex; flex-wrap:wrap; gap:.5rem 1.1rem; margin-bottom:1.2rem; }
+.pd-hero-chip {
+    display:flex; align-items:center; gap:.4rem;
+    font-size:.8rem; color:rgba(255,255,255,.82);
+}
+.pd-hero-chip svg { width:15px; height:15px; stroke:rgba(255,255,255,.7); fill:none; stroke-width:2; }
+.pd-hero-desc {
+    font-size:.88rem; color:rgba(255,255,255,.7); line-height:1.65;
+    max-width:520px; margin-bottom:1.6rem; font-weight:300;
+}
+.pd-hero-btns { display:flex; gap:.85rem; flex-wrap:wrap; align-items:center; }
+.pd-btn-book {
+    display:inline-flex; align-items:center; gap:.5rem;
+    padding:.8rem 2rem; background:var(--teal); color:#fff; border:none;
+    border-radius:40px; font-size:.9rem; font-weight:700; cursor:pointer;
+    text-decoration:none; font-family:'DM Sans',sans-serif; transition:all .25s;
+    box-shadow:0 4px 16px rgba(14,138,138,.45);
+}
+.pd-btn-book:hover { background:var(--teal-dark); transform:translateY(-2px); color:#fff; }
+.pd-btn-outline {
+    display:inline-flex; align-items:center; gap:.5rem;
+    padding:.78rem 1.6rem; background:transparent; color:#fff;
+    border:2px solid rgba(255,255,255,.35); border-radius:40px;
+    font-size:.88rem; font-weight:600; cursor:pointer;
+    text-decoration:none; font-family:'DM Sans',sans-serif; transition:all .25s;
+}
+.pd-btn-outline:hover { border-color:#fff; background:rgba(255,255,255,.1); }
+.pd-btn-wishlist {
+    display:inline-flex; align-items:center; gap:.5rem;
+    padding:.78rem 1.6rem; border-radius:40px;
+    font-size:.88rem; font-weight:600; cursor:pointer;
+    text-decoration:none; font-family:'DM Sans',sans-serif;
+    transition:all .25s;
+    background:rgba(255,255,255,.1);
+    border:2px solid rgba(255,255,255,.35);
+    color:#fff;
+}
+.pd-btn-wishlist.active {
+    background:var(--rose); border-color:var(--rose); color:#fff;
+}
+.pd-btn-wishlist:hover { border-color:#fff; background:rgba(255,255,255,.2); }
+.pd-btn-wishlist.active:hover { background:var(--rose-dark); border-color:var(--rose-dark); }
 
-        /* Quick Info Row */
-        .quick-info-row {
-            display: flex; flex-wrap: wrap; gap: 1rem;
-            background: white; border-radius: 20px;
-            border: 1px solid var(--gray-200);
-            padding: 1.4rem 1.8rem;
-            margin-bottom: 1.8rem;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.03);
-        }
-        .quick-info-item {
-            display: flex; align-items: center; gap: 0.7rem;
-            flex: 1 1 140px; min-width: 120px;
-        }
-        .qi-icon {
-            width: 40px; height: 40px; border-radius: 12px;
-            background: var(--accent-pale);
-            display: flex; align-items: center; justify-content: center;
-            flex-shrink: 0;
-        }
-        .qi-icon svg { width: 20px; height: 20px; stroke: var(--blue-mid); fill: none; stroke-width: 1.8; }
-        .qi-label { font-size: 0.67rem; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 2px; }
-        .qi-value { font-size: 0.88rem; font-weight: 600; color: var(--blue-start); }
+/* Participants */
+.pd-participants { display:flex; align-items:center; gap:.6rem; margin-bottom:1.4rem; }
+.pd-av-stack { display:flex; }
+.pd-av {
+    width:28px; height:28px; border-radius:50%; border:2px solid rgba(255,255,255,.3);
+    background:var(--teal); display:flex; align-items:center; justify-content:center;
+    font-size:.62rem; font-weight:700; color:#fff; margin-left:-8px; overflow:hidden;
+}
+.pd-av:first-child { margin-left:0; }
+.pd-av img { width:100%; height:100%; object-fit:cover; }
+.pd-participants-text { font-size:.78rem; color:rgba(255,255,255,.75); }
+.pd-participants-text strong { color:#fff; }
 
-        /* Content Grid */
-        .content-grid {
-            display: grid;
-            grid-template-columns: 1fr 320px;
-            gap: 1.8rem;
-            align-items: start;
-        }
-        .content-left { display: flex; flex-direction: column; gap: 1.5rem; }
+/* ── Hero right — gallery cards ── */
+.pd-hero-right { display:flex; flex-direction:column; gap:.75rem; padding-bottom:4.5rem; align-self:flex-end; }
+.pd-gallery-card-main {
+    border-radius:18px; overflow:hidden; position:relative;
+    height:200px; background:#1a2a3a; box-shadow:0 12px 40px rgba(0,0,0,.35);
+}
+.pd-gallery-card-main img { width:100%; height:100%; object-fit:cover; display:block; }
+.pd-gallery-card-label {
+    position:absolute; bottom:0; left:0; right:0;
+    background:linear-gradient(to top, rgba(0,0,0,.75), transparent);
+    padding:.75rem 1rem;
+    display:flex; justify-content:space-between; align-items:flex-end;
+}
+.pd-gallery-card-label span { font-size:.8rem; font-weight:600; color:#fff; }
+.pd-gallery-card-label small { font-size:.68rem; color:rgba(255,255,255,.65); }
+.pd-gallery-row { display:flex; gap:.65rem; }
+.pd-gallery-card-sm {
+    flex:1; border-radius:12px; overflow:hidden; height:110px;
+    background:#1a2a3a; position:relative; box-shadow:0 6px 20px rgba(0,0,0,.25);
+}
+.pd-gallery-card-sm img { width:100%; height:100%; object-fit:cover; display:block; }
 
-        /* Cards */
-        .info-card {
-            background: white;
-            border-radius: 20px;
-            border: 1px solid var(--gray-200);
-            overflow: hidden;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.03);
-        }
-        .card-header {
-            padding: 1.2rem 1.5rem;
-            border-bottom: 1px solid var(--gray-200);
-            display: flex; align-items: center; gap: 0.6rem;
-        }
-        .card-header h3 { font-size: 0.95rem; font-weight: 600; color: var(--text-dark); }
-        .card-header svg { width: 18px; height: 18px; stroke: var(--blue-start); fill: none; stroke-width: 1.8; }
-        .card-body { padding: 1.2rem 1.5rem; }
+/* ══════════════════════════════════════
+   AGENCY BAR
+══════════════════════════════════════ */
+.pd-agency-bar {
+    background:#fff; border-bottom:1px solid var(--border);
+    padding:.65rem 0;
+}
+.pd-agency-inner {
+    max-width:1440px; margin:0 auto; padding:0 3.5rem;
+    display:flex; align-items:center; justify-content:space-between;
+    gap:1rem; flex-wrap:wrap;
+}
+.pd-agency-info { display:flex; align-items:center; gap:.9rem; }
+.pd-agency-av {
+    width:40px; height:40px; border-radius:50%;
+    background:var(--teal); display:flex; align-items:center; justify-content:center;
+    color:#fff; font-weight:700; font-size:.95rem; flex-shrink:0;
+}
+.pd-agency-name { font-size:.88rem; font-weight:700; color:var(--ink); }
+.pd-agency-loc  { font-size:.7rem; color:var(--muted); }
+.pd-agency-stats { display:flex; gap:.5rem; }
+.pd-agency-stat {
+    text-align:center; padding:.28rem .7rem;
+    background:var(--s2); border:1px solid var(--border); border-radius:8px;
+}
+.pd-agency-stat-n { font-weight:700; font-size:.86rem; color:var(--ink); }
+.pd-agency-stat-l { font-size:.6rem; color:var(--muted); display:block; }
+.pd-agency-link {
+    font-size:.75rem; font-weight:600; color:var(--teal);
+    border:1.5px solid var(--teal); padding:.38rem .9rem;
+    border-radius:40px; text-decoration:none; transition:all .15s;
+}
+.pd-agency-link:hover { background:var(--teal); color:#fff; }
 
-        /* Overview */
-        .overview-text { font-size: 0.88rem; line-height: 1.8; color: var(--text-soft); }
+/* ══════════════════════════════════════
+   PAGE BODY — FULL WIDTH
+══════════════════════════════════════ */
+.pd-body {
+    max-width:1440px; margin:0 auto;
+    padding:2.5rem 3.5rem 5rem;
+}
+.pd-grid {
+    display:grid; grid-template-columns:1fr 380px;
+    gap:2.5rem; align-items:start;
+}
+.pd-main { min-width:0; }
+.pd-side { position:sticky; top:24px; }
 
-        /* Gallery */
-        .gallery-grid {
-            display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.8rem;
-        }
-        .gallery-img-wrap {
-            border-radius: 14px; overflow: hidden;
-            aspect-ratio: 4/3; background: var(--gray-150);
-            cursor: pointer; transition: transform 0.3s;
-        }
-        .gallery-img-wrap:hover { transform: scale(1.02); }
-        .gallery-img-wrap img { width: 100%; height: 100%; object-fit: cover; display: block; }
+/* Cards */
+.pd-card {
+    background:var(--surface); border:1px solid var(--border);
+    border-radius:var(--r); margin-bottom:1.75rem; overflow:hidden;
+    box-shadow:var(--sh);
+}
+.pd-card::before { content:''; display:block; height:3px; background:linear-gradient(90deg,var(--teal),var(--teal-dark)); }
+.pd-card-head {
+    display:flex; align-items:center; gap:.6rem;
+    padding:1rem 1.5rem; border-bottom:1px solid var(--border);
+    background:var(--s2);
+}
+.pd-card-head svg { width:18px; height:18px; stroke:var(--teal); fill:none; stroke-width:2; flex-shrink:0; }
+.pd-card-head h3 { font-family:'Cormorant Garamond',serif; font-size:1.08rem; font-weight:600; color:var(--ink); margin:0; }
+.pd-card-body { padding:1.5rem; }
 
-        /* Inc / Exc */
-        .inc-exc-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
-        .inc-exc-section-title {
-            font-size: 0.78rem; font-weight: 600; color: var(--text-dark);
-            margin-bottom: 0.8rem; display: flex; align-items: center; gap: 0.4rem;
-        }
-        .inc-list, .exc-list { display: flex; flex-direction: column; gap: 0.55rem; }
-        .inc-item, .exc-item {
-            display: flex; align-items: flex-start; gap: 0.55rem;
-            font-size: 0.83rem; color: var(--text-soft); line-height: 1.5;
-        }
-        .inc-dot {
-            width: 18px; height: 18px; border-radius: 50%;
-            background: rgba(34,197,94,0.15);
-            display: flex; align-items: center; justify-content: center;
-            flex-shrink: 0; margin-top: 1px;
-        }
-        .inc-dot svg { width: 10px; height: 10px; stroke: #16a34a; stroke-width: 2.5; fill: none; }
-        .exc-dot {
-            width: 18px; height: 18px; border-radius: 50%;
-            background: rgba(239,68,68,0.12);
-            display: flex; align-items: center; justify-content: center;
-            flex-shrink: 0; margin-top: 1px;
-        }
-        .exc-dot svg { width: 10px; height: 10px; stroke: #dc2626; stroke-width: 2.5; fill: none; }
+/* Info chips */
+.pd-chips { display:grid; grid-template-columns:repeat(3,1fr); gap:.75rem; }
+.pd-chip { background:var(--s2); border:1px solid var(--border); border-radius:10px; padding:.75rem 1rem; }
+.pd-chip-label { font-size:.64rem; text-transform:uppercase; letter-spacing:.5px; color:var(--muted); margin-bottom:.25rem; font-weight:600; }
+.pd-chip-value { font-size:.86rem; font-weight:600; color:var(--ink); }
 
-        /* Details Grid */
-        .details-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.8rem; }
-        .detail-chip {
-            background: var(--gray-100); border-radius: 12px;
-            padding: 0.75rem 1rem; border: 1px solid var(--gray-200);
-        }
-        .detail-chip-label { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-light); margin-bottom: 0.25rem; }
-        .detail-chip-value { font-size: 0.85rem; font-weight: 500; color: var(--text-dark); }
+/* Timeline */
+.pd-tl-item { display:flex; gap:1rem; margin-bottom:1.5rem; }
+.pd-tl-dot-col { width:40px; flex-shrink:0; display:flex; flex-direction:column; align-items:center; }
+.pd-tl-dot {
+    width:40px; height:40px; background:var(--teal-pale); border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    color:var(--teal); font-weight:700; font-size:.85rem;
+    border:2px solid rgba(14,138,138,.2);
+}
+.pd-tl-line { flex:1; width:2px; background:var(--border); margin-top:4px; }
+.pd-tl-item:last-child .pd-tl-line { display:none; }
+.pd-tl-content { flex:1; padding-top:.5rem; padding-bottom:1rem; }
+.pd-tl-title { font-weight:700; font-size:.95rem; color:var(--ink); margin-bottom:.35rem; }
+.pd-tl-desc { font-size:.83rem; color:var(--muted); line-height:1.6; }
 
-        /* Logistics two-col */
-        .logistics-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
-        .logistics-item {
-            background: var(--gray-100); border-radius: 14px;
-            padding: 1rem 1.1rem; border: 1px solid var(--gray-200);
-        }
-        .logistics-label {
-            font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.06em;
-            color: var(--text-light); margin-bottom: 0.4rem;
-            display: flex; align-items: center; gap: 0.4rem;
-        }
-        .logistics-label svg { width: 14px; height: 14px; stroke: var(--blue-start); fill: none; stroke-width: 1.8; }
-        .logistics-value { font-size: 0.85rem; font-weight: 500; color: var(--text-dark); line-height: 1.5; }
+/* Inclusions */
+.pd-inc-grid { display:grid; grid-template-columns:1fr 1fr; gap:1.5rem; }
+.pd-inc-title { font-size:.82rem; font-weight:700; margin-bottom:.6rem; display:flex; align-items:center; gap:.4rem; }
+.pd-inc-list { list-style:none; padding:0; margin:0; display:flex; flex-direction:column; gap:.4rem; }
+.pd-inc-list li { font-size:.82rem; color:var(--muted); display:flex; align-items:flex-start; gap:.5rem; line-height:1.5; }
+.pd-inc-list li::before { content:''; width:14px; height:14px; border-radius:50%; flex-shrink:0; margin-top:2px; }
+.pd-included li::before { background:var(--green-pale); border:2px solid var(--green); }
+.pd-excluded li::before { background:var(--red-pale); border:2px solid var(--red); }
 
-        /* Carry list */
-        .carry-grid { display: flex; flex-direction: column; gap: 0.5rem; }
-        .carry-item {
-            display: flex; align-items: flex-start; gap: 0.6rem;
-            font-size: 0.83rem; color: var(--text-soft); line-height: 1.5;
-        }
-        .carry-bullet {
-            width: 20px; height: 20px; border-radius: 6px;
-            background: rgba(59,130,246,0.1);
-            display: flex; align-items: center; justify-content: center;
-            flex-shrink: 0; margin-top: 1px;
-        }
-        .carry-bullet svg { width: 11px; height: 11px; stroke: var(--blue-mid); stroke-width: 2.5; fill: none; }
+/* Tags */
+.pd-tags { display:flex; flex-wrap:wrap; gap:.45rem; }
+.pd-tag {
+    background:var(--teal-pale); color:var(--teal-dark);
+    padding:.35rem .9rem; border-radius:40px; font-size:.78rem; font-weight:500;
+    border:1px solid rgba(14,138,138,.18);
+}
 
-        /* Itinerary */
-        .itinerary-item {
-            border: 1px solid var(--gray-200);
-            border-radius: 14px; overflow: hidden;
-            margin-bottom: 0.8rem; transition: box-shadow 0.2s;
-        }
-        .itinerary-item:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.07); }
-        .itinerary-header {
-            display: flex; align-items: center; gap: 0.8rem;
-            padding: 0.9rem 1.2rem; cursor: pointer;
-            background: var(--gray-100); user-select: none;
-        }
-        .day-badge {
-            background: var(--gradient-primary);
-            color: white; font-size: 0.7rem; font-weight: 600;
-            padding: 0.2rem 0.7rem; border-radius: 20px; white-space: nowrap;
-        }
-        .itinerary-title { font-size: 0.88rem; font-weight: 600; color: var(--text-dark); flex: 1; }
-        .chevron-icon {
-            width: 16px; height: 16px; stroke: var(--gray-500); fill: none;
-            stroke-width: 2; transition: transform 0.3s;
-        }
-        .itinerary-item.open .chevron-icon { transform: rotate(180deg); }
-        .itinerary-body {
-            padding: 0 1.2rem;
-            max-height: 0; overflow: hidden;
-            transition: max-height 0.35s ease, padding 0.2s;
-        }
-        .itinerary-item.open .itinerary-body { max-height: 600px; padding: 1rem 1.2rem; }
-        .itinerary-desc { font-size: 0.83rem; line-height: 1.7; color: var(--text-soft); }
+/* Gallery grid */
+.pd-gallery-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:.75rem; }
+.pd-gimg { border-radius:10px; overflow:hidden; aspect-ratio:1; cursor:pointer; }
+.pd-gimg img { width:100%; height:100%; object-fit:cover; transition:transform .3s; display:block; }
+.pd-gimg:hover img { transform:scale(1.06); }
 
-        /* Policy / Terms box */
-        .policy-box {
-            background: rgba(245,158,11,0.07); border: 1px solid rgba(245,158,11,0.22);
-            border-radius: 14px; padding: 1rem 1.2rem;
-        }
-        .policy-box p { font-size: 0.83rem; line-height: 1.7; color: var(--text-soft); }
-        .terms-box {
-            background: rgba(59,130,246,0.05); border: 1px solid rgba(59,130,246,0.15);
-            border-radius: 14px; padding: 1rem 1.2rem;
-        }
-        .terms-box p { font-size: 0.83rem; line-height: 1.7; color: var(--text-soft); }
+/* Reviews */
+.pd-review { background:var(--s2); border:1px solid var(--border); border-radius:12px; padding:1rem 1.2rem; margin-bottom:.85rem; }
+.pd-review-head { display:flex; justify-content:space-between; align-items:center; margin-bottom:.5rem; }
+.pd-review-rating { background:var(--amber-pale); color:var(--amber); padding:.22rem .7rem; border-radius:99px; font-size:.76rem; font-weight:700; }
+.pd-review-body { font-size:.83rem; color:var(--muted); line-height:1.6; margin-bottom:.4rem; }
+.pd-review-by { font-size:.72rem; color:var(--teal); font-weight:600; }
 
-        /* ========= RIGHT COLUMN ========= */
-        .right-col-stack {
-            display: flex; flex-direction: column; gap: 1.2rem;
-            position: sticky; top: 90px; align-self: start;
-        }
+/* Cancellation policy */
+.pd-policy-row {
+    display:flex; align-items:center; justify-content:space-between;
+    padding:.7rem 0; border-bottom:1px solid var(--s3); font-size:.83rem;
+}
+.pd-policy-row:last-child { border-bottom:none; }
+.pd-policy-days { color:var(--ink); font-weight:600; }
+.pd-policy-refund { font-weight:700; padding:.22rem .7rem; border-radius:99px; font-size:.76rem; }
+.pd-policy-refund.full   { background:var(--green-pale); color:var(--green); }
+.pd-policy-refund.partial { background:var(--amber-pale); color:var(--amber); }
+.pd-policy-refund.none   { background:var(--red-pale);   color:var(--red); }
 
-        /* Booking Card */
-        .booking-card {
-            background: white; border-radius: 20px;
-            border: 1px solid var(--gray-200);
-            box-shadow: 0 4px 20px rgba(0,0,0,0.06);
-            overflow: hidden;
-        }
-        .booking-card-header { background: var(--gradient-primary); padding: 1.5rem; }
-        .booking-price-row { display: flex; align-items: baseline; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 0.3rem; }
-        .price-main { font-size: 2rem; font-weight: 700; color: white; }
-        .price-original { font-size: 0.85rem; color: rgba(255,255,255,0.65); text-decoration: line-through; }
-        .price-per { font-size: 0.75rem; color: rgba(255,255,255,0.7); }
-        .save-badge {
-            background: rgba(34,197,94,0.25); color: #86efac;
-            font-size: 0.68rem; font-weight: 600;
-            padding: 0.2rem 0.6rem; border-radius: 20px;
-        }
-        .booking-card-body { padding: 1.4rem 1.5rem; }
-        .book-detail-row {
-            display: flex; justify-content: space-between; align-items: center;
-            padding: 0.65rem 0; border-bottom: 1px solid var(--gray-150);
-            font-size: 0.82rem;
-        }
-        .book-detail-row:last-child { border-bottom: none; }
-        .book-detail-row span:first-child { color: var(--text-light); }
-        .book-detail-row strong { color: var(--text-dark); font-weight: 600; }
-        .btn-book-now {
-            width: 100%; background: var(--gradient-primary);
-            color: white; border: none; border-radius: 14px;
-            padding: 0.9rem 1rem; font-size: 0.92rem; font-weight: 600;
-            cursor: pointer; margin-top: 1.2rem; transition: all 0.3s;
-            text-decoration: none; display: block; text-align: center;
-            box-shadow: 0 4px 14px rgba(59,130,246,0.35);
-            font-family: 'Inter', sans-serif;
-        }
-        .btn-book-now:hover { transform: translateY(-2px); box-shadow: 0 8px 22px rgba(59,130,246,0.45); }
-        .btn-back {
-            width: 100%; background: var(--gray-150);
-            color: var(--gray-700); border: 1px solid var(--gray-200); border-radius: 14px;
-            padding: 0.75rem 1rem; font-size: 0.85rem; font-weight: 600;
-            cursor: pointer; margin-top: 0.7rem; transition: all 0.2s;
-            text-decoration: none; display: block; text-align: center;
-            font-family: 'Inter', sans-serif;
-        }
-        .btn-back:hover { background: var(--gray-200); }
+/* ══════════════════════════════════════
+   BOOKING SIDEBAR
+══════════════════════════════════════ */
+.pd-booking-card {
+    background:var(--surface); border:1px solid var(--border);
+    border-radius:var(--r); overflow:hidden; box-shadow:var(--sh-lg);
+}
+.pd-booking-head {
+    background:linear-gradient(135deg,var(--teal) 0%,var(--teal-dark) 100%);
+    padding:1.4rem; text-align:center; color:#fff;
+}
+.pd-booking-price {
+    font-family:'Cormorant Garamond',serif;
+    font-size:2.4rem; font-weight:700; line-height:1; margin-bottom:.2rem;
+}
+.pd-booking-price small { font-size:.9rem; opacity:.8; font-family:'DM Sans',sans-serif; font-weight:400; }
+.pd-booking-orig { font-size:.8rem; opacity:.75; }
+.pd-booking-orig del { margin-right:.35rem; }
+.pd-booking-save {
+    display:inline-block; background:rgba(255,255,255,.2); border-radius:99px;
+    padding:.18rem .65rem; font-size:.72rem; font-weight:700; margin-top:.3rem;
+}
+.pd-booking-body { padding:1.2rem 1.4rem; }
+.pd-booking-row {
+    display:flex; justify-content:space-between; align-items:center;
+    padding:.55rem 0; border-bottom:1px solid var(--s3); font-size:.82rem;
+}
+.pd-booking-row:last-of-type { border-bottom:none; }
+.pd-booking-row span { color:var(--muted); }
+.pd-booking-row strong { color:var(--ink); font-weight:600; }
+.pd-book-now-btn {
+    display:block; width:100%; padding:.82rem; text-align:center;
+    background:var(--teal); color:#fff; border:none; border-radius:40px;
+    font-size:.92rem; font-weight:700; cursor:pointer;
+    text-decoration:none; font-family:'DM Sans',sans-serif;
+    transition:all .2s; margin-top:1rem;
+}
+.pd-book-now-btn:hover { background:var(--teal-dark); transform:translateY(-1px); box-shadow:0 6px 20px rgba(14,138,138,.35); color:#fff; }
+.pd-wishlist-sidebar-btn {
+    width:100%; padding:.7rem; border-radius:40px;
+    border:1.5px solid var(--gray-200);
+    background:transparent; color:var(--text-soft);
+    font-weight:600; cursor:pointer; transition:all .2s;
+    font-family:'DM Sans',sans-serif; margin-top:.8rem;
+    display:flex; align-items:center; justify-content:center; gap:.5rem;
+}
+.pd-wishlist-sidebar-btn.active {
+    background:var(--rose-pale); border-color:var(--rose); color:var(--rose);
+}
+.pd-wishlist-sidebar-btn:hover {
+    border-color:var(--rose); background:var(--rose-pale); color:var(--rose);
+}
+.pd-book-trust { text-align:center; font-size:.7rem; color:var(--muted); margin-top:.65rem; }
 
-        /* Owner actions */
-        .owner-actions { display: flex; gap: 0.8rem; margin-top: 1rem; }
-        .btn-edit {
-            flex: 1; background: var(--gradient-soft); color: white;
-            border: none; border-radius: 12px; padding: 0.7rem 1rem;
-            font-size: 0.83rem; font-weight: 600; cursor: pointer;
-            text-align: center; text-decoration: none; display: block;
-            font-family: 'Inter', sans-serif; transition: all 0.2s;
-        }
-        .btn-edit:hover { transform: translateY(-2px); }
-        .btn-delete {
-            flex: 1; background: rgba(239,68,68,0.08); color: #dc2626;
-            border: 1px solid rgba(239,68,68,0.2); border-radius: 12px;
-            padding: 0.7rem 1rem; font-size: 0.83rem; font-weight: 600;
-            cursor: pointer; text-align: center; text-decoration: none; display: block;
-            font-family: 'Inter', sans-serif; transition: all 0.2s;
-        }
-        .btn-delete:hover { background: rgba(239,68,68,0.14); }
+/* Side cards */
+.pd-side-card {
+    background:var(--surface); border:1px solid var(--border);
+    border-radius:var(--r); margin-top:1rem; overflow:hidden; box-shadow:var(--sh);
+}
+.pd-side-card-head {
+    display:flex; align-items:center; gap:.5rem;
+    padding:.85rem 1.2rem; border-bottom:1px solid var(--border); background:var(--s2);
+    font-size:.82rem; font-weight:700; color:var(--ink);
+}
+.pd-side-card-head svg { width:15px; height:15px; stroke:var(--teal); fill:none; stroke-width:2; }
+.pd-side-card-body { padding:1rem 1.2rem; font-size:.8rem; color:var(--muted); line-height:1.6; }
+.pd-side-card-body strong { color:var(--ink); display:block; margin-bottom:.25rem; font-weight:600; }
 
-        /* Side cards */
-        .side-card {
-            background: white; border-radius: 20px;
-            border: 1px solid var(--gray-200); overflow: hidden;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.03);
-        }
-        .side-card-header {
-            padding: 0.9rem 1.2rem; border-bottom: 1px solid var(--gray-200);
-            display: flex; align-items: center; gap: 0.55rem;
-            background: var(--gray-100);
-        }
-        .side-card-header svg { width: 16px; height: 16px; stroke: var(--blue-start); fill: none; stroke-width: 1.8; flex-shrink: 0; }
-        .side-card-header h3 { font-size: 0.83rem; font-weight: 600; color: var(--text-dark); }
-        .side-card-body { padding: 1rem 1.2rem; }
+/* Lightbox */
+.pd-lightbox {
+    display:none; position:fixed; inset:0;
+    background:rgba(0,0,0,.92); z-index:9000;
+    align-items:center; justify-content:center;
+}
+.pd-lightbox.open { display:flex; }
+.pd-lightbox img { max-width:90%; max-height:90%; border-radius:10px; }
+.pd-lb-close {
+    position:absolute; top:20px; right:28px;
+    color:#fff; font-size:2.2rem; cursor:pointer;
+    background:none; border:none; opacity:.75; transition:opacity .15s; line-height:1;
+}
+.pd-lb-close:hover { opacity:1; }
 
-        /* Highlights */
-        .highlights-card .side-card-header svg { stroke: #F59E0B; }
-        .highlight-item {
-            display: flex; align-items: flex-start; gap: 0.7rem;
-            padding: 0.6rem 0; border-bottom: 1px solid var(--gray-150);
-        }
-        .highlight-item:last-child { border-bottom: none; padding-bottom: 0; }
-        .hl-icon {
-            width: 34px; height: 34px; border-radius: 10px;
-            display: flex; align-items: center; justify-content: center; flex-shrink: 0;
-        }
-        .hl-icon svg { width: 16px; height: 16px; fill: none; stroke-width: 1.8; }
-        .hl-label { font-size: 0.65rem; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 2px; }
-        .hl-value { font-size: 0.82rem; font-weight: 500; color: var(--text-dark); line-height: 1.4; }
+/* Responsive */
+@media(max-width:1200px){
+    .pd-chips{ grid-template-columns:repeat(2,1fr); }
+    .pd-gallery-grid{ grid-template-columns:repeat(3,1fr); }
+}
+@media(max-width:1024px){
+    .pd-grid{grid-template-columns:1fr;} .pd-side{position:static;}
+    .pd-hero-body{grid-template-columns:1fr;} .pd-hero-right{display:none;}
+    .pd-body{padding:2rem 2rem 4rem;}
+    .pd-agency-inner{padding:0 2rem;}
+    .pd-hero-body{padding:0 2rem 3.5rem;}
+}
+@media(max-width:768px){
+    .pd-pill-nav{display:none;}
+    .pd-hero-body{padding:0 1.2rem 2.5rem;}
+    .pd-hero-title{font-size:2rem;}
+    .pd-body{padding:1.5rem 1rem 3rem;}
+    .pd-agency-inner{padding:0 1rem;}
+    .pd-inc-grid{grid-template-columns:1fr;}
+    .pd-gallery-grid{grid-template-columns:repeat(2,1fr);}
+    .pd-chips{grid-template-columns:1fr;}
+}
+</style>
+{% endblock %}
 
-        /* Stats strip */
-        .stats-gradient-card {
-            background: var(--gradient-primary); border: none;
-            box-shadow: 0 6px 18px rgba(59,130,246,0.25);
-        }
-        .stats-card-inner { display: flex; align-items: center; padding: 1rem 0.8rem; }
-        .stat-mini-item { flex: 1; text-align: center; }
-        .stat-mini-num { font-size: 1.4rem; font-weight: 700; color: white; line-height: 1; }
-        .stat-mini-label { font-size: 0.62rem; color: rgba(255,255,255,0.7); text-transform: uppercase; letter-spacing: 0.06em; margin-top: 3px; }
-        .stat-mini-divider { width: 1px; height: 36px; background: rgba(255,255,255,0.2); flex-shrink: 0; }
+{% block content %}
 
-        /* Side inclusions */
-        .side-inc-item {
-            display: flex; align-items: flex-start; gap: 0.5rem;
-            font-size: 0.8rem; color: var(--text-soft);
-            padding: 0.35rem 0; line-height: 1.4;
-        }
-        .side-inc-check { color: #16a34a; font-weight: 700; font-size: 0.85rem; flex-shrink: 0; margin-top: 1px; }
+<!-- ════════════════ HERO — SLIDESHOW ════════════════ -->
+<div class="pd-hero" id="pdHero">
 
-        /* Agency profile */
-        .agency-profile-top {
-            display: flex; align-items: center; gap: 0.8rem;
-            margin-bottom: 0.9rem; padding-bottom: 0.9rem;
-            border-bottom: 1px solid var(--gray-150);
-        }
-        .agency-avatar-lg {
-            width: 46px; height: 46px; border-radius: 13px;
-            background: var(--gradient-primary);
-            display: flex; align-items: center; justify-content: center;
-            color: white; font-weight: 700; font-size: 1.2rem; flex-shrink: 0;
-        }
-        .agency-row {
-            display: flex; align-items: center; gap: 0.6rem;
-            font-size: 0.82rem; color: var(--text-soft); margin-bottom: 0.65rem;
-        }
-        .agency-row:last-child { margin-bottom: 0; }
-        .agency-row svg { width: 15px; height: 15px; stroke: var(--blue-start); fill: none; flex-shrink: 0; }
-        .agency-row a { color: var(--blue-start); text-decoration: none; }
-        .agency-row a:hover { text-decoration: underline; }
+    <!-- Slide layers — first is always active -->
+    {% if package.images.all %}
+        {% for img in package.images.all %}
+        <div class="pd-slide {% if forloop.first %}active{% endif %}"
+             style="background-image:url('{{ img.image.url }}');"
+             data-index="{{ forloop.counter0 }}"></div>
+        {% endfor %}
+    {% else %}
+        <div class="pd-slide active"
+             style="background-image:url('{% static "images/package-placeholder.jpg" %}');"></div>
+    {% endif %}
 
-        /* Share */
-        .share-buttons { display: flex; gap: 0.6rem; }
-        .share-btn {
-            flex: 1; display: flex; align-items: center; justify-content: center;
-            gap: 0.4rem; padding: 0.6rem 0.5rem;
-            border-radius: 10px; border: none; cursor: pointer;
-            font-size: 0.75rem; font-weight: 600; font-family: 'Inter', sans-serif;
-            transition: all 0.2s;
-        }
-        .share-btn.whatsapp { background: rgba(37,211,102,0.12); color: #16a34a; }
-        .share-btn.whatsapp:hover { background: rgba(37,211,102,0.22); }
-        .share-btn.copy-link { background: var(--gray-150); color: var(--gray-700); }
-        .share-btn.copy-link:hover { background: var(--gray-200); }
+    <div class="pd-hero-bg-fade"></div>
 
-        /* Contact btn */
-        .btn-contact {
-            display: inline-flex; align-items: center; gap: 0.4rem;
-            background: var(--gradient-primary); color: white;
-            border: none; border-radius: 10px; padding: 0.6rem 1.2rem;
-            font-size: 0.8rem; font-weight: 600; cursor: pointer;
-            font-family: 'Inter', sans-serif; transition: all 0.2s; text-decoration: none;
-        }
-        .btn-contact:hover { transform: translateY(-2px); box-shadow: 0 6px 16px rgba(59,130,246,0.35); }
-
-        /* Lightbox */
-        .lightbox {
-            display: none; position: fixed; inset: 0;
-            background: rgba(0,0,0,0.92); z-index: 9000;
-            align-items: center; justify-content: center;
-        }
-        .lightbox.show { display: flex; }
-        .lightbox img { max-width: 90vw; max-height: 88vh; border-radius: 12px; object-fit: contain; }
-        .lightbox-close {
-            position: absolute; top: 1rem; right: 1.4rem;
-            color: white; font-size: 2rem; cursor: pointer; line-height: 1;
-        }
-
-        /* Footer */
-        .footer-site {
-            background: var(--gray-950); color: rgba(255,255,255,0.6);
-            padding: 3rem 2rem 2rem; margin-top: 2rem;
-        }
-        .footer-grid {
-            display: grid; grid-template-columns: 2fr 1fr 1fr 1fr;
-            gap: 2rem; max-width: 1400px; margin: 0 auto;
-        }
-        .footer-brand { max-width: 300px; }
-        .footer-logo {
-            font-family: 'Playfair Display', serif; font-size: 1.6rem; font-weight: 600;
-            color: white; text-decoration: none; display: inline-block; margin-bottom: 0.75rem;
-        }
-        .footer-desc { font-size: 0.85rem; line-height: 1.6; color: rgba(255,255,255,0.5); }
-        .footer-col h5 {
-            font-size: 0.75rem; font-weight: 600; letter-spacing: 0.1em;
-            text-transform: uppercase; margin-bottom: 1.2rem; color: rgba(255,255,255,0.7);
-        }
-        .footer-col ul { list-style: none; padding: 0; }
-        .footer-col li { margin-bottom: 0.7rem; }
-        .footer-col a { color: rgba(255,255,255,0.5); font-size: 0.8rem; text-decoration: none; transition: color 0.2s; }
-        .footer-col a:hover { color: white; }
-        .footer-bottom {
-            text-align: center; border-top: 1px solid rgba(255,255,255,0.08);
-            padding-top: 2rem; margin-top: 2rem; font-size: 0.75rem;
-            color: rgba(255,255,255,0.4);
-            display: flex; justify-content: space-between; align-items: center;
-            flex-wrap: wrap; gap: 1rem;
-            max-width: 1400px; margin-left: auto; margin-right: auto;
-        }
-
-        /* Responsive */
-        @media (max-width: 1000px) {
-            .content-grid { grid-template-columns: 1fr; }
-            .right-col-stack { position: static; }
-        }
-        @media (max-width: 860px) {
-            .sidebar { transform: translateX(-100%); }
-            .sidebar.open { transform: translateX(0); }
-            .main-wrapper { margin-left: 0 !important; }
-            .sidebar-overlay { display: block; opacity: 0; visibility: hidden; }
-            .sidebar-overlay.visible { opacity: 1; visibility: visible; }
-            .page-content { padding: 1.2rem 1rem 2rem; }
-            .hero-section { height: 280px; }
-            .hero-title { font-size: 1.5rem; }
-            .gallery-grid { grid-template-columns: repeat(2, 1fr); }
-            .inc-exc-grid { grid-template-columns: 1fr; }
-            .logistics-grid { grid-template-columns: 1fr; }
-            .footer-grid { grid-template-columns: 1fr 1fr; gap: 1.5rem; }
-            .footer-brand { grid-column: 1 / -1; max-width: 100%; }
-        }
-        @media (max-width: 600px) {
-            .quick-info-row { gap: 0.7rem; }
-            .quick-info-item { flex: 1 1 120px; }
-            .gallery-grid { grid-template-columns: 1fr 1fr; }
-            .details-grid { grid-template-columns: 1fr; }
-            .footer-grid { grid-template-columns: 1fr; }
-        }
-        a { text-decoration: none; }
-    </style>
-</head>
-<body>
-
-<div class="sidebar-overlay" id="sidebarOverlay"></div>
-<aside class="sidebar" id="sidebar">
-    <div class="sidebar-brand">
-        <a class="sidebar-logo" href="{% url 'index' %}">Wayzo</a>
-        <div class="sidebar-sub">Traveller Portal</div>
-    </div>
-
-    <!-- User block -->
-    <div class="sidebar-user">
-        <div class="sidebar-user-avatar">
-            {% if user.profile_picture %}
-                <img src="{{ user.profile_picture.url }}" alt="{{ user.username }}">
-            {% else %}
-                {{ user.get_full_name|default:user.username|slice:":2"|upper }}
-            {% endif %}
-        </div>
-        <div>
-            <div class="sidebar-user-name">{{ user.get_full_name|default:user.username }}</div>
-            <div class="sidebar-user-role">Explorer</div>
-        </div>
-    </div>
-
-    <nav class="sidebar-nav">
-        <span class="nav-group-label">Main</span>
-        <a href="{% url 'travellers:dashboard' %}" class="nav-item {% if request.resolver_match.url_name == 'user_profile' %}active{% endif %}">
-            <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
-            Dashboard
-        </a>
-        <a href="#" class="nav-item">
-            <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-            My Profile
-        </a>
-        <a href="#" class="nav-item active">
-            <svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-            Tour Packages
-        </a>
-        <a href="#" class="nav-item">
-            <svg viewBox="0 0 24 24"><path d="M3 11l19-9-9 19-2-8-8-2z"/></svg>
-            Restaurants
-        </a>
-        <a href="#" class="nav-item">
-            <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-            My Bookings
-        </a>
-        <a href="#" class="nav-item">
-            <svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
-            Wishlist
-        </a>
-
-        <span class="nav-group-label">Social</span>
-        <a href="#" class="nav-item">
-            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
-            Create Post
-        </a>
-        <a href="#" class="nav-item">
-            <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-            Messages
-        </a>
-        <a href="#" class="nav-item">
-            <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-            Community
-        </a>
-
-        <span class="nav-group-label">Settings</span>
-        <a href="#" class="nav-item">
-            <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-            Edit Profile
-        </a>
+    <!-- ── Floating pill tabs — centered, no brand/book clash ── -->
+    <nav class="pd-pill-nav" id="pdPillNav">
+        <button class="pd-pill-tab active" data-target="pd-overview">Overview</button>
+        <button class="pd-pill-tab" data-target="pd-details">Details</button>
+        <button class="pd-pill-tab" data-target="pd-itinerary">Travel Plan</button>
+        <button class="pd-pill-tab" data-target="pd-inclusions">Package</button>
+        <button class="pd-pill-tab" data-target="pd-reviews">Reviews</button>
     </nav>
 
-    <div class="logout-sidebar">
-        <a href="{% url 'logout' %}">
-            <svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-            Sign Out
-        </a>
-    </div>
-</aside>
+    <!-- Slide dots -->
+    <div class="pd-slide-dots" id="pdSlideDots"></div>
 
-<div class="main-wrapper" id="mainWrapper">
+    <!-- Hero body -->
+    <div class="pd-hero-body">
 
-    <!-- TOPBAR -->
-    <div class="topbar">
-        <div class="topbar-left">
-            <button class="hamburger" id="hamburgerBtn"><span></span><span></span><span></span></button>
-            <div>
-                <div class="topbar-breadcrumb">
-                    <a href="{% url 'travellers:user_profile' request.user.id %}">Dashboard</a>
-                    <span>›</span>
-                    <a href="#">Packages</a>
-                    <span>›</span>
-                    <span>{{ package.title|truncatechars:28 }}</span>
-                </div>
-                <div class="topbar-title">Package Detail</div>
+        <!-- Left -->
+        <div class="pd-hero-left">
+            <div class="pd-hero-eyebrow">
+                <span style="width:6px;height:6px;border-radius:50%;background:#5FC5C5;display:inline-block;flex-shrink:0;"></span>
+                {{ package.duration_days }} Days · {{ package.places_covered|truncatechars:40 }}
             </div>
-        </div>
-        <div class="topbar-right">
-            <button class="notification-btn" id="notificationBtn">
-                <svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
-                <span class="notification-badge">3</span>
-            </button>
-            <div class="avatar-menu" id="avatarMenu">
-                <div class="avatar-trigger" id="avatarTrigger">
-                    <div class="avatar-img">
-                        {% if user.profile_picture %}
-                            <img src="{{ user.profile_picture.url }}" alt="{{ user.username }}">
-                        {% elif user.traveller_profile.profile_picture %}
-                            <img src="{{ user.traveller_profile.profile_picture.url }}" alt="{{ user.username }}">
+
+            <h1 class="pd-hero-title">
+                {{ package.title|truncatewords:5 }}<br>
+                <em>{{ package.title|truncatewords_after_first:5 }}</em>
+            </h1>
+
+            <div class="pd-hero-meta">
+                <div class="pd-hero-chip">
+                    <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                    {{ package.best_season|default:"Year Round" }}
+                </div>
+                <div class="pd-hero-chip">
+                    <svg viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/></svg>
+                    {{ package.get_difficulty_level_display|default:"Moderate" }}
+                </div>
+                <div class="pd-hero-chip">
+                    <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/></svg>
+                    {{ package.max_group_size|default:"50" }}+ People Joined
+                </div>
+            </div>
+
+            <p class="pd-hero-desc">{{ package.description|truncatewords:28 }}</p>
+
+            <div class="pd-participants" >
+                <div class="pd-av-stack">
+                    <div class="pd-av">A</div>
+                    <div class="pd-av" style="background:#0a6e6e;">B</div>
+                    <div class="pd-av" style="background:#d97706;">C</div>
+                    <div class="pd-av" style="background:#4f46e5;">D</div>
+                </div>
+                <span class="pd-participants-text"><strong>{{ package.max_group_size|default:"32" }}+</strong> people joined</span>
+            </div>
+
+            <div class="pd-hero-btns">
+                <a href="{% url 'travellers:book_package' package.id %}" class="pd-btn-book">📅 Book Now →</a>
+                <button class="pd-btn-outline" onclick="pdScrollTo('pd-itinerary')">🗺️ View Travel Plan</button>
+                
+                <!-- Wishlist Button in Hero -->
+                <form method="POST" action="{% url 'travellers:wishlist_add' package.id %}" style="display: inline;">
+                    {% csrf_token %}
+                    <button type="submit" class="pd-btn-wishlist {% if is_wishlisted %}active{% endif %}">
+                        {% if is_wishlisted %}
+                            ❤️ Saved to Wishlist
                         {% else %}
-                            {{ user.get_full_name|default:user.username|slice:":2"|upper }}
+                            🤍 Add to Wishlist
                         {% endif %}
-                    </div>
-                    <span class="avatar-name">{{ user.username|truncatechars:14 }}</span>
-                </div>
-                <div class="dropdown-popup" id="dropdownPopup">
-                    <div class="dropdown-info">
-                        <p>{{ user.get_full_name|default:user.username }}</p>
-                        <span>{{ user.email }}</span>
-                    </div>
-                    <a href="{% url 'travellers:user_profile' request.user.id %}" class="dropdown-item">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>My Profile
-                    </a>
-                    <a href="{% url 'logout' %}" class="dropdown-item">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>Sign Out
-                    </a>
-                </div>
+                    </button>
+                </form>
             </div>
         </div>
-    </div>
 
-    <!-- PAGE CONTENT -->
-    <div class="page-content">
-
-        <!-- HERO -->
-        <div class="hero-section">
-            <div class="hero-badges">
-                {% if package.is_featured %}
-                <div class="badge-featured">
-                    <svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-                    Featured
+        <!-- Right: gallery cards -->
+        <div class="pd-hero-right">
+            {% if package.images.all|length > 1 %}
+            <div class="pd-gallery-card-main">
+                <img src="{{ package.images.all.0.image.url }}" alt="{{ package.title }}">
+                <div class="pd-gallery-card-label">
+                    <div>
+                        <span>{{ package.places_covered|truncatechars:28 }}</span><br>
+                        <small>{{ package.duration_days }}D · {{ package.duration_nights }}N</small>
+                    </div>
                 </div>
-                {% endif %}
-                {% if package.discounted_price and package.discounted_price > 0 %}
-                <div class="badge-discount">-{{ package.discount_percentage }}% OFF</div>
+            </div>
+            <div class="pd-gallery-row">
+                {% for img in package.images.all|slice:"1:3" %}
+                <div class="pd-gallery-card-sm"><img src="{{ img.image.url }}" alt="{{ package.title }}"></div>
+                {% endfor %}
+                {% if package.images.all|length < 2 %}
+                <div class="pd-gallery-card-sm" style="background:linear-gradient(135deg,#1a3a3a,#0e5a5a);"></div>
                 {% endif %}
             </div>
-
-            {% if images %}
-                <img class="hero-img" src="{{ images.0.image.url }}" alt="{{ package.title }}">
-            {% elif package.images.first %}
-                <img class="hero-img" src="{{ package.images.first.image.url }}" alt="{{ package.title }}">
             {% else %}
-                <div class="hero-placeholder">
-                    <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-                </div>
+            <div class="pd-gallery-card-main" style="background:linear-gradient(135deg,#1a3a3a,#0e5a5a);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:.5rem;">
+                <div style="font-size:2.5rem;opacity:.35;">📷</div>
+                <span style="color:rgba(255,255,255,.4);font-size:.8rem;">{{ package.title|truncatechars:28 }}</span>
+                <div class="pd-gallery-card-label"><div><span>{{ package.places_covered|truncatechars:28 }}</span><br><small>{{ package.duration_days }}D / {{ package.duration_nights }}N</small></div></div>
+            </div>
+            <div class="pd-gallery-row">
+                <div class="pd-gallery-card-sm" style="background:linear-gradient(135deg,#0e3a2a,#1a5a3a);"></div>
+                <div class="pd-gallery-card-sm" style="background:linear-gradient(135deg,#1a2a4a,#0e3a5a);"></div>
+            </div>
             {% endif %}
-            <div class="hero-overlay"></div>
-            <div class="hero-meta">
-                <div class="hero-title">{{ package.title }}</div>
-                <div class="hero-meta-row">
-                    <div class="hero-places">
-                        <svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-                        {{ package.places_covered }}
-                    </div>
-                    <div class="hero-duration">
-                        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                        {{ package.duration_days }} Days / {{ package.duration_nights }} Nights
+        </div>
+
+    </div><!-- /hero-body -->
+</div><!-- /hero -->
+
+
+<!-- ════════════════ AGENCY BAR ════════════════ -->
+<div class="pd-agency-bar">
+    <div class="pd-agency-inner">
+        <div class="pd-agency-info">
+            <div class="pd-agency-av">{{ package.agency.agency_name|first|upper }}</div>
+            <div>
+                <div class="pd-agency-name">{{ package.agency.agency_name }}</div>
+                <div class="pd-agency-loc">{{ package.agency.city }}{% if package.agency.city and package.agency.state %}, {% endif %}{{ package.agency.state }}</div>
+            </div>
+        </div>
+        <div class="pd-agency-stats">
+            <div class="pd-agency-stat">
+                <div class="pd-agency-stat-n">{{ package.agency.reviews.count|default:"0" }}</div>
+                <span class="pd-agency-stat-l">Reviews</span>
+            </div>
+            <div class="pd-agency-stat">
+                <div class="pd-agency-stat-n">{{ package.agency.packages.count|default:"0" }}</div>
+                <span class="pd-agency-stat-l">Packages</span>
+            </div>
+            <div class="pd-agency-stat">
+                <div class="pd-agency-stat-n">{{ package.agency.experience_years|default:"5" }}+</div>
+                <span class="pd-agency-stat-l">Yrs Exp</span>
+            </div>
+        </div>
+        <a href="{% url 'travellers:agency_detail' package.agency.id %}" class="pd-agency-link">View Agency →</a>
+    </div>
+</div>
+
+
+<!-- ════════════════ PAGE BODY ════════════════ -->
+<div class="pd-body">
+    <div class="pd-grid">
+
+        <!-- ── MAIN ── -->
+        <div class="pd-main">
+
+            <div class="pd-card" id="pd-overview">
+                <div class="pd-card-head">
+                    <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                    <h3>About This Tour</h3>
+                </div>
+                <div class="pd-card-body">
+                    <p style="line-height:1.8;color:var(--muted);font-size:.9rem;">{{ package.description }}</p>
+                </div>
+            </div>
+
+            <div class="pd-card" id="pd-details">
+                <div class="pd-card-head">
+                    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                    <h3>Tour Details</h3>
+                </div>
+                <div class="pd-card-body">
+                    <div class="pd-chips">
+                        <div class="pd-chip"><div class="pd-chip-label">Duration</div><div class="pd-chip-value">{{ package.duration_days }}D / {{ package.duration_nights }}N</div></div>
+                        <div class="pd-chip"><div class="pd-chip-label">Destinations</div><div class="pd-chip-value">{{ package.places_covered }}</div></div>
+                        <div class="pd-chip"><div class="pd-chip-label">Group Size</div><div class="pd-chip-value">{{ package.min_group_size|default:"1" }}–{{ package.max_group_size|default:"10" }} People</div></div>
+                        <div class="pd-chip"><div class="pd-chip-label">Guide Language</div><div class="pd-chip-value">{{ package.guide_language|default:"English" }}</div></div>
+                        <div class="pd-chip"><div class="pd-chip-label">Difficulty</div><div class="pd-chip-value">{{ package.get_difficulty_level_display|default:"Moderate" }}</div></div>
+                        <div class="pd-chip"><div class="pd-chip-label">Best Season</div><div class="pd-chip-value">{{ package.best_season|default:"Year Round" }}</div></div>
+                        {% if package.accommodation_type %}<div class="pd-chip"><div class="pd-chip-label">Accommodation</div><div class="pd-chip-value">{{ package.accommodation_type }}</div></div>{% endif %}
+                        {% if package.transport_type %}<div class="pd-chip"><div class="pd-chip-label">Transport</div><div class="pd-chip-value">{{ package.transport_type }}</div></div>{% endif %}
+                        {% if package.meals %}<div class="pd-chip"><div class="pd-chip-label">Meals</div><div class="pd-chip-value">{{ package.meals }}</div></div>{% endif %}
+                        {% if package.suitable_for %}<div class="pd-chip"><div class="pd-chip-label">Suitable For</div><div class="pd-chip-value">{{ package.suitable_for }}</div></div>{% endif %}
+                        <div class="pd-chip"><div class="pd-chip-label">Min Booking</div><div class="pd-chip-value">{{ package.min_booking_days|default:"1" }} days ahead</div></div>
+                        <div class="pd-chip"><div class="pd-chip-label">Max Booking</div><div class="pd-chip-value">{{ package.max_booking_days|default:"365" }} days ahead</div></div>
                     </div>
                 </div>
             </div>
-        </div>
 
-        <!-- QUICK INFO ROW -->
-        <div class="quick-info-row">
-            <div class="quick-info-item">
-                <div class="qi-icon">
+            {% if package.images.all|length > 1 %}
+            <div class="pd-card">
+                <div class="pd-card-head">
+                    <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                    <h3>Gallery</h3>
+                </div>
+                <div class="pd-card-body">
+                    <div class="pd-gallery-grid">
+                        {% for img in package.images.all|slice:":8" %}
+                        <div class="pd-gimg" onclick="pdLightbox('{{ img.image.url }}')">
+                            <img src="{{ img.image.url }}" alt="Gallery" loading="lazy">
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <div class="pd-card" id="pd-itinerary">
+                <div class="pd-card-head">
                     <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                    <h3>Travel Plan</h3>
                 </div>
-                <div>
-                    <div class="qi-label">Duration</div>
-                    <div class="qi-value">{{ package.duration_days }}D / {{ package.duration_nights }}N</div>
-                </div>
-            </div>
-            <div class="quick-info-item">
-                <div class="qi-icon">
-                    <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-                </div>
-                <div>
-                    <div class="qi-label">Group Size</div>
-                    <div class="qi-value">
-                        {% if package.min_group_size and package.max_group_size %}
-                            {{ package.min_group_size }}–{{ package.max_group_size }} People
-                        {% elif package.max_group_size %}
-                            Up to {{ package.max_group_size }}
+                <div class="pd-card-body">
+                    <div class="pd-timeline">
+                        {% if package.itineraries.exists %}
+                            {% for itin in package.itineraries.all|dictsort:"day_number" %}
+                            <div class="pd-tl-item">
+                                <div class="pd-tl-dot-col"><div class="pd-tl-dot">{{ itin.day_number }}</div><div class="pd-tl-line"></div></div>
+                                <div class="pd-tl-content"><div class="pd-tl-title">{{ itin.title }}</div><div class="pd-tl-desc">{{ itin.description }}</div></div>
+                            </div>
+                            {% endfor %}
                         {% else %}
-                            Flexible
+                            <div class="pd-tl-item"><div class="pd-tl-dot-col"><div class="pd-tl-dot">1</div><div class="pd-tl-line"></div></div><div class="pd-tl-content"><div class="pd-tl-title">Arrival & Welcome</div><div class="pd-tl-desc">Arrive, meet your guide, transfer to hotel. Evening orientation walk.</div></div></div>
+                            <div class="pd-tl-item"><div class="pd-tl-dot-col"><div class="pd-tl-dot">2</div><div class="pd-tl-line"></div></div><div class="pd-tl-content"><div class="pd-tl-title">Exploration Day</div><div class="pd-tl-desc">Full day exploring main attractions with your professional guide.</div></div></div>
                         {% endif %}
                     </div>
                 </div>
             </div>
-            <div class="quick-info-item">
-                <div class="qi-icon">
-                    <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+
+            <div class="pd-card" id="pd-inclusions">
+                <div class="pd-card-head">
+                    <svg viewBox="0 0 24 24"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+                    <h3>Package Inclusions</h3>
                 </div>
-                <div>
-                    <div class="qi-label">Language</div>
-                    <div class="qi-value">{{ package.guide_language|default:"English" }}</div>
+                <div class="pd-card-body">
+                    <div class="pd-inc-grid">
+                        <div>
+                            <div class="pd-inc-title" style="color:var(--green);">
+                                <span style="background:var(--green-pale);border-radius:50%;width:20px;height:20px;display:flex;align-items:center;justify-content:center;font-size:.7rem;">✓</span>
+                                Included
+                            </div>
+                            <ul class="pd-inc-list pd-included">
+                                {% if package.inclusions %}
+                                    {% for item in package.inclusions.splitlines|slice:":8" %}<li>{{ item }}</li>{% endfor %}
+                                {% else %}
+                                    <li>Premium Accommodation</li><li>Daily Breakfast & Dinner</li>
+                                    <li>Private AC Transfers</li><li>Professional Guide</li><li>Entry Fees</li>
+                                {% endif %}
+                            </ul>
+                        </div>
+                        <div>
+                            <div class="pd-inc-title" style="color:var(--red);">
+                                <span style="background:var(--red-pale);border-radius:50%;width:20px;height:20px;display:flex;align-items:center;justify-content:center;font-size:.7rem;">✗</span>
+                                Excluded
+                            </div>
+                            <ul class="pd-inc-list pd-excluded">
+                                {% if package.exclusions %}
+                                    {% for item in package.exclusions.splitlines|slice:":8" %}<li>{{ item }}</li>{% endfor %}
+                                {% else %}
+                                    <li>International Flights</li><li>Visa Fees</li>
+                                    <li>Personal Expenses</li><li>Travel Insurance</li><li>Optional Activities</li>
+                                {% endif %}
+                            </ul>
+                        </div>
+                    </div>
                 </div>
             </div>
-            <div class="quick-info-item">
-                <div class="qi-icon">
-                    <svg viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+
+            {% if package.things_to_carry %}
+            <div class="pd-card">
+                <div class="pd-card-head">
+                    <svg viewBox="0 0 24 24"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/></svg>
+                    <h3>Things to Carry</h3>
                 </div>
-                <div>
-                    <div class="qi-label">Difficulty</div>
-                    <div class="qi-value">{{ package.difficulty_level|default:"Moderate"|capfirst }}</div>
-                </div>
-            </div>
-            {% if package.best_season %}
-            <div class="quick-info-item">
-                <div class="qi-icon">
-                    <svg viewBox="0 0 24 24"><path d="M12 2v2M12 20v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M2 12h2M20 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/><circle cx="12" cy="12" r="5"/></svg>
-                </div>
-                <div>
-                    <div class="qi-label">Best Season</div>
-                    <div class="qi-value">{{ package.best_season }}</div>
+                <div class="pd-card-body">
+                    <div class="pd-tags">
+                        {% for item in package.things_to_carry.splitlines|slice:":12" %}
+                        <span class="pd-tag">✓ {{ item }}</span>
+                        {% endfor %}
+                    </div>
                 </div>
             </div>
             {% endif %}
-        </div>
 
-        <!-- CONTENT GRID -->
-        <div class="content-grid">
-
-            <!-- LEFT COLUMN -->
-            <div class="content-left">
-
-                <!-- Overview -->
-                <div class="info-card">
-                    <div class="card-header">
-                        <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
-                        <h3>Overview</h3>
-                    </div>
-                    <div class="card-body">
-                        <p class="overview-text">{{ package.description }}</p>
-                    </div>
+            <div class="pd-card" id="pd-cancellation">
+                <div class="pd-card-head">
+                    <svg viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/></svg>
+                    <h3>Cancellation Policy</h3>
                 </div>
-
-                <!-- Gallery -->
-                {% if images and images|length > 1 %}
-                <div class="info-card">
-                    <div class="card-header">
-                        <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-                        <h3>Gallery</h3>
-                    </div>
-                    <div class="card-body">
-                        <div class="gallery-grid">
-                            {% for img in images %}
-                                {% if not forloop.first %}
-                                <div class="gallery-img-wrap" onclick="openLightbox('{{ img.image.url }}')">
-                                    <img src="{{ img.image.url }}" alt="Gallery image {{ forloop.counter }}">
-                                </div>
-                                {% endif %}
-                            {% endfor %}
-                        </div>
-                    </div>
-                </div>
-                {% elif package.images.count > 1 %}
-                <div class="info-card">
-                    <div class="card-header">
-                        <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-                        <h3>Gallery</h3>
-                    </div>
-                    <div class="card-body">
-                        <div class="gallery-grid">
-                            {% for img in package.images.all %}
-                                {% if not forloop.first %}
-                                <div class="gallery-img-wrap" onclick="openLightbox('{{ img.image.url }}')">
-                                    <img src="{{ img.image.url }}" alt="Gallery image {{ forloop.counter }}">
-                                </div>
-                                {% endif %}
-                            {% endfor %}
-                        </div>
-                    </div>
-                </div>
-                {% endif %}
-
-                <!-- Inclusions & Exclusions -->
-                {% if package.inclusions or package.exclusions %}
-                <div class="info-card">
-                    <div class="card-header">
-                        <svg viewBox="0 0 24 24"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
-                        <h3>What's Included / Excluded</h3>
-                    </div>
-                    <div class="card-body">
-                        <div class="inc-exc-grid">
-                            {% if package.inclusions %}
-                            <div>
-                                <div class="inc-exc-section-title"><span style="color:#16a34a;">✓</span> Inclusions</div>
-                                <div class="inc-list">
-                                    {% for item in package.inclusions.splitlines %}
-                                    {% if item.strip %}
-                                    <div class="inc-item">
-                                        <div class="inc-dot"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div>
-                                        <span>{{ item.strip }}</span>
-                                    </div>
-                                    {% endif %}
-                                    {% endfor %}
-                                </div>
-                            </div>
-                            {% endif %}
-                            {% if package.exclusions %}
-                            <div>
-                                <div class="inc-exc-section-title"><span style="color:#dc2626;">✗</span> Exclusions</div>
-                                <div class="exc-list">
-                                    {% for item in package.exclusions.splitlines %}
-                                    {% if item.strip %}
-                                    <div class="exc-item">
-                                        <div class="exc-dot"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></div>
-                                        <span>{{ item.strip }}</span>
-                                    </div>
-                                    {% endif %}
-                                    {% endfor %}
-                                </div>
-                            </div>
-                            {% endif %}
-                        </div>
-                    </div>
-                </div>
-                {% endif %}
-
-                <!-- Travel & Stay Details -->
-                <div class="info-card">
-                    <div class="card-header">
-                        <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-                        <h3>Travel &amp; Stay</h3>
-                    </div>
-                    <div class="card-body">
-                        <div class="details-grid" style="margin-bottom:1rem;">
-                            {% if package.accommodation_type %}
-                            <div class="detail-chip">
-                                <div class="detail-chip-label">Accommodation</div>
-                                <div class="detail-chip-value">🏨 {{ package.accommodation_type }}</div>
-                            </div>
-                            {% endif %}
-                            {% if package.transport_type %}
-                            <div class="detail-chip">
-                                <div class="detail-chip-label">Transport</div>
-                                <div class="detail-chip-value">🚗 {{ package.transport_type }}</div>
-                            </div>
-                            {% endif %}
-                            {% if package.meals %}
-                            <div class="detail-chip">
-                                <div class="detail-chip-label">Meals</div>
-                                <div class="detail-chip-value">🍽 {{ package.meals }}</div>
-                            </div>
-                            {% endif %}
-                            {% if package.suitable_for %}
-                            <div class="detail-chip">
-                                <div class="detail-chip-label">Suitable For</div>
-                                <div class="detail-chip-value">👥 {{ package.suitable_for }}</div>
-                            </div>
-                            {% endif %}
-                            {% if package.difficulty_level %}
-                            <div class="detail-chip">
-                                <div class="detail-chip-label">Difficulty</div>
-                                <div class="detail-chip-value">
-                                    {% if package.difficulty_level == 'easy' %}🟢{% elif package.difficulty_level == 'moderate' %}🟡{% else %}🔴{% endif %}
-                                    {{ package.difficulty_level|capfirst }}
-                                </div>
-                            </div>
-                            {% endif %}
-                            {% if package.best_season %}
-                            <div class="detail-chip">
-                                <div class="detail-chip-label">Best Season</div>
-                                <div class="detail-chip-value">☀️ {{ package.best_season }}</div>
-                            </div>
-                            {% endif %}
-                        </div>
-
-                        {% if package.pickup_points or package.drop_points %}
-                        <div class="logistics-grid">
-                            {% if package.pickup_points %}
-                            <div class="logistics-item">
-                                <div class="logistics-label">
-                                    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 8 12 12 14 14"/></svg>
-                                    Pickup Points
-                                </div>
-                                <div class="logistics-value">{{ package.pickup_points }}</div>
-                            </div>
-                            {% endif %}
-                            {% if package.drop_points %}
-                            <div class="logistics-item">
-                                <div class="logistics-label">
-                                    <svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-                                    Drop Points
-                                </div>
-                                <div class="logistics-value">{{ package.drop_points }}</div>
-                            </div>
-                            {% endif %}
-                        </div>
-                        {% endif %}
-                    </div>
-                </div>
-
-                <!-- Things to Carry -->
-                {% if package.things_to_carry %}
-                <div class="info-card">
-                    <div class="card-header">
-                        <svg viewBox="0 0 24 24"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
-                        <h3>Things to Carry</h3>
-                    </div>
-                    <div class="card-body">
-                        <div class="carry-grid">
-                            {% for item in package.things_to_carry.splitlines %}
-                            {% if item.strip %}
-                            <div class="carry-item">
-                                <div class="carry-bullet">
-                                    <svg viewBox="0 0 24 24"><polyline points="9 11 12 14 22 4"/></svg>
-                                </div>
-                                <span>{{ item.strip }}</span>
-                            </div>
-                            {% endif %}
-                            {% endfor %}
-                        </div>
-                    </div>
-                </div>
-                {% endif %}
-
-                <!-- Itinerary -->
-                {% if itineraries %}
-                <div class="info-card">
-                    <div class="card-header">
-                        <svg viewBox="0 0 24 24"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>
-                        <h3>Day-by-Day Itinerary</h3>
-                    </div>
-                    <div class="card-body">
-                        {% for i in itineraries %}
-                        <div class="itinerary-item" onclick="toggleItinerary(this)">
-                            <div class="itinerary-header">
-                                <span class="day-badge">Day {{ i.day_number }}</span>
-                                <span class="itinerary-title">{{ i.title }}</span>
-                                <svg class="chevron-icon" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
-                            </div>
-                            <div class="itinerary-body">
-                                <p class="itinerary-desc">{{ i.description }}</p>
-                            </div>
+                <div class="pd-card-body">
+                    {% if package.cancellation_policies.all %}
+                        {% for policy in package.cancellation_policies.all|dictsort:"days_before" %}
+                        <div class="pd-policy-row">
+                            <span class="pd-policy-days">{{ policy.days_before }}+ days before travel</span>
+                            <span class="pd-policy-refund {% if policy.refund_percentage >= 75 %}full{% elif policy.refund_percentage > 0 %}partial{% else %}none{% endif %}">{{ policy.refund_percentage }}% Refund</span>
                         </div>
                         {% endfor %}
-                    </div>
+                    {% elif package.cancellation_policy %}
+                        <p style="font-size:.85rem;color:var(--muted);line-height:1.65;">{{ package.cancellation_policy }}</p>
+                    {% else %}
+                        <div class="pd-policy-row"><span class="pd-policy-days">30+ days before travel</span><span class="pd-policy-refund full">100% Refund</span></div>
+                        <div class="pd-policy-row"><span class="pd-policy-days">15–29 days before travel</span><span class="pd-policy-refund partial">50% Refund</span></div>
+                        <div class="pd-policy-row"><span class="pd-policy-days">Less than 15 days</span><span class="pd-policy-refund none">No Refund</span></div>
+                    {% endif %}
                 </div>
-                {% elif package.itineraries.exists %}
-                <div class="info-card">
-                    <div class="card-header">
-                        <svg viewBox="0 0 24 24"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>
-                        <h3>Day-by-Day Itinerary</h3>
-                    </div>
-                    <div class="card-body">
-                        {% for i in package.itineraries.all %}
-                        <div class="itinerary-item" onclick="toggleItinerary(this)">
-                            <div class="itinerary-header">
-                                <span class="day-badge">Day {{ i.day_number }}</span>
-                                <span class="itinerary-title">{{ i.title }}</span>
-                                <svg class="chevron-icon" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+            </div>
+
+            <div class="pd-card" id="pd-reviews">
+                <div class="pd-card-head">
+                    <svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                    <h3>Customer Testimonials</h3>
+                </div>
+                <div class="pd-card-body">
+                    {% if package.reviews.all %}
+                        {% for review in package.reviews.all|slice:":4" %}
+                        <div class="pd-review">
+                            <div class="pd-review-head">
+                                <div style="font-size:.85rem;font-weight:600;color:var(--ink);">{{ review.traveller.get_full_name|default:review.traveller.username }}</div>
+                                <span class="pd-review-rating">⭐ {{ review.rating }}/5</span>
                             </div>
-                            <div class="itinerary-body">
-                                <p class="itinerary-desc">{{ i.description }}</p>
-                            </div>
+                            <p class="pd-review-body">{{ review.review|truncatechars:180 }}</p>
+                            <div class="pd-review-by">{{ review.created_at|date:"F d, Y" }}</div>
                         </div>
                         {% endfor %}
-                    </div>
-                </div>
-                {% endif %}
-
-                <!-- Cancellation Policy -->
-                {% if package.cancellation_policy %}
-                <div class="info-card">
-                    <div class="card-header">
-                        <svg viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-                        <h3>Cancellation Policy</h3>
-                    </div>
-                    <div class="card-body">
-                        <div class="policy-box">
-                            <p>{{ package.cancellation_policy }}</p>
+                    {% else %}
+                        <div style="text-align:center;padding:2.5rem;color:var(--muted);">
+                            <div style="font-size:2rem;opacity:.3;margin-bottom:.5rem;">⭐</div>
+                            <p style="font-size:.85rem;">No reviews yet. Be the first to review after your trip!</p>
                         </div>
-                    </div>
+                    {% endif %}
                 </div>
-                {% endif %}
+            </div>
 
-                <!-- Terms & Conditions -->
-                {% if package.terms_conditions %}
-                <div class="info-card">
-                    <div class="card-header">
-                        <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/></svg>
-                        <h3>Terms &amp; Conditions</h3>
+        </div><!-- /main -->
+
+        <!-- ── SIDEBAR ── -->
+        <div class="pd-side">
+
+            <div class="pd-booking-card">
+                <div class="pd-booking-head">
+                    <div class="pd-booking-price">
+                        ₹{{ package.discounted_price|default:package.price|floatformat:0 }}<small>/person</small>
                     </div>
-                    <div class="card-body">
-                        <div class="terms-box">
-                            <p>{{ package.terms_conditions }}</p>
-                        </div>
+                    {% if package.discounted_price %}
+                    <div class="pd-booking-orig">
+                        <del>₹{{ package.price|floatformat:0 }}</del>
+                        <span class="pd-booking-save">Save {{ package.discount_percentage }}%</span>
                     </div>
+                    {% endif %}
                 </div>
-                {% endif %}
-
-            </div><!-- /content-left -->
-
-            <!-- RIGHT COLUMN -->
-            <div class="right-col-stack">
-
-                <!-- Booking / Price Card -->
-                <div class="booking-card">
-                    <div class="booking-card-header">
-                        <div class="booking-price-row">
-                            {% if package.discounted_price and package.discounted_price > 0 %}
-                                <span class="price-main">₹{{ package.discounted_price|floatformat:0 }}</span>
-                                <span class="price-original">₹{{ package.price|floatformat:0 }}</span>
-                                <span class="save-badge">Save {{ package.discount_percentage }}%</span>
+                <div class="pd-booking-body">
+                    <div class="pd-booking-row"><span>📅 Duration</span><strong>{{ package.duration_days }}D / {{ package.duration_nights }}N</strong></div>
+                    <div class="pd-booking-row"><span>👥 Group Size</span><strong>{% if package.max_group_size %}Up to {{ package.max_group_size }}{% else %}Flexible{% endif %}</strong></div>
+                    <div class="pd-booking-row"><span>🗣️ Language</span><strong>{{ package.guide_language|default:"English" }}</strong></div>
+                    <div class="pd-booking-row"><span>🏨 Stay</span><strong>{{ package.accommodation_type|default:"Premium Hotel" }}</strong></div>
+                    <div class="pd-booking-row"><span>🚗 Transport</span><strong>{{ package.transport_type|default:"AC Vehicle" }}</strong></div>
+                    
+                    <a href="{% url 'travellers:book_package' package.id %}" class="pd-book-now-btn">📅 Book This Tour →</a>
+                    
+                    <!-- Wishlist Button in Sidebar -->
+                    <form method="POST" action="{% url 'travellers:wishlist_add' package.id %}" style="display: block;">
+                        {% csrf_token %}
+                        <button type="submit" class="pd-wishlist-sidebar-btn {% if is_wishlisted %}active{% endif %}">
+                            {% if is_wishlisted %}
+                                ❤️ Remove from Wishlist
                             {% else %}
-                                <span class="price-main">₹{{ package.price|floatformat:0 }}</span>
+                                🤍 Add to Wishlist
                             {% endif %}
-                        </div>
-                        <span class="price-per">per person</span>
-                    </div>
-                    <div class="booking-card-body">
-                        <div class="book-detail-row">
-                            <span>Duration</span>
-                            <strong>{{ package.duration_days }}D / {{ package.duration_nights }}N</strong>
-                        </div>
-                        <div class="book-detail-row">
-                            <span>Places</span>
-                            <strong>{{ package.places_covered|truncatechars:22 }}</strong>
-                        </div>
-                        <div class="book-detail-row">
-                            <span>Group Size</span>
-                            <strong>
-                                {% if package.min_group_size and package.max_group_size %}
-                                    {{ package.min_group_size }}–{{ package.max_group_size }}
-                                {% elif package.max_group_size %}
-                                    Up to {{ package.max_group_size }}
-                                {% else %}Flexible{% endif %}
-                            </strong>
-                        </div>
-                        <div class="book-detail-row">
-                            <span>Language</span>
-                            <strong>{{ package.guide_language|default:"English" }}</strong>
-                        </div>
-                        {% if package.meals %}
-                        <div class="book-detail-row">
-                            <span>Meals</span>
-                            <strong>{{ package.meals|truncatechars:20 }}</strong>
-                        </div>
-                        {% endif %}
-                        {% if package.accommodation_type %}
-                        <div class="book-detail-row">
-                            <span>Stay</span>
-                            <strong>{{ package.accommodation_type|truncatechars:20 }}</strong>
-                        </div>
-                        {% endif %}
-                        {% if package.transport_type %}
-                        <div class="book-detail-row">
-                            <span>Transport</span>
-                            <strong>{{ package.transport_type|truncatechars:20 }}</strong>
-                        </div>
-                        {% endif %}
-                        <div class="book-detail-row">
-                            <span>Difficulty</span>
-                            <strong>
-                                {% if package.difficulty_level == 'easy' %}🟢{% elif package.difficulty_level == 'moderate' %}🟡{% else %}🔴{% endif %}
-                                {{ package.difficulty_level|default:"Moderate"|capfirst }}
-                            </strong>
-                        </div>
-
-                        {% if is_owner %}
-                        <div class="owner-actions">
-                            <a href="{% url 'agency:edit_package' package.id %}" class="btn-edit">✏️ Edit Package</a>
-                            <a href="{% url 'agency:delete_package' package.id %}" class="btn-delete"
-                               onclick="return confirm('Are you sure you want to delete this package?')">🗑 Delete</a>
-                        </div>
-                        {% else %}
-                        <a href="{% url 'travellers:book_package' package.id %}" class="btn-book-now">🧳 Book This Package</a>
-                        {% endif %}
-                        <a href="{% url 'travellers:user_profile' request.user.id %}" class="btn-back">← Back to Dashboard</a>
-                    </div>
-                </div>
-
-                <!-- Trip Highlights -->
-                <div class="side-card highlights-card">
-                    <div class="side-card-header">
-                        <svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" fill="rgba(245,158,11,0.15)" stroke="#F59E0B" stroke-width="1.8"/></svg>
-                        <h3>Trip Highlights</h3>
-                    </div>
-                    <div class="side-card-body">
-                        <div class="highlight-item">
-                            <div class="hl-icon" style="background:rgba(59,130,246,0.1);">
-                                <svg viewBox="0 0 24 24" stroke="#3B82F6"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-                            </div>
-                            <div>
-                                <div class="hl-label">Destinations</div>
-                                <div class="hl-value">{{ package.places_covered }}</div>
-                            </div>
-                        </div>
-                        <div class="highlight-item">
-                            <div class="hl-icon" style="background:rgba(34,197,94,0.1);">
-                                <svg viewBox="0 0 24 24" stroke="#16a34a"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>
-                            </div>
-                            <div>
-                                <div class="hl-label">Itinerary</div>
-                                <div class="hl-value">{{ package.duration_days }} Days Planned</div>
-                            </div>
-                        </div>
-                        {% if package.suitable_for %}
-                        <div class="highlight-item">
-                            <div class="hl-icon" style="background:rgba(168,85,247,0.1);">
-                                <svg viewBox="0 0 24 24" stroke="#9333ea"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
-                            </div>
-                            <div>
-                                <div class="hl-label">Ideal For</div>
-                                <div class="hl-value">{{ package.suitable_for }}</div>
-                            </div>
-                        </div>
-                        {% endif %}
-                        {% if package.best_season %}
-                        <div class="highlight-item">
-                            <div class="hl-icon" style="background:rgba(245,158,11,0.1);">
-                                <svg viewBox="0 0 24 24" stroke="#d97706"><path d="M12 2v2M12 20v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M2 12h2M20 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/><circle cx="12" cy="12" r="5"/></svg>
-                            </div>
-                            <div>
-                                <div class="hl-label">Best Time</div>
-                                <div class="hl-value">{{ package.best_season }}</div>
-                            </div>
-                        </div>
-                        {% endif %}
-                        <div class="highlight-item">
-                            <div class="hl-icon" style="background:rgba(239,68,68,0.1);">
-                                <svg viewBox="0 0 24 24" stroke="#dc2626"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
-                            </div>
-                            <div>
-                                <div class="hl-label">Experience Level</div>
-                                <div class="hl-value">{{ package.difficulty_level|default:"Moderate"|capfirst }} Trip</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Stats Strip -->
-                <div class="side-card stats-gradient-card">
-                    <div class="stats-card-inner">
-                        <div class="stat-mini-item">
-                            <div class="stat-mini-num">{{ package.duration_days }}</div>
-                            <div class="stat-mini-label">Days</div>
-                        </div>
-                        <div class="stat-mini-divider"></div>
-                        <div class="stat-mini-item">
-                            <div class="stat-mini-num">{{ package.duration_nights }}</div>
-                            <div class="stat-mini-label">Nights</div>
-                        </div>
-                        <div class="stat-mini-divider"></div>
-                        <div class="stat-mini-item">
-                            <div class="stat-mini-num">
-                                {% if package.max_group_size %}{{ package.max_group_size }}{% else %}∞{% endif %}
-                            </div>
-                            <div class="stat-mini-label">Max Pax</div>
-                        </div>
-                        <div class="stat-mini-divider"></div>
-                        <div class="stat-mini-item">
-                            <div class="stat-mini-num">
-                                {% if itineraries %}{{ itineraries|length }}{% else %}{{ package.itineraries.count }}{% endif %}
-                            </div>
-                            <div class="stat-mini-label">Activities</div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- What's Included Quick Summary -->
-                {% if package.inclusions %}
-                <div class="side-card">
-                    <div class="side-card-header">
-                        <svg viewBox="0 0 24 24"><polyline points="9 11 12 14 22 4" stroke="#16a34a"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" stroke="#16a34a"/></svg>
-                        <h3>What's Included</h3>
-                    </div>
-                    <div class="side-card-body">
-                        {% for item in package.inclusions.splitlines %}
-                        {% if item.strip %}
-                        <div class="side-inc-item">
-                            <span class="side-inc-check">✓</span>
-                            <span>{{ item.strip }}</span>
-                        </div>
-                        {% endif %}
-                        {% endfor %}
-                    </div>
-                </div>
-                {% endif %}
-
-                <!-- Agency Card -->
-                <div class="side-card">
-                    <div class="side-card-header">
-                        <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-                        <h3>About the Agency</h3>
-                    </div>
-                    <div class="side-card-body">
-                        <div class="agency-profile-top">
-                            <div class="agency-avatar-lg">{{ package.agency.agency_name|first|upper }}</div>
-                            <div>
-                                <div style="font-size:0.9rem;font-weight:600;color:var(--text-dark);">{{ package.agency.agency_name }}</div>
-                                {% if package.agency.city or package.agency.state %}
-                                <div style="font-size:0.75rem;color:var(--text-light);margin-top:2px;">
-                                    📍 {{ package.agency.city }}{% if package.agency.city and package.agency.state %}, {% endif %}{{ package.agency.state }}
-                                </div>
-                                {% endif %}
-                            </div>
-                        </div>
-                        {% if package.agency.mobile %}
-                        <div class="agency-row">
-                            <svg viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 13.1a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.77 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l.91-.91a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 17.22z"/></svg>
-                            {{ package.agency.mobile }}
-                        </div>
-                        {% endif %}
-                        {% if package.agency.website %}
-                        <div class="agency-row">
-                            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
-                            <a href="{{ package.agency.website }}" target="_blank">{{ package.agency.website|truncatechars:28 }}</a>
-                        </div>
-                        {% endif %}
-                    </div>
-                </div>
-
-                <!-- Share Card -->
-                <div class="side-card">
-                    <div class="side-card-header">
-                        <svg viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
-                        <h3>Share This Package</h3>
-                    </div>
-                    <div class="side-card-body">
-                        <p style="font-size:0.78rem;color:var(--text-light);margin-bottom:0.9rem;">Know someone who'd love this trip? Share it!</p>
-                        <div class="share-buttons">
-                            <button class="share-btn whatsapp" onclick="shareWhatsApp()">
-                                <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413Z"/></svg>
-                                WhatsApp
-                            </button>
-                            <button class="share-btn copy-link" onclick="copyLink()">
-                                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
-                                Copy Link
-                            </button>
-                        </div>
-                        <div id="copyConfirm" style="display:none;font-size:0.72rem;color:#16a34a;margin-top:0.5rem;text-align:center;">✓ Link copied to clipboard!</div>
-                    </div>
-                </div>
-
-                <!-- Need Help -->
-                <div class="side-card">
-                    <div class="side-card-body" style="text-align:center;padding:1.3rem;">
-                        <div style="width:48px;height:48px;background:var(--gradient-primary);border-radius:14px;display:flex;align-items:center;justify-content:center;margin:0 auto 0.8rem;">
-                            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="white" stroke-width="1.8"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-                        </div>
-                        <div style="font-size:0.9rem;font-weight:600;color:var(--text-dark);margin-bottom:0.3rem;">Need Help?</div>
-                        <p style="font-size:0.77rem;color:var(--text-light);line-height:1.55;margin-bottom:1rem;">Have questions about this package? Our team is happy to help!</p>
-                        {% if package.agency.mobile %}
-                        <a href="tel:{{ package.agency.mobile }}" class="btn-contact">
-                            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 13.1a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.77 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l.91-.91a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 17.22z"/></svg>
-                            Call Agency
-                        </a>
-                        {% else %}
-                        <button class="btn-contact" onclick="alert('Contact the agency for more details.')">
-                            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-                            Contact Agency
                         </button>
-                        {% endif %}
-                    </div>
+                    </form>
+                    
+                    <div class="pd-book-trust">🔒 Secure Booking · Best Price Guarantee</div>
                 </div>
-
-            </div><!-- /right column -->
-
-        </div><!-- /content-grid -->
-
-    </div><!-- /page-content -->
-
-    <!-- FOOTER -->
-    <footer class="footer-site">
-        <div class="footer-grid">
-            <div class="footer-brand">
-                <a class="footer-logo" href="{% url 'index' %}">Wayzo</a>
-                <p class="footer-desc">Your smart travel companion.<br>Discover, plan, and experience the world beautifully.</p>
             </div>
-            <div class="footer-col">
-                <h5>EXPLORE</h5>
-                <ul>
-                    <li><a href="#">Destinations</a></li>
-                    <li><a href="#">Restaurants</a></li>
-                    <li><a href="#">Hotels</a></li>
-                    <li><a href="#">Packages</a></li>
-                </ul>
+
+            {% if package.pickup_points or package.drop_points %}
+            <div class="pd-side-card">
+                <div class="pd-side-card-head">
+                    <svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                    Pickup & Drop
+                </div>
+                <div class="pd-side-card-body">
+                    {% if package.pickup_points %}<strong>📍 Pickup Points</strong>{{ package.pickup_points }}{% endif %}
+                    {% if package.drop_points %}<strong style="margin-top:.6rem;">🏁 Drop Points</strong>{{ package.drop_points }}{% endif %}
+                </div>
             </div>
-            <div class="footer-col">
-                <h5>TRAVELLERS</h5>
-                <ul>
-                    <li><a href="{% url 'traveller_register' %}">Join as Traveller</a></li>
-                    <li><a href="{% url 'login' %}">Login</a></li>
-                    <li><a href="#">How it Works</a></li>
-                    <li><a href="#">FAQs</a></li>
-                </ul>
+            {% endif %}
+
+            {% if package.terms_conditions %}
+            <div class="pd-side-card">
+                <div class="pd-side-card-head">
+                    <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                    Terms & Conditions
+                </div>
+                <div class="pd-side-card-body">{{ package.terms_conditions|truncatechars:220 }}</div>
             </div>
-            <div class="footer-col">
-                <h5>PARTNERS</h5>
-                <ul>
-                    <li><a href="{% url 'agency_register' %}">Register Agency</a></li>
-                    <li><a href="{% url 'restaurant_register' %}">Register Restaurant</a></li>
-                    <li><a href="#">Partner Benefits</a></li>
-                    <li><a href="#">Contact Us</a></li>
-                </ul>
-            </div>
+            {% endif %}
+
         </div>
-        <div class="footer-bottom">
-            <span>© 2025 Wayzo. All rights reserved.</span>
-            <span>Made for explorers everywhere</span>
-        </div>
-    </footer>
 
-</div><!-- /main-wrapper -->
+    </div>
+</div>
 
-<!-- LIGHTBOX -->
-<div class="lightbox" id="lightbox" onclick="closeLightbox()">
-    <span class="lightbox-close" onclick="closeLightbox()">×</span>
-    <img id="lightboxImg" src="" alt="Gallery">
+<!-- Lightbox -->
+<div class="pd-lightbox" id="pdLightbox" onclick="this.classList.remove('open')">
+    <button class="pd-lb-close">&times;</button>
+    <img id="pdLbImg" src="">
 </div>
 
 <script>
-    // Sidebar
-    const sidebarEl = document.getElementById('sidebar');
-    const hamburger = document.getElementById('hamburgerBtn');
-    const overlay   = document.getElementById('sidebarOverlay');
-    const mainWrapper = document.getElementById('mainWrapper');
+/* ══════════════════════════════════
+   HERO SLIDESHOW — every 5 seconds
+══════════════════════════════════ */
+(function(){
+    const slides = document.querySelectorAll('.pd-slide');
+    const dotsWrap = document.getElementById('pdSlideDots');
+    if(!slides.length) return;
 
-    function isMobile() { return window.innerWidth <= 860; }
+    let cur = 0;
+    const dots = [];
 
-    function setSidebarOpen(open) {
-        if (isMobile()) {
-            sidebarEl.classList.toggle('open', open);
-            overlay.classList.toggle('visible', open);
-        } else {
-            sidebarEl.classList.toggle('collapsed', !open);
-            mainWrapper.classList.toggle('sidebar-collapsed', !open);
-        }
-    }
-
-    function toggleSidebar() {
-        if (isMobile()) setSidebarOpen(!sidebarEl.classList.contains('open'));
-        else setSidebarOpen(sidebarEl.classList.contains('collapsed'));
-    }
-
-    if (hamburger) hamburger.addEventListener('click', toggleSidebar);
-    if (overlay) overlay.addEventListener('click', () => { if (isMobile()) setSidebarOpen(false); });
-
-    if (!isMobile()) {
-        sidebarEl.classList.add('collapsed');
-        mainWrapper.classList.add('sidebar-collapsed');
-    }
-
-    window.addEventListener('resize', () => {
-        if (!isMobile()) {
-            sidebarEl.classList.add('collapsed');
-            mainWrapper.classList.add('sidebar-collapsed');
-            sidebarEl.classList.remove('open');
-            overlay.classList.remove('visible');
-        } else {
-            sidebarEl.classList.remove('collapsed');
-            mainWrapper.classList.remove('sidebar-collapsed');
-        }
+    slides.forEach((_,i)=>{
+        const btn = document.createElement('button');
+        btn.className = 'pd-sdot' + (i===0?' active':'');
+        btn.addEventListener('click', ()=>goTo(i));
+        dotsWrap.appendChild(btn);
+        dots.push(btn);
     });
 
-    // Avatar dropdown
-    const avatarTrigger = document.getElementById('avatarTrigger');
-    const dropdown = document.getElementById('dropdownPopup');
-    if (avatarTrigger && dropdown) {
-        avatarTrigger.addEventListener('click', e => { e.stopPropagation(); dropdown.classList.toggle('show'); });
-        document.addEventListener('click', e => {
-            if (!avatarTrigger.contains(e.target) && !dropdown.contains(e.target)) dropdown.classList.remove('show');
-        });
+    function goTo(n){
+        slides[cur].classList.remove('active');
+        dots[cur].classList.remove('active');
+        cur = (n + slides.length) % slides.length;
+        slides[cur].classList.add('active');
+        dots[cur].classList.add('active');
     }
 
-    // Notification
-    const notifBtn = document.getElementById('notificationBtn');
-    if (notifBtn) notifBtn.addEventListener('click', () => alert('🔔 You have new notifications.'));
-
-    // Share
-    function shareWhatsApp() {
-        const text = encodeURIComponent('Check out this amazing tour package: ' + document.title + ' — ' + window.location.href);
-        window.open('https://wa.me/?text=' + text, '_blank');
-    }
-    function copyLink() {
-        navigator.clipboard.writeText(window.location.href).then(() => {
-            const el = document.getElementById('copyConfirm');
-            if (el) { el.style.display = 'block'; setTimeout(() => el.style.display = 'none', 2500); }
-        });
+    // Auto-advance every 5 seconds
+    if(slides.length > 1){
+        setInterval(()=>goTo(cur+1), 5000);
     }
 
-    // Itinerary accordion
-    function toggleItinerary(el) { el.classList.toggle('open'); }
+    // Hide dots if only one slide
+    if(slides.length <= 1) dotsWrap.style.display = 'none';
+})();
 
-    // Lightbox
-    function openLightbox(src) {
-        document.getElementById('lightboxImg').src = src;
-        document.getElementById('lightbox').classList.add('show');
-    }
-    function closeLightbox() { document.getElementById('lightbox').classList.remove('show'); }
-    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeLightbox(); });
+/* ══════════════════════════════════
+   PILL TAB SCROLL + ACTIVE STATE
+══════════════════════════════════ */
+document.querySelectorAll('.pd-pill-tab[data-target]').forEach(btn=>{
+    btn.addEventListener('click', function(){
+        pdScrollTo(this.dataset.target);
+        document.querySelectorAll('.pd-pill-tab').forEach(t=>t.classList.remove('active'));
+        this.classList.add('active');
+    });
+});
+
+function pdScrollTo(id){
+    const el = document.getElementById(id);
+    if(!el) return;
+    const offset = 90;
+    window.scrollTo({top: el.getBoundingClientRect().top + window.pageYOffset - offset, behavior:'smooth'});
+}
+
+// Highlight active tab on scroll
+const sections = ['pd-overview','pd-details','pd-itinerary','pd-inclusions','pd-reviews'];
+const tabs = document.querySelectorAll('.pd-pill-tab[data-target]');
+window.addEventListener('scroll', ()=>{
+    let current = '';
+    sections.forEach(id=>{
+        const el = document.getElementById(id);
+        if(el && el.getBoundingClientRect().top < 160) current = id;
+    });
+    tabs.forEach(t=>t.classList.toggle('active', t.dataset.target === current));
+}, {passive:true});
+
+/* ══════════════════════════════════
+   LIGHTBOX
+══════════════════════════════════ */
+function pdLightbox(src){
+    document.getElementById('pdLbImg').src = src;
+    document.getElementById('pdLightbox').classList.add('open');
+}
+document.querySelector('.pd-lb-close')?.addEventListener('click', e=>{
+    e.stopPropagation();
+    document.getElementById('pdLightbox').classList.remove('open');
+});
+document.addEventListener('keydown', e=>{
+    if(e.key==='Escape') document.getElementById('pdLightbox').classList.remove('open');
+});
 </script>
-</body>
-</html>
+
+{% endblock %}

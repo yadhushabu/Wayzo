@@ -1,1446 +1,968 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>Wayzo | {{ package.title }} — Package Detail</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+{% extends "agencies/base_agencies.html" %}
+{% load static %}
 
-        :root {
-            --gray-100: #F8F9FC;
-            --gray-150: #F1F3F8;
-            --gray-200: #E9EDF2;
-            --gray-300: #DCE2EA;
-            --gray-400: #BEC7D1;
-            --gray-500: #9AA3AF;
-            --gray-600: #6E7682;
-            --gray-700: #4A515C;
-            --gray-800: #2E343D;
-            --gray-850: #21262E;
-            --gray-900: #191E24;
-            --gray-950: #0F1217;
-            --accent-muted: #5B6E8C;
-            --accent-deep: #3A4A67;
-            --accent-light: #8A9CBA;
-            --accent-pale: #EFF2F9;
-            --white: #FFFFFF;
-            --text-dark: #1E242C;
-            --text-soft: #3C4350;
-            --text-light: #6F7886;
-            --green: #22C55E;
-            --amber: #F59E0B;
-            --blue-start: #3B82F6;
-            --blue-mid: #2563EB;
-            --blue-deep: #1E3A8A;
-            --gradient-primary: linear-gradient(135deg, #3B82F6 0%, #1E3A8A 100%);
-            --gradient-soft: linear-gradient(135deg, #60A5FA 0%, #3B82F6 50%, #2563EB 100%);
-            --gradient-glow: linear-gradient(135deg, #4F46E5 0%, #3B82F6 50%, #1E3A8A 100%);
-            --sidebar-w: 270px;
-        }
+{% block title %}{{ package.title }} | Wayzo Agency{% endblock %}
 
-        body {
-            font-family: 'Inter', sans-serif;
-            background: var(--gray-100);
-            color: var(--text-dark);
-            display: flex;
-            min-height: 100vh;
-            overflow-x: hidden;
-        }
+{% block page_title %}Package Details{% endblock %}
 
-        /* ========= SIDEBAR ========= */
-        .sidebar {
-            width: var(--sidebar-w);
-            background: var(--gray-950);
-            height: 100vh;
-            position: fixed;
-            top: 0; left: 0;
-            display: flex;
-            flex-direction: column;
-            z-index: 300;
-            border-right: 1px solid rgba(255,255,255,0.06);
-            transform: translateX(0);
-            transition: transform 0.3s cubic-bezier(0.4,0,0.2,1);
-            overflow-y: auto;
-        }
-        .sidebar.collapsed { transform: translateX(calc(-1 * var(--sidebar-w))); }
-        .sidebar-overlay {
-            display: none;
-            position: fixed; inset: 0;
-            background: rgba(0,0,0,0.45);
-            z-index: 290;
-            backdrop-filter: blur(2px);
-            transition: opacity 0.3s;
-        }
-        .sidebar-overlay.visible { display: block; opacity: 1; }
-        .sidebar-brand {
-            padding: 1.6rem 1.6rem 1rem;
-            border-bottom: 1px solid rgba(255,255,255,0.06);
-        }
-        .sidebar-logo {
-            font-family: 'Playfair Display', serif;
-            font-size: 1.5rem; font-weight: 600;
-            color: white; text-decoration: none; display: block;
-        }
-        .sidebar-sub {
-            font-size: 0.65rem; color: rgba(255,255,255,0.35);
-            letter-spacing: 0.08em; text-transform: uppercase;
-        }
-        .sidebar-nav { flex: 1; padding: 1.2rem 0.8rem; }
-        .nav-group-label {
-            font-size: 0.6rem; font-weight: 600;
-            letter-spacing: 0.12em; text-transform: uppercase;
-            color: rgba(255,255,255,0.25);
-            padding: 0.5rem 0.8rem; margin-top: 0.4rem;
-        }
-        .nav-item {
-            display: flex; align-items: center; gap: 0.75rem;
-            padding: 0.65rem 0.8rem; border-radius: 10px;
-            text-decoration: none; color: rgba(255,255,255,0.55);
-            font-size: 0.82rem; font-weight: 500;
-            transition: all 0.2s; margin-bottom: 2px;
-        }
-        .nav-item svg { width: 18px; height: 18px; stroke: currentColor; stroke-width: 1.7; fill: none; }
-        .nav-item:hover { background: rgba(255,255,255,0.07); color: rgba(255,255,255,0.9); }
-        .nav-item.active { background: rgba(138,156,186,0.18); color: var(--accent-light); }
-        .logout-sidebar {
-            margin-top: auto;
-            border-top: 1px solid rgba(255,255,255,0.06);
-            padding: 0.8rem;
-        }
-        .logout-sidebar a {
-            display: flex; align-items: center; gap: 0.65rem;
-            color: rgba(255,255,255,0.45); text-decoration: none;
-            padding: 0.5rem 0.7rem; border-radius: 8px;
-            font-size: 0.78rem; font-weight: 500; transition: all 0.2s;
-        }
-        .logout-sidebar a svg { width: 16px; height: 16px; }
-        .logout-sidebar a:hover { background: rgba(239,68,68,0.1); color: #F87171; }
+{% block breadcrumb %}Package Details{% endblock %}
 
-        /* ========= MAIN LAYOUT ========= */
-        .main-wrapper {
-            margin-left: var(--sidebar-w);
-            flex: 1;
-            transition: margin-left 0.3s;
-            min-height: 100vh;
-            display: flex; flex-direction: column;
-        }
-        .main-wrapper.sidebar-collapsed { margin-left: 0; }
+{% block extra_css %}
+<style>
+/* Package Detail Specific Styles */
+.package-hero {
+    background: linear-gradient(135deg, var(--gray-900) 0%, var(--gray-850) 100%);
+    border-radius: 24px;
+    overflow: hidden;
+    margin-bottom: 2rem;
+    position: relative;
+}
+.package-hero-image {
+    height: 400px;
+    width: 100%;
+    object-fit: cover;
+}
+.package-hero-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to top, rgba(0,0,0,0.7) 0%, transparent 50%);
+}
+.package-hero-content {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 2rem;
+    color: white;
+}
+.package-hero-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+}
+.package-hero-meta {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+    font-size: 0.85rem;
+    opacity: 0.9;
+}
+.package-badges {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    display: flex;
+    gap: 0.5rem;
+    z-index: 2;
+}
+.badge-featured, .badge-active {
+    padding: 0.3rem 1rem;
+    border-radius: 40px;
+    font-size: 0.7rem;
+    font-weight: 600;
+}
+.badge-featured {
+    background: linear-gradient(135deg, #F59E0B, #D97706);
+    color: white;
+}
+.badge-active {
+    background: rgba(16,185,129,0.9);
+    color: white;
+}
+.badge-inactive {
+    background: rgba(107,114,128,0.9);
+    color: white;
+}
 
-        /* TOPBAR */
-        .topbar {
-            background: var(--white);
-            border-bottom: 1px solid var(--gray-200);
-            padding: 0 1.8rem; height: 70px;
-            display: flex; align-items: center; justify-content: space-between;
-            position: sticky; top: 0; z-index: 200;
-        }
-        .topbar-left { display: flex; align-items: center; gap: 1rem; }
-        .hamburger {
-            background: transparent; border: none; cursor: pointer;
-            display: flex; flex-direction: column; gap: 5px; padding: 6px;
-        }
-        .hamburger span { width: 20px; height: 2px; background: var(--gray-700); border-radius: 2px; transition: 0.2s; }
-        .topbar-breadcrumb {
-            display: flex; align-items: center; gap: 0.4rem;
-            font-size: 0.75rem; color: var(--text-light);
-        }
-        .topbar-breadcrumb a { color: var(--accent-muted); text-decoration: none; }
-        .topbar-breadcrumb a:hover { text-decoration: underline; }
-        .topbar-breadcrumb span { color: var(--gray-400); }
-        .topbar-title { font-size: 1.15rem; font-family: 'Playfair Display', serif; color: var(--text-dark); }
-        .topbar-right { display: flex; align-items: center; gap: 1.2rem; }
-        .notification-btn {
-            background: var(--gray-150); border: none; border-radius: 40px;
-            width: 38px; height: 38px; display: flex; align-items: center; justify-content: center;
-            cursor: pointer; transition: 0.2s; position: relative;
-        }
-        .notification-btn:hover { background: var(--gray-200); }
-        .notification-btn svg { width: 18px; stroke: var(--gray-700); fill: none; }
-        .notification-badge {
-            position: absolute; top: -2px; right: -2px;
-            background: #EF4444; color: white; font-size: 0.6rem; font-weight: bold;
-            width: 16px; height: 16px; border-radius: 50%;
-            display: flex; align-items: center; justify-content: center;
-        }
-        .avatar-menu { position: relative; cursor: pointer; }
-        .avatar-trigger {
-            display: flex; align-items: center; gap: 0.5rem;
-            background: var(--gray-150); padding: 0.3rem 0.8rem 0.3rem 0.4rem;
-            border-radius: 40px; transition: 0.2s;
-        }
-        .avatar-trigger:hover { background: var(--gray-200); }
-        .avatar-img {
-            width: 36px; height: 36px; border-radius: 50%;
-            display: flex; align-items: center; justify-content: center;
-            font-weight: 600; color: white; font-size: 0.9rem;
-            background: var(--accent-deep); overflow: hidden;
-        }
-        .avatar-img img { width: 100%; height: 100%; object-fit: cover; }
-        .avatar-name { font-size: 0.8rem; font-weight: 500; color: var(--gray-800); }
-        .dropdown-popup {
-            position: absolute; top: 50px; right: 0;
-            background: white; border-radius: 16px;
-            box-shadow: 0 20px 35px -12px rgba(0,0,0,0.15);
-            width: 240px; padding: 0.8rem 0; z-index: 400;
-            border: 1px solid var(--gray-200);
-            opacity: 0; visibility: hidden; transform: translateY(-6px);
-            transition: all 0.2s;
-        }
-        .dropdown-popup.show { opacity: 1; visibility: visible; transform: translateY(0); }
-        .dropdown-info { padding: 0.5rem 1rem; border-bottom: 1px solid var(--gray-200); margin-bottom: 0.4rem; }
-        .dropdown-info p { font-size: 0.85rem; font-weight: 600; color: var(--gray-900); }
-        .dropdown-info span { font-size: 0.7rem; color: var(--text-light); display: block; margin-top: 2px; }
-        .dropdown-item {
-            display: flex; align-items: center; gap: 0.7rem;
-            padding: 0.6rem 1rem; color: var(--gray-700);
-            text-decoration: none; font-size: 0.8rem; transition: background 0.1s;
-        }
-        .dropdown-item:hover { background: var(--gray-150); }
+/* Stats Grid */
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+.stat-card {
+    background: white;
+    border-radius: 16px;
+    padding: 1rem;
+    border: 1px solid var(--gray-200);
+    text-align: center;
+}
+.stat-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--teal);
+}
+.stat-label {
+    font-size: 0.7rem;
+    color: var(--text-light);
+    text-transform: uppercase;
+}
 
-        /* ========= PAGE CONTENT ========= */
-        .page-content { flex: 1; padding: 2rem 2.2rem 3rem; max-width: 1100px; }
+/* Content Layout */
+.package-content {
+    display: grid;
+    grid-template-columns: 1fr 320px;
+    gap: 2rem;
+}
+.package-main {
+    min-width: 0;
+}
+.package-sidebar {
+    position: sticky;
+    top: 90px;
+}
 
-        /* Hero Image */
-        .hero-section {
-            position: relative;
-            border-radius: 24px;
-            overflow: hidden;
-            margin-bottom: 1.8rem;
-            height: 400px;
-            background: var(--gray-200);
-            box-shadow: 0 8px 32px rgba(0,0,0,0.12);
-        }
-        .hero-img {
-            width: 100%; height: 100%;
-            object-fit: cover;
-            display: block;
-        }
-        .hero-placeholder {
-            width: 100%; height: 100%;
-            display: flex; align-items: center; justify-content: center;
-            background: linear-gradient(135deg, var(--gray-200), var(--gray-300));
-            color: var(--gray-500);
-        }
-        .hero-overlay {
-            position: absolute; inset: 0;
-            background: linear-gradient(to top, rgba(15,18,23,0.72) 0%, transparent 55%);
-        }
-        .hero-badges {
-            position: absolute; top: 1.2rem; left: 1.2rem;
-            display: flex; gap: 0.5rem;
-        }
-        .badge-featured {
-            background: linear-gradient(135deg, #F59E0B, #D97706);
-            color: white; font-size: 0.68rem; font-weight: 600;
-            padding: 0.3rem 0.8rem; border-radius: 20px;
-            display: flex; align-items: center; gap: 0.3rem;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.18);
-        }
-        .badge-featured svg { width: 12px; height: 12px; fill: gold; stroke: none; }
-        .badge-discount {
-            background: linear-gradient(135deg, #EF4444, #DC2626);
-            color: white; font-size: 0.68rem; font-weight: 700;
-            padding: 0.3rem 0.8rem; border-radius: 20px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.18);
-        }
-        .hero-meta {
-            position: absolute; bottom: 1.4rem; left: 1.6rem; right: 1.6rem;
-        }
-        .hero-title {
-            font-family: 'Playfair Display', serif;
-            font-size: 2rem; font-weight: 600;
-            color: white; line-height: 1.25;
-            margin-bottom: 0.5rem;
-            text-shadow: 0 2px 12px rgba(0,0,0,0.3);
-        }
-        .hero-places {
-            font-size: 0.82rem; color: rgba(255,255,255,0.8);
-            display: flex; align-items: center; gap: 0.4rem;
-        }
-        .hero-places svg { width: 14px; height: 14px; stroke: rgba(255,255,255,0.8); fill: none; flex-shrink: 0; }
+/* Cards */
+.info-card {
+    background: white;
+    border-radius: 20px;
+    border: 1px solid var(--gray-200);
+    overflow: hidden;
+    margin-bottom: 1.5rem;
+}
+.card-header {
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid var(--gray-200);
+    background: var(--gray-100);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+.card-header h3 {
+    font-size: 1rem;
+    font-weight: 600;
+    margin: 0;
+}
+.card-header svg {
+    width: 18px;
+    height: 18px;
+    stroke: var(--teal);
+}
+.card-body {
+    padding: 1.5rem;
+}
 
-        /* Quick Info Icons Row */
-        .quick-info-row {
-            display: flex; flex-wrap: wrap; gap: 1rem;
-            background: white; border-radius: 20px;
-            border: 1px solid var(--gray-200);
-            padding: 1.4rem 1.8rem;
-            margin-bottom: 1.8rem;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.03);
-        }
-        .quick-info-item {
-            display: flex; align-items: center; gap: 0.7rem;
-            flex: 1 1 150px; min-width: 130px;
-        }
-        .qi-icon {
-            width: 40px; height: 40px; border-radius: 12px;
-            background: var(--accent-pale);
-            display: flex; align-items: center; justify-content: center;
-            flex-shrink: 0;
-        }
-        .qi-icon svg { width: 20px; height: 20px; stroke: var(--blue-mid); fill: none; stroke-width: 1.8; }
-        .qi-label { font-size: 0.67rem; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 2px; }
-        .qi-value { font-size: 0.88rem; font-weight: 600; color: var(--blue-start); }
+/* Details Grid */
+.details-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+}
+.detail-item {
+    background: var(--gray-100);
+    border-radius: 12px;
+    padding: 0.8rem;
+}
+.detail-label {
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    color: var(--text-light);
+    margin-bottom: 0.25rem;
+}
+.detail-value {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-dark);
+}
 
-        /* Content Grid */
-        .content-grid {
-            display: grid;
-            grid-template-columns: 1fr 320px;
-            gap: 1.8rem;
-            align-items: start;
-        }
-        .content-left { display: flex; flex-direction: column; gap: 1.5rem; }
+/* Itinerary Timeline */
+.timeline {
+    margin-top: 0.5rem;
+}
+.timeline-item {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+.timeline-day {
+    width: 50px;
+    flex-shrink: 0;
+    text-align: center;
+}
+.day-badge {
+    background: var(--teal);
+    color: white;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    margin: 0 auto;
+}
+.timeline-line {
+    width: 2px;
+    height: calc(100% - 40px);
+    background: var(--gray-200);
+    margin: 0.5rem auto 0;
+}
+.timeline-content {
+    flex: 1;
+    padding-bottom: 1rem;
+}
+.timeline-title {
+    font-weight: 700;
+    font-size: 0.9rem;
+    margin-bottom: 0.25rem;
+}
+.timeline-desc {
+    font-size: 0.8rem;
+    color: var(--text-light);
+    line-height: 1.5;
+}
 
-        /* Cards */
-        .info-card {
-            background: white;
-            border-radius: 20px;
-            border: 1px solid var(--gray-200);
-            overflow: hidden;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.03);
-        }
-        .card-header {
-            padding: 1.2rem 1.5rem;
-            border-bottom: 1px solid var(--gray-200);
-            display: flex; align-items: center; gap: 0.6rem;
-        }
-        .card-header h3 { font-size: 0.95rem; font-weight: 600; color: var(--text-dark); }
-        .card-header svg { width: 18px; height: 18px; stroke: var(--blue-start); fill: none; stroke-width: 1.8; }
-        .card-body { padding: 1.2rem 1.5rem; }
+/* Inclusions/Exclusions Grid */
+.inc-exc-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+}
+.inc-list, .exc-list {
+    list-style: none;
+    padding: 0;
+}
+.inc-list li, .exc-list li {
+    padding: 0.4rem 0;
+    font-size: 0.8rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+.inc-list li::before {
+    content: "✓";
+    color: var(--green);
+    font-weight: 700;
+}
+.exc-list li::before {
+    content: "✗";
+    color: var(--red);
+    font-weight: 700;
+}
 
-        /* Overview */
-        .overview-text {
-            font-size: 0.88rem; line-height: 1.75;
-            color: var(--text-soft);
-        }
+/* Gallery Grid */
+.gallery-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.8rem;
+}
+.gallery-item {
+    aspect-ratio: 1;
+    border-radius: 12px;
+    overflow: hidden;
+    cursor: pointer;
+}
+.gallery-item img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s;
+}
+.gallery-item:hover img {
+    transform: scale(1.05);
+}
 
-        /* Gallery */
-        .gallery-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 0.8rem;
-        }
-        .gallery-img-wrap {
-            border-radius: 14px; overflow: hidden;
-            aspect-ratio: 4/3; background: var(--gray-150);
-            cursor: pointer; transition: transform 0.3s;
-        }
-        .gallery-img-wrap:hover { transform: scale(1.02); }
-        .gallery-img-wrap img { width: 100%; height: 100%; object-fit: cover; display: block; }
+/* Sidebar Cards */
+.sidebar-card {
+    background: white;
+    border-radius: 20px;
+    border: 1px solid var(--gray-200);
+    overflow: hidden;
+    margin-bottom: 1.5rem;
+}
+.sidebar-header {
+    padding: 1rem 1.2rem;
+    border-bottom: 1px solid var(--gray-200);
+    background: var(--gray-100);
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+.sidebar-body {
+    padding: 1.2rem;
+}
+.pricing {
+    text-align: center;
+    margin-bottom: 1rem;
+}
+.price-current {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--teal);
+}
+.price-original {
+    font-size: 0.9rem;
+    color: var(--text-light);
+    text-decoration: line-through;
+    margin-left: 0.5rem;
+}
+.price-save {
+    display: inline-block;
+    background: var(--green-pale);
+    color: var(--green);
+    padding: 0.2rem 0.6rem;
+    border-radius: 20px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    margin-top: 0.3rem;
+}
+/* Sidebar icons sizing fix */
+.sidebar-header svg {
+    width: 16px !important;
+    height: 16px !important;
+    flex-shrink: 0;
+}
 
-        /* Inclusions / Exclusions */
-        .inc-exc-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
-        .inc-list, .exc-list { display: flex; flex-direction: column; gap: 0.5rem; }
-        .inc-item, .exc-item {
-            display: flex; align-items: flex-start; gap: 0.55rem;
-            font-size: 0.83rem; color: var(--text-soft); line-height: 1.5;
-        }
-        .inc-dot {
-            width: 18px; height: 18px; border-radius: 50%;
-            background: rgba(34,197,94,0.15);
-            display: flex; align-items: center; justify-content: center;
-            flex-shrink: 0; margin-top: 1px;
-        }
-        .inc-dot svg { width: 10px; height: 10px; stroke: #16a34a; stroke-width: 2.5; fill: none; }
-        .exc-dot {
-            width: 18px; height: 18px; border-radius: 50%;
-            background: rgba(239,68,68,0.12);
-            display: flex; align-items: center; justify-content: center;
-            flex-shrink: 0; margin-top: 1px;
-        }
-        .exc-dot svg { width: 10px; height: 10px; stroke: #dc2626; stroke-width: 2.5; fill: none; }
+.sidebar-header {
+    padding: 0.8rem 1.2rem;
+}
 
-        /* Itinerary */
-        .itinerary-item {
-            border: 1px solid var(--gray-200);
-            border-radius: 14px; overflow: hidden;
-            margin-bottom: 0.8rem; transition: box-shadow 0.2s;
-        }
-        .itinerary-item:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.07); }
-        .itinerary-header {
-            display: flex; align-items: center; gap: 0.8rem;
-            padding: 0.9rem 1.2rem; cursor: pointer;
-            background: var(--gray-100);
-            user-select: none;
-        }
-        .day-badge {
-            background: var(--gradient-primary);
-            color: white; font-size: 0.7rem; font-weight: 600;
-            padding: 0.2rem 0.7rem; border-radius: 20px; white-space: nowrap;
-        }
-        .itinerary-title { font-size: 0.88rem; font-weight: 600; color: var(--text-dark); flex: 1; }
-        .chevron-icon {
-            width: 16px; height: 16px; stroke: var(--gray-500); fill: none;
-            stroke-width: 2; transition: transform 0.3s;
-        }
-        .itinerary-item.open .chevron-icon { transform: rotate(180deg); }
-        .itinerary-body {
-            padding: 0 1.2rem;
-            max-height: 0; overflow: hidden;
-            transition: max-height 0.35s ease, padding 0.2s;
-        }
-        .itinerary-item.open .itinerary-body {
-            max-height: 600px; padding: 1rem 1.2rem;
-        }
-        .itinerary-desc { font-size: 0.83rem; line-height: 1.7; color: var(--text-soft); }
+.sidebar-header h3 {
+    font-size: 0.85rem;
+}
 
-        /* Right sidebar booking card */
-        .booking-card {
-            background: white; border-radius: 20px;
-            border: 1px solid var(--gray-200);
-            box-shadow: 0 4px 20px rgba(0,0,0,0.06);
-            overflow: hidden;
-        }
-        .booking-card-header {
-            background: var(--gradient-primary); padding: 1.5rem;
-        }
-        .booking-price-row { display: flex; align-items: baseline; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 0.3rem; }
-        .price-main { font-size: 2rem; font-weight: 700; color: white; }
-        .price-original { font-size: 0.85rem; color: rgba(255,255,255,0.65); text-decoration: line-through; }
-        .price-per { font-size: 0.75rem; color: rgba(255,255,255,0.7); }
-        .save-badge {
-            background: rgba(34,197,94,0.25); color: #86efac;
-            font-size: 0.68rem; font-weight: 600;
-            padding: 0.2rem 0.6rem; border-radius: 20px;
-        }
-        .booking-card-body { padding: 1.4rem 1.5rem; }
-        .book-detail-row {
-            display: flex; justify-content: space-between; align-items: center;
-            padding: 0.65rem 0; border-bottom: 1px solid var(--gray-150);
-            font-size: 0.82rem;
-        }
-        .book-detail-row:last-child { border-bottom: none; }
-        .book-detail-row span:first-child { color: var(--text-light); }
-        .book-detail-row strong { color: var(--text-dark); font-weight: 600; }
-        .btn-book-now {
-            width: 100%; background: var(--gradient-primary);
-            color: white; border: none; border-radius: 14px;
-            padding: 0.9rem 1rem; font-size: 0.92rem; font-weight: 600;
-            cursor: pointer; margin-top: 1.2rem; transition: all 0.3s;
-            text-decoration: none; display: block; text-align: center;
-            box-shadow: 0 4px 14px rgba(59,130,246,0.35);
-            font-family: 'Inter', sans-serif;
-        }
-        .btn-book-now:hover { transform: translateY(-2px); box-shadow: 0 8px 22px rgba(59,130,246,0.45); }
+/* Agency info icon sizing */
+.agency-info-icon {
+    width: 14px;
+    height: 14px;
+    flex-shrink: 0;
+}
 
-        /* Agency card */
-        .agency-card {
-            background: white; border-radius: 20px;
-            border: 1px solid var(--gray-200);
-            padding: 1.3rem 1.5rem;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.03);
-            margin-top: 1.5rem;
-        }
-        .agency-card h4 { font-size: 0.85rem; font-weight: 600; color: var(--text-dark); margin-bottom: 1rem; }
-        .agency-row {
-            display: flex; align-items: center; gap: 0.6rem;
-            font-size: 0.82rem; color: var(--text-soft); margin-bottom: 0.65rem;
-        }
-        .agency-row svg { width: 15px; height: 15px; stroke: var(--blue-start); fill: none; flex-shrink: 0; }
-        .agency-row a { color: var(--blue-start); text-decoration: none; }
-        .agency-row a:hover { text-decoration: underline; }
-        .agency-avatar {
-            width: 44px; height: 44px; border-radius: 12px;
-            background: var(--gradient-primary);
-            display: flex; align-items: center; justify-content: center;
-            color: white; font-weight: 700; font-size: 1.1rem;
-            margin-bottom: 0.8rem;
-        }
+/* Pricing section icon */
+.pricing-icon {
+    width: 18px;
+    height: 18px;
+}
 
-        /* Additional details grid */
-        .details-grid {
-            display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.8rem;
-        }
-        .detail-chip {
-            background: var(--gray-100); border-radius: 12px;
-            padding: 0.75rem 1rem; border: 1px solid var(--gray-200);
-        }
-        .detail-chip-label { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-light); margin-bottom: 0.25rem; }
-        .detail-chip-value { font-size: 0.85rem; font-weight: 500; color: var(--text-dark); }
+/* Pickup/drop section icons */
+.location-icon {
+    width: 14px;
+    height: 14px;
+    display: inline-block;
+    margin-right: 0.3rem;
+    vertical-align: middle;
+}
 
-        /* Owner buttons */
-        .owner-actions { display: flex; gap: 0.8rem; margin-top: 1rem; }
-        .btn-edit {
-            flex: 1; background: var(--gradient-soft); color: white;
-            border: none; border-radius: 12px; padding: 0.7rem 1rem;
-            font-size: 0.83rem; font-weight: 600; cursor: pointer;
-            text-align: center; text-decoration: none; display: block;
-            font-family: 'Inter', sans-serif; transition: all 0.2s;
-        }
-        .btn-edit:hover { transform: translateY(-2px); }
-        .btn-delete {
-            flex: 1; background: rgba(239,68,68,0.08); color: #dc2626;
-            border: 1px solid rgba(239,68,68,0.2); border-radius: 12px;
-            padding: 0.7rem 1rem; font-size: 0.83rem; font-weight: 600;
-            cursor: pointer; text-align: center; text-decoration: none; display: block;
-            font-family: 'Inter', sans-serif; transition: all 0.2s;
-        }
-        .btn-delete:hover { background: rgba(239,68,68,0.14); }
+/* Sidebar body text sizes */
+.sidebar-body {
+    font-size: 0.8rem;
+}
 
-        /* Right column stack */
-        .right-col-stack {
-            display: flex;
-            flex-direction: column;
-            gap: 1.2rem;
-            position: sticky;
-            top: 90px;
-            align-self: start;
-        }
+.sidebar-body strong {
+    font-size: 0.75rem;
+}
 
-        /* Generic side card */
-        .side-card {
-            background: white;
-            border-radius: 20px;
-            border: 1px solid var(--gray-200);
-            overflow: hidden;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.03);
-        }
-        .side-card-header {
-            padding: 0.9rem 1.2rem;
-            border-bottom: 1px solid var(--gray-200);
-            display: flex; align-items: center; gap: 0.55rem;
-            background: var(--gray-100);
-        }
-        .side-card-header svg { width: 16px; height: 16px; stroke: var(--blue-start); fill: none; stroke-width: 1.8; flex-shrink: 0; }
-        .side-card-header h3 { font-size: 0.83rem; font-weight: 600; color: var(--text-dark); }
-        .side-card-body { padding: 1rem 1.2rem; }
+.sidebar-body p {
+    font-size: 0.75rem;
+}
 
-        /* Highlights */
-        .highlights-card .side-card-header svg { stroke: #F59E0B; }
-        .highlight-item {
-            display: flex; align-items: flex-start; gap: 0.7rem;
-            padding: 0.6rem 0; border-bottom: 1px solid var(--gray-150);
-        }
-        .highlight-item:last-child { border-bottom: none; padding-bottom: 0; }
-        .hl-icon {
-            width: 34px; height: 34px; border-radius: 10px;
-            display: flex; align-items: center; justify-content: center;
-            flex-shrink: 0;
-        }
-        .hl-icon svg { width: 16px; height: 16px; fill: none; stroke-width: 1.8; }
-        .hl-label { font-size: 0.65rem; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 2px; }
-        .hl-value { font-size: 0.82rem; font-weight: 500; color: var(--text-dark); line-height: 1.4; }
+/* Agency info section */
+.agency-avatar-large {
+    width: 36px;
+    height: 36px;
+    font-size: 0.85rem;
+}
 
-        /* Stats strip */
-        .stats-gradient-card {
-            background: var(--gradient-primary);
-            border: none;
-            box-shadow: 0 6px 18px rgba(59,130,246,0.25);
-        }
-        .stats-card-inner {
-            display: flex; align-items: center;
-            padding: 1rem 0.8rem;
-        }
-        .stat-mini-item { flex: 1; text-align: center; }
-        .stat-mini-num { font-size: 1.4rem; font-weight: 700; color: white; line-height: 1; }
-        .stat-mini-label { font-size: 0.62rem; color: rgba(255,255,255,0.7); text-transform: uppercase; letter-spacing: 0.06em; margin-top: 3px; }
-        .stat-mini-divider { width: 1px; height: 36px; background: rgba(255,255,255,0.2); flex-shrink: 0; }
+.agency-details {
+    font-size: 0.75rem;
+}
 
-        /* Side inclusions */
-        .side-inc-item {
-            display: flex; align-items: flex-start; gap: 0.5rem;
-            font-size: 0.8rem; color: var(--text-soft);
-            padding: 0.35rem 0; line-height: 1.4;
-        }
-        .side-inc-check { color: #16a34a; font-weight: 700; font-size: 0.85rem; flex-shrink: 0; margin-top: 1px; }
+/* Contact info */
+.contact-info {
+    font-size: 0.7rem;
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+}
 
-        /* Agency profile inside side card */
-        .agency-profile-top {
-            display: flex; align-items: center; gap: 0.8rem;
-            margin-bottom: 0.9rem; padding-bottom: 0.9rem;
-            border-bottom: 1px solid var(--gray-150);
-        }
-        .agency-avatar-lg {
-            width: 46px; height: 46px; border-radius: 13px;
-            background: var(--gradient-primary);
-            display: flex; align-items: center; justify-content: center;
-            color: white; font-weight: 700; font-size: 1.2rem; flex-shrink: 0;
-        }
+.contact-info svg {
+    width: 12px;
+    height: 12px;
+    flex-shrink: 0;
+}
 
-        /* Share */
-        .share-buttons { display: flex; gap: 0.6rem; }
-        .share-btn {
-            flex: 1; display: flex; align-items: center; justify-content: center;
-            gap: 0.4rem; padding: 0.6rem 0.5rem;
-            border-radius: 10px; border: none; cursor: pointer;
-            font-size: 0.75rem; font-weight: 600; font-family: 'Inter', sans-serif;
-            transition: all 0.2s;
-        }
-        .share-btn.whatsapp { background: rgba(37,211,102,0.12); color: #16a34a; }
-        .share-btn.whatsapp:hover { background: rgba(37,211,102,0.22); }
-        .share-btn.copy-link { background: var(--gray-150); color: var(--gray-700); }
-        .share-btn.copy-link:hover { background: var(--gray-200); }
+/* Action Buttons */
+.action-buttons {
+    display: flex;
+    gap: 0.8rem;
+    margin-top: 1rem;
+}
+.btn-edit, .btn-delete {
+    flex: 1;
+    padding: 0.7rem;
+    border-radius: 40px;
+    text-align: center;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 0.8rem;
+    transition: all 0.2s;
+}
+.btn-edit {
+    background: var(--teal);
+    color: white;
+}
+.btn-edit:hover {
+    background: var(--teal-dark);
+    transform: translateY(-2px);
+}
+.btn-delete {
+    background: var(--red-pale);
+    color: var(--red);
+    border: 1px solid #fca5a5;
+}
+.btn-delete:hover {
+    background: var(--red);
+    color: white;
+    transform: translateY(-2px);
+}
 
-        /* Need help */
-        .need-help-card .side-card-body { padding: 1.2rem; }
-        .btn-contact {
-            display: inline-flex; align-items: center; gap: 0.4rem;
-            background: var(--gradient-primary); color: white;
-            border: none; border-radius: 10px; padding: 0.6rem 1.2rem;
-            font-size: 0.8rem; font-weight: 600; cursor: pointer;
-            font-family: 'Inter', sans-serif; transition: all 0.2s; text-decoration: none;
-        }
-        .btn-contact:hover { transform: translateY(-2px); box-shadow: 0 6px 16px rgba(59,130,246,0.35); }
+/* Policy List */
+.policy-list {
+    margin-top: 0.5rem;
+}
+.policy-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid var(--gray-100);
+    font-size: 0.8rem;
+}
+.policy-days {
+    font-weight: 600;
+}
+.policy-refund {
+    color: var(--green);
+    font-weight: 600;
+}
 
-        /* Cancellation */
-        .cancellation-box {
-            background: rgba(245,158,11,0.08); border: 1px solid rgba(245,158,11,0.25);
-            border-radius: 14px; padding: 1rem 1.2rem;
-        }
-        .cancellation-box p { font-size: 0.82rem; line-height: 1.65; color: var(--text-soft); }
+/* Responsive */
+@media (max-width: 992px) {
+    .package-content {
+        grid-template-columns: 1fr;
+    }
+    .package-sidebar {
+        position: static;
+    }
+}
+@media (max-width: 768px) {
+    .package-hero-image {
+        height: 300px;
+    }
+    .package-hero-title {
+        font-size: 1.3rem;
+    }
+    .details-grid {
+        grid-template-columns: 1fr;
+    }
+    .inc-exc-grid {
+        grid-template-columns: 1fr;
+    }
+    .gallery-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+</style>
+{% endblock %}
 
-        /* Lightbox */
-        .lightbox {
-            display: none; position: fixed; inset: 0;
-            background: rgba(0,0,0,0.92); z-index: 9000;
-            align-items: center; justify-content: center;
-        }
-        .lightbox.show { display: flex; }
-        .lightbox img { max-width: 90vw; max-height: 88vh; border-radius: 12px; object-fit: contain; }
-        .lightbox-close {
-            position: absolute; top: 1rem; right: 1.4rem;
-            color: white; font-size: 2rem; cursor: pointer; line-height: 1;
-        }
-
-        /* Footer */
-        .footer-site {
-            background: var(--gray-950); color: rgba(255,255,255,0.6);
-            padding: 3rem 2rem 2rem; margin-top: 2rem;
-        }
-        .footer-grid {
-            display: grid; grid-template-columns: 2fr 1fr 1fr 1fr;
-            gap: 2rem; max-width: 1400px; margin: 0 auto;
-        }
-        .footer-brand { max-width: 300px; }
-        .footer-logo {
-            font-family: 'Playfair Display', serif; font-size: 1.6rem; font-weight: 600;
-            color: white; text-decoration: none; display: inline-block; margin-bottom: 0.75rem;
-        }
-        .footer-desc { font-size: 0.85rem; line-height: 1.6; color: rgba(255,255,255,0.5); }
-        .footer-col h5 {
-            font-size: 0.75rem; font-weight: 600; letter-spacing: 0.1em;
-            text-transform: uppercase; margin-bottom: 1.2rem; color: rgba(255,255,255,0.7);
-        }
-        .footer-col ul { list-style: none; padding: 0; }
-        .footer-col li { margin-bottom: 0.7rem; }
-        .footer-col a { color: rgba(255,255,255,0.5); font-size: 0.8rem; text-decoration: none; transition: color 0.2s; }
-        .footer-col a:hover { color: white; }
-        .footer-bottom {
-            text-align: center; border-top: 1px solid rgba(255,255,255,0.08);
-            padding-top: 2rem; margin-top: 2rem; font-size: 0.75rem;
-            color: rgba(255,255,255,0.4);
-            display: flex; justify-content: space-between; align-items: center;
-            flex-wrap: wrap; gap: 1rem;
-            max-width: 1400px; margin-left: auto; margin-right: auto;
-        }
-
-        /* Responsive */
-        @media (max-width: 1000px) {
-            .content-grid { grid-template-columns: 1fr; }
-            .right-col-stack { position: static; }
-        }
-        @media (max-width: 860px) {
-            .sidebar { transform: translateX(-100%); }
-            .sidebar.open { transform: translateX(0); }
-            .main-wrapper { margin-left: 0 !important; }
-            .sidebar-overlay { display: block; opacity: 0; visibility: hidden; }
-            .sidebar-overlay.visible { opacity: 1; visibility: visible; }
-            .page-content { padding: 1.2rem 1rem 2rem; }
-            .hero-section { height: 260px; }
-            .hero-title { font-size: 1.4rem; }
-            .gallery-grid { grid-template-columns: repeat(2, 1fr); }
-            .inc-exc-grid { grid-template-columns: 1fr; }
-            .footer-grid { grid-template-columns: 1fr 1fr; gap: 1.5rem; }
-            .footer-brand { grid-column: 1 / -1; max-width: 100%; }
-        }
-        @media (max-width: 600px) {
-            .quick-info-row { gap: 0.7rem; }
-            .quick-info-item { flex: 1 1 120px; }
-            .gallery-grid { grid-template-columns: 1fr 1fr; }
-            .footer-grid { grid-template-columns: 1fr; }
-        }
-        a { text-decoration: none; }
-    </style>
-</head>
-<body>
-
-<div class="sidebar-overlay" id="sidebarOverlay"></div>
-<aside class="sidebar" id="sidebar">
-    <div class="sidebar-brand">
-        <a class="sidebar-logo" href="{% url 'index' %}">Wayzo</a>
-        <div class="sidebar-sub">Agency Portal</div>
-    </div>
-    <nav class="sidebar-nav">
-        <span class="nav-group-label">Main</span>
-        <a href="{% url 'agency:agency_dashboard' %}" class="nav-item {% if request.resolver_match.url_name == 'agency_dashboard' %}active{% endif %}">
-            <svg viewBox="0 0 24 24"><path d="M3 9L12 3L21 9L12 15L3 9Z" stroke="currentColor" fill="none"/><path d="M9 21V15H15V21" stroke="currentColor" fill="none"/></svg>Home
-        </a>
-        <a href="{% url 'agency:agency_packages' %}" class="nav-item {% if request.resolver_match.url_name == 'agency_packages' or request.resolver_match.url_name == 'package_detail' %}active{% endif %}">
-            <svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>Tour Packages
-        </a>
-        <a href="{% url 'agency:agency_bookings' %}" class="nav-item {% if request.resolver_match.url_name == 'agency_bookings' %}active{% endif %}">
-            <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>Bookings
-        </a>
-        <a href="{% url 'agency:add_package' %}" class="nav-item {% if request.resolver_match.url_name == 'add_package' %}active{% endif %}">
-            <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Add New Package
-        </a>
-        <span class="nav-group-label">Insights</span>
-        <a href="#" class="nav-item" id="nav-analytics">
-            <svg viewBox="0 0 24 24"><path d="M18 20V10M12 20V4M6 20v-6"/><line x1="2" y1="20" x2="22" y2="20"/></svg>Analytics
-        </a>
-        <a href="#" class="nav-item" id="nav-reviews">
-            <svg viewBox="0 0 24 24"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>Reviews
-        </a>
-        <a href="#" class="nav-item" id="nav-reports">
-            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H5.78a1.65 1.65 0 0 0-1.51 1 1.65 1.65 0 0 0 .33 1.82l.04.04A10 10 0 0 0 12 17.66a10 10 0 0 0 6.36-2.62l.04-.04z"/></svg>Reports
-        </a>
-        <a href="{% url 'agency:edit_agencyprofile' %}" class="nav-item {% if request.resolver_match.url_name == 'edit_agencyprofile' %}active{% endif %}">
-            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 1v6m0 6v6M1 12h6m6 0h6"/></svg>Settings
-        </a>
-    </nav>
-    <div class="logout-sidebar">
-        <a href="{% url 'logout' %}">
-            <svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-            Sign Out
-        </a>
-    </div>
-</aside>
-
-<div class="main-wrapper" id="mainWrapper">
-
-    <!-- TOPBAR -->
-    <div class="topbar">
-        <div class="topbar-left">
-            <button class="hamburger" id="hamburgerBtn"><span></span><span></span><span></span></button>
-            <div>
-                <div class="topbar-breadcrumb">
-                    <a href="{% url 'agency:agency_dashboard' %}">Dashboard</a>
-                    <span>›</span>
-                    <a href="{% url 'agency:agency_packages' %}">Packages</a>
-                    <span>›</span>
-                    <span>{{ package.title|truncatechars:28 }}</span>
-                </div>
-                <div class="topbar-title">Package Detail</div>
-            </div>
+{% block content %}
+<!-- Hero Section -->
+<div class="package-hero">
+    {% if images.first %}
+        <img class="package-hero-image" src="{{ images.first.image.url }}" alt="{{ package.title }}">
+    {% else %}
+        <div class="package-hero-image" style="background: linear-gradient(135deg, var(--teal), var(--teal-dark)); display: flex; align-items: center; justify-content: center;">
+            <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.5">
+                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
+                <circle cx="12" cy="10" r="3"/>
+            </svg>
         </div>
-        <div class="topbar-right">
-            <button class="notification-btn" id="notificationBtn">
-                <svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
-                <span class="notification-badge">{{ unread_notifications|default:"3" }}</span>
-            </button>
-            <div class="avatar-menu" id="avatarMenu">
-                <div class="avatar-trigger" id="avatarTrigger">
-                    <div class="avatar-img">
-                        {% if user.profile_picture %}
-                            <img src="{{ user.profile_picture.url }}" alt="{{ user.username }}">
-                        {% else %}
-                            {{ agency.agency_name|first|upper }}
-                        {% endif %}
-                    </div>
-                    <span class="avatar-name">{{ agency.agency_name|truncatechars:15 }}</span>
-                </div>
-                <div class="dropdown-popup" id="dropdownPopup">
-                    <div class="dropdown-info">
-                        <p>{{ agency.agency_name }}</p>
-                        <span>{{ agency.city }}{% if agency.city and agency.state %}, {% endif %}{{ agency.state|default:"Location not set" }}</span>
-                    </div>
-                    <a href="{% url 'agency:edit_agencyprofile' %}" class="dropdown-item">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>Profile Settings
-                    </a>
-                    <a href="{% url 'logout' %}" class="dropdown-item">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>Sign Out
-                    </a>
-                </div>
-            </div>
+    {% endif %}
+    <div class="package-hero-overlay"></div>
+    <div class="package-badges">
+        {% if package.is_featured %}
+        <span class="badge-featured">⭐ Featured</span>
+        {% endif %}
+        {% if package.is_active %}
+        <span class="badge-active">✓ Active</span>
+        {% else %}
+        <span class="badge-inactive">○ Inactive</span>
+        {% endif %}
+    </div>
+    <div class="package-hero-content">
+        <h1 class="package-hero-title">{{ package.title }}</h1>
+        <div class="package-hero-meta">
+            <span>📍 {{ package.places_covered }}</span>
+            <span>📅 {{ package.duration_days }}D / {{ package.duration_nights }}N</span>
+            <span>👥 {{ package.min_group_size|default:"1" }}-{{ package.max_group_size|default:"10" }} people</span>
         </div>
     </div>
+</div>
 
-    <!-- PAGE CONTENT -->
-    <div class="page-content">
+<!-- Stats Row -->
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-value">{{ package.duration_days }}</div>
+        <div class="stat-label">Days</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value">{{ package.duration_nights }}</div>
+        <div class="stat-label">Nights</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value">₹{{ package.price|floatformat:0 }}</div>
+        <div class="stat-label">Price per person</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value">{{ package.itineraries.count }}</div>
+        <div class="stat-label">Activities</div>
+    </div>
+</div>
 
-        <!-- HERO IMAGE (first image) -->
-        <div class="hero-section">
-            <div class="hero-badges">
-                {% if package.is_featured %}
-                <div class="badge-featured">
-                    <svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-                    Featured
-                </div>
-                {% endif %}
-                {% if package.discounted_price and package.discounted_price > 0 %}
-                <div class="badge-discount">-{{ package.discount_percentage }}% OFF</div>
-                {% endif %}
-                {% if not package.is_active %}
-                <div class="badge-discount" style="background:linear-gradient(135deg,#6b7280,#4b5563);">Inactive</div>
-                {% endif %}
+<!-- Main Content -->
+<div class="package-content">
+    
+    <!-- Left Column -->
+    <div class="package-main">
+        
+        <!-- Description -->
+        <div class="info-card">
+            <div class="card-header">
+                <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                <h3>About This Package</h3>
             </div>
-
-            {% if package.images.first %}
-                <img class="hero-img" src="{{ package.images.first.image.url }}" alt="{{ package.title }}">
-            {% else %}
-                <div class="hero-placeholder">
-                    <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-                </div>
-            {% endif %}
-            <div class="hero-overlay"></div>
-            <div class="hero-meta">
-                <div class="hero-title">{{ package.title }}</div>
-                <div class="hero-places">
-                    <svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-                    {{ package.places_covered }}
+            <div class="card-body">
+                <p style="line-height: 1.7; color: var(--text-soft);">{{ package.description }}</p>
+            </div>
+        </div>
+        
+        <!-- Package Details -->
+        <div class="info-card">
+            <div class="card-header">
+                <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                <h3>Package Details</h3>
+            </div>
+            <div class="card-body">
+                <div class="details-grid">
+                    <div class="detail-item">
+                        <div class="detail-label">Destination</div>
+                        <div class="detail-value">{{ package.places_covered }}</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">Duration</div>
+                        <div class="detail-value">{{ package.duration_days }} Days / {{ package.duration_nights }} Nights</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">Group Size</div>
+                        <div class="detail-value">{{ package.min_group_size|default:"1" }} - {{ package.max_group_size|default:"10" }} People</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">Guide Language</div>
+                        <div class="detail-value">{{ package.guide_language|default:"English" }}</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">Difficulty Level</div>
+                        <div class="detail-value">{{ package.get_difficulty_level_display|default:"Moderate" }}</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">Best Season</div>
+                        <div class="detail-value">{{ package.best_season|default:"Year Round" }}</div>
+                    </div>
+                    {% if package.accommodation_type %}
+                    <div class="detail-item">
+                        <div class="detail-label">Accommodation</div>
+                        <div class="detail-value">{{ package.accommodation_type }}</div>
+                    </div>
+                    {% endif %}
+                    {% if package.transport_type %}
+                    <div class="detail-item">
+                        <div class="detail-label">Transport</div>
+                        <div class="detail-value">{{ package.transport_type }}</div>
+                    </div>
+                    {% endif %}
+                    {% if package.meals %}
+                    <div class="detail-item">
+                        <div class="detail-label">Meals</div>
+                        <div class="detail-value">{{ package.meals }}</div>
+                    </div>
+                    {% endif %}
+                    {% if package.suitable_for %}
+                    <div class="detail-item">
+                        <div class="detail-label">Suitable For</div>
+                        <div class="detail-value">{{ package.suitable_for }}</div>
+                    </div>
+                    {% endif %}
+                    <div class="detail-item">
+                        <div class="detail-label">Booking Window</div>
+                        <div class="detail-value">{{ package.min_booking_days|default:"1" }} - {{ package.max_booking_days|default:"365" }} days in advance</div>
+                    </div>
                 </div>
             </div>
         </div>
-
-        <!-- QUICK INFO ROW (icon stats) -->
-        <div class="quick-info-row">
-            <div class="quick-info-item">
-                <div class="qi-icon">
-                    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                </div>
-                <div>
-                    <div class="qi-label">Duration</div>
-                    <div class="qi-value">{{ package.duration_days }} Days / {{ package.duration_nights }} Nights</div>
-                </div>
+        
+        <!-- Itinerary -->
+        {% if itineraries %}
+        <div class="info-card">
+            <div class="card-header">
+                <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                <h3>Day-by-Day Itinerary</h3>
             </div>
-            <div class="quick-info-item">
-                <div class="qi-icon">
-                    <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-                </div>
-                <div>
-                    <div class="qi-label">Group Size</div>
-                    <div class="qi-value">
-                        {% if package.min_group_size and package.max_group_size %}
-                            {{ package.min_group_size }}–{{ package.max_group_size }} People
-                        {% elif package.max_group_size %}
-                            Up to {{ package.max_group_size }}
-                        {% else %}
-                            Flexible
-                        {% endif %}
+            <div class="card-body">
+                <div class="timeline">
+                    {% for itinerary in itineraries|dictsort:"day_number" %}
+                    <div class="timeline-item">
+                        <div class="timeline-day">
+                            <div class="day-badge">{{ itinerary.day_number }}</div>
+                            {% if not forloop.last %}
+                            <div class="timeline-line"></div>
+                            {% endif %}
+                        </div>
+                        <div class="timeline-content">
+                            <div class="timeline-title">{{ itinerary.title }}</div>
+                            <div class="timeline-desc">{{ itinerary.description }}</div>
+                        </div>
                     </div>
+                    {% endfor %}
                 </div>
             </div>
-            <div class="quick-info-item">
-                <div class="qi-icon">
-                    <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-                </div>
-                <div>
-                    <div class="qi-label">Languages</div>
-                    <div class="qi-value">{{ package.guide_language|default:"English" }}</div>
-                </div>
-            </div>
-            <div class="quick-info-item">
-                <div class="qi-icon">
-                    <svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><path d="M12 8v4l3 3"/></svg>
-                </div>
-                <div>
-                    <div class="qi-label">Difficulty</div>
-                    <div class="qi-value">{{ package.difficulty_level|default:"Moderate"|capfirst }}</div>
-                </div>
-            </div>
-            {% if package.best_season %}
-            <div class="quick-info-item">
-                <div class="qi-icon">
-                    <svg viewBox="0 0 24 24"><path d="M12 2v2M12 20v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M2 12h2M20 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/><circle cx="12" cy="12" r="5"/></svg>
-                </div>
-                <div>
-                    <div class="qi-label">Best Season</div>
-                    <div class="qi-value">{{ package.best_season }}</div>
-                </div>
-            </div>
-            {% endif %}
         </div>
-
-        <!-- CONTENT GRID -->
-        <div class="content-grid">
-
-            <!-- LEFT COLUMN -->
-            <div class="content-left">
-
-                <!-- Overview -->
-                <div class="info-card">
-                    <div class="card-header">
-                        <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
-                        <h3>Overview</h3>
-                    </div>
-                    <div class="card-body">
-                        <p class="overview-text">{{ package.description }}</p>
-                    </div>
-                </div>
-
-                <!-- Gallery (images other than first) -->
-                {% with gallery_imgs=package.images.all %}
-                {% if gallery_imgs.count > 1 %}
-                <div class="info-card">
-                    <div class="card-header">
-                        <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-                        <h3>Gallery</h3>
-                    </div>
-                    <div class="card-body">
-                        <div class="gallery-grid">
-                            {% for img in gallery_imgs %}
-                                {% if not forloop.first %}
-                                <div class="gallery-img-wrap" onclick="openLightbox('{{ img.image.url }}')">
-                                    <img src="{{ img.image.url }}" alt="Gallery image {{ forloop.counter }}">
-                                </div>
-                                {% endif %}
+        {% endif %}
+        
+        <!-- Inclusions & Exclusions -->
+        {% if package.inclusions or package.exclusions %}
+        <div class="info-card">
+            <div class="card-header">
+                <svg viewBox="0 0 24 24"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+                <h3>What's Included & Excluded</h3>
+            </div>
+            <div class="card-body">
+                <div class="inc-exc-grid">
+                    <div>
+                        <h4 style="font-size: 0.85rem; margin-bottom: 0.5rem; color: var(--green);">✓ Included</h4>
+                        <ul class="inc-list">
+                            {% for item in package.inclusions.splitlines %}
+                            {% if item.strip %}
+                            <li>{{ item.strip }}</li>
+                            {% endif %}
+                            {% empty %}
+                            <li>Premium Accommodation</li>
+                            <li>Daily Breakfast</li>
+                            <li>Private Transfers</li>
+                            <li>Professional Guide</li>
                             {% endfor %}
-                        </div>
+                        </ul>
                     </div>
-                </div>
-                {% endif %}
-                {% endwith %}
-
-                <!-- Inclusions & Exclusions -->
-                {% if package.inclusions or package.exclusions %}
-                <div class="info-card">
-                    <div class="card-header">
-                        <svg viewBox="0 0 24 24"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
-                        <h3>What's Included</h3>
-                    </div>
-                    <div class="card-body">
-                        <div class="inc-exc-grid">
-                            {% if package.inclusions %}
-                            <div>
-                                <div style="font-size:0.78rem;font-weight:600;color:var(--text-dark);margin-bottom:0.7rem;display:flex;align-items:center;gap:0.4rem;">
-                                    <span style="color:#16a34a;">✓</span> Inclusions
-                                </div>
-                                <div class="inc-list">
-                                    {% for item in package.inclusions.splitlines %}
-                                    {% if item.strip %}
-                                    <div class="inc-item">
-                                        <div class="inc-dot"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div>
-                                        <span>{{ item.strip }}</span>
-                                    </div>
-                                    {% endif %}
-                                    {% endfor %}
-                                </div>
-                            </div>
+                    <div>
+                        <h4 style="font-size: 0.85rem; margin-bottom: 0.5rem; color: var(--red);">✗ Excluded</h4>
+                        <ul class="exc-list">
+                            {% for item in package.exclusions.splitlines %}
+                            {% if item.strip %}
+                            <li>{{ item.strip }}</li>
                             {% endif %}
-                            {% if package.exclusions %}
-                            <div>
-                                <div style="font-size:0.78rem;font-weight:600;color:var(--text-dark);margin-bottom:0.7rem;display:flex;align-items:center;gap:0.4rem;">
-                                    <span style="color:#dc2626;">✗</span> Exclusions
-                                </div>
-                                <div class="exc-list">
-                                    {% for item in package.exclusions.splitlines %}
-                                    {% if item.strip %}
-                                    <div class="exc-item">
-                                        <div class="exc-dot"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></div>
-                                        <span>{{ item.strip }}</span>
-                                    </div>
-                                    {% endif %}
-                                    {% endfor %}
-                                </div>
-                            </div>
-                            {% endif %}
-                        </div>
+                            {% empty %}
+                            <li>International Flights</li>
+                            <li>Visa Fees</li>
+                            <li>Travel Insurance</li>
+                            <li>Personal Expenses</li>
+                            {% endfor %}
+                        </ul>
                     </div>
                 </div>
-                {% endif %}
-
-                <!-- Additional Details -->
-                <div class="info-card">
-                    <div class="card-header">
-                        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-                        <h3>Package Details</h3>
-                    </div>
-                    <div class="card-body">
-                        <div class="details-grid">
-                            {% if package.accommodation_type %}
-                            <div class="detail-chip">
-                                <div class="detail-chip-label">Accommodation</div>
-                                <div class="detail-chip-value">🏨 {{ package.accommodation_type }}</div>
-                            </div>
-                            {% endif %}
-                            {% if package.transport_type %}
-                            <div class="detail-chip">
-                                <div class="detail-chip-label">Transport</div>
-                                <div class="detail-chip-value">🚗 {{ package.transport_type }}</div>
-                            </div>
-                            {% endif %}
-                            {% if package.meals %}
-                            <div class="detail-chip">
-                                <div class="detail-chip-label">Meals</div>
-                                <div class="detail-chip-value">🍽 {{ package.meals }}</div>
-                            </div>
-                            {% endif %}
-                            {% if package.suitable_for %}
-                            <div class="detail-chip">
-                                <div class="detail-chip-label">Suitable For</div>
-                                <div class="detail-chip-value">👥 {{ package.suitable_for }}</div>
-                            </div>
-                            {% endif %}
-                            <div class="detail-chip">
-                                <div class="detail-chip-label">Difficulty</div>
-                                <div class="detail-chip-value">
-                                    {% if package.difficulty_level == 'easy' %}🟢{% elif package.difficulty_level == 'moderate' %}🟡{% else %}🔴{% endif %}
-                                    {{ package.difficulty_level|default:"Moderate"|capfirst }}
-                                </div>
-                            </div>
-                            {% if package.best_season %}
-                            <div class="detail-chip">
-                                <div class="detail-chip-label">Best Season</div>
-                                <div class="detail-chip-value">☀️ {{ package.best_season }}</div>
-                            </div>
-                            {% endif %}
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Itinerary -->
-                {% if package.itineraries.exists %}
-                <div class="info-card">
-                    <div class="card-header">
-                        <svg viewBox="0 0 24 24"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>
-                        <h3>Day-by-Day Itinerary</h3>
-                    </div>
-                    <div class="card-body">
-                        {% for itinerary in package.itineraries.all %}
-                        <div class="itinerary-item" onclick="toggleItinerary(this)">
-                            <div class="itinerary-header">
-                                <span class="day-badge">Day {{ itinerary.day_number }}</span>
-                                <span class="itinerary-title">{{ itinerary.title }}</span>
-                                <svg class="chevron-icon" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
-                            </div>
-                            <div class="itinerary-body">
-                                <p class="itinerary-desc">{{ itinerary.description }}</p>
-                            </div>
-                        </div>
-                        {% endfor %}
-                    </div>
-                </div>
-                {% endif %}
-
-                <!-- Cancellation Policy -->
-                {% if package.cancellation_policy %}
-                <div class="info-card">
-                    <div class="card-header">
-                        <svg viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-                        <h3>Cancellation Policy</h3>
-                    </div>
-                    <div class="card-body">
-                        <div class="cancellation-box">
-                            <p>{{ package.cancellation_policy }}</p>
-                        </div>
-                    </div>
-                </div>
-                {% endif %}
-
-            </div><!-- /content-left -->
-
-            <!-- RIGHT COLUMN -->
-            <div class="right-col-stack">
-
-                <!-- Booking / Price Card -->
-                <div class="booking-card">
-                    <div class="booking-card-header">
-                        <div class="booking-price-row">
-                            {% if package.discounted_price and package.discounted_price > 0 %}
-                                <span class="price-main">₹{{ package.discounted_price|floatformat:0 }}</span>
-                                <span class="price-original">₹{{ package.price|floatformat:0 }}</span>
-                                <span class="save-badge">Save {{ package.discount_percentage }}%</span>
-                            {% else %}
-                                <span class="price-main">₹{{ package.price|floatformat:0 }}</span>
-                            {% endif %}
-                        </div>
-                        <span class="price-per">per person</span>
-                    </div>
-                    <div class="booking-card-body">
-                        <div class="book-detail-row">
-                            <span>Duration</span>
-                            <strong>{{ package.duration_days }}D / {{ package.duration_nights }}N</strong>
-                        </div>
-                        <div class="book-detail-row">
-                            <span>Places</span>
-                            <strong>{{ package.places_covered|truncatechars:22 }}</strong>
-                        </div>
-                        <div class="book-detail-row">
-                            <span>Group Size</span>
-                            <strong>
-                                {% if package.min_group_size and package.max_group_size %}
-                                    {{ package.min_group_size }}–{{ package.max_group_size }}
-                                {% elif package.max_group_size %}
-                                    Up to {{ package.max_group_size }}
-                                {% else %}Flexible{% endif %}
-                            </strong>
-                        </div>
-                        <div class="book-detail-row">
-                            <span>Language</span>
-                            <strong>{{ package.guide_language|default:"English" }}</strong>
-                        </div>
-                        {% if package.meals %}
-                        <div class="book-detail-row">
-                            <span>Meals</span>
-                            <strong>{{ package.meals|truncatechars:20 }}</strong>
-                        </div>
-                        {% endif %}
-                        {% if package.accommodation_type %}
-                        <div class="book-detail-row">
-                            <span>Stay</span>
-                            <strong>{{ package.accommodation_type|truncatechars:20 }}</strong>
-                        </div>
-                        {% endif %}
-                        {% if package.transport_type %}
-                        <div class="book-detail-row">
-                            <span>Transport</span>
-                            <strong>{{ package.transport_type|truncatechars:20 }}</strong>
-                        </div>
-                        {% endif %}
-                        <div class="book-detail-row">
-                            <span>Difficulty</span>
-                            <strong>
-                                {% if package.difficulty_level == 'easy' %}🟢{% elif package.difficulty_level == 'moderate' %}🟡{% else %}🔴{% endif %}
-                                {{ package.difficulty_level|default:"Moderate"|capfirst }}
-                            </strong>
-                        </div>
-
-                        {% if is_owner %}
-                        <div class="owner-actions">
-                            <a href="{% url 'agency:edit_package' package.id %}" class="btn-edit">✏️ Edit Package</a>
-                            <a href="{% url 'agency:delete_package' package.id %}" class="btn-delete"
-                               onclick="return confirm('Are you sure you want to delete this package?')">🗑 Delete</a>
-                        </div>
-                        {% else %}
-                        <a href="{% url 'travellers:book_package' package.id %}" class="btn-book-now">🧳 Book Now</a>
-                        {% endif %}
-                    </div>
-                </div>
-
-                <!-- Trip Highlights Card -->
-                <div class="side-card highlights-card">
-                    <div class="side-card-header">
-                        <svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" fill="rgba(245,158,11,0.15)" stroke="#F59E0B" stroke-width="1.8"/></svg>
-                        <h3>Trip Highlights</h3>
-                    </div>
-                    <div class="side-card-body">
-                        <div class="highlight-item">
-                            <div class="hl-icon" style="background:rgba(59,130,246,0.1);">
-                                <svg viewBox="0 0 24 24" stroke="#3B82F6"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-                            </div>
-                            <div>
-                                <div class="hl-label">Destinations</div>
-                                <div class="hl-value">{{ package.places_covered }}</div>
-                            </div>
-                        </div>
-                        <div class="highlight-item">
-                            <div class="hl-icon" style="background:rgba(34,197,94,0.1);">
-                                <svg viewBox="0 0 24 24" stroke="#16a34a"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>
-                            </div>
-                            <div>
-                                <div class="hl-label">Itinerary Days</div>
-                                <div class="hl-value">{{ package.duration_days }} Days Planned</div>
-                            </div>
-                        </div>
-                        {% if package.suitable_for %}
-                        <div class="highlight-item">
-                            <div class="hl-icon" style="background:rgba(168,85,247,0.1);">
-                                <svg viewBox="0 0 24 24" stroke="#9333ea"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-                            </div>
-                            <div>
-                                <div class="hl-label">Ideal For</div>
-                                <div class="hl-value">{{ package.suitable_for }}</div>
-                            </div>
-                        </div>
-                        {% endif %}
-                        {% if package.best_season %}
-                        <div class="highlight-item">
-                            <div class="hl-icon" style="background:rgba(245,158,11,0.1);">
-                                <svg viewBox="0 0 24 24" stroke="#d97706"><path d="M12 2v2M12 20v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M2 12h2M20 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/><circle cx="12" cy="12" r="5"/></svg>
-                            </div>
-                            <div>
-                                <div class="hl-label">Best Time to Visit</div>
-                                <div class="hl-value">{{ package.best_season }}</div>
-                            </div>
-                        </div>
-                        {% endif %}
-                        <div class="highlight-item">
-                            <div class="hl-icon" style="background:rgba(239,68,68,0.1);">
-                                <svg viewBox="0 0 24 24" stroke="#dc2626"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
-                            </div>
-                            <div>
-                                <div class="hl-label">Experience Level</div>
-                                <div class="hl-value">{{ package.difficulty_level|default:"Moderate"|capfirst }} Trip</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Package Stats Card -->
-                <div class="side-card stats-gradient-card">
-                    <div class="stats-card-inner">
-                        <div class="stat-mini-item">
-                            <div class="stat-mini-num">{{ package.duration_days }}</div>
-                            <div class="stat-mini-label">Days</div>
-                        </div>
-                        <div class="stat-mini-divider"></div>
-                        <div class="stat-mini-item">
-                            <div class="stat-mini-num">{{ package.duration_nights }}</div>
-                            <div class="stat-mini-label">Nights</div>
-                        </div>
-                        <div class="stat-mini-divider"></div>
-                        <div class="stat-mini-item">
-                            <div class="stat-mini-num">
-                                {% if package.max_group_size %}{{ package.max_group_size }}{% else %}∞{% endif %}
-                            </div>
-                            <div class="stat-mini-label">Max Pax</div>
-                        </div>
-                        <div class="stat-mini-divider"></div>
-                        <div class="stat-mini-item">
-                            <div class="stat-mini-num">{{ package.itineraries.count }}</div>
-                            <div class="stat-mini-label">Activities</div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- What's Included Quick Summary -->
-                {% if package.inclusions %}
-                <div class="side-card">
-                    <div class="side-card-header">
-                        <svg viewBox="0 0 24 24"><polyline points="9 11 12 14 22 4" stroke="#16a34a"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" stroke="#16a34a"/></svg>
-                        <h3>What's Included</h3>
-                    </div>
-                    <div class="side-card-body">
-                        {% for item in package.inclusions.splitlines %}
-                        {% if item.strip %}
-                        <div class="side-inc-item">
-                            <span class="side-inc-check">✓</span>
-                            <span>{{ item.strip }}</span>
-                        </div>
-                        {% endif %}
-                        {% endfor %}
-                    </div>
-                </div>
-                {% endif %}
-
-                <!-- Agency Card -->
-                <div class="side-card">
-                    <div class="side-card-header">
-                        <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-                        <h3>About the Agency</h3>
-                    </div>
-                    <div class="side-card-body">
-                        <div class="agency-profile-top">
-                            <div class="agency-avatar-lg">{{ package.agency.agency_name|first|upper }}</div>
-                            <div>
-                                <div style="font-size:0.9rem;font-weight:600;color:var(--text-dark);">{{ package.agency.agency_name }}</div>
-                                {% if package.agency.city or package.agency.state %}
-                                <div style="font-size:0.75rem;color:var(--text-light);margin-top:2px;">
-                                    📍 {{ package.agency.city }}{% if package.agency.city and package.agency.state %}, {% endif %}{{ package.agency.state }}
-                                </div>
-                                {% endif %}
-                            </div>
-                        </div>
-                        {% if package.agency.mobile %}
-                        <div class="agency-row">
-                            <svg viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 13.1a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.77 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l.91-.91a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 17.22z"/></svg>
-                            {{ package.agency.mobile }}
-                        </div>
-                        {% endif %}
-                        {% if package.agency.website %}
-                        <div class="agency-row">
-                            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
-                            <a href="{{ package.agency.website }}" target="_blank">{{ package.agency.website|truncatechars:28 }}</a>
-                        </div>
-                        {% endif %}
-                    </div>
-                </div>
-
-                <!-- Share Card -->
-                <div class="side-card share-card">
-                    <div class="side-card-header">
-                        <svg viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
-                        <h3>Share This Package</h3>
-                    </div>
-                    <div class="side-card-body">
-                        <p style="font-size:0.78rem;color:var(--text-light);margin-bottom:0.9rem;">Know someone who'd love this trip? Share it with them!</p>
-                        <div class="share-buttons">
-                            <button class="share-btn whatsapp" onclick="shareWhatsApp()">
-                                <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413Z"/></svg>
-                                WhatsApp
-                            </button>
-                            <button class="share-btn copy-link" onclick="copyLink()">
-                                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
-                                Copy Link
-                            </button>
-                        </div>
-                        <div id="copyConfirm" style="display:none;font-size:0.72rem;color:#16a34a;margin-top:0.5rem;text-align:center;">✓ Link copied to clipboard!</div>
-                    </div>
-                </div>
-
-                <!-- Need Help Card -->
-                <div class="side-card need-help-card">
-                    <div style="text-align:center;padding:0.5rem 0;">
-                        <div style="width:48px;height:48px;background:var(--gradient-primary);border-radius:14px;display:flex;align-items:center;justify-content:center;margin:0 auto 0.8rem;">
-                            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="white" stroke-width="1.8"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-                        </div>
-                        <div style="font-size:0.9rem;font-weight:600;color:var(--text-dark);margin-bottom:0.3rem;">Need Help?</div>
-                        <p style="font-size:0.77rem;color:var(--text-light);line-height:1.55;margin-bottom:1rem;">Have questions about this package? Our team is happy to assist you plan the perfect trip.</p>
-                        {% if package.agency.mobile %}
-                        <a href="tel:{{ package.agency.mobile }}" class="btn-contact">
-                            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 13.1a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.77 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l.91-.91a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 17.22z"/></svg>
-                            Call Agency
-                        </a>
-                        {% else %}
-                        <button class="btn-contact" onclick="alert('Contact agency for more details.')">
-                            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-                            Contact Agency
-                        </button>
-                        {% endif %}
-                    </div>
-                </div>
-
-            </div><!-- /right column -->
-
-        </div><!-- /content-grid -->
-
-    </div><!-- /page-content -->
-
-    <!-- FOOTER -->
-    <footer class="footer-site">
-        <div class="footer-grid">
-            <div class="footer-brand">
-                <a class="footer-logo" href="{% url 'index' %}">Wayzo</a>
-                <p class="footer-desc">Your smart travel companion.<br>Discover, plan, and experience the world beautifully.</p>
-            </div>
-            <div class="footer-col">
-                <h5>EXPLORE</h5>
-                <ul>
-                    <li><a href="#">Destinations</a></li>
-                    <li><a href="#">Restaurants</a></li>
-                    <li><a href="#">Hotels</a></li>
-                    <li><a href="#">Packages</a></li>
-                </ul>
-            </div>
-            <div class="footer-col">
-                <h5>TRAVELLERS</h5>
-                <ul>
-                    <li><a href="{% url 'traveller_register' %}">Join as Traveller</a></li>
-                    <li><a href="{% url 'login' %}">Login</a></li>
-                    <li><a href="#">How it Works</a></li>
-                    <li><a href="#">FAQs</a></li>
-                </ul>
-            </div>
-            <div class="footer-col">
-                <h5>PARTNERS</h5>
-                <ul>
-                    <li><a href="{% url 'agency_register' %}">Register Agency</a></li>
-                    <li><a href="{% url 'restaurant_register' %}">Register Restaurant</a></li>
-                    <li><a href="#">Partner Benefits</a></li>
-                    <li><a href="#">Contact Us</a></li>
-                </ul>
             </div>
         </div>
-        <div class="footer-bottom">
-            <span>© 2025 Wayzo. All rights reserved.</span>
-            <span>Made for explorers everywhere</span>
+        {% endif %}
+        
+        <!-- Things to Carry -->
+        {% if package.things_to_carry %}
+        <div class="info-card">
+            <div class="card-header">
+                <svg viewBox="0 0 24 24"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/></svg>
+                <h3>Things to Carry</h3>
+            </div>
+            <div class="card-body">
+                <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
+                    {% for item in package.things_to_carry.splitlines %}
+                    {% if item.strip %}
+                    <span style="background: var(--gray-100); padding: 0.3rem 0.8rem; border-radius: 20px; font-size: 0.75rem;">✓ {{ item.strip }}</span>
+                    {% endif %}
+                    {% endfor %}
+                </div>
+            </div>
         </div>
-    </footer>
+        {% endif %}
+        
+        <!-- Gallery -->
+        {% if images.count > 1 %}
+        <div class="info-card">
+            <div class="card-header">
+                <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                <h3>Gallery</h3>
+            </div>
+            <div class="card-body">
+                <div class="gallery-grid">
+                    {% for img in images|slice:"1:7" %}
+                    <div class="gallery-item" onclick="openLightbox('{{ img.image.url }}')">
+                        <img src="{{ img.image.url }}" alt="Gallery image">
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        
+        <!-- Terms & Conditions -->
+        {% if package.terms_conditions %}
+        <div class="info-card">
+            <div class="card-header">
+                <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                <h3>Terms & Conditions</h3>
+            </div>
+            <div class="card-body">
+                <p style="font-size: 0.85rem; line-height: 1.7; color: var(--text-soft);">{{ package.terms_conditions }}</p>
+            </div>
+        </div>
+        {% endif %}
+        
+        <!-- Cancellation Policy -->
+        <div class="info-card">
+            <div class="card-header">
+                <svg viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/></svg>
+                <h3>Cancellation Policy</h3>
+            </div>
+            <div class="card-body">
+                {% if package.cancellation_policies.all %}
+                <div class="policy-list">
+                    {% for policy in package.cancellation_policies.all|dictsort:"days_before" %}
+                    <div class="policy-item">
+                        <span class="policy-days">{{ policy.days_before }}+ days before travel</span>
+                        <span class="policy-refund">{{ policy.refund_percentage }}% Refund</span>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% elif package.cancellation_policy %}
+                <p style="font-size: 0.85rem; line-height: 1.6;">{{ package.cancellation_policy }}</p>
+                {% else %}
+                <div class="policy-list">
+                    <div class="policy-item"><span class="policy-days">30+ days before travel</span><span class="policy-refund">100% Refund</span></div>
+                    <div class="policy-item"><span class="policy-days">15-29 days before travel</span><span class="policy-refund">50% Refund</span></div>
+                    <div class="policy-item"><span class="policy-days">Less than 15 days</span><span class="policy-refund">No Refund</span></div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        
+    </div>
+    
+    <!-- Right Sidebar -->
+<div class="package-sidebar">
+    
+    <!-- Pricing Card -->
+    <div class="sidebar-card">
+        <div class="sidebar-header">
+            <svg class="pricing-icon" viewBox="0 0 24 24" width="16" height="16">
+                <line x1="12" y1="1" x2="12" y2="23"/>
+                <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+            </svg>
+            <h3>Pricing</h3>
+        </div>
+        <div class="sidebar-body">
+            <div class="pricing">
+                {% if package.discounted_price %}
+                <span class="price-current">₹{{ package.discounted_price|floatformat:0 }}</span>
+                <span class="price-original">₹{{ package.price|floatformat:0 }}</span>
+                <div class="price-save">Save {{ package.discount_percentage }}%</div>
+                {% else %}
+                <span class="price-current">₹{{ package.price|floatformat:0 }}</span>
+                {% endif %}
+                <div style="font-size: 0.7rem; color: var(--text-light); margin-top: 0.3rem;">per person</div>
+            </div>
+            
+            <div class="action-buttons">
+                <a href="{% url 'agency:edit_package' package.id %}" class="btn-edit">✏️ Edit Package</a>
+                <a href="{% url 'agency:delete_package' package.id %}" class="btn-delete" onclick="return confirm('Are you sure you want to delete this package? This action cannot be undone.')">🗑 Delete</a>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Quick Stats -->
+    <div class="sidebar-card">
+        <div class="sidebar-header">
+            <svg viewBox="0 0 24 24" width="16" height="16">
+                <rect x="3" y="3" width="7" height="7"/>
+                <rect x="14" y="3" width="7" height="7"/>
+                <rect x="14" y="14" width="7" height="7"/>
+                <rect x="3" y="14" width="7" height="7"/>
+            </svg>
+            <h3>Quick Stats</h3>
+        </div>
+        <div class="sidebar-body">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                <span style="color: var(--text-light); font-size: 0.7rem;">Package ID</span>
+                <strong style="font-size: 0.75rem;">#{{ package.id }}</strong>
+            </div>
+            <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                <span style="color: var(--text-light); font-size: 0.7rem;">Created</span>
+                <strong style="font-size: 0.75rem;">{{ package.created_at|date:"M d, Y" }}</strong>
+            </div>
+            <div style="display: flex; justify-content: space-between;">
+                <span style="color: var(--text-light); font-size: 0.7rem;">Last Updated</span>
+                <strong style="font-size: 0.75rem;">{{ package.created_at|date:"M d, Y" }}</strong>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Pickup & Drop Points -->
+    {% if package.pickup_points or package.drop_points %}
+    <div class="sidebar-card">
+        <div class="sidebar-header">
+            <svg viewBox="0 0 24 24" width="16" height="16">
+                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
+                <circle cx="12" cy="10" r="3"/>
+            </svg>
+            <h3>Pickup & Drop</h3>
+        </div>
+        <div class="sidebar-body">
+            {% if package.pickup_points %}
+            <div style="margin-bottom: 0.8rem;">
+                <strong style="font-size: 0.7rem;">📍 Pickup Points</strong>
+                <p style="font-size: 0.75rem; color: var(--text-light); margin-top: 0.2rem;">{{ package.pickup_points }}</p>
+            </div>
+            {% endif %}
+            {% if package.drop_points %}
+            <div>
+                <strong style="font-size: 0.7rem;">🏁 Drop Points</strong>
+                <p style="font-size: 0.75rem; color: var(--text-light); margin-top: 0.2rem;">{{ package.drop_points }}</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- Agency Info -->
+    <div class="sidebar-card">
+        <div class="sidebar-header">
+            <svg viewBox="0 0 24 24" width="16" height="16">
+                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                <polyline points="9 22 9 12 15 12 15 22"/>
+            </svg>
+            <h3>Agency Info</h3>
+        </div>
+        <div class="sidebar-body">
+            <div style="display: flex; align-items: center; gap: 0.8rem; margin-bottom: 0.8rem;">
+                <div style="width: 32px; height: 32px; border-radius: 10px; background: var(--teal); display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 0.8rem;">
+                    {{ package.agency.agency_name|first|upper }}
+                </div>
+                <div>
+                    <div style="font-weight: 600; font-size: 0.8rem;">{{ package.agency.agency_name }}</div>
+                    <div style="font-size: 0.65rem; color: var(--text-light);">{{ package.agency.city }}{% if package.agency.city and package.agency.state %}, {% endif %}{{ package.agency.state }}</div>
+                </div>
+            </div>
+            {% if package.agency.mobile %}
+            <div style="font-size: 0.7rem; color: var(--text-light); margin-bottom: 0.3rem; display: flex; align-items: center; gap: 0.3rem;">
+                <svg viewBox="0 0 24 24" width="12" height="12">
+                    <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 13.1a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.77 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l.91-.91a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 17.22z"/>
+                </svg>
+                {{ package.agency.mobile }}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    
+</div>
+    
+</div>
 
-</div><!-- /main-wrapper -->
-
-<!-- LIGHTBOX -->
-<div class="lightbox" id="lightbox" onclick="closeLightbox()">
-    <span class="lightbox-close" onclick="closeLightbox()">×</span>
-    <img id="lightboxImg" src="" alt="Gallery">
+<!-- Lightbox -->
+<div class="pd-lightbox" id="lightbox" onclick="closeLightbox()">
+    <button class="pd-lb-close" onclick="closeLightbox()">&times;</button>
+    <img id="lightboxImg" src="">
 </div>
 
 <script>
-    // Sidebar
-    const sidebarEl = document.getElementById('sidebar');
-    const hamburger = document.getElementById('hamburgerBtn');
-    const overlay = document.getElementById('sidebarOverlay');
-    const mainWrapper = document.getElementById('mainWrapper');
+// Lightbox functionality
+function openLightbox(src) {
+    document.getElementById('lightboxImg').src = src;
+    document.getElementById('lightbox').classList.add('open');
+}
 
-    function isMobile() { return window.innerWidth <= 860; }
+function closeLightbox() {
+    document.getElementById('lightbox').classList.remove('open');
+}
 
-    function setSidebarOpen(open) {
-        if (isMobile()) {
-            sidebarEl.classList.toggle('open', open);
-            overlay.classList.toggle('visible', open);
-        } else {
-            sidebarEl.classList.toggle('collapsed', !open);
-            mainWrapper.classList.toggle('sidebar-collapsed', !open);
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') closeLightbox();
+});
+
+// Add lightbox styles if not present
+if (!document.querySelector('#lightbox-style')) {
+    const style = document.createElement('style');
+    style.id = 'lightbox-style';
+    style.textContent = `
+        .pd-lightbox {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.92);
+            z-index: 9000;
+            align-items: center;
+            justify-content: center;
         }
-    }
-
-    function toggleSidebar() {
-        if (isMobile()) setSidebarOpen(!sidebarEl.classList.contains('open'));
-        else setSidebarOpen(sidebarEl.classList.contains('collapsed'));
-    }
-
-    if (hamburger) hamburger.addEventListener('click', toggleSidebar);
-    if (overlay) overlay.addEventListener('click', () => { if (isMobile()) setSidebarOpen(false); });
-
-    // Start collapsed on desktop
-    if (!isMobile()) {
-        sidebarEl.classList.add('collapsed');
-        mainWrapper.classList.add('sidebar-collapsed');
-    }
-
-    window.addEventListener('resize', () => {
-        if (!isMobile()) {
-            sidebarEl.classList.add('collapsed');
-            mainWrapper.classList.add('sidebar-collapsed');
-            sidebarEl.classList.remove('open');
-            overlay.classList.remove('visible');
-        } else {
-            sidebarEl.classList.remove('collapsed');
-            mainWrapper.classList.remove('sidebar-collapsed');
+        .pd-lightbox.open {
+            display: flex;
         }
-    });
-
-    // Avatar dropdown
-    const avatarTrigger = document.getElementById('avatarTrigger');
-    const dropdown = document.getElementById('dropdownPopup');
-    if (avatarTrigger && dropdown) {
-        avatarTrigger.addEventListener('click', e => { e.stopPropagation(); dropdown.classList.toggle('show'); });
-        document.addEventListener('click', e => {
-            if (!avatarTrigger.contains(e.target) && !dropdown.contains(e.target)) dropdown.classList.remove('show');
-        });
-    }
-
-    // Notification
-    const notifBtn = document.getElementById('notificationBtn');
-    if (notifBtn) notifBtn.addEventListener('click', () => alert('🔔 You have new notifications.'));
-
-    // Placeholder navs
-    const analyticsNav = document.getElementById('nav-analytics');
-    const reviewsNav = document.getElementById('nav-reviews');
-    const reportsNav = document.getElementById('nav-reports');
-    if (analyticsNav) analyticsNav.addEventListener('click', e => { e.preventDefault(); alert('📊 Analytics dashboard coming soon.'); });
-    if (reviewsNav) reviewsNav.addEventListener('click', e => { e.preventDefault(); alert('⭐ Reviews management will be available soon.'); });
-    if (reportsNav) reportsNav.addEventListener('click', e => { e.preventDefault(); alert('📈 Detailed reports coming in the next update.'); });
-
-    // Share functions
-    function shareWhatsApp() {
-        const text = encodeURIComponent('Check out this amazing tour package: ' + document.title + ' - ' + window.location.href);
-        window.open('https://wa.me/?text=' + text, '_blank');
-    }
-    function copyLink() {
-        navigator.clipboard.writeText(window.location.href).then(() => {
-            const el = document.getElementById('copyConfirm');
-            if (el) { el.style.display = 'block'; setTimeout(() => el.style.display = 'none', 2500); }
-        });
-    }
-
-    // Itinerary accordion
-    function toggleItinerary(el) {
-        el.classList.toggle('open');
-    }
-
-    // Lightbox
-    function openLightbox(src) {
-        document.getElementById('lightboxImg').src = src;
-        document.getElementById('lightbox').classList.add('show');
-    }
-    function closeLightbox() {
-        document.getElementById('lightbox').classList.remove('show');
-    }
-    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeLightbox(); });
+        .pd-lightbox img {
+            max-width: 90%;
+            max-height: 90%;
+            border-radius: 10px;
+        }
+        .pd-lb-close {
+            position: absolute;
+            top: 20px;
+            right: 28px;
+            color: white;
+            font-size: 2rem;
+            cursor: pointer;
+            background: none;
+            border: none;
+        }
+    `;
+    document.head.appendChild(style);
+}
 </script>
-</body>
-</html>
+
+<style>
+/* Additional lightbox styles */
+.pd-lightbox {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.92);
+    z-index: 9000;
+    align-items: center;
+    justify-content: center;
+}
+.pd-lightbox.open {
+    display: flex;
+}
+.pd-lightbox img {
+    max-width: 90%;
+    max-height: 90%;
+    border-radius: 10px;
+}
+.pd-lb-close {
+    position: absolute;
+    top: 20px;
+    right: 28px;
+    color: white;
+    font-size: 2rem;
+    cursor: pointer;
+    background: none;
+    border: none;
+}
+.pd-lb-close:hover {
+    opacity: 0.8;
+}
+</style>
+{% endblock %}

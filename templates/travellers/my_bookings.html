@@ -1,166 +1,11 @@
+{% extends "travellers/base.html" %}
 {% load static %}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>Wayzo | My Bookings</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
-    <style>
-        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
-        :root {
-            --gray-100:     #F8F9FC;
-            --gray-150:     #F1F3F8;
-            --gray-200:     #E9EDF2;
-            --gray-300:     #DCE2EA;
-            --gray-400:     #BEC7D1;
-            --gray-500:     #9AA3AF;
-            --gray-600:     #6E7682;
-            --gray-700:     #4A515C;
-            --gray-800:     #2E343D;
-            --gray-850:     #21262E;
-            --gray-900:     #191E24;
-            --gray-950:     #0F1217;
-            --teal:         #0E8A8A;
-            --teal-dark:    #0A6B6B;
-            --teal-pale:    #EAF4F4;
-            --white:        #FFFFFF;
-            --text-dark:    #1E242C;
-            --text-soft:    #3C4350;
-            --text-light:   #6F7886;
-            --amber:        #F59E0B;
-            --rose:         #F43F5E;
-            --green:        #10B981;
-            --indigo:       #4F46E5;
-            --sidebar-w:    260px;
-        }
+{% block title %}Wayzo | My Bookings{% endblock %}
 
-        html { height: 100%; scroll-behavior: smooth; }
-        body {
-            font-family: 'Inter', sans-serif;
-            background: var(--gray-100);
-            color: var(--text-dark);
-            display: flex;
-            min-height: 100vh;
-            overflow-x: hidden;
-        }
-
-        /* ── SIDEBAR ── */
-        .sidebar {
-            width: var(--sidebar-w);
-            background: var(--gray-950);
-            height: 100vh;
-            position: fixed; top: 0; left: 0;
-            display: flex; flex-direction: column;
-            z-index: 300;
-            border-right: 1px solid rgba(255,255,255,0.06);
-            transform: translateX(0);
-            transition: transform 0.32s cubic-bezier(0.4,0,0.2,1);
-            overflow-y: auto; overflow-x: hidden;
-        }
-        .sidebar.collapsed { transform: translateX(calc(-1 * var(--sidebar-w))); }
-        .sidebar-overlay {
-            display: none; position: fixed; inset: 0;
-            background: rgba(0,0,0,0.45); z-index: 290;
-            opacity: 0; transition: opacity 0.3s ease; backdrop-filter: blur(2px);
-        }
-        .sidebar-overlay.visible { display: block; opacity: 1; }
-        .sidebar-brand { padding: 1.8rem 1.6rem 1.4rem; border-bottom: 1px solid rgba(255,255,255,0.06); }
-        .sidebar-logo { font-family: 'Playfair Display', serif; font-size: 1.5rem; font-weight: 600; color: white; text-decoration: none; display: block; margin-bottom: 0.2rem; }
-        .sidebar-sub { font-size: 0.68rem; color: rgba(255,255,255,0.3); letter-spacing: 0.08em; text-transform: uppercase; }
-        .sidebar-profile { padding: 1.2rem 1.6rem; border-bottom: 1px solid rgba(255,255,255,0.06); display: flex; align-items: center; gap: 0.85rem; }
-        .sidebar-avatar { width: 38px; height: 38px; border-radius: 50%; background: var(--teal); display: flex; align-items: center; justify-content: center; font-size: 0.85rem; font-weight: 600; color: white; overflow: hidden; flex-shrink: 0; border: 2px solid rgba(255,255,255,0.08); }
-        .sidebar-avatar img { width: 100%; height: 100%; object-fit: cover; }
-        .sidebar-profile-info { overflow: hidden; }
-        .sidebar-profile-name { font-size: 0.82rem; font-weight: 600; color: white; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .sidebar-profile-role { font-size: 0.68rem; color: rgba(255,255,255,0.35); }
-        .sidebar-nav { flex: 1; padding: 1rem 0.8rem; overflow-y: auto; }
-        .nav-group-label { font-size: 0.62rem; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: rgba(255,255,255,0.22); padding: 0.6rem 0.8rem 0.4rem; display: block; }
-        .nav-item {
-            display: flex; align-items: center; gap: 0.75rem;
-            padding: 0.65rem 0.8rem; border-radius: 8px;
-            text-decoration: none; color: rgba(255,255,255,0.5);
-            font-size: 0.82rem; font-weight: 500;
-            transition: all 0.2s; margin-bottom: 2px;
-        }
-        .nav-item svg { width: 16px; height: 16px; stroke: currentColor; stroke-width: 1.8; fill: none; flex-shrink: 0; }
-        .nav-item:hover { background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.85); }
-        .nav-item.active { background: rgba(14,138,138,0.18); color: #5FC5C5; }
-        .sidebar-footer { padding: 0.8rem; border-top: 1px solid rgba(255,255,255,0.06); }
-        .logout-btn { display: flex; align-items: center; gap: 0.75rem; padding: 0.65rem 0.8rem; border-radius: 8px; text-decoration: none; color: rgba(255,255,255,0.5); font-size: 0.82rem; font-weight: 500; transition: all 0.2s; }
-        .logout-btn svg { width: 16px; height: 16px; stroke: currentColor; stroke-width: 1.8; fill: none; }
-        .logout-btn:hover { background: rgba(239,68,68,0.1); color: #F87171; }
-
-        /* ── MAIN ── */
-        .main {
-            margin-left: var(--sidebar-w);
-            flex: 1; display: flex; flex-direction: column;
-            transition: margin-left 0.32s cubic-bezier(0.4,0,0.2,1);
-        }
-        .main.sidebar-collapsed { margin-left: 0; }
-
-        /* TOPBAR */
-        .topbar {
-            background: transparent;
-            padding: 0 2rem;
-            height: 70px;
-            display: flex; align-items: center; justify-content: space-between;
-            position: absolute; top: 0; left: 0; right: 0;
-            z-index: 100; gap: 1rem;
-        }
-        .topbar-left { display: flex; align-items: center; gap: 1rem; flex: 1; min-width: 0; }
-        .topbar-left h1 { font-family: 'Playfair Display', serif; font-size: 1.2rem; font-weight: 500; color: white; text-shadow: 0 1px 8px rgba(0,0,0,0.2); }
-        .topbar-left p { font-size: 0.75rem; color: rgba(255,255,255,0.7); margin-top: 1px; }
-        .topbar-right { display: flex; align-items: center; gap: 1rem; flex-shrink: 0; }
-
-        .hamburger {
-            width: 36px; height: 36px;
-            display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px;
-            background: rgba(255,255,255,0.12); backdrop-filter: blur(8px);
-            border: 1px solid rgba(255,255,255,0.18);
-            cursor: pointer; padding: 4px; border-radius: 9px; flex-shrink: 0;
-            transition: background 0.2s; position: relative; z-index: 100;
-        }
-        .hamburger:hover { background: rgba(255,255,255,0.22); }
-        .hamburger span { display: block; width: 18px; height: 1.8px; background: white; border-radius: 2px; transition: transform 0.3s, opacity 0.3s; }
-
-        .sidebar-close-btn {
-            position: fixed; top: 17px; left: calc(var(--sidebar-w) + 10px);
-            z-index: 600; width: 36px; height: 36px;
-            display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px;
-            background: rgba(255,255,255,0.12); backdrop-filter: blur(8px);
-            border: 1px solid rgba(255,255,255,0.18); border-radius: 9px;
-            cursor: pointer; padding: 4px; opacity: 0; pointer-events: none;
-            transform: translateX(-6px); transition: opacity 0.22s ease, transform 0.22s ease, background 0.2s;
-        }
-        .sidebar-close-btn:hover { background: rgba(244,63,94,0.25); border-color: rgba(244,63,94,0.4); }
-        .sidebar-close-btn span { display: block; width: 18px; height: 1.8px; background: white; border-radius: 2px; }
-        .sidebar-close-btn span:nth-child(1) { transform: translateY(5px) rotate(45deg); }
-        .sidebar-close-btn span:nth-child(2) { transform: translateY(-4px) rotate(-45deg); }
-        body.sidebar-is-open .sidebar-close-btn { opacity: 1; pointer-events: auto; transform: translateX(0); }
-
-        .notification-btn {
-            background: rgba(255,255,255,0.12); backdrop-filter: blur(8px);
-            border: 1px solid rgba(255,255,255,0.18); border-radius: 50%; width: 38px; height: 38px;
-            display: flex; align-items: center; justify-content: center; cursor: pointer; position: relative; transition: background 0.2s;
-        }
-        .notification-btn:hover { background: rgba(255,255,255,0.2); }
-        .notification-btn svg { width: 17px; stroke: white; fill: none; }
-        .notification-badge { position: absolute; top: -2px; right: -2px; background: var(--rose); color: white; font-size: 0.58rem; width: 15px; height: 15px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; }
-        .avatar-menu { position: relative; cursor: pointer; }
-        .avatar-trigger { display: flex; align-items: center; gap: 0.5rem; background: rgba(255,255,255,0.12); backdrop-filter: blur(8px); border: 1px solid rgba(255,255,255,0.18); padding: 0.3rem 0.8rem 0.3rem 0.35rem; border-radius: 40px; transition: background 0.2s; }
-        .avatar-trigger:hover { background: rgba(255,255,255,0.2); }
-        .avatar-img { width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 600; color: white; background: var(--teal); overflow: hidden; font-size: 0.75rem; }
-        .avatar-img img { width: 100%; height: 100%; object-fit: cover; }
-        .avatar-name { font-size: 0.79rem; font-weight: 500; color: white; }
-        .dropdown-popup { position: absolute; top: 50px; right: 0; background: white; border-radius: 14px; box-shadow: 0 16px 40px -8px rgba(0,0,0,0.18); width: 220px; padding: 0.6rem 0; z-index: 400; border: 1px solid var(--gray-200); opacity: 0; visibility: hidden; transform: translateY(-6px); transition: all 0.2s; }
-        .dropdown-popup.show { opacity: 1; visibility: visible; transform: translateY(0); }
-        .dropdown-info { padding: 0.6rem 1rem 0.5rem; border-bottom: 1px solid var(--gray-200); }
-        .dropdown-item { display: flex; align-items: center; gap: 0.7rem; padding: 0.55rem 1rem; color: var(--gray-700); text-decoration: none; font-size: 0.79rem; transition: background 0.15s; }
-        .dropdown-item:hover { background: var(--gray-100); }
-
+{% block nav_bookings %}active{% endblock %}
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+{% block extra_styles %}
         /* ── HERO ── */
         .hero-section {
             position: relative; height: 340px; overflow: hidden; flex-shrink: 0;
@@ -170,10 +15,8 @@
             background-image: url("{% static 'images/felix.jpg' %}");
             background-size: cover;
             background-position: center 40%;
-            /* background: linear-gradient(135deg, #0a1628 0%, #0d2a2a 40%, #111827 100%); */
             z-index: 0;
         }
-        /* subtle dot grid pattern */
         .hero-bg::before {
             content: "";
             position: absolute; inset: 0;
@@ -289,21 +132,18 @@
         }
         .booking-card:hover { box-shadow: 0 12px 36px rgba(0,0,0,0.09); transform: translateY(-2px); }
 
-        /* Completed cards — faded */
         .booking-card.completed {
             opacity: 0.6;
             filter: grayscale(0.3);
         }
         .booking-card.completed:hover { opacity: 0.8; filter: grayscale(0); }
 
-        /* Cancelled cards */
         .booking-card.cancelled-card {
             opacity: 0.55; filter: grayscale(0.5);
             border-color: var(--gray-200);
         }
         .booking-card.cancelled-card:hover { opacity: 0.75; filter: grayscale(0.2); }
 
-        /* IMAGE */
         .card-img {
             width: 200px; min-height: 100%; flex-shrink: 0;
             position: relative; overflow: hidden;
@@ -317,7 +157,6 @@
         }
         .card-img-placeholder svg { width: 28px; height: 28px; stroke: var(--gray-300); fill: none; }
 
-        /* STATUS RIBBON */
         .status-ribbon {
             position: absolute; top: 0.7rem; left: 0;
             font-size: 0.6rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
@@ -330,7 +169,6 @@
         .ribbon-completed { background: var(--gray-600); color: white; }
         .ribbon-cancelled { background: var(--rose); color: white; }
 
-        /* CARD BODY */
         .card-body {
             flex: 1; padding: 1.2rem 1.4rem; display: flex; flex-direction: column; gap: 0.5rem;
             min-width: 0;
@@ -340,7 +178,6 @@
         .card-subtitle { font-size: 0.72rem; color: var(--text-light); }
         .booking-id { font-size: 0.65rem; color: var(--gray-400); font-family: monospace; }
 
-        /* META GRID */
         .meta-grid {
             display: grid; grid-template-columns: repeat(3, 1fr);
             gap: 0.5rem 1rem; margin: 0.3rem 0;
@@ -349,7 +186,6 @@
         .meta-label { font-size: 0.62rem; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; color: var(--gray-400); }
         .meta-value { font-size: 0.78rem; font-weight: 500; color: var(--gray-800); }
 
-        /* PAYMENT BAR */
         .payment-section { margin-top: 0.4rem; }
         .payment-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.35rem; }
         .payment-label { font-size: 0.7rem; color: var(--text-light); }
@@ -369,14 +205,25 @@
         .chip-remaining{ background: #FEE2E2; color: #991B1B; border: 1px solid #FECACA; }
         .chip-refund   { background: #ECFDF5; color: #065F46; border: 1px solid #A7F3D0; }
 
-        /* CANCEL / REFUND INFO */
         .cancel-info {
             background: #FFF5F5; border: 1px solid #FECACA; border-radius: 10px;
             padding: 0.65rem 1rem; font-size: 0.74rem; color: #B91C1C; display: flex; gap: 0.6rem; align-items: flex-start; margin-top: 0.3rem;
         }
         .cancel-info svg { width: 14px; height: 14px; stroke: #EF4444; fill: none; flex-shrink: 0; margin-top: 1px; }
 
-        /* COMPLETED STAMP */
+        .refund-info {
+            border-radius: 10px;
+            padding: 0.65rem 1rem; font-size: 0.74rem; display: flex; gap: 0.6rem; align-items: flex-start; margin-top: 0.3rem;
+        }
+        .refund-info.success {
+            background: #ECFDF5; border: 1px solid #A7F3D0; color: #065F46;
+        }
+        .refund-info.success svg { stroke: #10B981; }
+        .refund-info.pending {
+            background: #FEF3C7; border: 1px solid #FDE68A; color: #92400E;
+        }
+        .refund-info.pending svg { stroke: #F59E0B; }
+
         .completed-stamp {
             display: inline-flex; align-items: center; gap: 0.4rem;
             background: #F0FDF4; border: 1px solid #BBF7D0; border-radius: 40px;
@@ -384,7 +231,6 @@
         }
         .completed-stamp svg { width: 12px; height: 12px; stroke: #10B981; fill: none; }
 
-        /* ACTION BUTTONS COLUMN */
         .card-actions {
             padding: 1.2rem 1.2rem 1.2rem 0;
             display: flex; flex-direction: column; gap: 0.55rem; justify-content: center; align-items: flex-end;
@@ -399,17 +245,20 @@
         }
         .btn svg { width: 13px; height: 13px; stroke: currentColor; fill: none; }
         .btn-view    { background: var(--gray-900); color: white; }
-        .btn-view:hover { background: var(--teal); }
+        .btn-view:hover { background: var(--teal); transform: translateY(-2px); }
         .btn-invoice { background: var(--teal-pale); color: var(--teal-dark); border: 1px solid rgba(14,138,138,0.2); }
-        .btn-invoice:hover { background: var(--teal); color: white; }
+        .btn-invoice:hover { background: var(--teal); color: white; transform: translateY(-2px); }
         .btn-pay     { background: var(--indigo); color: white; }
-        .btn-pay:hover { background: #3730A3; }
+        .btn-pay:hover { background: #3730A3; transform: translateY(-2px); }
         .btn-remaining { background: var(--amber); color: white; }
-        .btn-remaining:hover { background: #D97706; }
+        .btn-remaining:hover { background: #D97706; transform: translateY(-2px); }
         .btn-cancel  { background: transparent; color: var(--rose); border: 1.5px solid rgba(244,63,94,0.25); font-size: 0.72rem; }
-        .btn-cancel:hover { background: rgba(244,63,94,0.06); border-color: var(--rose); }
+        .btn-cancel:hover { background: rgba(244,63,94,0.06); border-color: var(--rose); transform: translateY(-2px); }
+        .btn-review { background: var(--amber); color: white; }
+        .btn-review:hover { background: #D97706; transform: translateY(-2px); }
+        .btn-edit { background: var(--indigo); color: white; }
+        .btn-edit:hover { background: #3730A3; transform: translateY(-2px); }
 
-        /* ── EMPTY STATE ── */
         .empty-state {
             text-align: center; padding: 3.5rem 2rem; background: white;
             border-radius: 18px; border: 1px dashed var(--gray-300); margin-bottom: 1.5rem;
@@ -421,10 +270,8 @@
         .empty-state a { display: inline-flex; align-items: center; gap: 0.4rem; background: var(--gray-900); color: white; padding: 0.6rem 1.4rem; border-radius: 40px; font-size: 0.78rem; font-weight: 600; text-decoration: none; transition: background 0.2s; }
         .empty-state a:hover { background: var(--teal); }
 
-        /* SECTION DIVIDER */
         .section-block { margin-bottom: 2.5rem; }
 
-        /* COMPLETED SECTION HEADER */
         .completed-section-header {
             display: flex; align-items: center; gap: 0.7rem; margin-bottom: 1rem; cursor: pointer; user-select: none;
         }
@@ -437,27 +284,11 @@
         .completed-toggle.open { transform: rotate(180deg); }
         .completed-divider { flex: 1; height: 1px; background: var(--gray-200); }
 
-        /* ── MESSAGES ── */
         .toast-messages { margin-bottom: 1rem; }
         .toast { background: #ECFDF5; border: 1px solid #A7F3D0; border-radius: 10px; padding: 0.7rem 1rem; font-size: 0.8rem; color: #065F46; display: flex; align-items: center; gap: 0.5rem; }
         .toast svg { width: 14px; height: 14px; stroke: #10B981; fill: none; }
 
-        /* FOOTER */
-        .site-footer {
-            background: var(--gray-950);
-            color: rgba(255,255,255,0.5);
-            padding: 3rem 5% 2rem; margin-top: auto;
-        }
-        .footer-grid { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 2.5rem; margin-bottom: 2.8rem; }
-        .footer-logo { font-family: 'Playfair Display', serif; font-size: 1.6rem; font-weight: 600; color: white; text-decoration: none; display: block; margin-bottom: 1rem; }
-        .footer-desc { font-size: 0.83rem; color: rgba(255,255,255,0.38); line-height: 1.75; max-width: 240px; }
-        .footer-col h5 { font-size: 0.63rem; letter-spacing: 0.12em; text-transform: uppercase; font-weight: 600; color: rgba(255,255,255,0.45); margin-bottom: 1.2rem; }
-        .footer-col ul { list-style: none; display: flex; flex-direction: column; gap: 0.65rem; }
-        .footer-col ul a { font-size: 0.82rem; color: rgba(255,255,255,0.38); text-decoration: none; transition: color 0.2s; }
-        .footer-col ul a:hover { color: white; }
-        .footer-bottom { border-top: 1px solid rgba(255,255,255,0.07); padding-top: 1.8rem; display: flex; justify-content: space-between; font-size: 0.72rem; }
-
-        /* ── MODAL ── */
+        /* MODAL */
         .modal-overlay {
             display: none; position: fixed; inset: 0;
             background: rgba(0,0,0,0.55); backdrop-filter: blur(4px);
@@ -499,156 +330,29 @@
         .modal-confirm-btn:hover { background: var(--teal-dark); }
         .modal-confirm-btn:disabled { background: var(--gray-300); cursor: not-allowed; }
 
-        /* RESPONSIVE */
         @media (max-width: 860px) {
-            .sidebar { transform: translateX(calc(-1 * var(--sidebar-w))); }
-            .sidebar.open { transform: translateX(0); }
-            .main { margin-left: 0 !important; }
             .page-body { padding: 0 1.2rem 2rem; }
             .hero-section h1 { font-size: 2rem; }
             .hero-content { padding: 4rem 1.5rem 4rem; }
             .card-img { width: 130px; }
             .meta-grid { grid-template-columns: repeat(2, 1fr); }
-            .footer-grid { grid-template-columns: 1fr 1fr; }
         }
         @media (max-width: 640px) {
             .booking-card { flex-direction: column; }
             .card-img { width: 100%; height: 180px; }
             .card-actions { flex-direction: row; flex-wrap: wrap; padding: 0 1.2rem 1.2rem; min-width: 0; }
             .card-actions .btn { width: auto; }
-            .footer-grid { grid-template-columns: 1fr; }
-            .footer-bottom { flex-direction: column; text-align: center; gap: 0.6rem; }
         }
         @keyframes fadeUp { from { opacity:0; transform:translateY(14px); } to { opacity:1; transform:translateY(0); } }
         .page-body > * { animation: fadeUp 0.45s ease both; }
-        .page-body > *:nth-child(2) { animation-delay: 0.06s; }
-        .page-body > *:nth-child(3) { animation-delay: 0.12s; }
-    </style>
-</head>
-<body>
+{% endblock %}
 
-<div class="sidebar-overlay" id="sidebarOverlay"></div>
-<button class="sidebar-close-btn" id="sidebarCloseBtn" aria-label="Close sidebar"><span></span><span></span></button>
+{% block topbar_title %}My Bookings{% endblock %}
+{% block topbar_subtitle %}Manage all your trips and reservations{% endblock %}
 
-<!-- ── SIDEBAR ── -->
-<aside class="sidebar" id="sidebar">
-    <div class="sidebar-brand">
-        <a class="sidebar-logo" href="{% url 'index' %}">Wayzo</a>
-        <span class="sidebar-sub">Traveller Portal</span>
-    </div>
-    <div class="sidebar-profile">
-        <div class="sidebar-avatar">
-            {% if profile.profile_picture %}
-                <img src="{{ profile.profile_picture.url }}" alt="{{ profile.first_name }}">
-            {% else %}
-                {{ profile.first_name|first|upper }}{{ profile.last_name|first|upper }}
-            {% endif %}
-        </div>
-        <div class="sidebar-profile-info">
-            <div class="sidebar-profile-name">{{ profile.first_name }} {{ profile.last_name }}</div>
-            <div class="sidebar-profile-role">Explorer</div>
-        </div>
-    </div>
-    <nav class="sidebar-nav">
-        <span class="nav-group-label">Main</span>
-        <a href="{% url 'travellers:dashboard' %}" class="nav-item">
-            <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
-            Dashboard
-        </a>
-        <a href="{% url 'travellers:user_profile' user_id=request.user.id %}" class="nav-item">
-            <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-            My Profile
-        </a>
-        <a href="{% url 'travellers:all_packages' %}" class="nav-item">
-            <svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-            Tour Packages
-        </a>
-        <a href="{% url 'travellers:all_restaurants' %}" class="nav-item">
-            <svg viewBox="0 0 24 24"><line x1="12" y1="2" x2="12" y2="6"/><line x1="12" y1="18" x2="12" y2="22"/><path d="M4.93 4.93l2.83 2.83"/><path d="M16.24 16.24l2.83 2.83"/></svg>
-            Restaurants
-        </a>
-        <a href="{% url 'travellers:my_bookings' %}" class="nav-item active">
-            <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-            My Bookings
-        </a>
-        <a href="{% url 'travellers:wishlist' %}" class="nav-item">
-            <svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
-            Wishlist
-        </a>
-        <span class="nav-group-label">Social</span>
-        <a href="{% url 'travellers:new_post' %}" class="nav-item">
-            <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/><circle cx="12" cy="12" r="10"/></svg>
-            Create Post
-        </a>
-        <a href="{% url 'travellers:inbox' %}" class="nav-item">
-            <svg viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
-            Messages
-        </a>
-        <a href="{% url 'community_home' %}" class="nav-item">
-            <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-            Community
-        </a>
-        <span class="nav-group-label">Settings</span>
-        <a href="{% url 'travellers:edit_profile' %}" class="nav-item">
-            <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-            Edit Profile
-        </a>
-        <a href="{% url 'travellers:change_password' %}" class="nav-item">
-            <svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-            Change Password
-        </a>
-    </nav>
-    <div class="sidebar-footer">
-        <a href="{% url 'logout' %}" class="logout-btn">
-            <svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-            Sign Out
-        </a>
-    </div>
-</aside>
+{% block content %}
 
-<!-- ── MAIN ── -->
-<div class="main" id="mainEl">
-
-    <!-- TOPBAR -->
-    <div class="topbar">
-        <div class="topbar-left">
-            <button class="hamburger" id="hamburgerBtn" aria-label="Toggle sidebar">
-                <span></span><span></span><span></span>
-            </button>
-            <div>
-                <h1>My Bookings</h1>
-                <p>Manage all your trips and reservations</p>
-            </div>
-        </div>
-        <div class="topbar-right">
-            <button class="notification-btn" id="notificationBtn">
-                <svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
-                <span class="notification-badge">{{ unread_notifications|default:"2" }}</span>
-            </button>
-            <div class="avatar-menu" id="avatarMenu">
-                <div class="avatar-trigger" id="avatarTrigger">
-                    <div class="avatar-img">
-                        {% if profile.user.profile_picture %}
-                            <img src="{{ profile.user.profile_picture.url }}" alt="{{ profile.first_name }}">
-                        {% else %}
-                            {{ profile.first_name|first|upper }}{{ profile.last_name|first|upper }}
-                        {% endif %}
-                    </div>
-                    <span class="avatar-name">{{ profile.first_name }}</span>
-                </div>
-                <div class="dropdown-popup" id="dropdownPopup">
-                    <div class="dropdown-info">
-                        <p>{{ profile.first_name }} {{ profile.last_name }}</p>
-                        <span>{{ profile.email|default:"traveller@wayzo.com" }}</span>
-                    </div>
-                    <a href="{% url 'travellers:edit_profile' %}" class="dropdown-item">Profile Settings</a>
-                    <a href="{% url 'logout' %}" class="dropdown-item">Sign Out</a>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- ── HERO ── -->
+    <!-- HERO -->
     <div class="hero-section">
         <div class="hero-bg"></div>
         <div class="hero-fade"></div>
@@ -677,7 +381,7 @@
         </div>
     </div>
 
-    <!-- ── PAGE BODY ── -->
+    <!-- PAGE BODY -->
     <div class="page-body">
 
         <!-- TOAST MESSAGES -->
@@ -744,7 +448,6 @@
                 {% for booking in package_bookings %}
                     {% if booking.status != "completed" and booking.status != "cancelled" %}
                     <div class="booking-card" data-status="{{ booking.status }}" data-type="package">
-                        <!-- IMAGE -->
                         <div class="card-img">
                             {% if booking.package.images.all %}
                                 <img src="{{ booking.package.images.all.0.image.url }}" alt="{{ booking.package.title }}">
@@ -757,7 +460,6 @@
                             <span class="status-ribbon ribbon-{{ booking.status }}">{{ booking.status|capfirst }}</span>
                         </div>
 
-                        <!-- BODY -->
                         <div class="card-body">
                             <div class="card-body-top">
                                 <div>
@@ -782,7 +484,6 @@
                                 </div>
                             </div>
 
-                            <!-- PAYMENT PROGRESS -->
                             <div class="payment-section">
                                 <div class="payment-row">
                                     <span class="payment-label">
@@ -807,7 +508,6 @@
                             </div>
                         </div>
 
-                        <!-- ACTIONS -->
                         <div class="card-actions">
                             <a href="{% url 'travellers:package_detail' booking.package.id %}" class="btn btn-view">
                                 <svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
@@ -817,37 +517,35 @@
                                 <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
                                 Invoice
                             </a>
-                            {% if booking.status == "pending" and booking.payment_status == "pending" %}
-                                <button class="btn btn-pay" onclick="openPaymentModal({{ booking.id }}, 'advance', {{ booking.advance_amount }})">
-                                    <svg viewBox="0 0 24 24"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
-                                    Pay Advance
-                                </button>
-                            {% endif %}
-                            {% if booking.status == "confirmed" and booking.payment_status == "partial" %}
-                                <a href="{% url 'travellers:pay_remaining' booking.id %}" class="btn btn-remaining">
-                                    <svg viewBox="0 0 24 24"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
-                                    Pay Remaining
-                                </a>
-                            {% endif %}
+                            <!-- For Advance Payment Button -->
+{% if booking.status == "pending" and booking.payment_status == "pending" %}
+    <button class="btn btn-pay" onclick="payAdvance({{ booking.id }})">
+        <svg viewBox="0 0 24 24"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+        Pay Advance
+    </button>
+{% endif %}
+
+<!-- For Remaining Payment Button -->
+{% if booking.status == "confirmed" and booking.payment_status == "partial" %}
+    <button class="btn btn-remaining" onclick="payRemaining({{ booking.id }})">
+        <svg viewBox="0 0 24 24"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+        Pay Remaining
+    </button>
+{% endif %}
                             {% if booking.status == "pending" or booking.status == "confirmed" %}
-                                <a href="{% url 'travellers:cancel_booking' booking.id %}" class="btn btn-cancel"
-                                   onclick="return confirm('Are you sure you want to cancel this booking?')">
+                                <button class="btn btn-cancel" onclick="openCancelModal('package', {{ booking.id }}, '{{ booking.package.title|escapejs }}')">
                                     Cancel
-                                </a>
+                                </button>
                             {% endif %}
                         </div>
                     </div>
                     {% endif %}
                 {% endfor %}
 
-                <!-- COMPLETED PACKAGE BOOKINGS -->
-                {% with has_completed=False %}
-                {% for booking in package_bookings %}{% if booking.status == "completed" %}{% with has_completed=True %}{% endwith %}{% endif %}{% endfor %}
-                {% endwith %}
-
+                <!-- COMPLETED & CANCELLED PACKAGE BOOKINGS -->
                 <div class="completed-section-header" onclick="toggleCompleted('pkg-completed')">
                     <span class="dot dot-completed" style="width:8px;height:8px;border-radius:50%;display:inline-block;"></span>
-                    <h4>Completed Trips</h4>
+                    <h4>Past & Cancelled Trips</h4>
                     <div class="completed-divider"></div>
                     <div class="completed-toggle" id="toggle-pkg-completed">
                         <svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
@@ -855,8 +553,8 @@
                 </div>
                 <div id="pkg-completed" style="display:none;">
                     {% for booking in package_bookings %}
-                    {% if booking.status == "completed" %}
-                    <div class="booking-card completed" data-status="completed" data-type="package">
+                    {% if booking.status == "completed" or booking.status == "cancelled" %}
+                    <div class="booking-card {% if booking.status == 'completed' %}completed{% else %}cancelled-card{% endif %}" data-status="{{ booking.status }}" data-type="package">
                         <div class="card-img">
                             {% if booking.package.images.all %}
                                 <img src="{{ booking.package.images.all.0.image.url }}" alt="{{ booking.package.title }}">
@@ -866,7 +564,7 @@
                                     No image
                                 </div>
                             {% endif %}
-                            <span class="status-ribbon ribbon-completed">Completed</span>
+                            <span class="status-ribbon ribbon-{{ booking.status }}">{{ booking.status|capfirst }}</span>
                         </div>
                         <div class="card-body">
                             <div class="card-body-top">
@@ -890,10 +588,38 @@
                                     <span class="meta-value">₹{{ booking.total_amount }}</span>
                                 </div>
                             </div>
-                            <div class="completed-stamp">
-                                <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
-                                Trip Completed
-                            </div>
+                            {% if booking.status == "completed" %}
+                                <div class="completed-stamp">
+                                    <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+                                    Trip Completed
+                                </div>
+                            {% else %}
+                                <!-- Refund Status Display for Cancelled Bookings -->
+                                {% if booking.refund_status == "success" %}
+                                    <div class="refund-info success">
+                                        <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+                                        <div>
+                                            <strong>💰 Refund credited to your account</strong><br>
+                                            Amount: ₹{{ booking.refund_amount|default:"0" }}
+                                        </div>
+                                    </div>
+                                {% elif booking.refund_status == "pending" %}
+                                    <div class="refund-info pending">
+                                        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                                        <div>
+                                            <strong>⏳ Refund processing</strong><br>
+                                            Amount: ₹{{ booking.refund_amount|default:"0" }} - Will be credited within 5-7 business days
+                                        </div>
+                                    </div>
+                                {% else %}
+                                    <div class="cancel-info">
+                                        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                                        <div>
+                                            Cancelled. {% if booking.refund_amount %}Refund: ₹{{ booking.refund_amount }} ({{ booking.refund_percentage }}%){% else %}No refund applicable.{% endif %}
+                                        </div>
+                                    </div>
+                                {% endif %}
+                            {% endif %}
                         </div>
                         <div class="card-actions">
                             <a href="{% url 'travellers:package_detail' booking.package.id %}" class="btn btn-view">
@@ -904,40 +630,20 @@
                                 <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
                                 Invoice
                             </a>
-                        </div>
-                    </div>
-                    {% endif %}
-                    {% endfor %}
-
-                    <!-- CANCELLED PACKAGE BOOKINGS -->
-                    {% for booking in package_bookings %}
-                    {% if booking.status == "cancelled" %}
-                    <div class="booking-card cancelled-card" data-status="cancelled" data-type="package">
-                        <div class="card-img">
-                            {% if booking.package.images.all %}
-                                <img src="{{ booking.package.images.all.0.image.url }}" alt="{{ booking.package.title }}">
-                            {% else %}
-                                <div class="card-img-placeholder"><svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>No image</div>
+                            <!-- REVIEW BUTTON for completed bookings -->
+                            {% if booking.status == "completed" %}
+                                {% if booking.can_review and not booking.review %}
+                                    <a href="{% url 'travellers:add_package_review' booking.id %}" class="btn btn-review">
+                                        <svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                                        Write Review
+                                    </a>
+                                {% elif booking.review %}
+                                    <a href="{% url 'travellers:edit_package_review' booking.review.id %}" class="btn btn-edit">
+                                        <svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                                        Edit Review
+                                    </a>
+                                {% endif %}
                             {% endif %}
-                            <span class="status-ribbon ribbon-cancelled">Cancelled</span>
-                        </div>
-                        <div class="card-body">
-                            <div class="card-title">{{ booking.package.title }}</div>
-                            <div class="booking-id">Booking #{{ booking.id }} · Travel date: {{ booking.travel_date }}</div>
-                            <div class="cancel-info" style="margin-top:0.7rem;">
-                                <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-                                <div>
-                                    Cancelled by <strong>{{ booking.cancelled_by }}</strong>.
-                                    {% if booking.refund_amount %}
-                                        Refund: ₹{{ booking.refund_amount }} ({{ booking.refund_percentage }}%)
-                                    {% else %}
-                                        No refund applicable.
-                                    {% endif %}
-                                </div>
-                            </div>
-                        </div>
-                        <div class="card-actions">
-                            <a href="{% url 'travellers:package_detail' booking.package.id %}" class="btn btn-view">View Package</a>
                         </div>
                     </div>
                     {% endif %}
@@ -970,83 +676,125 @@
 
                 <!-- ACTIVE PROPERTY BOOKINGS -->
                 {% for booking in property_bookings %}
-                {% if booking.status != "completed" and booking.status != "cancelled" %}
-                <div class="booking-card" data-status="{{ booking.status }}" data-type="property">
-                    <div class="card-img">
-                        {% if booking.property.cover_image %}
-                            <img src="{{ booking.property.cover_image.url }}" alt="{{ booking.property.name }}">
-                        {% else %}
-                            <div class="card-img-placeholder">
-                                {% if booking.booking_type == "table" %}
-                                <svg viewBox="0 0 24 24"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/></svg>
-                                {% else %}
-                                <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-                                {% endif %}
-                                No image
-                            </div>
-                        {% endif %}
-                        <span class="status-ribbon ribbon-{{ booking.status }}">{{ booking.status|capfirst }}</span>
-                    </div>
-
-                    <div class="card-body">
-                        <div class="card-body-top">
-                            <div>
-                                <div class="card-title">{{ booking.property.name }}</div>
-                                <div class="card-subtitle">
-                                    {% if booking.booking_type == "table" %}Table Reservation{% else %}Room Stay{% endif %}
+                    {% if booking.status != "completed" and booking.status != "cancelled" %}
+                    <div class="booking-card" data-status="{{ booking.status }}" data-type="property">
+                        <div class="card-img">
+                            {% if booking.property.media.first %}
+                                <img src="{{ booking.property.media.first.image.url }}" alt="{{ booking.property.restaurant_name }}">
+                            {% else %}
+                                <div class="card-img-placeholder">
+                                    {% if booking.booking_type == "table" %}
+                                    <svg viewBox="0 0 24 24"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/></svg>
+                                    {% else %}
+                                    <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+                                    {% endif %}
+                                    No image
                                 </div>
-                                <div class="booking-id">Booking #{{ booking.id }}</div>
+                            {% endif %}
+                            <span class="status-ribbon ribbon-{{ booking.status }}">{{ booking.status|capfirst }}</span>
+                        </div>
+
+                        <div class="card-body">
+                            <div class="card-body-top">
+                                <div>
+                                    <div class="card-title">{{ booking.property.restaurant_name }}</div>
+                                    <div class="card-subtitle">
+                                        {% if booking.booking_type == "table" %}Table Reservation{% else %}Room Stay{% endif %}
+                                    </div>
+                                    <div class="booking-id">Booking #{{ booking.id }}</div>
+                                </div>
+                            </div>
+
+                            <div class="meta-grid">
+                                {% if booking.booking_type == "table" %}
+                                <div class="meta-item">
+                                    <span class="meta-label">Date</span>
+                                    <span class="meta-value">{{ booking.booking_date }}</span>
+                                </div>
+                                <div class="meta-item">
+                                    <span class="meta-label">Time</span>
+                                    <span class="meta-value">{{ booking.time }}</span>
+                                </div>
+                                <div class="meta-item">
+                                    <span class="meta-label">Guests</span>
+                                    <span class="meta-value">{{ booking.guests }}</span>
+                                </div>
+                                {% else %}
+                                <div class="meta-item">
+                                    <span class="meta-label">Check-in</span>
+                                    <span class="meta-value">{{ booking.check_in }}</span>
+                                </div>
+                                <div class="meta-item">
+                                    <span class="meta-label">Check-out</span>
+                                    <span class="meta-value">{{ booking.check_out }}</span>
+                                </div>
+                                <div class="meta-item">
+                                    <span class="meta-label">Guests</span>
+                                    <span class="meta-value">{{ booking.guests }} guest(s)</span>
+                                </div>
+                                {% endif %}
+                            </div>
+                            
+                            <!-- Show Total Amount for Restaurant/Table Bookings -->
+                            <div class="payment-section">
+                                {% if booking.booking_type == "room" %}
+                                <div class="payment-row">
+                                    <span class="payment-label">Total Amount</span>
+                                    <span class="payment-pct">₹{{ booking.total_amount|floatformat:2 }}</span>
+                                </div>
+                                {% elif booking.booking_type == "table" %}
+                                    {% if booking.property.requires_table_advance %}
+                                    <div class="payment-row">
+                                        <span class="payment-label">Advance Paid</span>
+                                        <span class="payment-pct">₹{{ booking.advance_paid|floatformat:2 }}</span>
+                                    </div>
+                                    <div class="payment-row">
+                                        <span class="payment-label">Balance to Pay</span>
+                                        <span class="payment-pct">₹{{ booking.total_amount|floatformat:2 }}</span>
+                                    </div>
+                                    <div class="payment-row">
+                                        <span class="payment-label">Total Amount</span>
+                                        <span class="payment-pct">₹{{ booking.advance_paid|add:booking.total_amount|floatformat:2 }}</span>
+                                    </div>
+                                    {% else %}
+                                    <div class="payment-row">
+                                        <span class="payment-label">Total Amount</span>
+                                        <span class="payment-pct">₹0 (Pay at Restaurant)</span>
+                                    </div>
+                                    {% endif %}
+                                {% endif %}
                             </div>
                         </div>
 
-                        <div class="meta-grid">
-                            {% if booking.booking_type == "table" %}
-                            <div class="meta-item">
-                                <span class="meta-label">Date</span>
-                                <span class="meta-value">{{ booking.booking_date }}</span>
-                            </div>
-                            <div class="meta-item">
-                                <span class="meta-label">Time</span>
-                                <span class="meta-value">{{ booking.time }}</span>
-                            </div>
-                            <div class="meta-item">
-                                <span class="meta-label">Guests</span>
-                                <span class="meta-value">{{ booking.guests }}</span>
-                            </div>
-                            {% else %}
-                            <div class="meta-item">
-                                <span class="meta-label">Check-in</span>
-                                <span class="meta-value">{{ booking.check_in }}</span>
-                            </div>
-                            <div class="meta-item">
-                                <span class="meta-label">Check-out</span>
-                                <span class="meta-value">{{ booking.check_out }}</span>
-                            </div>
-                            <div class="meta-item">
-                                <span class="meta-label">Rooms · Guests</span>
-                                <span class="meta-value">{{ booking.rooms }} rm · {{ booking.guests }} guests</span>
-                            </div>
+                        <div class="card-actions">
+                            <a href="{% url 'travellers:restaurant_detail' booking.property.id %}" class="btn btn-view">
+                                <svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                                View Details
+                            </a>
+                            {% if booking.status == "pending" %}
+                                {% if booking.booking_type == "room" %}
+                                    <a href="{% url 'travellers:room_booking_payment' booking.id %}" class="btn btn-pay">
+                                        <svg viewBox="0 0 24 24"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+                                        Pay Now
+                                    </a>
+                                {% elif booking.booking_type == "table" and booking.property.requires_table_advance %}
+                                    <a href="{% url 'travellers:table_booking_payment' booking.id %}" class="btn btn-pay">
+                                        <svg viewBox="0 0 24 24"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+                                        Pay Advance
+                                    </a>
+                                {% endif %}
+                            {% endif %}
+                            {% if booking.status == "pending" or booking.status == "confirmed" %}
+                            <button class="btn btn-cancel" onclick="openCancelModal('{% if booking.booking_type == "room" %}room{% else %}table{% endif %}', {{ booking.id }}, '{{ booking.property.restaurant_name|escapejs }}')">
+                                Cancel
+                            </button>
                             {% endif %}
                         </div>
                     </div>
-
-                    <div class="card-actions">
-                        <a href="{% url 'travellers:restaurant_detail' booking.property.id %}" class="btn btn-view">
-                            <svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-                            View
-                        </a>
-                        {% if booking.status == "pending" or booking.status == "confirmed" %}
-                        <a href="{% url 'travellers:cancel_booking' booking.id %}" class="btn btn-cancel"
-                           onclick="return confirm('Cancel this reservation?')">
-                            Cancel
-                        </a>
-                        {% endif %}
-                    </div>
-                </div>
-                {% endif %}
+                    {% endif %}
                 {% endfor %}
 
-                <!-- COMPLETED PROPERTY BOOKINGS -->
+                <!-- COMPLETED & CANCELLED PROPERTY BOOKINGS -->
                 <div class="completed-section-header" onclick="toggleCompleted('prop-completed')">
                     <span class="dot dot-completed" style="width:8px;height:8px;border-radius:50%;display:inline-block;"></span>
                     <h4>Past Reservations</h4>
@@ -1060,8 +808,8 @@
                     {% if booking.status == "completed" or booking.status == "cancelled" %}
                     <div class="booking-card {% if booking.status == 'completed' %}completed{% else %}cancelled-card{% endif %}" data-status="{{ booking.status }}" data-type="property">
                         <div class="card-img">
-                            {% if booking.property.cover_image %}
-                                <img src="{{ booking.property.cover_image.url }}" alt="{{ booking.property.name }}">
+                            {% if booking.property.media.first %}
+                                <img src="{{ booking.property.media.first.image.url }}" alt="{{ booking.property.restaurant_name }}">
                             {% else %}
                                 <div class="card-img-placeholder">
                                     <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
@@ -1071,7 +819,7 @@
                             <span class="status-ribbon ribbon-{{ booking.status }}">{{ booking.status|capfirst }}</span>
                         </div>
                         <div class="card-body">
-                            <div class="card-title">{{ booking.property.name }}</div>
+                            <div class="card-title">{{ booking.property.restaurant_name }}</div>
                             <div class="card-subtitle">{% if booking.booking_type == "table" %}Table Reservation{% else %}Room Stay{% endif %}</div>
                             <div class="booking-id">Booking #{{ booking.id }}</div>
                             <div class="meta-grid" style="margin-top:0.5rem;">
@@ -1088,7 +836,7 @@
                             {% else %}
                             <div class="cancel-info" style="margin-top:0.5rem;">
                                 <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-                                Cancelled by {{ booking.cancelled_by }}
+                                Cancelled
                             </div>
                             {% endif %}
                         </div>
@@ -1112,101 +860,41 @@
 
     </div><!-- end page-body -->
 
-    <!-- ── FOOTER ── -->
-    <footer class="site-footer">
-        <div class="footer-grid">
-            <div>
-                <a class="footer-logo" href="{% url 'index' %}">Wayzo</a>
-                <p class="footer-desc">Your smart travel companion. Discover, plan, and experience the world beautifully — one journey at a time.</p>
+    <!-- ── PAYMENT MODAL ── -->
+    <div class="modal-overlay" id="paymentModal">
+        <div class="modal-box">
+            <button class="modal-close" onclick="closeModal()">✕</button>
+            <div class="modal-title">Complete Payment</div>
+            <div class="modal-sub" id="modalSub">Select your preferred payment method</div>
+            <div class="modal-amount-chip" id="modalAmount">₹0</div>
+            <div class="pay-method-grid">
+                <button class="pay-method-btn" onclick="selectMethod(this, 'card')"><span class="method-icon">💳</span>Card</button>
+                <button class="pay-method-btn" onclick="selectMethod(this, 'upi')"><span class="method-icon">📱</span>UPI</button>
+                <button class="pay-method-btn" onclick="selectMethod(this, 'netbanking')"><span class="method-icon">🏦</span>Net Banking</button>
             </div>
-            <div class="footer-col"><h5>Explore</h5><ul><li><a href="{% url 'travellers:all_packages' %}">Tour Packages</a></li><li><a href="{% url 'travellers:all_restaurants' %}">Restaurants</a></li><li><a href="#">Destinations</a></li></ul></div>
-            <div class="footer-col"><h5>My Account</h5><ul><li><a href="{% url 'travellers:my_bookings' %}">My Bookings</a></li><li><a href="{% url 'travellers:wishlist' %}">Wishlist</a></li><li><a href="{% url 'travellers:edit_profile' %}">Profile Settings</a></li></ul></div>
-            <div class="footer-col"><h5>Support</h5><ul><li><a href="#">Help Center</a></li><li><a href="#">Contact Us</a></li><li><a href="#">Terms &amp; Privacy</a></li></ul></div>
+            <button class="modal-confirm-btn" id="modalConfirmBtn" onclick="confirmPayment()" disabled>Choose a payment method</button>
         </div>
-        <div class="footer-bottom"><span>© 2025 Wayzo. All rights reserved.</span><span>Made for explorers everywhere</span></div>
-    </footer>
-</div>
-
-<!-- ── PAYMENT MODAL ── -->
-<div class="modal-overlay" id="paymentModal">
-    <div class="modal-box">
-        <button class="modal-close" onclick="closeModal()">✕</button>
-        <div class="modal-title">Complete Payment</div>
-        <div class="modal-sub" id="modalSub">Select your preferred payment method</div>
-        <div class="modal-amount-chip" id="modalAmount">₹0</div>
-        <div class="pay-method-grid">
-            <button class="pay-method-btn" onclick="selectMethod(this, 'card')"><span class="method-icon">💳</span>Card</button>
-            <button class="pay-method-btn" onclick="selectMethod(this, 'upi')"><span class="method-icon">📱</span>UPI</button>
-            <button class="pay-method-btn" onclick="selectMethod(this, 'netbanking')"><span class="method-icon">🏦</span>Net Banking</button>
-        </div>
-        <button class="modal-confirm-btn" id="modalConfirmBtn" onclick="confirmPayment()" disabled>Choose a payment method</button>
     </div>
-</div>
 
+    <!-- Cancel Confirmation Modal -->
+    <div class="modal-overlay" id="cancelModal">
+        <div class="modal-box">
+            <button class="modal-close" onclick="closeCancelModal()">✕</button>
+            <div class="modal-title">Cancel Booking</div>
+            <div class="modal-sub" id="cancelModalSub">Are you sure you want to cancel this booking?</div>
+            <div class="modal-amount-chip" id="cancelModalBookingInfo">Booking Details</div>
+            <button class="modal-confirm-btn" id="cancelConfirmBtn" onclick="confirmCancel()" style="background:#EF4444;">
+                Yes, Cancel Booking
+            </button>
+        </div>
+    </div>
+
+{% endblock %}
+
+{% block extra_scripts %}
 <script>
-    // ── Sidebar toggle ──
-    const sidebar = document.getElementById('sidebar');
-    const hamburgerBtn = document.getElementById('hamburgerBtn');
-    const sidebarCloseBtn = document.getElementById('sidebarCloseBtn');
-    const mainEl = document.getElementById('mainEl');
-    const overlay = document.getElementById('sidebarOverlay');
-    const MOBILE_BP = 860;
-
-    function isMobile() { return window.innerWidth <= MOBILE_BP; }
-
-    function setSidebarOpen(open) {
-        if (open) document.body.classList.add('sidebar-is-open');
-        else document.body.classList.remove('sidebar-is-open');
-
-        if (isMobile()) {
-            if (open) { sidebar.classList.add('open'); overlay.classList.add('visible'); document.body.style.overflow = 'hidden'; }
-            else { sidebar.classList.remove('open'); overlay.classList.remove('visible'); document.body.style.overflow = ''; }
-        } else {
-            if (open) { sidebar.classList.remove('collapsed'); mainEl.classList.remove('sidebar-collapsed'); }
-            else { sidebar.classList.add('collapsed'); mainEl.classList.add('sidebar-collapsed'); }
-            overlay.classList.remove('visible');
-        }
-    }
-
-    function toggleSidebar() {
-        if (isMobile()) setSidebarOpen(!sidebar.classList.contains('open'));
-        else setSidebarOpen(sidebar.classList.contains('collapsed'));
-    }
-
-    if (isMobile()) { sidebar.classList.remove('open'); }
-    else { sidebar.classList.add('collapsed'); mainEl.classList.add('sidebar-collapsed'); }
-
-    hamburgerBtn.addEventListener('click', toggleSidebar);
-    sidebarCloseBtn.addEventListener('click', () => setSidebarOpen(false));
-    overlay.addEventListener('click', () => setSidebarOpen(false));
-    window.addEventListener('resize', () => {
-        if (!isMobile()) {
-            sidebar.classList.add('collapsed'); mainEl.classList.add('sidebar-collapsed');
-            sidebar.classList.remove('open'); overlay.classList.remove('visible');
-            document.body.style.overflow = ''; document.body.classList.remove('sidebar-is-open');
-        } else {
-            sidebar.classList.remove('collapsed'); mainEl.classList.remove('sidebar-collapsed');
-        }
-    });
-
-    // ── Avatar dropdown ──
-    const avatarTrigger = document.getElementById('avatarTrigger');
-    const dropdownPopup = document.getElementById('dropdownPopup');
-    avatarTrigger.addEventListener('click', (e) => { e.stopPropagation(); dropdownPopup.classList.toggle('show'); });
-    document.addEventListener('click', (e) => { if (!avatarTrigger.contains(e.target)) dropdownPopup.classList.remove('show'); });
-
-    // ── Notification ──
-    document.getElementById('notificationBtn').addEventListener('click', () => alert('🔔 You have new notifications!'));
-
-    // ── Collapsed sections ──
-    function toggleCompleted(id) {
-        const el = document.getElementById(id);
-        const toggle = document.getElementById('toggle-' + id);
-        const isOpen = el.style.display !== 'none';
-        el.style.display = isOpen ? 'none' : 'block';
-        toggle.classList.toggle('open', !isOpen);
-    }
-
+    let cancelData = { type: null, id: null, name: null };
+    
     // ── Tab filtering ──
     function switchTab(tab, btn) {
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -1231,19 +919,15 @@
             if (tab === 'properties') show = (type === 'property');
             card.style.display = show ? '' : 'none';
         });
+    }
 
-        // For active/completed/cancelled, show both sections
-        if (['active','completed','cancelled','all'].includes(tab)) {
-            pkgSection.style.display = ''; propSection.style.display = '';
-            // Auto-expand completed section when on completed tab
-            if (tab === 'completed' || tab === 'cancelled') {
-                ['pkg-completed','prop-completed'].forEach(id => {
-                    const el = document.getElementById(id);
-                    const toggle = document.getElementById('toggle-' + id);
-                    if (el) { el.style.display = 'block'; toggle.classList.add('open'); }
-                });
-            }
-        }
+    // ── Collapsed sections ──
+    function toggleCompleted(id) {
+        const el = document.getElementById(id);
+        const toggle = document.getElementById('toggle-' + id);
+        const isOpen = el.style.display !== 'none';
+        el.style.display = isOpen ? 'none' : 'block';
+        if (toggle) toggle.classList.toggle('open', !isOpen);
     }
 
     // ── Count tabs on load ──
@@ -1295,13 +979,212 @@
     function confirmPayment() {
         if (!selectedPayMethod) return;
         closeModal();
-        window.location.href = `/traveller/pay/${currentBookingId}/${currentPayType}/`;
+        if (currentPayType === "advance") {
+            window.location.href = `/traveller/pay-advance/${currentBookingId}/`;
+        } else if (currentPayType === "remaining") {
+            window.location.href = `/traveller/pay-remaining/${currentBookingId}/`;
+        }
     }
 
-    // Close modal on overlay click
     document.getElementById('paymentModal').addEventListener('click', (e) => {
         if (e.target === document.getElementById('paymentModal')) closeModal();
     });
+
+    // ── Cancel Modal Functions ──
+    function openCancelModal(type, id, name) {
+        cancelData = { type: type, id: id, name: name };
+        let refundMessage = '';
+        if (type === 'table') {
+            refundMessage = '<p class="text-danger mt-2" style="font-size:0.75rem; color:#dc2626;">⚠️ Note: Advance payment is non-refundable.</p>';
+        } else if (type === 'room') {
+            refundMessage = '<p class="text-warning mt-2" style="font-size:0.75rem; color:#d97706;">Refund will be calculated based on cancellation policy.</p>';
+        } else if (type === 'package') {
+            refundMessage = '<p class="text-warning mt-2" style="font-size:0.75rem; color:#d97706;">Refund will be calculated based on package cancellation policy.</p>';
+        }
+        document.getElementById('cancelModalSub').innerHTML = `Are you sure you want to cancel your booking for <strong>${name}</strong>? ${refundMessage}`;
+        document.getElementById('cancelModalBookingInfo').innerHTML = `Booking #${id}`;
+        document.getElementById('cancelModal').classList.add('open');
+    }
+
+    function closeCancelModal() {
+        document.getElementById('cancelModal').classList.remove('open');
+        cancelData = { type: null, id: null, name: null };
+    }
+
+    function confirmCancel() {
+        if (!cancelData.id) return;
+        
+        const url = `/traveller/cancel-booking/${cancelData.type}/${cancelData.id}/`;
+        
+        fetch(url, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken'),
+                'X-Requested-With': 'XMLHttpRequest',
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showToast(data.message, 'success');
+                setTimeout(() => location.reload(), 1500);
+            } else {
+                showToast(data.error || 'Failed to cancel booking', 'error');
+            }
+            closeCancelModal();
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showToast('An error occurred', 'error');
+            closeCancelModal();
+        });
+    }
+
+    function showToast(message, type) {
+        const toast = document.createElement('div');
+        toast.className = `toast-notification ${type}`;
+        toast.innerHTML = message;
+        toast.style.cssText = `
+            position: fixed; bottom: 20px; right: 20px;
+            background: ${type === 'success' ? '#10B981' : '#EF4444'};
+            color: white; padding: 12px 20px; border-radius: 12px;
+            font-size: 0.85rem; z-index: 9999; animation: slideIn 0.3s ease;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        `;
+        document.body.appendChild(toast);
+        setTimeout(() => {
+            toast.style.opacity = '0';
+            setTimeout(() => toast.remove(), 300);
+        }, 3000);
+    }
+
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+    document.getElementById('cancelModal').addEventListener('click', (e) => {
+        if (e.target === document.getElementById('cancelModal')) closeCancelModal();
+    });
 </script>
-</body>
-</html>
+<script>
+function payAdvance(bookingId) {
+
+    fetch(`/traveller/pay-advance/${bookingId}/`)
+    .then(response => response.json())
+    .then(data => {
+
+        if (!data.success) {
+            alert(data.message);
+            return;
+        }
+
+        var options = {
+            key: data.key,
+            amount: data.amount,
+            currency: "INR",
+            name: "Wayzo",
+            description: "Advance Payment",
+            order_id: data.order_id,
+
+            handler: function (response) {
+                fetch(`/traveller/advance-success/${bookingId}/`, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "X-CSRFToken": "{{ csrf_token }}"
+                    },
+                    body: JSON.stringify(response)
+                })
+                .then(res => res.json())
+                .then(result => {
+                    if (result.status === "success") {
+                        // Updated redirect with query parameters
+                        window.location.href = `/traveller/payment-success/?booking=${result.booking_id}&type=${encodeURIComponent(result.payment_type)}&amount=${result.amount}`;
+                    } else {
+                        alert("Payment verification failed: " + (result.error || "Unknown error"));
+                    }
+                })
+                .catch(error => {
+                    console.error("Error:", error);
+                    alert("An error occurred while verifying payment");
+                });
+            }
+        };
+
+        var rzp = new Razorpay(options);
+        rzp.open();
+    })
+    .catch(error => {
+        console.error("Error:", error);
+        alert("Failed to initialize payment");
+    });
+}
+
+function payRemaining(bookingId) {
+
+    fetch(`/traveller/pay-remaining/${bookingId}/`)
+    .then(response => response.json())
+    .then(data => {
+
+        if (!data.success) {
+            alert(data.message);
+            return;
+        }
+
+        var options = {
+            key: data.key,
+            amount: data.amount,
+            currency: "INR",
+            name: "Wayzo",
+            description: "Remaining Payment",
+            order_id: data.order_id,
+
+            handler: function (response) {
+                fetch(`/traveller/remaining-success/${bookingId}/`, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "X-CSRFToken": "{{ csrf_token }}"
+                    },
+                    body: JSON.stringify(response)
+                })
+                .then(res => res.json())
+                .then(result => {
+                    if (result.status === "success") {
+                        // Updated redirect with query parameters
+                        window.location.href = `/traveller/payment-success/?booking=${result.booking_id}&type=${encodeURIComponent(result.payment_type)}&amount=${result.amount}`;
+                    } else {
+                        alert("Payment verification failed: " + (result.error || "Unknown error"));
+                    }
+                })
+                .catch(error => {
+                    console.error("Error:", error);
+                    alert("An error occurred while verifying payment");
+                });
+            }
+        };
+
+        var rzp = new Razorpay(options);
+        rzp.open();
+    })
+    .catch(error => {
+        console.error("Error:", error);
+        alert("Failed to initialize payment");
+    });
+}
+</script>
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+
+{% endblock %}

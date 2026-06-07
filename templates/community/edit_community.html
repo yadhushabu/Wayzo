@@ -1,19 +1,956 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
-</head>
-<body>
-    <form method="post" enctype="multipart/form-data">
-        {% csrf_token %}
-        {{form.as_p}}
-        {% if request.user == community.creator %}
-        <button type="submit">Update</button>
-    <a href="{% url 'delete_community' community.id %}" 
-       style="color:red;">Delete Community</a>
-{% endif %}
-    </form>
-</body>
-</html>
+{% extends "travellers/base.html" %}
+{% load static %}
+
+{% block title %}Edit {{ community.name }} | Wayzo{% endblock %}
+{% block nav_community %}active{% endblock %}
+
+{% block extra_styles %}
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,400&family=DM+Sans:wght@300;400;500;600&display=swap');
+
+:root {
+    --cc-teal: #0e8a8a;
+    --cc-teal-dark: #0a6e6e;
+    --cc-teal-pale: #e6f3f3;
+    --cc-ink: #0f172a;
+    --cc-ink2: #1e293b;
+    --cc-muted: #64748b;
+    --cc-border: #e2e8f0;
+    --cc-surface: #fff;
+    --cc-s2: #f8fafc;
+    --cc-s3: #f1f5f9;
+    --cc-red: #dc2626;
+    --cc-red-pale: #fee2e2;
+    --cc-green: #16a34a;
+    --cc-green-pale: #dcfce7;
+    --cc-amber: #d97706;
+    --cc-amber-pale: #fef3c7;
+    --cc-r: 16px;
+    --cc-sh: 0 1px 3px rgba(0,0,0,.04), 0 4px 16px rgba(0,0,0,.06);
+    --cc-sh-md: 0 4px 24px rgba(0,0,0,.10);
+}
+*, *::before, *::after { box-sizing: border-box; }
+body { font-family: 'DM Sans', sans-serif; background: #f8fafc; }
+
+/* ══ HERO ══ */
+.cc-hero {
+    position: relative;
+    height: 260px;
+    overflow: hidden;
+    background: linear-gradient(135deg, #0a3d3d 0%, #0e5a5a 40%, #0b3228 100%);
+    flex-shrink: 0;
+}
+.cc-hero-bg {
+    position: absolute; inset: 0;
+    background-size: cover; background-position: center;
+    z-index: 0;
+}
+.cc-hero-bg::after {
+    content: ''; position: absolute; inset: 0;
+    background: linear-gradient(160deg, rgba(6,16,24,.80) 0%, rgba(10,50,50,.65) 45%, rgba(6,16,24,.50) 100%);
+}
+/* Dot-grid texture overlay */
+.cc-hero::before {
+    content: ''; position: absolute; inset: 0; z-index: 1;
+    background-image: radial-gradient(rgba(255,255,255,.055) 1px, transparent 1px);
+    background-size: 26px 26px;
+    pointer-events: none;
+}
+.cc-hero-fade {
+    position: absolute; bottom: 0; left: 0; right: 0; height: 100px;
+    background: linear-gradient(to bottom, transparent, #f8fafc);
+    z-index: 3; pointer-events: none;
+}
+.cc-hero-content {
+    position: relative; z-index: 4;
+    height: 100%; display: flex; flex-direction: column;
+    justify-content: flex-end;
+    padding: 1.5rem 3rem 2.4rem;
+    max-width: 1200px; margin: 0 auto;
+}
+.cc-hero-eyebrow {
+    display: inline-flex; align-items: center; gap: .45rem;
+    background: rgba(255,255,255,.12); backdrop-filter: blur(10px);
+    border: 1px solid rgba(255,255,255,.2); border-radius: 40px;
+    padding: .28rem .85rem; font-size: .65rem; font-weight: 500;
+    letter-spacing: .08em; text-transform: uppercase;
+    color: rgba(255,255,255,.85); margin-bottom: .55rem; width: fit-content;
+    text-decoration: none; transition: background .2s;
+}
+.cc-hero-eyebrow:hover { background: rgba(255,255,255,.18); }
+.cc-hero-eyebrow::before {
+    content: ''; width: 5px; height: 5px; border-radius: 50%;
+    background: #5FC5C5; display: inline-block; flex-shrink: 0;
+}
+.cc-hero-title {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(1.5rem, 2.8vw, 2rem);
+    font-weight: 700; color: #fff; line-height: 1.15;
+    text-shadow: 0 2px 12px rgba(0,0,0,.35); margin-bottom: .25rem;
+}
+.cc-hero-sub { font-size: .82rem; color: rgba(255,255,255,.6); font-weight: 300; }
+
+/* ══ BREADCRUMB ══ */
+.cc-breadcrumb {
+    max-width: 1200px; margin: 0 auto;
+    padding: .85rem 3rem;
+    display: flex; align-items: center; gap: .4rem;
+    font-size: .75rem; color: var(--cc-muted);
+}
+.cc-breadcrumb a { color: var(--cc-muted); text-decoration: none; transition: color .15s; }
+.cc-breadcrumb a:hover { color: var(--cc-teal); }
+.cc-breadcrumb-sep { color: var(--cc-border); }
+.cc-breadcrumb-current { color: var(--cc-ink2); font-weight: 600; }
+
+/* ══ PAGE LAYOUT ══ */
+.cc-page {
+    max-width: 1200px; margin: 0 auto;
+    padding: 0 3rem 5rem;
+}
+.cc-grid {
+    display: grid;
+    grid-template-columns: 1fr 320px;
+    gap: 2rem; align-items: start;
+}
+.cc-form-col { min-width: 0; }
+.cc-tips-col { position: sticky; top: 24px; }
+
+/* ══ CARDS ══ */
+.cc-card {
+    background: var(--cc-surface);
+    border: 1px solid var(--cc-border);
+    border-radius: var(--cc-r);
+    margin-bottom: 1.5rem;
+    overflow: hidden;
+    box-shadow: var(--cc-sh);
+    transition: box-shadow .2s;
+}
+.cc-card:hover { box-shadow: var(--cc-sh-md); }
+.cc-card::before {
+    content: ''; display: block; height: 3px;
+    background: linear-gradient(90deg, #0e8a8a, #1aa8a8);
+}
+.cc-card-head {
+    display: flex; align-items: center; gap: .75rem;
+    padding: 1.15rem 1.6rem;
+    border-bottom: 1px solid var(--cc-border);
+    background: var(--cc-s2);
+}
+.cc-card-head-icon {
+    width: 36px; height: 36px; border-radius: 10px;
+    background: var(--cc-teal-pale);
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.cc-card-head-icon svg { width: 16px; height: 16px; stroke: #0e8a8a; fill: none; stroke-width: 2; }
+.cc-card-head h3 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1rem; font-weight: 600; color: var(--cc-ink); margin: 0 0 .06rem;
+}
+.cc-card-head p { font-size: .73rem; color: var(--cc-muted); margin: 0; }
+.cc-card-body { padding: 1.6rem; }
+
+/* ══ COVER IMAGE SECTION ══ */
+.cc-cover-current {
+    position: relative; border-radius: 12px; overflow: hidden;
+    background: var(--cc-s2); margin-bottom: 1rem;
+}
+.cc-cover-current img {
+    width: 100%; height: 180px; object-fit: cover; display: block;
+}
+.cc-cover-no-image {
+    width: 100%; height: 180px; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: .5rem;
+    background: linear-gradient(135deg, #e6f3f3, #f0f9f9);
+    border: 2px dashed var(--cc-border); border-radius: 12px;
+}
+.cc-cover-no-image .no-img-icon { font-size: 2.5rem; opacity: .3; }
+.cc-cover-no-image span { font-size: .75rem; color: var(--cc-muted); }
+
+/* Badge over existing image */
+.cc-cover-badge {
+    position: absolute; top: 10px; left: 10px;
+    background: rgba(0,0,0,.55); backdrop-filter: blur(6px);
+    color: white; font-size: .65rem; font-weight: 600;
+    padding: .25rem .65rem; border-radius: 40px;
+    letter-spacing: .04em; text-transform: uppercase;
+}
+.cc-cover-change-overlay {
+    position: absolute; inset: 0;
+    background: rgba(0,0,0,.0); transition: background .25s;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+}
+.cc-cover-change-overlay:hover { background: rgba(0,0,0,.35); }
+.cc-cover-change-overlay .overlay-label {
+    color: white; font-size: .8rem; font-weight: 700;
+    opacity: 0; transition: opacity .2s;
+    display: flex; align-items: center; gap: .4rem;
+    background: rgba(0,0,0,.5); padding: .5rem 1.1rem; border-radius: 40px;
+}
+.cc-cover-change-overlay:hover .overlay-label { opacity: 1; }
+.cc-cover-change-overlay svg { width: 15px; height: 15px; stroke: white; fill: none; stroke-width: 2; }
+
+/* Upload zone (shows after clicking change) */
+.cc-cover-upload {
+    border: 2px dashed var(--cc-border); border-radius: 12px;
+    padding: 1.8rem 1.5rem; text-align: center; cursor: pointer;
+    transition: border-color .2s, background .2s; position: relative;
+    overflow: hidden; background: var(--cc-s2); display: none;
+}
+.cc-cover-upload.visible { display: block; }
+.cc-cover-upload:hover { border-color: #0e8a8a; background: var(--cc-teal-pale); }
+.cc-cover-upload input[type="file"] {
+    position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%;
+}
+.cc-cover-icon { font-size: 2rem; opacity: .4; margin-bottom: .4rem; }
+.cc-cover-label { font-size: .83rem; font-weight: 600; color: var(--cc-muted); margin-bottom: .2rem; }
+.cc-cover-sub { font-size: .7rem; color: var(--cc-muted); }
+.cc-cover-preview {
+    width: 100%; height: 160px; object-fit: cover;
+    border-radius: 10px; display: none; margin-bottom: .75rem;
+}
+
+/* Change / cancel buttons */
+.cc-cover-actions {
+    display: flex; gap: .6rem; margin-top: .75rem; flex-wrap: wrap;
+}
+.cc-cover-btn {
+    display: inline-flex; align-items: center; gap: .35rem;
+    padding: .4rem .95rem; border-radius: 40px; font-size: .75rem;
+    font-weight: 600; cursor: pointer; border: none; font-family: 'DM Sans', sans-serif;
+    transition: all .2s;
+}
+.cc-cover-btn-change {
+    background: var(--cc-teal-pale); color: var(--cc-teal);
+    border: 1.5px solid rgba(14,138,138,.3);
+}
+.cc-cover-btn-change:hover { background: var(--cc-teal); color: white; }
+.cc-cover-btn-cancel {
+    background: var(--cc-s2); color: var(--cc-muted);
+    border: 1.5px solid var(--cc-border); display: none;
+}
+.cc-cover-btn-cancel:hover { border-color: var(--cc-red); color: var(--cc-red); background: var(--cc-red-pale); }
+.cc-cover-btn svg { width: 13px; height: 13px; stroke: currentColor; fill: none; stroke-width: 2; }
+
+/* ══ FORM FIELDS ══ */
+.cc-fg { margin-bottom: 1.25rem; }
+.cc-fg:last-child { margin-bottom: 0; }
+.cc-fg > label {
+    display: block !important; font-size: .7rem !important; font-weight: 700 !important;
+    color: var(--cc-muted) !important; text-transform: uppercase !important;
+    letter-spacing: .5px !important; margin-bottom: .4rem !important;
+}
+.cc-fg > label .req { color: var(--cc-red); }
+.cc-fg .hint { font-size: .7rem; color: var(--cc-muted); margin-top: .25rem; line-height: 1.5; }
+
+.cc-fg input[type="text"],
+.cc-fg input[type="number"],
+.cc-fg textarea,
+.cc-fg select {
+    width: 100% !important; padding: .72rem 1rem !important;
+    border: 1.5px solid #e2e8f0 !important; border-radius: 10px !important;
+    font-size: .875rem !important; font-family: 'DM Sans', sans-serif !important;
+    color: #0f172a !important; background: #fff !important;
+    transition: border-color .15s, box-shadow .15s;
+    box-sizing: border-box !important;
+}
+.cc-fg input:focus, .cc-fg textarea:focus, .cc-fg select:focus {
+    outline: none !important; border-color: #0e8a8a !important;
+    box-shadow: 0 0 0 3px rgba(14,138,138,.12) !important;
+}
+.cc-fg textarea { resize: vertical; min-height: 100px; }
+.cc-fg select { appearance: auto; cursor: pointer; }
+.cc-fg-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+
+/* ══ COMMUNITY TYPE CARDS ══ */
+.cc-type-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+.cc-type-card {
+    border: 2px solid var(--cc-border); border-radius: 12px;
+    padding: 1.1rem 1.2rem; cursor: pointer; transition: all .15s;
+    background: var(--cc-surface); text-align: left;
+    font-family: 'DM Sans', sans-serif; display: block;
+}
+.cc-type-card:hover { border-color: #0e8a8a; background: var(--cc-teal-pale); }
+.cc-type-card.selected {
+    border-color: #0e8a8a; background: var(--cc-teal-pale);
+    box-shadow: 0 0 0 3px rgba(14,138,138,.12);
+}
+.cc-type-card input[type="radio"] { display: none; }
+.cc-type-icon { font-size: 1.5rem; margin-bottom: .5rem; }
+.cc-type-name { font-size: .88rem; font-weight: 700; color: var(--cc-ink); margin-bottom: .18rem; }
+.cc-type-desc { font-size: .74rem; color: var(--cc-muted); line-height: 1.5; }
+
+.cc-privacy-info {
+    background: var(--cc-teal-pale); border: 1px solid rgba(14,138,138,.25);
+    border-radius: 10px; padding: .9rem 1.1rem; margin-top: 1rem;
+    font-size: .8rem; color: #0a6e6e; display: none; line-height: 1.55;
+}
+.cc-privacy-info.show { display: block; }
+
+/* ══ TOGGLE SWITCHES ══ */
+.cc-toggle-row { display: flex; flex-direction: column; gap: .75rem; }
+.cc-toggle-item {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: .9rem 1.2rem; background: #f8fafc;
+    border: 1.5px solid #e2e8f0; border-radius: 12px; gap: 1rem;
+    transition: border-color .15s;
+}
+.cc-toggle-item:hover { border-color: rgba(14,138,138,.4); }
+.cc-toggle-info .cc-toggle-label {
+    font-size: .875rem; font-weight: 600; color: #0f172a;
+    margin-bottom: .08rem; display: block;
+}
+.cc-toggle-info .cc-toggle-sub { font-size: .74rem; color: #64748b; display: block; }
+.cc-sw {
+    position: relative; display: inline-block;
+    width: 52px; height: 28px; flex-shrink: 0; cursor: pointer;
+}
+.cc-sw input[type="checkbox"] {
+    position: absolute !important; opacity: 0 !important;
+    width: 0 !important; height: 0 !important;
+    pointer-events: none !important; margin: 0 !important;
+    padding: 0 !important; appearance: none !important;
+    -webkit-appearance: none !important; border: none !important;
+    background: none !important;
+}
+.cc-sw-track {
+    position: absolute; inset: 0; border-radius: 34px;
+    background: #cbd5e1; transition: background .25s ease; pointer-events: none;
+}
+.cc-sw-track::after {
+    content: ''; position: absolute; top: 4px; left: 4px;
+    width: 20px; height: 20px; border-radius: 50%;
+    background: #ffffff; box-shadow: 0 1px 4px rgba(0,0,0,.25);
+    transition: transform .25s ease;
+}
+.cc-sw input[type="checkbox"]:checked ~ .cc-sw-track { background: #0e8a8a; }
+.cc-sw input[type="checkbox"]:checked ~ .cc-sw-track::after { transform: translateX(24px); }
+
+/* ══ DANGER ZONE ══ */
+.danger-zone-card {
+    background: var(--cc-surface); border: 1.5px solid #fca5a5;
+    border-radius: var(--cc-r); overflow: hidden;
+    box-shadow: var(--cc-sh); margin-bottom: 1.5rem;
+}
+.danger-zone-card::before {
+    content: ''; display: block; height: 3px;
+    background: linear-gradient(90deg, #ef4444, #f87171);
+}
+.danger-zone-head {
+    display: flex; align-items: center; gap: .75rem;
+    padding: 1.1rem 1.6rem; border-bottom: 1px solid #fecaca;
+    background: #fff5f5;
+}
+.danger-zone-head-icon {
+    width: 36px; height: 36px; border-radius: 10px;
+    background: var(--cc-red-pale); display: flex; align-items: center;
+    justify-content: center; flex-shrink: 0;
+}
+.danger-zone-head-icon svg { width: 16px; height: 16px; stroke: var(--cc-red); fill: none; stroke-width: 2; }
+.danger-zone-head h3 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1rem; font-weight: 600; color: var(--cc-red); margin: 0 0 .06rem;
+}
+.danger-zone-head p { font-size: .73rem; color: #b91c1c; margin: 0; }
+.danger-zone-body {
+    padding: 1.4rem 1.6rem;
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 1.5rem; flex-wrap: wrap;
+}
+.danger-zone-body p { font-size: .8rem; color: var(--cc-muted); line-height: 1.6; flex: 1; }
+.cc-btn-delete {
+    display: inline-flex !important; align-items: center !important; gap: .45rem !important;
+    padding: .65rem 1.4rem !important; border-radius: 40px !important;
+    background: var(--cc-red-pale) !important; color: var(--cc-red) !important;
+    border: 1.5px solid #fca5a5 !important; font-size: .82rem !important;
+    font-weight: 700 !important; font-family: 'DM Sans', sans-serif !important;
+    text-decoration: none !important; cursor: pointer !important;
+    transition: all .2s; white-space: nowrap; flex-shrink: 0;
+}
+.cc-btn-delete svg { width: 14px; height: 14px; stroke: var(--cc-red); fill: none; stroke-width: 2; }
+.cc-btn-delete:hover {
+    background: var(--cc-red) !important; color: white !important;
+    border-color: var(--cc-red) !important;
+    box-shadow: 0 4px 12px rgba(220,38,38,.3) !important;
+}
+.cc-btn-delete:hover svg { stroke: white; }
+
+/* ══ FORM FOOTER ══ */
+.cc-form-foot {
+    display: flex; align-items: center; justify-content: flex-end;
+    gap: 1rem; padding: 1.2rem 1.6rem;
+    background: #f1f5f9; border-top: 1px solid #e2e8f0;
+}
+.cc-btn-cancel {
+    display: inline-flex !important; align-items: center !important; gap: .45rem !important;
+    padding: .75rem 1.5rem !important; background: #ffffff !important;
+    color: #64748b !important; border: 1.5px solid #e2e8f0 !important;
+    border-radius: 40px !important; font-size: .875rem !important;
+    font-weight: 500 !important; text-decoration: none !important;
+    font-family: 'DM Sans', sans-serif !important; transition: all .2s; cursor: pointer;
+}
+.cc-btn-cancel:hover { border-color: #0e8a8a !important; color: #0e8a8a !important; background: #e6f3f3 !important; }
+button.cc-btn-submit, .cc-btn-submit {
+    display: inline-flex !important; align-items: center !important; gap: .5rem !important;
+    padding: .78rem 2rem !important; background-color: #0e8a8a !important;
+    color: #ffffff !important; border: none !important; border-radius: 40px !important;
+    font-size: .9rem !important; font-weight: 700 !important;
+    font-family: 'DM Sans', sans-serif !important; cursor: pointer !important;
+    text-decoration: none !important; box-shadow: 0 4px 14px rgba(14,138,138,.45) !important;
+    transition: background-color .2s, transform .2s, box-shadow .2s; line-height: 1 !important;
+}
+button.cc-btn-submit:hover, .cc-btn-submit:hover {
+    background-color: #0a6e6e !important; transform: translateY(-2px) !important;
+    box-shadow: 0 6px 20px rgba(14,138,138,.5) !important; color: #ffffff !important;
+}
+.cc-btn-submit svg { width: 16px !important; height: 16px !important; stroke: #ffffff !important; fill: none !important; stroke-width: 2.2 !important; }
+
+/* ══ ALERTS ══ */
+.cc-alert {
+    display: flex; align-items: center; gap: .6rem;
+    padding: .9rem 1.2rem; border-radius: 12px; margin-bottom: 1.2rem;
+    font-size: .84rem; line-height: 1.5;
+}
+.cc-alert svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 2; flex-shrink: 0; }
+.cc-alert.success { background: #dcfce7; border: 1px solid #bbf7d0; color: #166534; }
+.cc-alert.error   { background: #fee2e2; border: 1px solid #fecaca; color: #991b1b; }
+.errorlist { color: #dc2626; font-size: .73rem; list-style: none; padding: 0; margin: .3rem 0 0; }
+
+/* ══ SIDEBAR ══ */
+.cc-tips-card {
+    background: #fff; border: 1px solid #e2e8f0;
+    border-radius: 16px; overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0,0,0,.04), 0 4px 16px rgba(0,0,0,.06);
+    margin-bottom: 1.2rem;
+}
+.cc-tips-card::before {
+    content: ''; display: block; height: 3px;
+    background: linear-gradient(90deg, #0e8a8a, #1aa8a8);
+}
+.cc-tips-head {
+    padding: 1rem 1.4rem; border-bottom: 1px solid #e2e8f0;
+    background: #f8fafc; font-size: .875rem; font-weight: 700;
+    color: #0f172a; display: flex; align-items: center; gap: .55rem;
+}
+.cc-tips-head svg { width: 16px; height: 16px; stroke: #0e8a8a; fill: none; stroke-width: 2; }
+.cc-tips-body { padding: 1rem 1.4rem; }
+.cc-tip-item {
+    display: flex; align-items: flex-start; gap: .75rem;
+    padding: .65rem 0; border-bottom: 1px solid #f1f5f9;
+}
+.cc-tip-item:last-child { border-bottom: none; padding-bottom: 0; }
+.cc-tip-icon {
+    width: 30px; height: 30px; border-radius: 8px; flex-shrink: 0;
+    background: #e6f3f3; display: flex; align-items: center;
+    justify-content: center; font-size: .9rem;
+}
+.cc-tip-title { font-weight: 600; color: #1e293b; margin-bottom: .08rem; font-size: .82rem; }
+.cc-tip-text  { font-size: .74rem; color: #64748b; line-height: 1.55; }
+
+/* Community preview card in sidebar */
+.cc-preview-card {
+    background: #fff; border: 1px solid #e2e8f0;
+    border-radius: 16px; overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0,0,0,.04), 0 4px 16px rgba(0,0,0,.06);
+}
+.cc-preview-card::before {
+    content: ''; display: block; height: 3px;
+    background: linear-gradient(90deg, #d97706, #f59e0b);
+}
+.cc-preview-thumb {
+    width: 100%; height: 100px; object-fit: cover; display: block;
+    background: linear-gradient(135deg, #0e8a8a, #0a6e6e);
+}
+.cc-preview-thumb-placeholder {
+    width: 100%; height: 100px;
+    background: linear-gradient(135deg, #e6f3f3, #f0f9f9);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 2rem; opacity: .4;
+}
+.cc-preview-body { padding: 1rem 1.2rem; }
+.cc-preview-name {
+    font-family: 'Playfair Display', serif;
+    font-size: .95rem; font-weight: 700; color: #0f172a; margin-bottom: .2rem;
+}
+.cc-preview-meta { font-size: .72rem; color: #64748b; }
+
+/* ══ RESPONSIVE ══ */
+@media (max-width: 960px) {
+    .cc-grid { grid-template-columns: 1fr; }
+    .cc-tips-col { position: static; }
+    .cc-page { padding: 0 1.5rem 4rem; }
+    .cc-breadcrumb { padding: .85rem 1.5rem; }
+    .cc-hero-content { padding: 1.2rem 1.5rem 2rem; }
+}
+@media (max-width: 640px) {
+    .cc-page { padding: 0 1rem 3rem; }
+    .cc-breadcrumb { padding: .75rem 1rem; }
+    .cc-hero-content { padding: 1rem 1rem 1.6rem; }
+    .cc-hero { height: 200px; }
+    .cc-fg-row { grid-template-columns: 1fr; }
+    .cc-type-grid { grid-template-columns: 1fr; }
+    .cc-form-foot { flex-direction: column-reverse; }
+    .cc-btn-submit, .cc-btn-cancel { width: 100% !important; justify-content: center !important; }
+    .cc-card-body { padding: 1.2rem; }
+    .danger-zone-body { flex-direction: column; }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- ══ HERO ══ -->
+<div class="cc-hero">
+    {% if community.cover_image %}
+    <div class="cc-hero-bg" style="background-image:url('{{ community.cover_image.url }}');"></div>
+    {% endif %}
+    <div class="cc-hero-fade"></div>
+    <div class="cc-hero-content">
+        <a href="{% url 'community:community_detail' pk=community.id %}" class="cc-hero-eyebrow">← {{ community.name }}</a>
+        <h1 class="cc-hero-title">Edit Community</h1>
+        <div class="cc-hero-sub">Update settings, details and permissions</div>
+    </div>
+</div>
+
+<!-- ══ BREADCRUMB ══ -->
+<div class="cc-breadcrumb">
+    <a href="{% url 'community:community_home' %}">Community</a>
+    <span class="cc-breadcrumb-sep">/</span>
+    <a href="{% url 'community:community_detail' pk=community.id %}">{{ community.name }}</a>
+    <span class="cc-breadcrumb-sep">/</span>
+    <span class="cc-breadcrumb-current">Edit</span>
+</div>
+
+<!-- ══ PAGE ══ -->
+<div class="cc-page">
+
+    {% if messages %}
+        {% for message in messages %}
+        <div class="cc-alert {% if 'success' in message.tags %}success{% else %}error{% endif %}">
+            <svg viewBox="0 0 24 24">
+                {% if 'success' in message.tags %}
+                    <polyline points="20 6 9 17 4 12"/>
+                {% else %}
+                    <circle cx="12" cy="12" r="10"/>
+                    <line x1="12" y1="8" x2="12" y2="12"/>
+                    <line x1="12" y1="16" x2="12.01" y2="16"/>
+                {% endif %}
+            </svg>
+            {{ message }}
+        </div>
+        {% endfor %}
+    {% endif %}
+
+    <div class="cc-grid">
+
+        <!-- ══ FORM COLUMN ══ -->
+        <div class="cc-form-col">
+            <form method="POST" enctype="multipart/form-data" id="ccForm">
+                {% csrf_token %}
+
+                <!-- 1. Cover Image -->
+                <div class="cc-card">
+                    <div class="cc-card-head">
+                        <div class="cc-card-head-icon">
+                            <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                        </div>
+                        <div>
+                            <h3>Cover Image</h3>
+                            <p>{% if community.cover_image %}Update or keep your current cover photo{% else %}Add a cover photo to your community{% endif %}</p>
+                        </div>
+                    </div>
+                    <div class="cc-card-body">
+
+                        <!-- Current cover display -->
+                        {% if community.cover_image %}
+                        <div class="cc-cover-current" id="ccCurrentCover">
+                            <img src="{{ community.cover_image.url }}" alt="{{ community.name }} cover">
+                            <div class="cc-cover-badge">Current Cover</div>
+                            <div class="cc-cover-change-overlay" onclick="showUploadZone()">
+                                <div class="overlay-label">
+                                    <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                                    Change Cover
+                                </div>
+                            </div>
+                        </div>
+                        {% else %}
+                        <div class="cc-cover-no-image" id="ccCurrentCover">
+                            <div class="no-img-icon">🏔️</div>
+                            <span>No cover image yet</span>
+                        </div>
+                        {% endif %}
+
+                        <!-- New image preview (hidden until upload) -->
+                        <img id="ccCoverPreview" class="cc-cover-preview" src="" alt="New preview">
+
+                        <!-- Upload zone (hidden by default if cover exists) -->
+                        <div class="cc-cover-upload {% if not community.cover_image %}visible{% endif %}" id="ccUploadZone">
+                            <input type="file" name="cover_image" accept="image/*" id="ccCoverInput" onchange="previewCover(this)">
+                            <div id="ccCoverPlaceholder">
+                                <div class="cc-cover-icon">📸</div>
+                                <div class="cc-cover-label">Click or drag to upload a new cover photo</div>
+                                <div class="cc-cover-sub">JPG, PNG, WebP &middot; Max 5 MB &middot; Recommended 1200×400</div>
+                            </div>
+                        </div>
+
+                        {% if form.cover_image.errors %}<ul class="errorlist">{{ form.cover_image.errors }}</ul>{% endif %}
+
+                        <!-- Action buttons -->
+                        <div class="cc-cover-actions">
+                            {% if community.cover_image %}
+                            <button type="button" class="cc-cover-btn cc-cover-btn-change" id="ccChangeCoverBtn" onclick="showUploadZone()">
+                                <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                                Change Cover Photo
+                            </button>
+                            <button type="button" class="cc-cover-btn cc-cover-btn-cancel" id="ccCancelCoverBtn" onclick="cancelCoverChange()">
+                                Cancel
+                            </button>
+                            {% endif %}
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- 2. Basic Info -->
+                <div class="cc-card">
+                    <div class="cc-card-head">
+                        <div class="cc-card-head-icon">
+                            <svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+                        </div>
+                        <div>
+                            <h3>Basic Information</h3>
+                            <p>Edit your community's name, description and category</p>
+                        </div>
+                    </div>
+                    <div class="cc-card-body">
+                        <div class="cc-fg">
+                            <label>Community Name <span class="req">*</span></label>
+                            {{ form.name }}
+                            {% if form.name.errors %}<ul class="errorlist">{{ form.name.errors }}</ul>{% endif %}
+                        </div>
+                        <div class="cc-fg">
+                            <label>Description <span class="req">*</span></label>
+                            {{ form.description }}
+                            {% if form.description.errors %}<ul class="errorlist">{{ form.description.errors }}</ul>{% endif %}
+                            <span class="hint">Tell people what this community is about</span>
+                        </div>
+                        <div class="cc-fg-row">
+                            <div class="cc-fg">
+                                <label>Interest / Category <span class="req">*</span></label>
+                                {{ form.interest }}
+                                {% if form.interest.errors %}<ul class="errorlist">{{ form.interest.errors }}</ul>{% endif %}
+                            </div>
+                            <div class="cc-fg">
+                                <label>Tags</label>
+                                {{ form.tags }}
+                                {% if form.tags.errors %}<ul class="errorlist">{{ form.tags.errors }}</ul>{% endif %}
+                                <span class="hint">Comma-separated: hiking, solo, kerala</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 3. Privacy & Type -->
+                <div class="cc-card">
+                    <div class="cc-card-head">
+                        <div class="cc-card-head-icon">
+                            <svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                        </div>
+                        <div>
+                            <h3>Privacy &amp; Type</h3>
+                            <p>Control who can see and join your community</p>
+                        </div>
+                    </div>
+                    <div class="cc-card-body">
+                        <div class="cc-fg">
+                            <label>Community Type <span class="req">*</span></label>
+                            <div class="cc-type-grid">
+                                <label class="cc-type-card {% if community.community_type == 'public' %}selected{% endif %}" id="typePublic" onclick="selectType('public')">
+                                    <input type="radio" name="community_type" value="public" {% if community.community_type == 'public' %}checked{% endif %}>
+                                    <div class="cc-type-icon">🌍</div>
+                                    <div class="cc-type-name">Public</div>
+                                    <div class="cc-type-desc">Anyone can find and join. Great for large communities.</div>
+                                </label>
+                                <label class="cc-type-card {% if community.community_type == 'private' %}selected{% endif %}" id="typePrivate" onclick="selectType('private')">
+                                    <input type="radio" name="community_type" value="private" {% if community.community_type == 'private' %}checked{% endif %}>
+                                    <div class="cc-type-icon">🔒</div>
+                                    <div class="cc-type-name">Private</div>
+                                    <div class="cc-type-desc">Invite-only. Members must be approved to join.</div>
+                                </label>
+                            </div>
+                            {% if form.community_type.errors %}<ul class="errorlist">{{ form.community_type.errors }}</ul>{% endif %}
+                        </div>
+                        <div class="cc-privacy-info {% if community.community_type == 'private' %}show{% endif %}" id="ccPrivacyInfo">
+                            <strong>🔒 Private Community</strong> — Only approved members can see posts and content. You'll review join requests before anyone can participate.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 4. Rules & Permissions -->
+                <div class="cc-card">
+                    <div class="cc-card-head">
+                        <div class="cc-card-head-icon">
+                            <svg viewBox="0 0 24 24"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+                        </div>
+                        <div>
+                            <h3>Rules &amp; Permissions</h3>
+                            <p>Set expectations and what members can do</p>
+                        </div>
+                    </div>
+                    <div class="cc-card-body">
+                        <div class="cc-fg">
+                            <label>Community Rules</label>
+                            {{ form.rules }}
+                            {% if form.rules.errors %}<ul class="errorlist">{{ form.rules.errors }}</ul>{% endif %}
+                            <span class="hint">Guidelines to keep your community respectful and on-topic</span>
+                        </div>
+                        <div class="cc-fg">
+                            <label>Max Members</label>
+                            {{ form.max_members }}
+                            {% if form.max_members.errors %}<ul class="errorlist">{{ form.max_members.errors }}</ul>{% endif %}
+                            <span class="hint">Leave blank for unlimited members</span>
+                        </div>
+                        <div class="cc-fg" style="margin-bottom:0;">
+                            <label>Member Permissions</label>
+                            <div class="cc-toggle-row">
+                                <div class="cc-toggle-item">
+                                    <div class="cc-toggle-info">
+                                        <span class="cc-toggle-label">Allow Posts</span>
+                                        <span class="cc-toggle-sub">Members can create posts in this community</span>
+                                    </div>
+                                    <label class="cc-sw" id="sw-allow-post" onclick="toggleSwitch('allow_post_cb', 'sw-allow-post')">
+                                        <input type="checkbox" id="allow_post_cb" name="{{ form.allow_post.html_name }}"
+                                               {% if form.allow_post.value %}checked{% endif %}>
+                                        <span class="cc-sw-track"></span>
+                                    </label>
+                                </div>
+                                <div class="cc-toggle-item">
+                                    <div class="cc-toggle-info">
+                                        <span class="cc-toggle-label">Allow Trip Plans</span>
+                                        <span class="cc-toggle-sub">Members can share and organise trips</span>
+                                    </div>
+                                    <label class="cc-sw" id="sw-allow-trip" onclick="toggleSwitch('allow_trip_cb', 'sw-allow-trip')">
+                                        <input type="checkbox" id="allow_trip_cb" name="{{ form.allow_trip.html_name }}"
+                                               {% if form.allow_trip.value %}checked{% endif %}>
+                                        <span class="cc-sw-track"></span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="cc-form-foot">
+                        <a href="{% url 'community:community_detail' pk=community.id %}" class="cc-btn-cancel">Cancel</a>
+                        <button type="submit" class="cc-btn-submit">
+                            <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+                            Save Changes
+                        </button>
+                    </div>
+                </div>
+
+            </form>
+
+            <!-- ══ DANGER ZONE ══ -->
+            {% if request.user == community.creator %}
+            <div class="danger-zone-card">
+                <div class="danger-zone-head">
+                    <div class="danger-zone-head-icon">
+                        <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+                    </div>
+                    <div>
+                        <h3>Danger Zone</h3>
+                        <p>Irreversible actions — proceed with caution</p>
+                    </div>
+                </div>
+                <div class="danger-zone-body">
+                    <p>Permanently delete <strong>{{ community.name }}</strong> and all its posts, polls, trips and member data. This cannot be undone.</p>
+                    <a href="{% url 'community:delete_community' community.id %}"
+                       class="cc-btn-delete"
+                       onclick="return confirm('Are you sure you want to permanently delete {{ community.name }}? This action cannot be undone.')">
+                        <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
+                        Delete Community
+                    </a>
+                </div>
+            </div>
+            {% endif %}
+
+        </div><!-- /form-col -->
+
+        <!-- ══ SIDEBAR ══ -->
+        <div class="cc-tips-col">
+
+            <!-- Community preview -->
+            <div class="cc-preview-card" style="margin-bottom:1.2rem;">
+                <div style="position:relative;">
+                    {% if community.cover_image %}
+                    <img src="{{ community.cover_image.url }}" alt="" class="cc-preview-thumb" id="sidebarPreview">
+                    {% else %}
+                    <div class="cc-preview-thumb-placeholder" id="sidebarPreview">🏔️</div>
+                    {% endif %}
+                </div>
+                <div class="cc-preview-body">
+                    <div class="cc-preview-name">{{ community.name }}</div>
+                    <div class="cc-preview-meta">
+                        {% if community.community_type == 'private' %}🔒 Private{% else %}🌍 Public{% endif %} ·
+                        {% if community.interest %}{{ community.interest }}{% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tips -->
+            <div class="cc-tips-card">
+                <div class="cc-tips-head">
+                    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                    Editing tips
+                </div>
+                <div class="cc-tips-body">
+                    <div class="cc-tip-item">
+                        <div class="cc-tip-icon">📸</div>
+                        <div>
+                            <div class="cc-tip-title">Refresh your cover</div>
+                            <div class="cc-tip-text">Hover over the current cover photo to upload a new one instantly.</div>
+                        </div>
+                    </div>
+                    <div class="cc-tip-item">
+                        <div class="cc-tip-icon">🔒</div>
+                        <div>
+                            <div class="cc-tip-title">Switching to Private</div>
+                            <div class="cc-tip-text">Existing members stay, but new joiners will need approval.</div>
+                        </div>
+                    </div>
+                    <div class="cc-tip-item">
+                        <div class="cc-tip-icon">📋</div>
+                        <div>
+                            <div class="cc-tip-title">Update your rules</div>
+                            <div class="cc-tip-text">Clear guidelines keep discussions healthy as communities grow.</div>
+                        </div>
+                    </div>
+                    <div class="cc-tip-item">
+                        <div class="cc-tip-icon">🏷️</div>
+                        <div>
+                            <div class="cc-tip-title">Add more tags</div>
+                            <div class="cc-tip-text">More tags means more discoverability in search.</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div><!-- /tips-col -->
+
+    </div>
+</div>
+
+<script>
+/* ── Cover image ── */
+function showUploadZone() {
+    document.getElementById('ccUploadZone').classList.add('visible');
+    const cancelBtn = document.getElementById('ccCancelCoverBtn');
+    const changeBtn = document.getElementById('ccChangeCoverBtn');
+    if (cancelBtn) cancelBtn.style.display = 'inline-flex';
+    if (changeBtn) changeBtn.style.display = 'none';
+}
+
+function cancelCoverChange() {
+    document.getElementById('ccUploadZone').classList.remove('visible');
+    document.getElementById('ccCoverPreview').style.display = 'none';
+    document.getElementById('ccCoverInput').value = '';
+    const cancelBtn = document.getElementById('ccCancelCoverBtn');
+    const changeBtn = document.getElementById('ccChangeCoverBtn');
+    if (cancelBtn) cancelBtn.style.display = 'none';
+    if (changeBtn) changeBtn.style.display = 'inline-flex';
+    const ph = document.getElementById('ccCoverPlaceholder');
+    if (ph) ph.style.display = '';
+}
+
+function previewCover(input) {
+    if (!input.files[0]) return;
+    const reader = new FileReader();
+    reader.onload = ev => {
+        const preview = document.getElementById('ccCoverPreview');
+        const ph = document.getElementById('ccCoverPlaceholder');
+        preview.src = ev.target.result;
+        preview.style.display = 'block';
+        if (ph) ph.style.display = 'none';
+
+        // Also update sidebar preview
+        const sp = document.getElementById('sidebarPreview');
+        if (sp && sp.tagName === 'IMG') {
+            sp.src = ev.target.result;
+        } else if (sp) {
+            // Replace placeholder div with img
+            const img = document.createElement('img');
+            img.src = ev.target.result;
+            img.className = 'cc-preview-thumb';
+            img.id = 'sidebarPreview';
+            sp.replaceWith(img);
+        }
+    };
+    reader.readAsDataURL(input.files[0]);
+}
+
+/* ── Community type ── */
+function selectType(type) {
+    document.getElementById('typePublic').classList.toggle('selected',  type === 'public');
+    document.getElementById('typePrivate').classList.toggle('selected', type === 'private');
+    const info = document.getElementById('ccPrivacyInfo');
+    if (info) info.classList.toggle('show', type === 'private');
+}
+
+/* ── Toggle switches ── */
+function toggleSwitch(cbId, labelId) {
+    const cb = document.getElementById(cbId);
+    if (!cb) return;
+    cb.checked = !cb.checked;
+    updateToggleVisual(cb);
+}
+function updateToggleVisual(cb) {
+    const track = cb.nextElementSibling;
+    if (!track) return;
+    track.style.background = cb.checked ? '#0e8a8a' : '#cbd5e1';
+}
+
+document.addEventListener('DOMContentLoaded', function () {
+    ['allow_post_cb', 'allow_trip_cb'].forEach(function(id) {
+        const cb = document.getElementById(id);
+        if (!cb) return;
+        updateToggleVisual(cb);
+        cb.addEventListener('click', function(e) { e.preventDefault(); });
+    });
+
+    /* Apply DM Sans to Django-rendered inputs */
+    document.querySelectorAll('.cc-card input:not([type="checkbox"]):not([type="radio"]):not([type="file"]), .cc-card textarea, .cc-card select').forEach(el => {
+        el.style.fontFamily = "'DM Sans', sans-serif";
+    });
+});
+
+/* ── Drag-over on upload zone ── */
+const zone = document.getElementById('ccUploadZone');
+if (zone) {
+    zone.addEventListener('dragover', e => {
+        e.preventDefault();
+        zone.style.borderColor = '#0e8a8a';
+        zone.style.background = '#e6f3f3';
+    });
+    zone.addEventListener('dragleave', () => {
+        zone.style.borderColor = '';
+        zone.style.background = '';
+    });
+    zone.addEventListener('drop', e => {
+        e.preventDefault();
+        zone.style.borderColor = '';
+        zone.style.background = '';
+        const file = e.dataTransfer.files[0];
+        if (file && file.type.startsWith('image/')) {
+            const input = document.getElementById('ccCoverInput');
+            const dt = new DataTransfer();
+            dt.items.add(file);
+            input.files = dt.files;
+            previewCover(input);
+        }
+    });
+}
+
+document.head.insertAdjacentHTML('beforeend', '<style>.cc-sw-track::after{transform:translateX(var(--thumb-x,0px));}</style>');
+</script>
+
+{% endblock %}

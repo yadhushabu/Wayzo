@@ -1,40 +1,532 @@
-<h2>Create Poll</h2>
+{% extends "travellers/base.html" %}
+{% load static %}
 
-<form method="POST" enctype="multipart/form-data">
-    {% csrf_token %}
+{% block title %}Create Poll | {{ community.name }} | Wayzo{% endblock %}
+{% block nav_community %}active{% endblock %}
 
-    <label>Question</label>
-    <input type="text" name="question" required>
+{% block extra_styles %}
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,400&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap');
 
-    <h4>Options</h4>
+:root {
+    --teal:#0e8a8a; --teal-dark:#0a6e6e; --teal-pale:#eaf4f4;
+    --amber:#f59e0b; --amber-pale:#fef3c7;
+    --green:#10b981; --green-pale:#d1fae5;
+    --red:#ef4444; --red-pale:#fee2e2;
+    --rose:#f43f5e;
+    --ink:#1e242c; --ink2:#334155; --muted:#64748b;
+    --border:#e9edf2; --border2:#f1f3f8;
+    --surface:#fff; --s2:#f8f9fc; --s3:#f1f3f8;
+    --gray-100:#f8f9fc; --gray-150:#f1f3f8; --gray-200:#e9edf2;
+    --gray-300:#dce2ea; --gray-400:#bec7d1; --gray-500:#9aa3af;
+    --gray-700:#4a515c; --gray-800:#2e343d; --gray-900:#191e24;
+    --text-dark:#1e242c; --text-soft:#3c4350; --text-light:#6f7886;
+    --radius:18px; --radius-sm:10px;
+    --sh:0 4px 16px rgba(0,0,0,.06);
+    --sh-lg:0 12px 40px rgba(0,0,0,.1);
+    --white:#fff;
+}
 
-    <div id="options-box">
-        <div>
-            <input type="text" name="options" placeholder="Option 1">
-            <input type="file" name="option_images">
-        </div>
-        <div>
-            <input type="text" name="options" placeholder="Option 2">
-            <input type="file" name="option_images">
-        </div>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'DM Sans',sans-serif;background:var(--gray-100);color:var(--text-dark);-webkit-font-smoothing:antialiased;}
+
+/* ══════════════════════════════
+   HERO
+══════════════════════════════ */
+.community-hero {
+    position:relative; height:220px; overflow:hidden;
+    background:linear-gradient(135deg,#0a3d3d,#0d2b2a);
+    flex-shrink:0;
+}
+.community-hero-bg {
+    position:absolute; inset:0;
+    background-size:cover; background-position:center;
+    z-index:0;
+}
+.community-hero-bg::after {
+    content:''; position:absolute; inset:0;
+    background:linear-gradient(160deg,rgba(6,16,24,.82) 0%,rgba(10,50,50,.68) 45%,rgba(6,16,24,.5) 100%);
+}
+.hero-fade-bottom {
+    position:absolute; bottom:0; left:0; right:0; height:100px;
+    background:linear-gradient(to bottom,transparent,var(--gray-100));
+    z-index:3; pointer-events:none;
+}
+.community-hero-content {
+    position:relative; z-index:4;
+    height:100%; display:flex; flex-direction:column;
+    justify-content:flex-end; padding:2rem 3rem 2.5rem;
+    max-width:1000px;
+}
+.hero-eyebrow {
+    display:inline-flex; align-items:center; gap:.45rem;
+    background:rgba(255,255,255,.1); backdrop-filter:blur(10px);
+    border:1px solid rgba(255,255,255,.2); border-radius:40px;
+    padding:.28rem .85rem; font-size:.65rem; font-weight:500;
+    letter-spacing:.08em; text-transform:uppercase;
+    color:rgba(255,255,255,.85); margin-bottom:.6rem; width:fit-content;
+    text-decoration:none; transition:background .2s;
+}
+.hero-eyebrow:hover { background:rgba(255,255,255,.16); }
+.hero-eyebrow::before {
+    content:''; width:5px; height:5px; border-radius:50%;
+    background:#5FC5C5; flex-shrink:0; display:inline-block;
+}
+.community-hero-content h1 {
+    font-family:'Playfair Display',serif;
+    font-size:clamp(1.5rem,2.8vw,2rem); font-weight:700;
+    color:white; line-height:1.15;
+    text-shadow:0 2px 16px rgba(0,0,0,.35);
+}
+.community-hero-content p {
+    font-size:.82rem; color:rgba(255,255,255,.6);
+    margin-top:.35rem; font-weight:300;
+}
+
+/* ══════════════════════════════
+   PAGE BODY
+══════════════════════════════ */
+.page-body {
+    position:relative; z-index:10;
+    padding:2rem 3rem 4rem;
+    max-width:1000px; margin:0 auto;
+    width:100%;
+}
+
+/* Breadcrumb bar */
+.breadcrumb-bar {
+    display:flex; align-items:center; gap:.5rem;
+    margin-bottom:1.5rem; font-size:.75rem; color:var(--muted);
+}
+.breadcrumb-bar a { color:var(--teal); text-decoration:none; font-weight:500; }
+.breadcrumb-bar a:hover { text-decoration:underline; }
+.breadcrumb-bar .sep { opacity:.4; }
+
+/* ══════════════════════════════
+   FORM CARD
+══════════════════════════════ */
+.form-card {
+    background:white; border:1px solid var(--gray-200);
+    border-radius:var(--radius); overflow:hidden;
+    box-shadow:0 8px 32px rgba(0,0,0,.08),0 1px 4px rgba(0,0,0,.04);
+    animation:fadeUp .35s ease both;
+}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
+
+.form-card-header {
+    padding:1.2rem 1.8rem; border-bottom:1px solid var(--gray-200);
+    background:var(--s2); display:flex; align-items:center; gap:.75rem;
+}
+.form-card-header .header-icon {
+    width:40px; height:40px; border-radius:12px;
+    background:var(--teal-pale); display:flex; align-items:center;
+    justify-content:center; font-size:1.1rem; flex-shrink:0;
+}
+.form-card-header h2 {
+    font-family:'Playfair Display',serif;
+    font-size:1.2rem; font-weight:700; color:var(--ink);
+}
+.form-card-header p { font-size:.75rem; color:var(--muted); margin-top:.1rem; }
+
+.form-card-body { padding:1.8rem; }
+
+/* ══════════════════════════════
+   FORM ELEMENTS
+══════════════════════════════ */
+.field-group { margin-bottom:1.4rem; }
+.field-label {
+    display:block; font-size:.78rem; font-weight:700;
+    color:var(--ink2); margin-bottom:.45rem; letter-spacing:.01em;
+}
+.field-label span { color:var(--red); margin-left:.15rem; }
+.field-hint { font-size:.68rem; color:var(--muted); margin-top:.3rem; }
+
+.form-input {
+    width:100%; padding:.68rem 1rem; border:1.5px solid var(--gray-200);
+    border-radius:var(--radius-sm); font-size:.85rem;
+    font-family:'DM Sans',sans-serif; color:var(--ink);
+    background:white; transition:border-color .15s, box-shadow .15s;
+    outline:none;
+}
+.form-input:focus {
+    border-color:var(--teal);
+    box-shadow:0 0 0 3px rgba(14,138,138,.1);
+}
+.form-input::placeholder { color:var(--gray-400); }
+
+textarea.form-input { resize:vertical; min-height:80px; line-height:1.55; }
+
+/* ══════════════════════════════
+   OPTIONS SECTION
+══════════════════════════════ */
+.options-section {
+    border:1.5px solid var(--gray-200); border-radius:var(--radius);
+    overflow:hidden; margin-bottom:1.5rem;
+}
+.options-header {
+    padding:.8rem 1.2rem; background:var(--s2);
+    border-bottom:1px solid var(--gray-200);
+    display:flex; align-items:center; justify-content:space-between;
+}
+.options-header-left {
+    display:flex; align-items:center; gap:.5rem;
+    font-size:.8rem; font-weight:700; color:var(--ink);
+}
+.options-count-badge {
+    background:var(--teal-pale); color:var(--teal-dark);
+    font-size:.65rem; font-weight:700; padding:.12rem .45rem;
+    border-radius:99px; min-width:20px; text-align:center;
+}
+
+.options-list { padding:.5rem 0; }
+
+.option-row {
+    display:flex; align-items:center; gap:.75rem;
+    padding:.7rem 1.2rem; border-bottom:1px solid var(--gray-150);
+    transition:background .15s; position:relative;
+    animation:fadeUp .25s ease both;
+}
+.option-row:last-child { border-bottom:none; }
+.option-row:hover { background:var(--gray-100); }
+
+.option-number {
+    width:26px; height:26px; border-radius:50%;
+    background:var(--teal-pale); color:var(--teal-dark);
+    font-size:.7rem; font-weight:800; display:flex;
+    align-items:center; justify-content:center; flex-shrink:0;
+}
+
+.option-fields { flex:1; display:flex; gap:.6rem; align-items:center; min-width:0; }
+.option-text-input {
+    flex:1; padding:.55rem .9rem; border:1.5px solid var(--gray-200);
+    border-radius:40px; font-size:.82rem;
+    font-family:'DM Sans',sans-serif; color:var(--ink);
+    background:white; transition:border-color .15s, box-shadow .15s;
+    outline:none; min-width:0;
+}
+.option-text-input:focus {
+    border-color:var(--teal);
+    box-shadow:0 0 0 3px rgba(14,138,138,.08);
+}
+.option-text-input::placeholder { color:var(--gray-400); }
+
+/* Image upload pill */
+.option-img-label {
+    display:inline-flex; align-items:center; gap:.35rem;
+    padding:.48rem .85rem; border-radius:40px;
+    border:1.5px dashed var(--gray-300); cursor:pointer;
+    font-size:.72rem; font-weight:600; color:var(--muted);
+    transition:all .2s; white-space:nowrap; flex-shrink:0;
+    background:white;
+}
+.option-img-label:hover {
+    border-color:var(--teal); color:var(--teal);
+    background:var(--teal-pale);
+}
+.option-img-label svg { width:13px; height:13px; stroke:currentColor; fill:none; stroke-width:2; }
+.option-img-label.has-image {
+    border-style:solid; border-color:var(--teal);
+    color:var(--teal-dark); background:var(--teal-pale);
+}
+.option-img-label.has-image::before { content:'✓ '; }
+input[type="file"].option-img-input { display:none; }
+
+/* Remove option */
+.remove-option-btn {
+    width:28px; height:28px; border-radius:50%; border:none;
+    background:none; cursor:pointer; display:flex; align-items:center;
+    justify-content:center; color:var(--gray-400); flex-shrink:0;
+    transition:all .15s; font-size:1rem; line-height:1;
+}
+.remove-option-btn:hover { background:var(--red-pale); color:var(--red); }
+
+/* Add option button */
+.add-option-btn {
+    display:flex; align-items:center; gap:.5rem;
+    width:100%; padding:.75rem 1.2rem;
+    background:none; border:none; border-top:1px solid var(--gray-150);
+    cursor:pointer; font-family:'DM Sans',sans-serif;
+    font-size:.78rem; font-weight:600; color:var(--teal);
+    transition:background .15s; text-align:left;
+}
+.add-option-btn:hover { background:var(--teal-pale); }
+.add-option-btn svg { width:16px; height:16px; stroke:currentColor; fill:none; stroke-width:2.5; }
+
+/* Preview strip */
+.option-preview-img {
+    width:32px; height:32px; border-radius:7px; object-fit:cover;
+    border:1.5px solid var(--teal); display:none; flex-shrink:0;
+}
+
+/* ══════════════════════════════
+   ACTION BAR (bottom)
+══════════════════════════════ */
+.form-actions {
+    display:flex; align-items:center; justify-content:space-between;
+    padding:1.2rem 1.8rem; border-top:1px solid var(--gray-200);
+    background:var(--s2); gap:1rem; flex-wrap:wrap;
+}
+.form-actions-hint { font-size:.72rem; color:var(--muted); }
+.form-actions-hint strong { color:var(--ink); }
+
+.action-btn {
+    display:inline-flex; align-items:center; gap:.4rem;
+    padding:.55rem 1.4rem; border-radius:40px;
+    font-size:.82rem; font-weight:600; text-decoration:none;
+    transition:all .2s; cursor:pointer; border:none;
+    font-family:'DM Sans',sans-serif; white-space:nowrap;
+}
+.action-btn svg { width:15px; height:15px; stroke:currentColor; fill:none; stroke-width:2; }
+.action-btn-primary { background:var(--teal); color:white; }
+.action-btn-primary:hover { background:var(--teal-dark); color:white; transform:translateY(-1px); box-shadow:0 4px 16px rgba(14,138,138,.3); }
+.action-btn-ghost { background:transparent; color:var(--text-light); border:1.5px solid var(--gray-200); }
+.action-btn-ghost:hover { background:var(--s2); border-color:var(--gray-300); color:var(--ink); }
+
+/* Validation helpers */
+.option-row.empty-warn .option-text-input { border-color:var(--amber); }
+.min-options-note {
+    font-size:.68rem; color:var(--amber); font-weight:600;
+    display:none; padding:.3rem 1.2rem .5rem;
+}
+.min-options-note.show { display:block; }
+
+/* Responsive */
+@media(max-width:768px){
+    .community-hero{ height:180px; }
+    .community-hero-content{ padding:1.2rem 1.2rem 1.8rem; }
+    .page-body{ padding:1rem 1rem 2.5rem; }
+    .form-card-body{ padding:1.2rem; }
+    .form-actions{ padding:1rem 1.2rem; }
+    .option-fields{ flex-wrap:wrap; }
+    .option-img-label{ font-size:.65rem; }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- ══ HERO ══ -->
+<div class="community-hero">
+    {% if community.cover_image %}
+    <div class="community-hero-bg" style="background-image:url('{{ community.cover_image.url }}');"></div>
+    {% else %}
+    <div class="community-hero-bg" style="background:linear-gradient(135deg,var(--teal),var(--teal-dark));"></div>
+    {% endif %}
+    <div class="hero-fade-bottom"></div>
+    <div class="community-hero-content">
+        <a href="{% url 'community:community_detail' pk=community.id %}" class="hero-eyebrow">← {{ community.name }}</a>
+        <h1>Create a Poll</h1>
+        <p>Ask the community — let members vote on what matters</p>
+    </div>
+</div>
+
+<!-- ══ PAGE BODY ══ -->
+<div class="page-body">
+
+    <!-- Breadcrumb -->
+    <div class="breadcrumb-bar">
+        <a href="{% url 'community:community_detail' pk=community.id %}">{{ community.name }}</a>
+        <span class="sep">›</span>
+        <span>Create Poll</span>
     </div>
 
-    <button type="button" onclick="addOption()">+ Add Option</button>
+    <form method="POST" enctype="multipart/form-data" id="pollForm" novalidate>
+        {% csrf_token %}
 
-    <br><br>
-    <button type="submit">Create Poll</button>
-</form>
+        <div class="form-card">
+            <!-- Header -->
+            <div class="form-card-header">
+                <div class="header-icon">📊</div>
+                <div>
+                    <h2>New Poll</h2>
+                    <p>Add a question and at least 2 options for members to vote on</p>
+                </div>
+            </div>
+
+            <!-- Body -->
+            <div class="form-card-body">
+
+                <!-- Question -->
+                <div class="field-group">
+                    <label class="field-label" for="pollQuestion">
+                        Poll Question <span>*</span>
+                    </label>
+                    <input
+                        type="text"
+                        id="pollQuestion"
+                        name="question"
+                        class="form-input"
+                        placeholder="e.g. Which destination should we visit next?"
+                        required
+                        autocomplete="off"
+                    >
+                    <p class="field-hint">Keep it clear and focused — good polls get more votes.</p>
+                </div>
+
+                <!-- Options -->
+                <div class="field-group" style="margin-bottom:0;">
+                    <label class="field-label">
+                        Poll Options <span>*</span>
+                    </label>
+                </div>
+
+                <div class="options-section">
+                    <div class="options-header">
+                        <div class="options-header-left">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--teal)" stroke-width="2.5"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+                            Options
+                            <span class="options-count-badge" id="optionsCount">2</span>
+                        </div>
+                        <span style="font-size:.68rem;color:var(--muted);">Optional: add an image per option</span>
+                    </div>
+
+                    <div class="options-list" id="optionsList">
+                        <!-- Options injected by JS; 2 default rendered below -->
+                    </div>
+
+                    <p class="min-options-note" id="minNote">⚠ Please fill in at least 2 options</p>
+
+                    <button type="button" class="add-option-btn" onclick="addOption()">
+                        <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                        Add Another Option
+                    </button>
+                </div>
+
+            </div><!-- /form-card-body -->
+
+            <!-- Actions -->
+            <div class="form-actions">
+                <p class="form-actions-hint">
+                    Posting to <strong>{{ community.name }}</strong>
+                </p>
+                <div style="display:flex;gap:.6rem;flex-wrap:wrap;">
+                    <a href="{% url 'community:community_detail' pk=community.id %}" class="action-btn action-btn-ghost">
+                        <svg viewBox="0 0 24 24"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+                        Cancel
+                    </a>
+                    <button type="submit" class="action-btn action-btn-primary" id="submitBtn">
+                        <svg viewBox="0 0 24 24"><polyline points="22 3 2 3 10 13 10 21 14 18 14 13 22 3"/></svg>
+                        Post Poll
+                    </button>
+                </div>
+            </div>
+
+        </div><!-- /form-card -->
+
+    </form>
+</div><!-- /page-body -->
 
 <script>
-function addOption() {
-    let div = document.getElementById("options-box");
+let optionCount = 0;
 
-    let newOption = document.createElement("div");
-    newOption.innerHTML = `
-        <input type="text" name="options" placeholder="Another option">
-        <input type="file" name="option_images">
+function addOption(placeholder) {
+    optionCount++;
+    const list = document.getElementById('optionsList');
+    const count = list.children.length + 1;
+
+    const row = document.createElement('div');
+    row.className = 'option-row';
+    row.dataset.index = count;
+
+    row.innerHTML = `
+        <div class="option-number">${count}</div>
+        <div class="option-fields">
+            <input
+                type="text"
+                name="options"
+                class="option-text-input"
+                placeholder="${placeholder || 'Option ' + count}"
+                autocomplete="off"
+            >
+            <label class="option-img-label" title="Upload an image for this option">
+                <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                Photo
+                <input type="file" name="option_images" class="option-img-input" accept="image/*" onchange="handleImageSelect(this)">
+            </label>
+            <img class="option-preview-img" alt="preview">
+        </div>
+        <button type="button" class="remove-option-btn" onclick="removeOption(this)" title="Remove option">×</button>
     `;
 
-    div.appendChild(newOption);
+    list.appendChild(row);
+    updateNumbers();
+
+    // Focus the new input
+    row.querySelector('.option-text-input').focus();
 }
+
+function removeOption(btn) {
+    const row = btn.closest('.option-row');
+    const list = document.getElementById('optionsList');
+    if (list.children.length <= 2) {
+        document.getElementById('minNote').classList.add('show');
+        setTimeout(() => document.getElementById('minNote').classList.remove('show'), 2500);
+        return;
+    }
+    row.style.opacity = '0';
+    row.style.transform = 'translateX(10px)';
+    row.style.transition = 'all .2s';
+    setTimeout(() => { row.remove(); updateNumbers(); }, 200);
+}
+
+function updateNumbers() {
+    const rows = document.querySelectorAll('.option-row');
+    rows.forEach((row, i) => {
+        const num = row.querySelector('.option-number');
+        if (num) num.textContent = i + 1;
+    });
+    document.getElementById('optionsCount').textContent = rows.length;
+}
+
+function handleImageSelect(input) {
+    const label = input.closest('.option-img-label');
+    const preview = input.closest('.option-fields').querySelector('.option-preview-img');
+
+    if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            preview.src = e.target.result;
+            preview.style.display = 'block';
+        };
+        reader.readAsDataURL(input.files[0]);
+        label.classList.add('has-image');
+        label.querySelector('svg').style.display = 'none';
+        // update label text
+        const textNodes = [...label.childNodes].filter(n => n.nodeType === 3);
+        textNodes.forEach(n => n.textContent = 'Photo');
+    }
+}
+
+// Form submit validation
+document.getElementById('pollForm').addEventListener('submit', function(e) {
+    const inputs = document.querySelectorAll('.option-text-input');
+    const filled = [...inputs].filter(i => i.value.trim() !== '');
+    if (filled.length < 2) {
+        e.preventDefault();
+        document.getElementById('minNote').classList.add('show');
+        inputs.forEach(i => {
+            if (!i.value.trim()) i.closest('.option-row').classList.add('empty-warn');
+        });
+        return;
+    }
+
+    // Disable submit to prevent double
+    const btn = document.getElementById('submitBtn');
+    btn.disabled = true;
+    btn.innerHTML = `
+        <svg viewBox="0 0 24 24" style="animation:spin .7s linear infinite;"><path d="M21 12a9 9 0 1 1-9-9" stroke="white" stroke-width="2.5" fill="none"/></svg>
+        Posting…
+    `;
+});
+
+// Init default 2 options
+addOption('e.g. Goa');
+addOption('e.g. Manali');
+
+// Spin keyframe
+const style = document.createElement('style');
+style.textContent = '@keyframes spin{to{transform:rotate(360deg)}}';
+document.head.appendChild(style);
 </script>
+
+{% endblock %}
