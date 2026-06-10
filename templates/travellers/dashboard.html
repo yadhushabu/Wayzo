@@ -1500,4 +1500,86 @@
         }
     });
 </script>
+
+
+
+
+<style>
+    .float-chat-btn {
+        position: fixed;
+        bottom: 2rem;
+        right: 2rem;
+        z-index: 500;
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+        background: var(--gray-950);
+        border: 1px solid rgba(14,138,138,0.35);
+        color: white;
+        padding: 0.75rem 1.3rem 0.75rem 0.9rem;
+        border-radius: 50px;
+        text-decoration: none;
+        font-family: 'Inter', sans-serif;
+        font-size: 0.82rem;
+        font-weight: 600;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.28), 0 0 0 1px rgba(14,138,138,0.1);
+        transition: all 0.25s ease;
+        cursor: pointer;
+    }
+    .float-chat-btn:hover {
+        background: #0E8A8A;
+        border-color: transparent;
+        transform: translateY(-3px);
+        box-shadow: 0 14px 40px rgba(14,138,138,0.38);
+        color: white;
+        text-decoration: none;
+    }
+    .float-chat-icon {
+        width: 34px;
+        height: 34px;
+        background: rgba(14,138,138,0.2);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        transition: background 0.25s;
+    }
+    .float-chat-btn:hover .float-chat-icon {
+        background: rgba(255,255,255,0.18);
+    }
+    .float-chat-icon svg {
+        width: 16px;
+        height: 16px;
+        stroke: #5FC5C5;
+        fill: none;
+        stroke-width: 2;
+    }
+    .float-chat-btn:hover .float-chat-icon svg {
+        stroke: white;
+    }
+    .float-chat-pulse {
+        position: absolute;
+        top: -3px;
+        right: -3px;
+        width: 11px;
+        height: 11px;
+        background: #10B981;
+        border-radius: 50%;
+        border: 2px solid var(--gray-100);
+    }
+    @media (max-width: 640px) {
+        .float-chat-btn span.chat-label { display: none; }
+        .float-chat-btn { padding: 0.75rem; border-radius: 50%; }
+        .float-chat-icon { width: 40px; height: 40px; background: transparent; }
+    }
+</style>
+
+<a href="{% url 'chatbot:chatbot_page' %}" class="float-chat-btn" title="Open AI Travel Assistant">
+    <div class="float-chat-icon" style="position:relative;">
+        <svg viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+        <div class="float-chat-pulse"></div>
+    </div>
+    <span class="chat-label">Wayzo AI</span>
+</a>
 {% endblock %}

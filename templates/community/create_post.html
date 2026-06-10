@@ -27,21 +27,17 @@
     --white:#fff;
 }
 
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
-body{font-family:'DM Sans',sans-serif;background:var(--gray-100);color:var(--text-dark);-webkit-font-smoothing:antialiased;}
+*,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
+body { font-family:'DM Sans',sans-serif; background:var(--gray-100); color:var(--text-dark); -webkit-font-smoothing:antialiased; }
 
-/* ══════════════════════════════
-   HERO
-══════════════════════════════ */
+/* ══ HERO ══ */
 .community-hero {
     position:relative; height:220px; overflow:hidden;
-    background:linear-gradient(135deg,#0a3d3d,#0d2b2a);
-    flex-shrink:0;
+    background:linear-gradient(135deg,#0a3d3d,#0d2b2a); flex-shrink:0;
 }
 .community-hero-bg {
     position:absolute; inset:0;
-    background-size:cover; background-position:center;
-    z-index:0;
+    background-size:cover; background-position:center; z-index:0;
 }
 .community-hero-bg::after {
     content:''; position:absolute; inset:0;
@@ -53,10 +49,9 @@ body{font-family:'DM Sans',sans-serif;background:var(--gray-100);color:var(--tex
     z-index:3; pointer-events:none;
 }
 .community-hero-content {
-    position:relative; z-index:4;
-    height:100%; display:flex; flex-direction:column;
-    justify-content:flex-end; padding:2rem 3rem 2.5rem;
-    max-width:1000px;
+    position:relative; z-index:4; height:100%;
+    display:flex; flex-direction:column; justify-content:flex-end;
+    padding:2rem 3rem 2.5rem; max-width:1000px;
 }
 .hero-eyebrow {
     display:inline-flex; align-items:center; gap:.45rem;
@@ -67,7 +62,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--gray-100);color:var(--tex
     color:rgba(255,255,255,.85); margin-bottom:.6rem; width:fit-content;
     text-decoration:none; transition:background .2s;
 }
-.hero-eyebrow:hover { background:rgba(255,255,255,.16); }
+.hero-eyebrow:hover { background:rgba(255,255,255,.18); }
 .hero-eyebrow::before {
     content:''; width:5px; height:5px; border-radius:50%;
     background:#5FC5C5; flex-shrink:0; display:inline-block;
@@ -83,14 +78,11 @@ body{font-family:'DM Sans',sans-serif;background:var(--gray-100);color:var(--tex
     margin-top:.35rem; font-weight:300;
 }
 
-/* ══════════════════════════════
-   PAGE BODY
-══════════════════════════════ */
+/* ══ PAGE BODY ══ */
 .page-body {
     position:relative; z-index:10;
     padding:2rem 3rem 4rem;
-    max-width:1000px; margin:0 auto;
-    width:100%;
+    max-width:780px; margin:0 auto; width:100%;
 }
 
 /* Breadcrumb */
@@ -102,16 +94,14 @@ body{font-family:'DM Sans',sans-serif;background:var(--gray-100);color:var(--tex
 .breadcrumb-bar a:hover { text-decoration:underline; }
 .breadcrumb-bar .sep { opacity:.4; }
 
-/* ══════════════════════════════
-   FORM CARD
-══════════════════════════════ */
+/* ══ FORM CARD ══ */
 .form-card {
     background:white; border:1px solid var(--gray-200);
     border-radius:var(--radius); overflow:hidden;
     box-shadow:0 8px 32px rgba(0,0,0,.08),0 1px 4px rgba(0,0,0,.04);
     animation:fadeUp .35s ease both;
 }
-@keyframes fadeUp{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
+@keyframes fadeUp { from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);} }
 
 .form-card-header {
     padding:1.2rem 1.8rem; border-bottom:1px solid var(--gray-200);
@@ -130,9 +120,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--gray-100);color:var(--tex
 
 .form-card-body { padding:1.8rem; }
 
-/* ══════════════════════════════
-   FORM ELEMENTS
-══════════════════════════════ */
+/* ══ FORM ELEMENTS ══ */
 .field-group { margin-bottom:1.4rem; }
 .field-label {
     display:block; font-size:.78rem; font-weight:700;
@@ -145,27 +133,17 @@ body{font-family:'DM Sans',sans-serif;background:var(--gray-100);color:var(--tex
     width:100%; padding:.68rem 1rem; border:1.5px solid var(--gray-200);
     border-radius:var(--radius-sm); font-size:.85rem;
     font-family:'DM Sans',sans-serif; color:var(--ink);
-    background:white; transition:border-color .15s, box-shadow .15s;
-    outline:none;
+    background:white; transition:border-color .15s,box-shadow .15s; outline:none;
 }
 .form-input:focus {
     border-color:var(--teal);
     box-shadow:0 0 0 3px rgba(14,138,138,.1);
 }
 .form-input::placeholder { color:var(--gray-400); }
+textarea.form-input { resize:vertical; min-height:150px; line-height:1.6; }
+.errorlist { list-style:none; margin-top:.3rem; padding:0; font-size:.72rem; color:var(--red); }
 
-textarea.form-input {
-    resize:vertical; min-height:150px; line-height:1.6;
-}
-
-.errorlist {
-    list-style:none; margin-top:.3rem; padding:0;
-    font-size:.72rem; color:var(--red);
-}
-
-/* ══════════════════════════════
-   IMAGE UPLOAD SECTION
-══════════════════════════════ */
+/* ══ IMAGE UPLOAD ══ */
 .images-section {
     border:1.5px solid var(--gray-200); border-radius:var(--radius);
     overflow:hidden; margin-bottom:1.5rem;
@@ -185,25 +163,14 @@ textarea.form-input {
     font-size:.65rem; font-weight:700; padding:.12rem .45rem;
     border-radius:99px; min-width:20px; text-align:center;
 }
-
 .image-grid-wrapper {
     padding:1rem 1.2rem;
     display:grid;
-    grid-template-columns:repeat(auto-fill, minmax(120px, 1fr));
+    grid-template-columns:repeat(auto-fill,minmax(110px,1fr));
     gap:.75rem;
+    min-height:0;
 }
-
-/* Upload placeholder tile */
-.img-placeholder {
-    aspect-ratio:1; border:2px dashed var(--gray-300);
-    border-radius:12px; display:flex; flex-direction:column;
-    align-items:center; justify-content:center; gap:.4rem;
-    cursor:pointer; transition:all .2s; background:var(--gray-100);
-    color:var(--muted); font-size:.68rem; font-weight:500;
-}
-.img-placeholder svg { width:26px; height:26px; stroke:var(--gray-400); fill:none; stroke-width:1.8; }
-.img-placeholder:hover { border-color:var(--teal); background:var(--teal-pale); color:var(--teal); }
-.img-placeholder:hover svg { stroke:var(--teal); }
+.image-grid-wrapper:empty { padding:0; }
 
 /* Preview tile */
 .img-preview-tile {
@@ -214,7 +181,7 @@ textarea.form-input {
 .img-preview-tile img { width:100%; height:100%; object-fit:cover; display:block; }
 .img-remove-btn {
     position:absolute; top:5px; right:5px;
-    background:rgba(0,0,0,.65); color:white;
+    background:rgba(0,0,0,.6); color:white;
     border:none; border-radius:50%; width:24px; height:24px;
     cursor:pointer; font-size:.9rem; line-height:1;
     display:flex; align-items:center; justify-content:center;
@@ -222,32 +189,30 @@ textarea.form-input {
 }
 .img-remove-btn:hover { background:var(--red); }
 
-/* Add-image button at bottom */
+/* Add-image row */
 .add-image-row {
     padding:.65rem 1.2rem; border-top:1px solid var(--gray-150);
-    display:flex; align-items:center; gap:.5rem;
+    display:flex; align-items:center; gap:.6rem; flex-wrap:wrap;
 }
 .add-image-btn-row {
     display:flex; align-items:center; gap:.45rem;
     background:none; border:1.5px dashed var(--gray-300);
     border-radius:40px; padding:.42rem 1rem;
     font-size:.75rem; font-weight:600; color:var(--muted);
-    cursor:pointer; font-family:'DM Sans',sans-serif;
-    transition:all .2s;
+    cursor:pointer; font-family:'DM Sans',sans-serif; transition:all .2s;
 }
 .add-image-btn-row svg { width:13px; height:13px; stroke:currentColor; fill:none; stroke-width:2.5; }
 .add-image-btn-row:hover { border-color:var(--teal); color:var(--teal); background:var(--teal-pale); }
-.add-image-btn-row:disabled { opacity:.45; cursor:not-allowed; }
+.add-image-btn-row:disabled { opacity:.45; cursor:not-allowed; pointer-events:none; }
 .images-hint { font-size:.68rem; color:var(--muted); }
 
-/* ══════════════════════════════
-   OPTIONAL POLL SECTION
-══════════════════════════════ */
+/* ══ POLL SECTION ══ */
 .poll-toggle-row {
     display:flex; align-items:center; justify-content:space-between;
     padding:.75rem 1.2rem; background:var(--amber-pale);
     border:1px solid #fcd34d; border-radius:var(--radius-sm);
     margin-bottom:1.4rem; cursor:pointer; transition:background .15s;
+    user-select:none;
 }
 .poll-toggle-row:hover { background:#fef0b0; }
 .poll-toggle-left {
@@ -256,8 +221,7 @@ textarea.form-input {
 }
 .poll-toggle-switch {
     width:36px; height:20px; border-radius:99px;
-    background:var(--gray-300); position:relative; transition:background .25s;
-    flex-shrink:0;
+    background:var(--gray-300); position:relative; transition:background .25s; flex-shrink:0;
 }
 .poll-toggle-switch.on { background:var(--amber); }
 .poll-toggle-switch::after {
@@ -269,12 +233,10 @@ textarea.form-input {
 .poll-toggle-switch.on::after { transform:translateX(16px); }
 
 .poll-inline {
-    display:none;
-    border:1.5px solid #fcd34d; border-radius:var(--radius);
+    display:none; border:1.5px solid #fcd34d; border-radius:var(--radius);
     overflow:hidden; margin-bottom:1.4rem;
-    animation:fadeUp .25s ease both;
 }
-.poll-inline.open { display:block; }
+.poll-inline.open { display:block; animation:fadeUp .25s ease both; }
 .poll-inline-header {
     padding:.8rem 1.2rem; background:var(--amber-pale);
     border-bottom:1px solid #fce7a0;
@@ -285,7 +247,6 @@ textarea.form-input {
 .poll-option-row {
     display:flex; align-items:center; gap:.6rem;
     padding:.5rem 0; border-bottom:1px solid var(--gray-150);
-    animation:fadeUp .2s ease both;
 }
 .poll-option-row:last-child { border-bottom:none; }
 .poll-opt-num {
@@ -297,42 +258,34 @@ textarea.form-input {
 .poll-opt-input {
     flex:1; padding:.5rem .85rem; border:1.5px solid var(--gray-200);
     border-radius:40px; font-size:.8rem; font-family:'DM Sans',sans-serif;
-    color:var(--ink); outline:none; transition:border-color .15s, box-shadow .15s;
-    background:white;
+    color:var(--ink); outline:none; transition:border-color .15s,box-shadow .15s; background:white;
 }
 .poll-opt-input:focus { border-color:var(--amber); box-shadow:0 0 0 3px rgba(245,158,11,.1); }
 .poll-opt-input::placeholder { color:var(--gray-400); }
 .poll-opt-remove {
     width:26px; height:26px; border-radius:50%;
-    border:none; background:none; cursor:pointer;
-    color:var(--gray-400); font-size:.95rem;
-    display:flex; align-items:center; justify-content:center;
-    transition:all .15s;
+    border:none; background:none; cursor:pointer; color:var(--gray-400); font-size:.95rem;
+    display:flex; align-items:center; justify-content:center; transition:all .15s;
 }
 .poll-opt-remove:hover { background:var(--red-pale); color:var(--red); }
-
 .add-poll-opt-btn {
     display:flex; align-items:center; gap:.45rem;
-    background:none; border:1.5px dashed var(--gray-300);
-    border-radius:40px; padding:.42rem 1rem;
-    font-size:.75rem; font-weight:600; color:var(--muted);
-    cursor:pointer; font-family:'DM Sans',sans-serif;
-    transition:all .2s; margin-top:.6rem;
+    background:none; border:1.5px dashed var(--gray-300); border-radius:40px;
+    padding:.42rem 1rem; font-size:.75rem; font-weight:600; color:var(--muted);
+    cursor:pointer; font-family:'DM Sans',sans-serif; transition:all .2s; margin-top:.6rem;
 }
 .add-poll-opt-btn svg { width:12px; height:12px; stroke:currentColor; fill:none; stroke-width:2.5; }
 .add-poll-opt-btn:hover { border-color:var(--amber); color:#92400e; background:var(--amber-pale); }
 
-/* ══════════════════════════════
-   ACTION FOOTER
-══════════════════════════════ */
+/* ══ ACTION FOOTER ══ */
 .form-actions {
     display:flex; align-items:center; justify-content:space-between;
-    padding:1.2rem 1.8rem; border-top:1px solid var(--gray-200);
+    padding:1.1rem 1.8rem; border-top:1px solid var(--gray-200);
     background:var(--s2); gap:1rem; flex-wrap:wrap;
 }
 .form-actions-hint { font-size:.72rem; color:var(--muted); }
 .form-actions-hint strong { color:var(--ink); }
-.form-actions-btns { display:flex; gap:.6rem; flex-wrap:wrap; }
+.form-actions-btns { display:flex; gap:.6rem; align-items:center; }
 
 .action-btn {
     display:inline-flex; align-items:center; gap:.4rem;
@@ -344,17 +297,19 @@ textarea.form-input {
 .action-btn svg { width:15px; height:15px; stroke:currentColor; fill:none; stroke-width:2; }
 .action-btn-primary { background:var(--teal); color:white; }
 .action-btn-primary:hover { background:var(--teal-dark); color:white; transform:translateY(-1px); box-shadow:0 4px 16px rgba(14,138,138,.3); }
+.action-btn-primary:disabled { opacity:.6; transform:none; cursor:not-allowed; }
 .action-btn-ghost { background:transparent; color:var(--text-light); border:1.5px solid var(--gray-200); }
 .action-btn-ghost:hover { background:var(--s2); border-color:var(--gray-300); color:var(--ink); }
 
-/* Responsive */
+/* ══ RESPONSIVE ══ */
 @media(max-width:768px){
-    .community-hero{ height:180px; }
-    .community-hero-content{ padding:1.2rem 1.2rem 1.8rem; }
-    .page-body{ padding:1rem 1rem 2.5rem; }
-    .form-card-body{ padding:1.2rem; }
-    .form-actions{ padding:1rem 1.2rem; }
-    .image-grid-wrapper{ grid-template-columns:repeat(3,1fr); }
+    .community-hero { height:180px; }
+    .community-hero-content { padding:1.2rem 1.2rem 1.8rem; }
+    .page-body { padding:1rem 1rem 2.5rem; }
+    .form-card-body { padding:1.2rem; }
+    .form-actions { padding:1rem 1.2rem; flex-direction:column; align-items:stretch; }
+    .form-actions-btns { justify-content:flex-end; }
+    .image-grid-wrapper { grid-template-columns:repeat(3,1fr); }
 }
 </style>
 {% endblock %}
@@ -379,7 +334,6 @@ textarea.form-input {
 <!-- ══ PAGE BODY ══ -->
 <div class="page-body">
 
-    <!-- Breadcrumb -->
     <div class="breadcrumb-bar">
         <a href="{% url 'community:community_detail' community.id %}">{{ community.name }}</a>
         <span class="sep">›</span>
@@ -405,9 +359,7 @@ textarea.form-input {
 
                 <!-- Title -->
                 <div class="field-group">
-                    <label class="field-label" for="id_title">
-                        Post Title <span>*</span>
-                    </label>
+                    <label class="field-label" for="id_title">Post Title <span>*</span></label>
                     {{ form.title }}
                     {% if form.title.errors %}<ul class="errorlist">{{ form.title.errors }}</ul>{% endif %}
                     <p class="field-hint">Give your post a clear and engaging title (max 200 characters)</p>
@@ -415,17 +367,18 @@ textarea.form-input {
 
                 <!-- Content -->
                 <div class="field-group">
-                    <label class="field-label" for="id_content">
-                        Story Content <span>*</span>
-                    </label>
+                    <label class="field-label" for="id_content">Story Content <span>*</span></label>
                     {{ form.content }}
                     {% if form.content.errors %}<ul class="errorlist">{{ form.content.errors }}</ul>{% endif %}
                     <p class="field-hint">Share your experience in detail — tips, highlights, and anything worth knowing</p>
                 </div>
 
                 <!-- Images -->
-                <div class="field-group" style="margin-bottom:0;">
-                    <label class="field-label">Photos <span style="color:var(--muted);font-weight:400;">(optional)</span></label>
+                <div class="field-group" style="margin-bottom:.6rem;">
+                    <label class="field-label">
+                        Photos
+                        <span style="color:var(--muted);font-weight:400;">(optional)</span>
+                    </label>
                 </div>
 
                 <div class="images-section">
@@ -438,11 +391,7 @@ textarea.form-input {
                         <span style="font-size:.68rem;color:var(--muted);">JPG, PNG, WebP · max 5 MB each</span>
                     </div>
 
-                    {{ image_formset.management_form }}
-
-                    <div class="image-grid-wrapper" id="imageGrid">
-                        <!-- Preview tiles injected here -->
-                    </div>
+                    <div class="image-grid-wrapper" id="imageGrid"></div>
 
                     <div class="add-image-row">
                         <button type="button" class="add-image-btn-row" id="addImageBtn" onclick="triggerImageUpload()">
@@ -450,12 +399,13 @@ textarea.form-input {
                             Add Photo
                         </button>
                         <span class="images-hint" id="imagesHint">Upload up to 5 photos</span>
-                        <!-- Hidden file input -->
-                        <input type="file" id="hiddenFileInput" accept="image/*" style="display:none;" onchange="handleFileSelected(this)">
+                        <input type="file" id="hiddenFileInput" name="images"
+                               accept="image/*" multiple style="display:none;"
+                               onchange="handleFileSelected(this)">
                     </div>
                 </div>
 
-                <!-- Optional Poll toggle -->
+                <!-- Poll toggle -->
                 <div class="poll-toggle-row" onclick="togglePollSection()" style="margin-top:1.4rem;">
                     <div class="poll-toggle-left">
                         <span>📊</span>
@@ -465,21 +415,17 @@ textarea.form-input {
                     <div class="poll-toggle-switch" id="pollSwitch"></div>
                 </div>
 
-                <!-- Poll section (hidden by default) -->
+                <!-- Poll section -->
                 <div class="poll-inline" id="pollInline">
-                    <div class="poll-inline-header">
-                        📊 Poll Options
-                    </div>
+                    <div class="poll-inline-header">📊 Poll Options</div>
                     <div class="poll-inline-body">
                         <div class="field-group">
                             <label class="field-label">Poll Question</label>
                             <input type="text" name="poll_question" id="pollQuestion"
-                                class="form-input"
-                                placeholder="e.g. What's the best time to visit?">
+                                   class="form-input"
+                                   placeholder="e.g. What's the best time to visit?">
                         </div>
-                        <div id="pollOptionsList">
-                            <!-- Options injected by JS -->
-                        </div>
+                        <div id="pollOptionsList"></div>
                         <button type="button" class="add-poll-opt-btn" onclick="addPollOption()">
                             <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
                             Add Option
@@ -490,11 +436,9 @@ textarea.form-input {
 
             </div><!-- /form-card-body -->
 
-            <!-- Actions footer -->
+            <!-- Footer -->
             <div class="form-actions">
-                <p class="form-actions-hint">
-                    Posting to <strong>{{ community.name }}</strong>
-                </p>
+                <p class="form-actions-hint">Posting to <strong>{{ community.name }}</strong></p>
                 <div class="form-actions-btns">
                     <a href="{% url 'community:community_detail' community.id %}" class="action-btn action-btn-ghost">
                         <svg viewBox="0 0 24 24"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
@@ -512,12 +456,10 @@ textarea.form-input {
 </div><!-- /page-body -->
 
 <script>
-/* ══════════════════════════════
-   IMAGE UPLOAD
-══════════════════════════════ */
+/* ══ IMAGE UPLOAD ══ */
 const MAX_IMAGES = 5;
-let imageFiles = [];   // {file, dataUrl, formIndex}
-let totalForms = parseInt(document.getElementById('id_form-TOTAL_FORMS')?.value || 0);
+let imageFiles = [];
+const masterDt = new DataTransfer();
 
 function triggerImageUpload() {
     if (imageFiles.length >= MAX_IMAGES) return;
@@ -525,76 +467,36 @@ function triggerImageUpload() {
 }
 
 function handleFileSelected(input) {
-    if (!input.files || !input.files[0]) return;
-    const file = input.files[0];
+    if (!input.files || !input.files.length) return;
 
-    if (!file.type.startsWith('image/')) {
-        showToast('Please select an image file');
-        input.value = ''; return;
+    for (const file of Array.from(input.files)) {
+        if (imageFiles.length >= MAX_IMAGES) break;
+        if (!file.type.startsWith('image/')) { showToast('Please select an image file'); continue; }
+        if (file.size > 5 * 1024 * 1024) { showToast(`${file.name} exceeds 5 MB limit`); continue; }
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            imageFiles.push({ file, dataUrl: e.target.result });
+            masterDt.items.add(file);
+            document.getElementById('hiddenFileInput').files = masterDt.files;
+            renderImages();
+        };
+        reader.readAsDataURL(file);
     }
-    if (file.size > 5 * 1024 * 1024) {
-        showToast('Image must be under 5 MB');
-        input.value = ''; return;
-    }
-
-    const reader = new FileReader();
-    reader.onload = (e) => {
-        const formIndex = totalForms;
-        imageFiles.push({ file, dataUrl: e.target.result, formIndex });
-        totalForms++;
-
-        // Create a real file input so Django formset can pick it up
-        const realInput = document.createElement('input');
-        realInput.type = 'file';
-        realInput.name = `form-${formIndex}-image`;
-        realInput.id = `img-file-${formIndex}`;
-        realInput.style.display = 'none';
-        document.getElementById('postForm').appendChild(realInput);
-
-        // Use DataTransfer to assign file to hidden input
-        const dt = new DataTransfer();
-        dt.items.add(file);
-        realInput.files = dt.files;
-
-        if (document.getElementById('id_form-TOTAL_FORMS'))
-            document.getElementById('id_form-TOTAL_FORMS').value = totalForms;
-
-        renderImages();
-    };
-    reader.readAsDataURL(file);
-    input.value = ''; // reset so same file can be reselected
+    input.value = '';
 }
 
 function removeImage(idx) {
     imageFiles.splice(idx, 1);
-
-    // Remove real inputs and rebuild them to keep formset indices clean
-    document.querySelectorAll('[id^="img-file-"]').forEach(el => el.remove());
-    totalForms = imageFiles.length;
-    imageFiles.forEach((item, i) => {
-        item.formIndex = i;
-        const realInput = document.createElement('input');
-        realInput.type = 'file';
-        realInput.name = `form-${i}-image`;
-        realInput.id = `img-file-${i}`;
-        realInput.style.display = 'none';
-        document.getElementById('postForm').appendChild(realInput);
-
-        const dt = new DataTransfer();
-        dt.items.add(item.file);
-        realInput.files = dt.files;
-    });
-
-    if (document.getElementById('id_form-TOTAL_FORMS'))
-        document.getElementById('id_form-TOTAL_FORMS').value = totalForms;
-
+    while (masterDt.items.length) masterDt.items.remove(0);
+    imageFiles.forEach(item => masterDt.items.add(item.file));
+    document.getElementById('hiddenFileInput').files = masterDt.files;
     renderImages();
 }
 
 function renderImages() {
     const grid = document.getElementById('imageGrid');
     grid.innerHTML = '';
-
     imageFiles.forEach((item, i) => {
         const tile = document.createElement('div');
         tile.className = 'img-preview-tile';
@@ -605,31 +507,26 @@ function renderImages() {
         grid.appendChild(tile);
     });
 
-    const badge = document.getElementById('imgCountBadge');
-    badge.textContent = `${imageFiles.length} / ${MAX_IMAGES}`;
-
+    const remaining = MAX_IMAGES - imageFiles.length;
+    document.getElementById('imgCountBadge').textContent = `${imageFiles.length} / ${MAX_IMAGES}`;
     const addBtn = document.getElementById('addImageBtn');
-    const hint = document.getElementById('imagesHint');
-    if (imageFiles.length >= MAX_IMAGES) {
+    const hint   = document.getElementById('imagesHint');
+    if (remaining <= 0) {
         addBtn.disabled = true;
         hint.textContent = 'Maximum 5 photos reached';
     } else {
         addBtn.disabled = false;
-        hint.textContent = `Upload up to ${MAX_IMAGES - imageFiles.length} more photo${MAX_IMAGES - imageFiles.length !== 1 ? 's' : ''}`;
+        hint.textContent = `Upload up to ${remaining} more photo${remaining !== 1 ? 's' : ''}`;
     }
 }
 
-/* ══════════════════════════════
-   POLL SECTION
-══════════════════════════════ */
+/* ══ POLL ══ */
 let pollOpen = false;
-let pollOptCount = 0;
 
 function togglePollSection() {
     pollOpen = !pollOpen;
     document.getElementById('pollSwitch').classList.toggle('on', pollOpen);
     document.getElementById('pollInline').classList.toggle('open', pollOpen);
-
     if (pollOpen && document.getElementById('pollOptionsList').children.length === 0) {
         addPollOption('e.g. Peak season (Oct–Mar)');
         addPollOption('e.g. Off season (Apr–Sep)');
@@ -637,11 +534,9 @@ function togglePollSection() {
 }
 
 function addPollOption(placeholder) {
-    pollOptCount++;
-    const list = document.getElementById('pollOptionsList');
+    const list  = document.getElementById('pollOptionsList');
     const count = list.children.length + 1;
-
-    const row = document.createElement('div');
+    const row   = document.createElement('div');
     row.className = 'poll-option-row';
     row.innerHTML = `
         <div class="poll-opt-num">${count}</div>
@@ -656,13 +551,9 @@ function addPollOption(placeholder) {
 
 function removePollOption(btn) {
     const list = document.getElementById('pollOptionsList');
-    if (list.children.length <= 2) {
-        showToast('You need at least 2 poll options');
-        return;
-    }
+    if (list.children.length <= 2) { showToast('You need at least 2 poll options'); return; }
     const row = btn.closest('.poll-option-row');
-    row.style.opacity = '0';
-    row.style.transition = 'opacity .15s';
+    row.style.cssText += 'opacity:0;transition:opacity .15s;';
     setTimeout(() => { row.remove(); updatePollNumbers(); }, 150);
 }
 
@@ -673,27 +564,18 @@ function updatePollNumbers() {
     });
 }
 
-/* ══════════════════════════════
-   FORM SUBMIT
-══════════════════════════════ */
+/* ══ SUBMIT ══ */
 document.getElementById('postForm').addEventListener('submit', function(e) {
-    const title = document.querySelector('[name="title"]')?.value.trim();
+    const title   = document.querySelector('[name="title"]')?.value.trim();
     const content = document.querySelector('[name="content"]')?.value.trim();
-
-    if (!title) { e.preventDefault(); showToast('Please enter a post title'); return; }
+    if (!title)   { e.preventDefault(); showToast('Please enter a post title'); return; }
     if (!content) { e.preventDefault(); showToast('Please enter post content'); return; }
-
     if (pollOpen) {
         const question = document.getElementById('pollQuestion').value.trim();
         const opts = [...document.querySelectorAll('[name="poll_options"]')]
             .map(i => i.value.trim()).filter(Boolean);
-        if (question && opts.length < 2) {
-            e.preventDefault();
-            showToast('Add at least 2 poll options');
-            return;
-        }
+        if (question && opts.length < 2) { e.preventDefault(); showToast('Add at least 2 poll options'); return; }
     }
-
     const btn = document.getElementById('submitBtn');
     btn.disabled = true;
     btn.innerHTML = `
@@ -704,42 +586,31 @@ document.getElementById('postForm').addEventListener('submit', function(e) {
     `;
 });
 
-/* ══════════════════════════════
-   TOAST
-══════════════════════════════ */
+/* ══ TOAST ══ */
 function showToast(msg) {
     let t = document.getElementById('toast');
     if (!t) {
         t = document.createElement('div');
         t.id = 'toast';
-        t.style.cssText = `
-            position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(10px);
+        t.style.cssText = `position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(10px);
             background:var(--ink);color:white;padding:.55rem 1.2rem;border-radius:40px;
             font-size:.78rem;font-weight:600;z-index:9999;opacity:0;
-            transition:all .25s;pointer-events:none;white-space:nowrap;
-        `;
+            transition:all .25s;pointer-events:none;white-space:nowrap;`;
         document.body.appendChild(t);
     }
     t.textContent = msg;
-    requestAnimationFrame(() => {
-        t.style.opacity = '1';
-        t.style.transform = 'translateX(-50%) translateY(0)';
-    });
-    setTimeout(() => {
-        t.style.opacity = '0';
-        t.style.transform = 'translateX(-50%) translateY(10px)';
-    }, 2800);
+    requestAnimationFrame(() => { t.style.opacity='1'; t.style.transform='translateX(-50%) translateY(0)'; });
+    setTimeout(() => { t.style.opacity='0'; t.style.transform='translateX(-50%) translateY(10px)'; }, 2800);
 }
 
-// Spin keyframe
-const style = document.createElement('style');
-style.textContent = '@keyframes spin{to{transform:rotate(360deg)}}';
-document.head.appendChild(style);
+/* ══ INIT ══ */
+const _s = document.createElement('style');
+_s.textContent = '@keyframes spin{to{transform:rotate(360deg)}}';
+document.head.appendChild(_s);
 
-// Init: apply DM Sans to Django-rendered form inputs
-document.querySelectorAll('.form-card input, .form-card textarea, .form-card select').forEach(el => {
+document.querySelectorAll('.form-card input:not([type=file]), .form-card textarea, .form-card select').forEach(el => {
     el.classList.add('form-input');
-    el.style.fontFamily = "'DM Sans', sans-serif";
+    el.style.fontFamily = "'DM Sans',sans-serif";
 });
 </script>
 

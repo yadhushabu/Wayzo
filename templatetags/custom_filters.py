@@ -199,3 +199,22 @@ def selectattr(iterable, args):
             return iterable
     except (ValueError, AttributeError):
         return iterable
+    
+
+from django import template
+
+register = template.Library()
+
+@register.filter
+def truncatewords_after_first(value, num_words):
+    words = str(value).split()
+
+    try:
+        num_words = int(num_words)
+    except (TypeError, ValueError):
+        return value
+
+    if len(words) <= num_words:
+        return ""
+
+    return " ".join(words[num_words:])

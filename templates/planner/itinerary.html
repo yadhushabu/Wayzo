@@ -153,6 +153,21 @@
         }
         #map { height: 460px; width: 100%; }
 
+        /* map status bar */
+        .map-status {
+            display: flex; align-items: center; gap: 0.5rem;
+            padding: 0.6rem 1.6rem;
+            background: rgba(14,138,138,0.04);
+            border-top: 1px solid var(--gray-150);
+            font-size: 0.72rem; color: var(--text-light);
+        }
+        .map-status-dot {
+            width: 7px; height: 7px; border-radius: 50%;
+            background: var(--teal); flex-shrink: 0;
+            animation: pulse 2s ease infinite;
+        }
+        @keyframes pulse { 0%,100%{opacity:1;} 50%{opacity:0.4;} }
+
         /* ── AI INSIGHTS ── */
         .ai-insights-card {
             background: white;
@@ -363,7 +378,6 @@
         .footer-note-bar a:hover { text-decoration: underline; }
 
         /* ── MODALS ── */
-        /* Review Modal */
         .review-modal-overlay {
             display: none; position: fixed; inset: 0;
             background: rgba(0,0,0,0.5); z-index: 1000;
@@ -437,6 +451,15 @@
         }
         @keyframes spin { to { transform: rotate(360deg); } }
 
+        /* ── DAY REBUILD FLASH ── */
+        @keyframes rebuildFlash {
+            0%   { opacity: 0; transform: translateY(6px); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
+        .activity-section.just-rebuilt {
+            animation: rebuildFlash 0.35s ease both;
+        }
+
         /* Animations */
         @keyframes fadeUp { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
         .page-body > * { animation: fadeUp 0.45s ease both; }
@@ -477,7 +500,6 @@
             <span class="notification-badge" id="notificationBadge">{{ unread_notifications|default:"0" }}</span>
         </button>
 
-        <!-- Notification Dropdown -->
         <div class="notification-dropdown" id="notificationDropdown">
             <div class="notification-header">
                 <h4>Notifications</h4>
@@ -581,12 +603,16 @@
             <h3>🗺️ Itinerary Map</h3>
             <div class="map-legend">
                 <div class="legend-dot" style="--dot-color: #4caf50;">Start</div>
-                <div class="legend-dot" style="--dot-color: #667eea;">Route</div>
+                <div class="legend-dot" style="--dot-color: #0E8A8A;">Activity</div>
                 <div class="legend-dot" style="--dot-color: #9c27b0;">Hotel</div>
                 <div class="legend-dot" style="--dot-color: #f44336;">End</div>
             </div>
         </div>
         <div id="map"></div>
+        <div class="map-status">
+            <div class="map-status-dot"></div>
+            <span id="mapStatusText">Loading road routes…</span>
+        </div>
     </div>
 
     <!-- AI INSIGHTS -->
@@ -629,10 +655,10 @@
                     🚗 &nbsp;Travel
                 </div>
                 <div class="activity-section-body">
-                    <div class="activity-row is-travel" data-travel-id="{{ forloop.counter0 }}">
+                    <div class="activity-row is-travel">
                         <div class="activity-num-col">
-                            <div class="activity-badge travel-badge-style" style="background:var(--gray-200);color:var(--gray-600);">✈</div>
-                            <div class="activity-time-text time-display-{{ forloop.parentloop.counter0 }}-{{ forloop.counter0 }}">
+                            <div class="activity-badge travel-badge-style">✈</div>
+                            <div class="activity-time-text">
                                 {{ activity.start_time }}{% if activity.end_time %} – {{ activity.end_time }}{% endif %}
                             </div>
                         </div>
@@ -680,7 +706,7 @@
                          data-activity-lon="{{ activity.lon }}">
                         <div class="activity-num-col">
                             <div class="activity-badge">D{{ day.day }}-{{ forloop.counter0|add:1 }}</div>
-                            <div class="activity-time-text time-display-{{ forloop.parentloop.counter0 }}-{{ forloop.counter0 }}">
+                            <div class="activity-time-text">
                                 {{ activity.start_time }}{% if activity.end_time %} – {{ activity.end_time }}{% endif %}
                             </div>
                         </div>
@@ -851,408 +877,693 @@
 
 {% block extra_scripts %}
 <script>
-    // ── CSRF ──
-    function getCsrfToken() {
-        return document.querySelector('[name=csrfmiddlewaretoken]')?.value ||
-               document.cookie.split('; ').find(r => r.startsWith('csrftoken='))?.split('=')[1];
-    }
-    const csrftoken = getCsrfToken();
+// ══════════════════════════════════════════════════════════════════
+//  WAYZO ITINERARY — FIXED JS
+//  Fixes: (1) travel block ordering after change
+//         (2) road-following map routes via DirectionsService
+//         (3) activity badge labels on map markers
+// ══════════════════════════════════════════════════════════════════
 
-    // ── MAP STATE ──
-    let map = null;
-    let markers = [];
-    let polylines = [];
+// ── CSRF ──────────────────────────────────────────────────────────
+function getCsrfToken() {
+    return document.querySelector('[name=csrfmiddlewaretoken]')?.value ||
+           document.cookie.split('; ').find(r => r.startsWith('csrftoken='))?.split('=')[1];
+}
+const csrftoken = getCsrfToken();
 
-    // ── SLIDE PANEL ──
-    const slideOverlay = document.getElementById('slideOverlay');
-    const slidePanel = document.getElementById('slidePanel');
-    const slidePanelTitle = document.getElementById('slidePanelTitle');
-    const slidePanelBody = document.getElementById('slidePanelBody');
+// ── MAP STATE ─────────────────────────────────────────────────────
+let map = null;
+let mapMarkers = [];
+let mapRoutes  = [];   // DirectionsRenderer instances
 
-    function openSlidePanel(title) {
-        slidePanelTitle.textContent = title;
-        slidePanel.classList.add('open');
-        slideOverlay.classList.add('open');
-        document.body.style.overflow = 'hidden';
-    }
-    function closeSlidePanel() {
-        slidePanel.classList.remove('open');
-        slideOverlay.classList.remove('open');
-        document.body.style.overflow = '';
-    }
-    document.getElementById('slideClose').onclick = closeSlidePanel;
-    slideOverlay.onclick = closeSlidePanel;
+// ── SLIDE PANEL ───────────────────────────────────────────────────
+const slideOverlay   = document.getElementById('slideOverlay');
+const slidePanel     = document.getElementById('slidePanel');
+const slidePanelTitle = document.getElementById('slidePanelTitle');
+const slidePanelBody  = document.getElementById('slidePanelBody');
 
-    // ── REVIEW MODAL ──
-    function openReviewModal() { document.getElementById('reviewModal').classList.add('open'); }
-    function closeReviewModal() { document.getElementById('reviewModal').classList.remove('open'); }
-    document.getElementById('reviewModal').addEventListener('click', e => {
-        if (e.target === document.getElementById('reviewModal')) closeReviewModal();
-    });
+function openSlidePanel(title) {
+    slidePanelTitle.textContent = title;
+    slidePanel.classList.add('open');
+    slideOverlay.classList.add('open');
+    document.body.style.overflow = 'hidden';
+}
+function closeSlidePanel() {
+    slidePanel.classList.remove('open');
+    slideOverlay.classList.remove('open');
+    document.body.style.overflow = '';
+}
+document.getElementById('slideClose').onclick = closeSlidePanel;
+slideOverlay.onclick = closeSlidePanel;
 
-    // ── HELPERS ──
-    function escHtml(t) {
-        if (!t) return '';
-        const d = document.createElement('div'); d.textContent = t; return d.innerHTML;
-    }
-    function openGoogleMaps(lat, lon, name) {
-        window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(name)}&center=${lat},${lon}`, '_blank');
-    }
-    function getDirections(lat, lon, name, btn) {
-        const orig = btn.textContent;
-        if (navigator.geolocation) {
-            btn.textContent = '📍 Locating…';
-            navigator.geolocation.getCurrentPosition(
-                pos => { window.open(`https://www.google.com/maps/dir/${pos.coords.latitude},${pos.coords.longitude}/${lat},${lon}/`, '_blank'); btn.textContent = orig; },
-                () => { openGoogleMaps(lat, lon, name); btn.textContent = orig; }
-            );
-        } else { openGoogleMaps(lat, lon, name); }
-    }
+// ── REVIEW MODAL ──────────────────────────────────────────────────
+document.getElementById('reviewModal').addEventListener('click', e => {
+    if (e.target === document.getElementById('reviewModal'))
+        document.getElementById('reviewModal').classList.remove('open');
+});
 
-    // ── FETCH REVIEWS ──
-    async function fetchReviews(placeName, destination, lat, lon) {
-        openReviewModal();
-        document.getElementById('reviewTitle').textContent = `📝 Reviews — ${placeName}`;
-        slidePanelBody.innerHTML = '';
-        document.getElementById('reviewBody').innerHTML = '<div class="spinner-wrap"><div class="spinner"></div><p>Loading reviews…</p></div>';
-        try {
-            let url = `/planner/get-reviews/?place=${encodeURIComponent(placeName)}&dest=${encodeURIComponent(destination||'')}`;
-            if (lat) url += `&lat=${lat}&lon=${lon}`;
-            const data = await (await fetch(url, { headers: { 'X-CSRFToken': csrftoken }, credentials: 'same-origin' })).json();
-            if (data.success && data.reviews?.length) {
-                document.getElementById('reviewBody').innerHTML = data.reviews.map(r => `
-                    <div style="padding:1rem 0;border-bottom:1px solid var(--gray-150);">
-                        <div style="display:flex;align-items:center;gap:0.6rem;margin-bottom:0.4rem;">
-                            <strong style="font-size:0.85rem;">👤 ${escHtml(r.author)}</strong>
-                            ${r.rating ? `<span class="rating-tag">⭐ ${r.rating}</span>` : ''}
-                            <span style="font-size:0.68rem;color:var(--text-light);margin-left:auto;">📅 ${escHtml(r.date)}</span>
-                        </div>
-                        <p style="font-size:0.8rem;color:var(--text-soft);line-height:1.6;">"${escHtml(r.text)}"</p>
-                    </div>`).join('');
-            } else {
-                document.getElementById('reviewBody').innerHTML = '<p style="text-align:center;padding:2rem;color:var(--text-light);">No reviews found.</p>';
-            }
-        } catch (e) {
-            document.getElementById('reviewBody').innerHTML = `<p style="text-align:center;padding:2rem;color:var(--rose);">⚠️ ${e.message}</p>`;
-        }
-    }
+// ── HELPERS ───────────────────────────────────────────────────────
+function escHtml(t) {
+    if (!t) return '';
+    const d = document.createElement('div'); d.textContent = t; return d.innerHTML;
+}
+function openGoogleMaps(lat, lon, name) {
+    window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(name)}&center=${lat},${lon}`, '_blank');
+}
+function getDirections(lat, lon, name, btn) {
+    const orig = btn.textContent;
+    if (navigator.geolocation) {
+        btn.textContent = '📍 Locating…';
+        navigator.geolocation.getCurrentPosition(
+            pos => { window.open(`https://www.google.com/maps/dir/${pos.coords.latitude},${pos.coords.longitude}/${lat},${lon}/`, '_blank'); btn.textContent = orig; },
+            () => { openGoogleMaps(lat, lon, name); btn.textContent = orig; }
+        );
+    } else { openGoogleMaps(lat, lon, name); }
+}
 
-    // ── CHANGE ACTIVITY / HOTEL STATE ──
-    let currentChangeTarget = null;
-    let currentDayIndex = null;
-    let currentActivityIndex = null;
-    let isHotelChange = false;
-
-    // ── FETCH ALTERNATIVES ──
-    async function fetchAlternatives(activityEl, type, lat, lon, destination, currentName, dayIndex, activityIndex) {
-        slidePanelBody.innerHTML = '<div class="spinner-wrap"><div class="spinner"></div><p>Loading alternatives…</p></div>';
-        openSlidePanel('🔄 Choose Alternative Activity');
-        currentChangeTarget = activityEl;
-        currentDayIndex = dayIndex;
-        currentActivityIndex = activityIndex;
-        isHotelChange = false;
-        try {
-            const url = `/planner/api/alternatives/?lat=${lat}&lon=${lon}&type=${type}&destination=${encodeURIComponent(destination)}&exclude=${encodeURIComponent(currentName)}`;
-            const data = await (await fetch(url, { headers: { 'X-CSRFToken': csrftoken }, credentials: 'same-origin' })).json();
-            if (data.alternatives?.length) {
-                slidePanelBody.innerHTML = data.alternatives.map(p => `
-                    <div class="alt-item" onclick="selectAlternative('${escHtml(p.name)}',${p.lat||0},${p.lon||0},'${escHtml(p.address||'')}','${p.rating||''}','${p.thumbnail||''}','${p.price_level||''}')">
-                        <div class="alt-item-name">${escHtml(p.name)}</div>
-                        <div class="alt-item-meta">
-                            ${p.rating ? `<span class="rating-tag">⭐ ${p.rating}</span>` : ''}
-                            ${p.price_level ? `<span class="price-tag">💰 ${p.price_level}</span>` : ''}
-                        </div>
-                        <div class="alt-address">${escHtml((p.address||'').substring(0,100))}</div>
-                    </div>`).join('');
-            } else {
-                slidePanelBody.innerHTML = '<p style="text-align:center;padding:2.5rem;color:var(--text-light);">No alternatives found nearby.</p>';
-            }
-        } catch (e) {
-            slidePanelBody.innerHTML = `<p style="text-align:center;padding:2.5rem;color:var(--rose);">⚠️ ${e.message}</p>`;
-        }
-    }
-
-    async function fetchHotelAlternatives(stayEl, lat, lon, destination, currentName, dayIndex) {
-        slidePanelBody.innerHTML = '<div class="spinner-wrap"><div class="spinner"></div><p>Loading hotels…</p></div>';
-        openSlidePanel('🏨 Choose Alternative Hotel');
-        currentChangeTarget = stayEl;
-        currentDayIndex = dayIndex;
-        isHotelChange = true;
-        try {
-            const url = `/planner/api/hotel-alternatives/?lat=${lat}&lon=${lon}&destination=${encodeURIComponent(destination)}&exclude=${encodeURIComponent(currentName)}`;
-            const data = await (await fetch(url, { headers: { 'X-CSRFToken': csrftoken }, credentials: 'same-origin' })).json();
-            if (data.alternatives?.length) {
-                slidePanelBody.innerHTML = data.alternatives.map(h => `
-                    <div class="alt-item" onclick="selectHotelAlternative('${escHtml(h.name)}',${h.lat||0},${h.lon||0},'${escHtml(h.address||'')}','${h.rating||''}','${h.thumbnail||''}','${h.price_level||''}','${escHtml(h.description||'Comfortable accommodation')}')">
-                        <div class="alt-item-name">${escHtml(h.name)}</div>
-                        <div class="alt-item-meta">
-                            ${h.rating ? `<span class="rating-tag">⭐ ${h.rating}</span>` : ''}
-                            ${h.price_level ? `<span class="price-tag">💰 ${h.price_level}</span>` : ''}
-                        </div>
-                        <div class="alt-address">${escHtml((h.address||'').substring(0,100))}</div>
-                    </div>`).join('');
-            } else {
-                slidePanelBody.innerHTML = '<p style="text-align:center;padding:2.5rem;color:var(--text-light);">No hotel alternatives found.</p>';
-            }
-        } catch (e) {
-            slidePanelBody.innerHTML = `<p style="text-align:center;padding:2.5rem;color:var(--rose);">⚠️ ${e.message}</p>`;
-        }
-    }
-
-    // ── SELECT ACTIVITY ──
-    async function selectAlternative(newName, newLat, newLon, newAddress, newRating, newImage, newPrice) {
-        if (!currentChangeTarget || isHotelChange) return;
-        const target = currentChangeTarget;
-        const changeBtn = target.querySelector('.action-btn.change');
-        if (changeBtn) { changeBtn.textContent = '⏳ Updating…'; changeBtn.disabled = true; }
-        try {
-            const res = await fetch('/planner/replace-activity/', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrftoken },
-                body: JSON.stringify({
-                    trip_id: {{ trip.id }},
-                    day_index: currentDayIndex,
-                    activity_index: currentActivityIndex,
-                    new_activity: { name: newName, lat: newLat, lon: newLon, address: newAddress, rating: newRating, image_url: newImage, price_level: newPrice, description: `Visit ${newName} — A wonderful place to explore` }
-                })
-            });
-            const data = await res.json();
-            if (data.success) {
-                const nameEl = target.querySelector('.activity-name'); if (nameEl) nameEl.firstChild.textContent = newName;
-                const descEl = target.querySelector('.activity-desc'); if (descEl) descEl.textContent = `Visit ${newName} — A wonderful place to explore`;
-                const imgEl = target.querySelector('.activity-img'); if (imgEl && newImage) imgEl.src = newImage;
-                const ratingEl = target.querySelector('.rating-tag'); if (ratingEl && newRating) { ratingEl.textContent = `⭐ ${newRating}`; ratingEl.dataset.place = newName; ratingEl.dataset.lat = newLat; ratingEl.dataset.lon = newLon; }
-                const priceEl = target.querySelector('.price-tag'); if (priceEl && newPrice) priceEl.textContent = `💰 ${newPrice}`;
-                const addrEl = target.querySelector('.address-row'); if (addrEl && newAddress) addrEl.innerHTML = `📍 ${newAddress.substring(0,80)}`;
-                target.querySelectorAll('.action-btn.map,.action-btn.dir').forEach(b => { b.dataset.lat = newLat; b.dataset.lon = newLon; b.dataset.name = newName; });
-                if (changeBtn) { changeBtn.dataset.name = newName; changeBtn.dataset.lat = newLat; changeBtn.dataset.lon = newLon; }
-                const upd = data.updated_activities?.[currentActivityIndex];
-                if (upd?.start_time) { const tEl = target.querySelector('.activity-time-text'); if (tEl) tEl.textContent = upd.start_time + (upd.end_time ? ` – ${upd.end_time}` : ''); }
-                target.dataset.activityName = newName; target.dataset.activityLat = newLat; target.dataset.activityLon = newLon;
-                updateTravelBlocks(currentDayIndex);
-                refreshMap();
-                closeSlidePanel();
-            } else { throw new Error(data.error || 'Update failed'); }
-        } catch (e) { alert('Failed to update: ' + e.message); }
-        finally { if (changeBtn) { changeBtn.textContent = '🔄 Change'; changeBtn.disabled = false; } }
-    }
-
-    // ── SELECT HOTEL ──
-    async function selectHotelAlternative(newName, newLat, newLon, newAddress, newRating, newImage, newPrice, newDesc) {
-        if (!currentChangeTarget || !isHotelChange) return;
-        const stayEl = currentChangeTarget;
-        const changeBtn = stayEl.querySelector('.action-btn.hotel-change');
-        if (changeBtn) { changeBtn.textContent = '⏳ Updating…'; changeBtn.disabled = true; }
-        try {
-            const res = await fetch('/planner/replace-hotel/', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrftoken },
-                body: JSON.stringify({ trip_id: {{ trip.id }}, day_index: currentDayIndex, new_hotel: { name: newName, lat: newLat, lon: newLon, address: newAddress, rating: newRating, image_url: newImage, price_level: newPrice, description: newDesc } })
-            });
-            const data = await res.json();
-            if (data.success) {
-                const nameEl = stayEl.querySelector('.hotel-name-text'); if (nameEl) nameEl.textContent = newName;
-                const descEl = stayEl.querySelector('.stay-desc'); if (descEl) descEl.textContent = newDesc;
-                const addrEl = stayEl.querySelector('.hotel-address-text'); if (addrEl && newAddress) addrEl.textContent = newAddress.substring(0,80);
-                const ratingEl = stayEl.querySelector('.hotel-rating'); if (ratingEl && newRating) ratingEl.textContent = `⭐ ${newRating}`;
-                const coordsEl = stayEl.querySelector('.hotel-coords'); if (coordsEl) { coordsEl.dataset.lat = newLat; coordsEl.dataset.lon = newLon; }
-                stayEl.querySelectorAll('.action-btn.map,.action-btn.dir').forEach(b => { b.dataset.lat = newLat; b.dataset.lon = newLon; b.dataset.name = newName; });
-                if (changeBtn) { changeBtn.dataset.hotelName = newName; changeBtn.dataset.hotelLat = newLat; changeBtn.dataset.hotelLon = newLon; }
-                refreshMap();
-                closeSlidePanel();
-            } else { throw new Error(data.error || 'Update failed'); }
-        } catch (e) { alert('Failed to update hotel: ' + e.message); }
-        finally { if (changeBtn) { changeBtn.textContent = '🏨 Change Hotel'; changeBtn.disabled = false; } }
-    }
-
-    // ── TRAVEL BLOCK UPDATE ──
-    function updateTravelBlocks(dayIndex) {
-        const dayCard = document.querySelector(`.day-card[data-day-index="${dayIndex}"]`);
-        if (!dayCard) return;
-        const travelBlocks = dayCard.querySelectorAll('[data-travel-block="true"]');
-        const activities = dayCard.querySelectorAll('.activity-row:not(.is-travel)');
-        travelBlocks.forEach((block, idx) => {
-            const fromSpan = block.querySelector('.travel-from');
-            const toSpan = block.querySelector('.travel-to');
-            const nameSpan = block.querySelector('.travel-name');
-            const descSpan = block.querySelector('.travel-description');
-            const prevAct = idx > 0 ? activities[idx - 1] : null;
-            const nextAct = activities[idx];
-            if (prevAct && nextAct) {
-                const prev = prevAct.querySelector('.activity-name')?.textContent.trim() || 'Previous';
-                const next = nextAct.querySelector('.activity-name')?.textContent.trim() || 'Next';
-                if (fromSpan) fromSpan.textContent = prev;
-                if (toSpan) toSpan.textContent = next;
-                if (nameSpan) nameSpan.textContent = `Travel from ${prev} to ${next}`;
-                if (descSpan) descSpan.textContent = `🚗 Traveling from ${prev} to ${next}`;
-            }
-        });
-    }
-
-    // ── MAP ──
-    function refreshMap() {
-        if (!map) return;
-        markers.forEach(m => m.setMap(null));
-        polylines.forEach(p => p.setMap(null));
-        markers = []; polylines = [];
-        const points = [];
-        document.querySelectorAll('.activity-row:not(.is-travel)').forEach(el => {
-            const lat = el.dataset.activityLat, lon = el.dataset.activityLon, name = el.dataset.activityName;
-            if (lat && lon && lat !== 'None' && lon !== 'None' && lat !== '0' && lon !== '0')
-                points.push({ lat: parseFloat(lat), lng: parseFloat(lon), name });
-        });
-        document.querySelectorAll('.stay-card .action-btn.map').forEach(btn => {
-            if (btn.dataset.lat && btn.dataset.lon)
-                points.push({ lat: parseFloat(btn.dataset.lat), lng: parseFloat(btn.dataset.lon), name: btn.dataset.name, isHotel: true });
-        });
-        if (!points.length) return;
-        const bounds = new google.maps.LatLngBounds();
-        points.forEach(p => bounds.extend({ lat: p.lat, lng: p.lng }));
-        map.fitBounds(bounds);
-        if (points.length > 1) {
-            polylines.push(new google.maps.Polyline({ path: points.map(p => ({ lat: p.lat, lng: p.lng })), geodesic: true, strokeColor: '#0E8A8A', strokeOpacity: 0.75, strokeWeight: 4, map }));
-        }
-        points.forEach((pt, i) => {
-            let color = '#2196f3', label = String(i + 1);
-            if (i === 0) { color = '#4caf50'; label = 'S'; }
-            else if (i === points.length - 1) { color = '#f44336'; label = 'E'; }
-            else if (pt.isHotel) { color = '#9c27b0'; label = 'H'; }
-            markers.push(new google.maps.Marker({ position: { lat: pt.lat, lng: pt.lng }, map, label: { text: label, color: '#fff', fontSize: '10px', fontWeight: 'bold' }, title: pt.name }));
-        });
-    }
-
-    function initMap() {
-        const el = document.getElementById('map');
-        if (!el) return;
-        map = new google.maps.Map(el, { center: { lat: 10.0889, lng: 77.0595 }, zoom: 10, mapTypeId: google.maps.MapTypeId.ROADMAP });
-        refreshMap();
-    }
-
-    // ── EVENT DELEGATION ──
-    document.body.addEventListener('click', function(e) {
-        const btn = e.target.closest('button') || e.target;
-
-        if (btn.classList.contains('action-btn') && btn.classList.contains('map')) {
-            const lat = btn.dataset.lat, lon = btn.dataset.lon, name = btn.dataset.name;
-            if (lat && lon) openGoogleMaps(lat, lon, name);
-        }
-        if (btn.classList.contains('action-btn') && btn.classList.contains('dir')) {
-            const lat = btn.dataset.lat, lon = btn.dataset.lon, name = btn.dataset.name;
-            if (lat && lon) getDirections(lat, lon, name, btn);
-        }
-        if (btn.classList.contains('rating-tag') || btn.classList.contains('hotel-rating')) {
-            fetchReviews(btn.dataset.place, btn.dataset.dest, btn.dataset.lat, btn.dataset.lon);
-        }
-        if (btn.classList.contains('action-btn') && btn.classList.contains('change')) {
-            const activityRow = btn.closest('.activity-row');
-            if (!activityRow) return;
-            const lat = btn.dataset.lat, lon = btn.dataset.lon, name = btn.dataset.name;
-            const dayIndex = parseInt(btn.dataset.dayIndex), actIdx = parseInt(btn.dataset.activityIndex);
-            const destination = '{{ itinerary.destination|escapejs }}';
-            let type = 'activity';
-            const header = btn.closest('.activity-section')?.querySelector('.activity-section-header');
-            if (header) {
-                const t = header.textContent;
-                if (t.includes('Breakfast')) type = 'breakfast';
-                else if (t.includes('Lunch')) type = 'lunch';
-                else if (t.includes('Dinner')) type = 'dinner';
-            }
-            fetchAlternatives(activityRow, type, lat, lon, destination, name, dayIndex, actIdx);
-        }
-        if (btn.classList.contains('action-btn') && btn.classList.contains('hotel-change')) {
-            const stayCard = btn.closest('.stay-card');
-            if (!stayCard) return;
-            const lat = btn.dataset.hotelLat, lon = btn.dataset.hotelLon, name = btn.dataset.hotelName;
-            const dayIndex = parseInt(btn.dataset.dayIndex);
-            const destination = '{{ itinerary.destination|escapejs }}';
-            if (lat && lon && name) fetchHotelAlternatives(stayCard, lat, lon, destination, name, dayIndex);
-        }
-    });
-
-    // ── NOTIFICATIONS (same as dashboard/planner) ──
-    let notifInterval;
-    function toggleNotificationDropdown() {
-        const dd = document.getElementById('notificationDropdown');
-        if (!dd.classList.contains('show')) { dd.classList.add('show'); loadNotifications(); }
-        else dd.classList.remove('show');
-    }
-    function loadNotifications() {
-        const list = document.getElementById('notificationList');
-        list.innerHTML = '<div class="notification-loading">Loading notifications…</div>';
-        fetch('/community/api/recent-notifications/')
-            .then(r => r.json())
-            .then(data => {
-                if (data.notifications?.length) displayNotifications(data.notifications);
-                else list.innerHTML = '<div class="notification-empty">No notifications yet</div>';
-            })
-            .catch(() => { list.innerHTML = '<div class="notification-loading">Error loading</div>'; });
-    }
-    function displayNotifications(notifications) {
-        const list = document.getElementById('notificationList');
-        list.innerHTML = notifications.map(n => {
-            let actions = '';
-            if (n.type === 'buddy_request' && n.buddy_request_id)
-                actions = `<div class="notification-actions"><button class="btn-accept-notif" onclick="event.stopPropagation();acceptBuddy(${n.buddy_request_id},${n.id})">✓ Accept</button><button class="btn-reject-notif" onclick="event.stopPropagation();rejectBuddy(${n.buddy_request_id},${n.id})">✗ Reject</button></div>`;
-            return `<div class="notification-item ${!n.is_read?'unread':''}" data-notification-id="${n.id}">
-                <div class="notification-content">
-                    <div class="notification-avatar">${n.sender_avatar?`<img src="${n.sender_avatar}">`:`<span>${n.sender_name?n.sender_name[0]:'?'}</span>`}</div>
-                    <div class="notification-text">
-                        <div class="notification-message">${n.message}</div>
-                        <div class="notification-time">${timeAgo(n.created_at)}</div>
-                        ${actions}
+// ── FETCH REVIEWS ─────────────────────────────────────────────────
+async function fetchReviews(placeName, destination, lat, lon) {
+    document.getElementById('reviewModal').classList.add('open');
+    document.getElementById('reviewTitle').textContent = `📝 Reviews — ${placeName}`;
+    document.getElementById('reviewBody').innerHTML = '<div class="spinner-wrap"><div class="spinner"></div><p>Loading reviews…</p></div>';
+    try {
+        let url = `/planner/get-reviews/?place=${encodeURIComponent(placeName)}&dest=${encodeURIComponent(destination||'')}`;
+        if (lat) url += `&lat=${lat}&lon=${lon}`;
+        const data = await (await fetch(url, { headers: { 'X-CSRFToken': csrftoken }, credentials: 'same-origin' })).json();
+        if (data.success && data.reviews?.length) {
+            document.getElementById('reviewBody').innerHTML = data.reviews.map(r => `
+                <div style="padding:1rem 0;border-bottom:1px solid var(--gray-150);">
+                    <div style="display:flex;align-items:center;gap:0.6rem;margin-bottom:0.4rem;">
+                        <strong style="font-size:0.85rem;">👤 ${escHtml(r.author)}</strong>
+                        ${r.rating ? `<span class="rating-tag">⭐ ${r.rating}</span>` : ''}
+                        <span style="font-size:0.68rem;color:var(--text-light);margin-left:auto;">📅 ${escHtml(r.date)}</span>
                     </div>
-                </div></div>`;
-        }).join('');
+                    <p style="font-size:0.8rem;color:var(--text-soft);line-height:1.6;">"${escHtml(r.text)}"</p>
+                </div>`).join('');
+        } else {
+            document.getElementById('reviewBody').innerHTML = '<p style="text-align:center;padding:2rem;color:var(--text-light);">No reviews found.</p>';
+        }
+    } catch (e) {
+        document.getElementById('reviewBody').innerHTML = `<p style="text-align:center;padding:2rem;color:var(--rose);">⚠️ ${e.message}</p>`;
     }
-    function acceptBuddy(rid, nid) {
-        fetch(`/community/notification/mark-read/${nid}/`,{method:'POST',headers:{'X-CSRFToken':getCsrfToken(),'Content-Type':'application/json'}});
-        fetch(`/travellers/buddy-requests/${rid}/accept/`,{method:'POST',headers:{'X-CSRFToken':getCsrfToken(),'Content-Type':'application/json'}})
-            .then(r => { if(r.ok){document.querySelector(`[data-notification-id="${nid}"]`)?.remove();updateNotifCount();showToast('Buddy request accepted!','success');} });
-    }
-    function rejectBuddy(rid, nid) {
-        fetch(`/community/notification/mark-read/${nid}/`,{method:'POST',headers:{'X-CSRFToken':getCsrfToken(),'Content-Type':'application/json'}});
-        fetch(`/travellers/buddy-requests/${rid}/reject/`,{method:'POST',headers:{'X-CSRFToken':getCsrfToken(),'Content-Type':'application/json'}})
-            .then(r => { if(r.ok){document.querySelector(`[data-notification-id="${nid}"]`)?.remove();updateNotifCount();showToast('Request rejected','info');} });
-    }
-    function updateNotifCount() {
-        fetch('/community/api/unread-notifications-count/')
-            .then(r=>r.json()).then(d=>{
-                const b = document.getElementById('notificationBadge');
-                if(d.unread_count>0){b.textContent=d.unread_count>99?'99+':d.unread_count;b.style.display='flex';}
-                else b.style.display='none';
-            }).catch(()=>{});
-    }
-    function timeAgo(s) {
-        const diff = (new Date()-new Date(s))/60000;
-        if(diff<1) return 'Just now';
-        if(diff<60) return `${Math.floor(diff)} min ago`;
-        if(diff<1440) return `${Math.floor(diff/60)} hr ago`;
-        return `${Math.floor(diff/1440)} day${Math.floor(diff/1440)>1?'s':''} ago`;
-    }
-    function showToast(msg, type) {
-        const t = document.createElement('div');
-        t.style.cssText = `position:fixed;bottom:20px;right:20px;background:${type==='success'?'#10B981':type==='error'?'#EF4444':'#3B82F6'};color:white;padding:12px 20px;border-radius:10px;font-size:0.85rem;z-index:9999;box-shadow:0 4px 12px rgba(0,0,0,0.15);`;
-        t.textContent = msg; document.body.appendChild(t);
-        setTimeout(() => t.remove(), 3000);
-    }
-    document.addEventListener('click', e => {
-        const dd = document.getElementById('notificationDropdown'), btn = document.getElementById('notificationBtn');
-        if(dd && btn && !btn.contains(e.target) && !dd.contains(e.target)) dd.classList.remove('show');
-    });
-    notifInterval = setInterval(updateNotifCount, 30000);
-    window.addEventListener('beforeunload', () => clearInterval(notifInterval));
+}
 
-    // ── GOOGLE MAPS BOOTSTRAP ──
-    const apiKey = '{{ GOOGLE_API_KEY }}';
-    if (!apiKey) {
-        document.getElementById('map').innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--text-light);">⚠️ Google Maps API key missing</div>';
-    } else {
-        const s = document.createElement('script');
-        s.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&callback=initMap&libraries=geometry`;
-        s.async = true; s.defer = true; document.head.appendChild(s);
+// ── CHANGE STATE ──────────────────────────────────────────────────
+let currentChangeTarget = null;
+let currentDayIndex     = null;
+let currentActivityIndex = null;
+let isHotelChange       = false;
+
+// ── FETCH ALTERNATIVES ────────────────────────────────────────────
+async function fetchAlternatives(activityEl, type, lat, lon, destination, currentName, dayIndex, activityIndex) {
+    slidePanelBody.innerHTML = '<div class="spinner-wrap"><div class="spinner"></div><p>Loading alternatives…</p></div>';
+    openSlidePanel('🔄 Choose Alternative Activity');
+    currentChangeTarget  = activityEl;
+    currentDayIndex      = dayIndex;
+    currentActivityIndex = activityIndex;
+    isHotelChange        = false;
+    try {
+        const url = `/planner/api/alternatives/?lat=${lat}&lon=${lon}&type=${type}&destination=${encodeURIComponent(destination)}&exclude=${encodeURIComponent(currentName)}`;
+        const data = await (await fetch(url, { headers: { 'X-CSRFToken': csrftoken }, credentials: 'same-origin' })).json();
+        if (data.alternatives?.length) {
+            slidePanelBody.innerHTML = data.alternatives.map(p => `
+                <div class="alt-item" onclick="selectAlternative('${escHtml(p.name)}',${p.lat||0},${p.lon||0},'${escHtml(p.address||'')}','${p.rating||''}','${p.thumbnail||''}','${p.price_level||''}')">
+                    <div class="alt-item-name">${escHtml(p.name)}</div>
+                    <div class="alt-item-meta">
+                        ${p.rating ? `<span class="rating-tag">⭐ ${p.rating}</span>` : ''}
+                        ${p.price_level ? `<span class="price-tag">💰 ${p.price_level}</span>` : ''}
+                    </div>
+                    <div class="alt-address">${escHtml((p.address||'').substring(0,100))}</div>
+                </div>`).join('');
+        } else {
+            slidePanelBody.innerHTML = '<p style="text-align:center;padding:2.5rem;color:var(--text-light);">No alternatives found nearby.</p>';
+        }
+    } catch (e) {
+        slidePanelBody.innerHTML = `<p style="text-align:center;padding:2.5rem;color:var(--rose);">⚠️ ${e.message}</p>`;
     }
-    window.initMap = initMap;
-    window.selectAlternative = selectAlternative;
-    window.selectHotelAlternative = selectHotelAlternative;
+}
+
+async function fetchHotelAlternatives(stayEl, lat, lon, destination, currentName, dayIndex) {
+    slidePanelBody.innerHTML = '<div class="spinner-wrap"><div class="spinner"></div><p>Loading hotels…</p></div>';
+    openSlidePanel('🏨 Choose Alternative Hotel');
+    currentChangeTarget = stayEl;
+    currentDayIndex     = dayIndex;
+    isHotelChange       = true;
+    try {
+        const url =
+    `/planner/api/alternatives/?type=hotel&lat=${lat}&lon=${lon}&destination=${encodeURIComponent(destination)}&exclude=${encodeURIComponent(currentName)}`;
+        const data = await (await fetch(url, { headers: { 'X-CSRFToken': csrftoken }, credentials: 'same-origin' })).json();
+        if (data.alternatives?.length) {
+            slidePanelBody.innerHTML = data.alternatives.map(h => `
+                <div class="alt-item" onclick="selectHotelAlternative('${escHtml(h.name)}',${h.lat||0},${h.lon||0},'${escHtml(h.address||'')}','${h.rating||''}','${h.thumbnail||''}','${h.price_level||''}','${escHtml(h.description||'Comfortable accommodation')}')">
+                    <div class="alt-item-name">${escHtml(h.name)}</div>
+                    <div class="alt-item-meta">
+                        ${h.rating ? `<span class="rating-tag">⭐ ${h.rating}</span>` : ''}
+                        ${h.price_level ? `<span class="price-tag">💰 ${h.price_level}</span>` : ''}
+                    </div>
+                    <div class="alt-address">${escHtml((h.address||'').substring(0,100))}</div>
+                </div>`).join('');
+        } else {
+            slidePanelBody.innerHTML = '<p style="text-align:center;padding:2.5rem;color:var(--text-light);">No hotel alternatives found.</p>';
+        }
+    } catch (e) {
+        slidePanelBody.innerHTML = `<p style="text-align:center;padding:2.5rem;color:var(--rose);">⚠️ ${e.message}</p>`;
+    }
+}
+
+// ══════════════════════════════════════════════════════════════════
+//  DAY CARD FULL REBUILD
+//  Called after selectAlternative with the server's updated_activities
+//  list. This is the FIX for travel blocks appearing out of order.
+// ══════════════════════════════════════════════════════════════════
+function rebuildDayCard(dayIndex, activities) {
+    const dayCard = document.querySelector(`.day-card[data-day-index="${dayIndex}"]`);
+    if (!dayCard) return;
+
+    const body = dayCard.querySelector('.day-card-body');
+    if (!body) return;
+
+    // Preserve the stay card (it's not in the activities list)
+    const stayCard = body.querySelector('.stay-card');
+
+    // Track activity badge counter (only non-travel get a D-N label)
+    let actCounter = 0;
+    const dayNum   = parseInt(dayCard.querySelector('.day-label')?.textContent.replace('Day ', '') || '1');
+
+    const fragments = [];
+
+    activities.forEach((act, idx) => {
+        if (act.type === 'travel') {
+            fragments.push(buildTravelBlock(act));
+        } else {
+            actCounter++;
+            fragments.push(buildActivityBlock(act, dayNum, actCounter, dayIndex, idx));
+        }
+    });
+
+    // Clear and re-insert
+    body.innerHTML = '';
+    fragments.forEach(frag => {
+        frag.classList.add('just-rebuilt');
+        body.appendChild(frag);
+    });
+
+    // Re-attach stay card
+    if (stayCard) body.appendChild(stayCard);
+}
+
+// ── Build a travel block element ──────────────────────────────────
+function buildTravelBlock(act) {
+    const section = document.createElement('div');
+    section.className = 'activity-section';
+    section.dataset.travelBlock = 'true';
+    section.innerHTML = `
+        <div class="activity-section-header type-travel">🚗 &nbsp;Travel</div>
+        <div class="activity-section-body">
+            <div class="activity-row is-travel">
+                <div class="activity-num-col">
+                    <div class="activity-badge travel-badge-style">✈</div>
+                    <div class="activity-time-text">
+                        ${escHtml(act.start_time || '')}${act.end_time ? ' – ' + escHtml(act.end_time) : ''}
+                    </div>
+                </div>
+                <div class="activity-main">
+                    <div class="activity-name">
+                        <span class="travel-name">${escHtml(act.name || 'Travel')}</span>
+                        <span class="travel-tag">Travel</span>
+                    </div>
+                    <div class="activity-desc travel-description">${escHtml(act.description || '')}</div>
+                    <div class="travel-route">
+                        🚉 <span class="travel-from">${escHtml(act.from_place || 'Previous location')}</span>
+                        <span>→</span>
+                        <span class="travel-to">${escHtml(act.to_place || 'Next destination')}</span>
+                    </div>
+                    ${act.duration_minutes ? `<div class="travel-duration">⏱️ ${act.duration_minutes} min travel time</div>` : ''}
+                </div>
+            </div>
+        </div>`;
+    return section;
+}
+
+// ── Build a regular activity block element ────────────────────────
+function buildActivityBlock(act, dayNum, badgeNum, dayIndex, activityIndex) {
+    const time = act.time || '';
+    let headerClass = 'type-activity', headerLabel = '📍 Activity';
+    if (time.includes('Breakfast')) { headerClass = 'type-breakfast'; headerLabel = '🍳 Breakfast'; }
+    else if (time.includes('Lunch'))  { headerClass = 'type-lunch';    headerLabel = '🍽️ Lunch'; }
+    else if (time.includes('Dinner')) { headerClass = 'type-dinner';   headerLabel = '🍷 Dinner'; }
+
+    const mapBtns = (act.lat && act.lon && act.lat !== 'None' && act.lon !== 'None')
+        ? `<button class="action-btn map" data-lat="${act.lat}" data-lon="${act.lon}" data-name="${escHtml(act.name)}">🗺️ Map</button>
+           <button class="action-btn dir" data-lat="${act.lat}" data-lon="${act.lon}" data-name="${escHtml(act.name)}">🧭 Directions</button>`
+        : '';
+
+    const section = document.createElement('div');
+    section.className = 'activity-section';
+    section.innerHTML = `
+        <div class="activity-section-header ${headerClass}">${headerLabel}</div>
+        <div class="activity-section-body">
+            <div class="activity-row"
+                 data-activity-id="${activityIndex}"
+                 data-day-index="${dayIndex}"
+                 data-activity-index="${activityIndex}"
+                 data-activity-name="${escHtml(act.name)}"
+                 data-activity-lat="${act.lat || ''}"
+                 data-activity-lon="${act.lon || ''}">
+                <div class="activity-num-col">
+                    <div class="activity-badge">D${dayNum}-${badgeNum}</div>
+                    <div class="activity-time-text">
+                        ${escHtml(act.start_time || '')}${act.end_time ? ' – ' + escHtml(act.end_time) : ''}
+                    </div>
+                </div>
+                <div class="activity-main">
+                    <div class="activity-name">${escHtml(act.name)}</div>
+                    <div class="activity-desc">${escHtml(act.description || 'A must-visit attraction')}</div>
+                    <div class="activity-tags-row">
+                        ${act.rating ? `<span class="rating-tag" data-place="${escHtml(act.name)}" data-dest="{{ itinerary.destination|escapejs }}" data-lat="${act.lat||''}" data-lon="${act.lon||''}">⭐ ${act.rating}</span>` : ''}
+                        ${act.price_level ? `<span class="price-tag">💰 ${escHtml(act.price_level)}</span>` : ''}
+                    </div>
+                    ${act.address ? `<div class="address-row">📍 ${escHtml((act.address||'').substring(0,80))}</div>` : ''}
+                    <div class="activity-actions">
+                        ${mapBtns}
+                        <button class="action-btn change"
+                            data-day-index="${dayIndex}"
+                            data-activity-index="${activityIndex}"
+                            data-name="${escHtml(act.name)}"
+                            data-lat="${act.lat||''}"
+                            data-lon="${act.lon||''}">
+                            🔄 Change
+                        </button>
+                    </div>
+                </div>
+                ${act.image_url ? `<img class="activity-img" src="${escHtml(act.image_url)}" alt="${escHtml(act.name)}" loading="lazy" onerror="this.style.display='none'">` : ''}
+            </div>
+        </div>`;
+    return section;
+}
+
+// ── SELECT ACTIVITY — now calls rebuildDayCard ─────────────────────
+async function selectAlternative(newName, newLat, newLon, newAddress, newRating, newImage, newPrice) {
+    if (!currentChangeTarget || isHotelChange) return;
+
+    // Find the Change button to show loading state
+    const changeBtn = currentChangeTarget.querySelector('.action-btn.change');
+    if (changeBtn) { changeBtn.textContent = '⏳ Updating…'; changeBtn.disabled = true; }
+
+    try {
+        const res = await fetch('/planner/replace-activity/', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrftoken },
+            body: JSON.stringify({
+                trip_id: {{ trip.id }},
+                day_index: currentDayIndex,
+                activity_index: currentActivityIndex,
+                new_activity: {
+                    name: newName, lat: newLat, lon: newLon,
+                    address: newAddress, rating: newRating,
+                    image_url: newImage, price_level: newPrice,
+                    description: `Visit ${newName} — A wonderful place to explore`
+                }
+            })
+        });
+        const data = await res.json();
+
+        if (data.success) {
+            // ✅ Full day rebuild — fixes travel block ordering
+            rebuildDayCard(currentDayIndex, data.updated_activities);
+            refreshMap();
+            closeSlidePanel();
+        } else {
+            throw new Error(data.error || 'Update failed');
+        }
+    } catch (e) {
+        alert('Failed to update: ' + e.message);
+        if (changeBtn) { changeBtn.textContent = '🔄 Change'; changeBtn.disabled = false; }
+    }
+}
+
+// ── SELECT HOTEL ──────────────────────────────────────────────────
+async function selectHotelAlternative(newName, newLat, newLon, newAddress, newRating, newImage, newPrice, newDesc) {
+    if (!currentChangeTarget || !isHotelChange) return;
+    const stayEl   = currentChangeTarget;
+    const changeBtn = stayEl.querySelector('.action-btn.hotel-change');
+    if (changeBtn) { changeBtn.textContent = '⏳ Updating…'; changeBtn.disabled = true; }
+    try {
+        const res = await fetch('/planner/replace-hotel/', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrftoken },
+            body: JSON.stringify({ trip_id: {{ trip.id }}, day_index: currentDayIndex, new_hotel: { name: newName, lat: newLat, lon: newLon, address: newAddress, rating: newRating, image_url: newImage, price_level: newPrice, description: newDesc } })
+        });
+        const data = await res.json();
+        if (data.success) {
+            const nameEl  = stayEl.querySelector('.hotel-name-text'); if (nameEl) nameEl.textContent = newName;
+            const descEl  = stayEl.querySelector('.stay-desc');       if (descEl) descEl.textContent = newDesc;
+            const addrEl  = stayEl.querySelector('.hotel-address-text'); if (addrEl && newAddress) addrEl.textContent = newAddress.substring(0,80);
+            const ratingEl = stayEl.querySelector('.hotel-rating');    if (ratingEl && newRating) ratingEl.textContent = `⭐ ${newRating}`;
+            const coordsEl = stayEl.querySelector('.hotel-coords');    if (coordsEl) { coordsEl.dataset.lat = newLat; coordsEl.dataset.lon = newLon; }
+            stayEl.querySelectorAll('.action-btn.map,.action-btn.dir').forEach(b => { b.dataset.lat = newLat; b.dataset.lon = newLon; b.dataset.name = newName; });
+            if (changeBtn) { changeBtn.dataset.hotelName = newName; changeBtn.dataset.hotelLat = newLat; changeBtn.dataset.hotelLon = newLon; }
+            refreshMap();
+            closeSlidePanel();
+        } else { throw new Error(data.error || 'Update failed'); }
+    } catch (e) { alert('Failed to update hotel: ' + e.message); }
+    finally { if (changeBtn) { changeBtn.textContent = '🏨 Change Hotel'; changeBtn.disabled = false; } }
+}
+
+// ══════════════════════════════════════════════════════════════════
+//  MAP — ROAD-FOLLOWING ROUTES + ACTIVITY BADGE LABELS
+// ══════════════════════════════════════════════════════════════════
+
+function collectMapPoints() {
+    const points = [];
+    let actCounter = 0;
+
+    // Walk the DOM in document order to preserve sequence
+    document.querySelectorAll('.day-card').forEach(dayCard => {
+        const dayNum = parseInt(dayCard.querySelector('.day-label')?.textContent.replace('Day ', '') || '1');
+        let dayActCounter = 0;
+
+        dayCard.querySelectorAll('.activity-section').forEach(section => {
+            // Skip travel blocks for route waypoints (they have no coords)
+            if (section.dataset.travelBlock === 'true') return;
+
+            const row = section.querySelector('.activity-row:not(.is-travel)');
+            if (!row) return;
+
+            const lat  = parseFloat(row.dataset.activityLat);
+            const lon  = parseFloat(row.dataset.activityLon);
+            const name = row.dataset.activityName || '';
+
+            if (!lat || !lon || isNaN(lat) || isNaN(lon)) return;
+
+            dayActCounter++;
+            actCounter++;
+
+            // Badge label mirrors the DOM badge: D{day}-{n}
+            const badgeLabel = `D${dayNum}-${dayActCounter}`;
+
+            points.push({ lat, lng: lon, name, badgeLabel, isHotel: false });
+        });
+
+        // Hotel
+        const stayBtn = dayCard.querySelector('.stay-card .action-btn.map');
+        if (stayBtn?.dataset.lat && stayBtn?.dataset.lon) {
+            const lat = parseFloat(stayBtn.dataset.lat);
+            const lng = parseFloat(stayBtn.dataset.lon);
+            if (!isNaN(lat) && !isNaN(lng)) {
+                points.push({ lat, lng, name: stayBtn.dataset.name || 'Hotel', badgeLabel: 'H', isHotel: true });
+            }
+        }
+    });
+
+    return points;
+}
+
+// Custom SVG marker pin with a badge label inside
+function makeBadgeIcon(label, color) {
+    const isLong = label.length > 3;
+    const w = isLong ? 52 : 40;
+    const h = 32;
+    const svg = `
+<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h + 8}" viewBox="0 0 ${w} ${h + 8}">
+  <rect x="1" y="1" width="${w-2}" height="${h-2}" rx="10" ry="10" fill="${color}" stroke="white" stroke-width="2"/>
+  <polygon points="${w/2-5},${h} ${w/2+5},${h} ${w/2},${h+8}" fill="${color}"/>
+  <text x="${w/2}" y="${h/2 + 5}" text-anchor="middle" font-family="'DM Sans',sans-serif"
+        font-size="${isLong ? 9 : 11}" font-weight="700" fill="white">${label}</text>
+</svg>`;
+    return {
+        url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(svg),
+        scaledSize: new google.maps.Size(w, h + 8),
+        anchor: new google.maps.Point(w / 2, h + 8)
+    };
+}
+
+function clearMap() {
+    mapMarkers.forEach(m => m.setMap(null));
+    mapRoutes.forEach(r => r.setMap(null));
+    mapMarkers = [];
+    mapRoutes  = [];
+}
+
+// ── Draw road route using DirectionsService ───────────────────────
+// Google Directions API allows max 8 waypoints per request (free tier).
+// We chunk the points into segments of up to 10 stops (8 waypoints + origin + dest).
+async function drawRoadRoute(points) {
+    if (!map || points.length < 2) return;
+
+    const ds = new google.maps.DirectionsService();
+    const CHUNK_SIZE = 10;  // origin + 8 waypoints + destination
+
+    const statusEl = document.getElementById('mapStatusText');
+    let totalSegments = Math.ceil((points.length - 1) / (CHUNK_SIZE - 1));
+    let drawnSegments = 0;
+
+    for (let i = 0; i < points.length - 1; i += CHUNK_SIZE - 1) {
+        const chunk = points.slice(i, i + CHUNK_SIZE);
+        if (chunk.length < 2) break;
+
+        const origin      = { lat: chunk[0].lat, lng: chunk[0].lng };
+        const destination = { lat: chunk[chunk.length - 1].lat, lng: chunk[chunk.length - 1].lng };
+        const waypoints   = chunk.slice(1, -1).map(p => ({
+            location: { lat: p.lat, lng: p.lng },
+            stopover: true
+        }));
+
+        await new Promise(resolve => {
+            ds.route({
+                origin,
+                destination,
+                waypoints,
+                travelMode: google.maps.TravelMode.DRIVING,
+                optimizeWaypoints: false
+            }, (result, status) => {
+                if (status === 'OK') {
+                    const renderer = new google.maps.DirectionsRenderer({
+                        map,
+                        suppressMarkers: true,  // we draw our own markers
+                        polylineOptions: {
+                            strokeColor: '#0E8A8A',
+                            strokeOpacity: 0.85,
+                            strokeWeight: 5
+                        }
+                    });
+                    renderer.setDirections(result);
+                    mapRoutes.push(renderer);
+                    drawnSegments++;
+                    if (statusEl) statusEl.textContent = `Road route loaded (${drawnSegments}/${totalSegments} segments)`;
+                } else {
+                    // Fallback: draw straight line for this chunk
+                    console.warn(`Directions failed for chunk (${status}), drawing straight line`);
+                    const poly = new google.maps.Polyline({
+                        path: chunk.map(p => ({ lat: p.lat, lng: p.lng })),
+                        geodesic: true,
+                        strokeColor: '#0E8A8A',
+                        strokeOpacity: 0.5,
+                        strokeWeight: 3,
+                        strokePattern: [{ icon: { path: 'M 0,-1 0,1', strokeOpacity: 1, scale: 3 }, offset: '0', repeat: '12px' }],
+                        map
+                    });
+                    mapRoutes.push(poly);
+                    drawnSegments++;
+                    if (statusEl) statusEl.textContent = `Partial route (road data unavailable for some segments)`;
+                }
+                resolve();
+            });
+        });
+    }
+}
+
+function refreshMap() {
+    if (!map) return;
+    clearMap();
+
+    const points = collectMapPoints();
+    if (!points.length) return;
+
+    // Fit bounds
+    const bounds = new google.maps.LatLngBounds();
+    points.forEach(p => bounds.extend({ lat: p.lat, lng: p.lng }));
+    map.fitBounds(bounds);
+
+    // Place custom badge markers
+    points.forEach((pt, i) => {
+        let color = '#0E8A8A';  // teal for regular activities
+        if (i === 0) color = '#4caf50';                      // green = start
+        else if (i === points.length - 1 && !pt.isHotel) color = '#f44336';  // red = end
+        else if (pt.isHotel) color = '#9c27b0';              // purple = hotel
+
+        const infoWindow = new google.maps.InfoWindow({
+            content: `<div style="font-family:'DM Sans',sans-serif;font-size:0.8rem;font-weight:600;padding:2px 4px;">${escHtml(pt.name)}</div>`
+        });
+
+        const marker = new google.maps.Marker({
+            position: { lat: pt.lat, lng: pt.lng },
+            map,
+            title: pt.name,
+            icon: makeBadgeIcon(pt.badgeLabel, color)
+        });
+
+        marker.addListener('click', () => infoWindow.open(map, marker));
+        mapMarkers.push(marker);
+    });
+
+    // Draw road-following routes
+    const statusEl = document.getElementById('mapStatusText');
+    if (statusEl) statusEl.textContent = 'Calculating road routes…';
+    drawRoadRoute(points);
+}
+
+function initMap() {
+    const el = document.getElementById('map');
+    if (!el) return;
+    map = new google.maps.Map(el, {
+        center: { lat: 10.0889, lng: 77.0595 },
+        zoom: 10,
+        mapTypeId: google.maps.MapTypeId.ROADMAP,
+        mapTypeControl: false,
+        streetViewControl: false,
+        fullscreenControlOptions: { position: google.maps.ControlPosition.TOP_RIGHT },
+        styles: [
+            { featureType: 'poi', elementType: 'labels', stylers: [{ visibility: 'off' }] },
+            { featureType: 'transit', stylers: [{ visibility: 'simplified' }] }
+        ]
+    });
+    refreshMap();
+}
+
+// ── EVENT DELEGATION ──────────────────────────────────────────────
+document.body.addEventListener('click', function(e) {
+    const btn = e.target.closest('button') || e.target;
+
+    if (btn.classList?.contains('action-btn') && btn.classList.contains('map')) {
+        const lat = btn.dataset.lat, lon = btn.dataset.lon, name = btn.dataset.name;
+        if (lat && lon) openGoogleMaps(lat, lon, name);
+        return;
+    }
+    if (btn.classList?.contains('action-btn') && btn.classList.contains('dir')) {
+        const lat = btn.dataset.lat, lon = btn.dataset.lon, name = btn.dataset.name;
+        if (lat && lon) getDirections(lat, lon, name, btn);
+        return;
+    }
+    if (btn.classList?.contains('rating-tag') || btn.classList?.contains('hotel-rating')) {
+        fetchReviews(btn.dataset.place, btn.dataset.dest, btn.dataset.lat, btn.dataset.lon);
+        return;
+    }
+    if (btn.classList?.contains('action-btn') && btn.classList.contains('change')) {
+        const activityRow = btn.closest('.activity-row');
+        if (!activityRow) return;
+        const lat = btn.dataset.lat, lon = btn.dataset.lon, name = btn.dataset.name;
+        const dayIndex = parseInt(btn.dataset.dayIndex), actIdx = parseInt(btn.dataset.activityIndex);
+        const destination = '{{ itinerary.destination|escapejs }}';
+        let type = 'activity';
+        const header = btn.closest('.activity-section')?.querySelector('.activity-section-header');
+        if (header) {
+            const t = header.textContent;
+            if (t.includes('Breakfast')) type = 'breakfast';
+            else if (t.includes('Lunch')) type = 'lunch';
+            else if (t.includes('Dinner')) type = 'dinner';
+        }
+        fetchAlternatives(activityRow, type, lat, lon, destination, name, dayIndex, actIdx);
+        return;
+    }
+    if (btn.classList?.contains('action-btn') && btn.classList.contains('hotel-change')) {
+        const stayCard = btn.closest('.stay-card');
+        if (!stayCard) return;
+        const lat = btn.dataset.hotelLat, lon = btn.dataset.hotelLon, name = btn.dataset.hotelName;
+        const dayIndex = parseInt(btn.dataset.dayIndex);
+        const destination = '{{ itinerary.destination|escapejs }}';
+        if (lat && lon && name) fetchHotelAlternatives(stayCard, lat, lon, destination, name, dayIndex);
+        return;
+    }
+});
+
+// ── NOTIFICATIONS ─────────────────────────────────────────────────
+let notifInterval;
+function toggleNotificationDropdown() {
+    const dd = document.getElementById('notificationDropdown');
+    if (!dd.classList.contains('show')) { dd.classList.add('show'); loadNotifications(); }
+    else dd.classList.remove('show');
+}
+function loadNotifications() {
+    const list = document.getElementById('notificationList');
+    list.innerHTML = '<div class="notification-loading">Loading notifications…</div>';
+    fetch('/community/api/recent-notifications/')
+        .then(r => r.json())
+        .then(data => {
+            if (data.notifications?.length) displayNotifications(data.notifications);
+            else list.innerHTML = '<div class="notification-empty">No notifications yet</div>';
+        })
+        .catch(() => { list.innerHTML = '<div class="notification-loading">Error loading</div>'; });
+}
+function displayNotifications(notifications) {
+    const list = document.getElementById('notificationList');
+    list.innerHTML = notifications.map(n => {
+        let actions = '';
+        if (n.type === 'buddy_request' && n.buddy_request_id)
+            actions = `<div class="notification-actions"><button class="btn-accept-notif" onclick="event.stopPropagation();acceptBuddy(${n.buddy_request_id},${n.id})">✓ Accept</button><button class="btn-reject-notif" onclick="event.stopPropagation();rejectBuddy(${n.buddy_request_id},${n.id})">✗ Reject</button></div>`;
+        return `<div class="notification-item ${!n.is_read?'unread':''}" data-notification-id="${n.id}">
+            <div class="notification-content">
+                <div class="notification-avatar">${n.sender_avatar?`<img src="${n.sender_avatar}">`:`<span>${n.sender_name?n.sender_name[0]:'?'}</span>`}</div>
+                <div class="notification-text">
+                    <div class="notification-message">${n.message}</div>
+                    <div class="notification-time">${timeAgo(n.created_at)}</div>
+                    ${actions}
+                </div>
+            </div></div>`;
+    }).join('');
+}
+function acceptBuddy(rid, nid) {
+    fetch(`/community/notification/mark-read/${nid}/`,{method:'POST',headers:{'X-CSRFToken':getCsrfToken(),'Content-Type':'application/json'}});
+    fetch(`/travellers/buddy-requests/${rid}/accept/`,{method:'POST',headers:{'X-CSRFToken':getCsrfToken(),'Content-Type':'application/json'}})
+        .then(r => { if(r.ok){document.querySelector(`[data-notification-id="${nid}"]`)?.remove();updateNotifCount();showToast('Buddy request accepted!','success');} });
+}
+function rejectBuddy(rid, nid) {
+    fetch(`/community/notification/mark-read/${nid}/`,{method:'POST',headers:{'X-CSRFToken':getCsrfToken(),'Content-Type':'application/json'}});
+    fetch(`/travellers/buddy-requests/${rid}/reject/`,{method:'POST',headers:{'X-CSRFToken':getCsrfToken(),'Content-Type':'application/json'}})
+        .then(r => { if(r.ok){document.querySelector(`[data-notification-id="${nid}"]`)?.remove();updateNotifCount();showToast('Request rejected','info');} });
+}
+function updateNotifCount() {
+    fetch('/community/api/unread-notifications-count/')
+        .then(r=>r.json()).then(d=>{
+            const b = document.getElementById('notificationBadge');
+            if(d.unread_count>0){b.textContent=d.unread_count>99?'99+':d.unread_count;b.style.display='flex';}
+            else b.style.display='none';
+        }).catch(()=>{});
+}
+function timeAgo(s) {
+    const diff = (new Date()-new Date(s))/60000;
+    if(diff<1) return 'Just now';
+    if(diff<60) return `${Math.floor(diff)} min ago`;
+    if(diff<1440) return `${Math.floor(diff/60)} hr ago`;
+    return `${Math.floor(diff/1440)} day${Math.floor(diff/1440)>1?'s':''} ago`;
+}
+function showToast(msg, type) {
+    const t = document.createElement('div');
+    t.style.cssText = `position:fixed;bottom:20px;right:20px;background:${type==='success'?'#10B981':type==='error'?'#EF4444':'#3B82F6'};color:white;padding:12px 20px;border-radius:10px;font-size:0.85rem;z-index:9999;box-shadow:0 4px 12px rgba(0,0,0,0.15);`;
+    t.textContent = msg; document.body.appendChild(t);
+    setTimeout(() => t.remove(), 3000);
+}
+document.addEventListener('click', e => {
+    const dd = document.getElementById('notificationDropdown'), btn = document.getElementById('notificationBtn');
+    if(dd && btn && !btn.contains(e.target) && !dd.contains(e.target)) dd.classList.remove('show');
+});
+notifInterval = setInterval(updateNotifCount, 30000);
+window.addEventListener('beforeunload', () => clearInterval(notifInterval));
+
+// ── GOOGLE MAPS BOOTSTRAP ─────────────────────────────────────────
+const apiKey = '{{ GOOGLE_API_KEY }}';
+if (!apiKey) {
+    document.getElementById('map').innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--text-light);">⚠️ Google Maps API key missing</div>';
+    document.getElementById('mapStatusText').textContent = 'Google Maps unavailable';
+} else {
+    const s = document.createElement('script');
+    // Include 'directions' library isn't needed — DirectionsService is part of core
+    s.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&callback=initMap&libraries=geometry`;
+    s.async = true; s.defer = true; document.head.appendChild(s);
+}
+
+window.initMap             = initMap;
+window.selectAlternative   = selectAlternative;
+window.selectHotelAlternative = selectHotelAlternative;
 </script>
 {% endblock %}

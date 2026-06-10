@@ -126,62 +126,114 @@ from datetime import date
 
 @login_required
 def agency_bookings(request):
+
     auto_cancel_expired_bookings()
-    
+
     agency = request.user.agencyprofile
-    today_date = date.today()
-    
-    # Get all bookings for this agency
+    today_date = timezone.now().date()
+
+    # ===================================
+    # AUTO COMPLETE FINISHED TRIPS
+    # ===================================
+
+    active_bookings = PackageBooking.objects.filter(
+        package__agency=agency,
+        status="in_progress",
+        payment_status="paid"
+    ).select_related("package")
+
+    for booking in active_bookings:
+
+        if booking.trip_end_date < today_date:
+            booking.complete_trip()
+
+    # ===================================
+    # FETCH BOOKINGS
+    # ===================================
+
     bookings = PackageBooking.objects.filter(
         package__agency=agency
-    ).select_related('package', 'traveller').order_by('-booked_at')
-    
-    # Calculate statistics
+    ).select_related(
+        "package",
+        "traveller"
+    ).order_by("-booked_at")
+
+    # ===================================
+    # STATS
+    # ===================================
+
     total_bookings = bookings.count()
-    pending_count = bookings.filter(status='pending').count()
-    confirmed_count = bookings.filter(status='confirmed').count()
-    
-    # Ongoing bookings (confirmed and travel date is today or in progress)
+
+    pending_count = bookings.filter(
+        status="pending"
+    ).count()
+
+    confirmed_count = bookings.filter(
+        status="confirmed"
+    ).count()
+
     ongoing_count = bookings.filter(
-        status='confirmed',
-        travel_date=today_date
+        status="in_progress"
     ).count()
-    
-    # Completed bookings (travel date passed and confirmed)
+
     completed_count = bookings.filter(
-        status='confirmed',
-        travel_date__lt=today_date
+        status="completed"
     ).count()
-    
-    # Add upcoming status to each booking for display
+
+    # ===================================
+    # DISPLAY FLAGS
+    # ===================================
+
     for booking in bookings:
-        booking.is_upcoming = booking.status == 'confirmed' and booking.travel_date > today_date
-        booking.is_ongoing = booking.status == 'confirmed' and booking.travel_date == today_date
-        booking.is_completed = booking.status == 'confirmed' and booking.travel_date < today_date
-    
-    # Pagination
+
+        booking.is_upcoming = (
+            booking.status == "confirmed"
+            and booking.travel_date > today_date
+        )
+
+        booking.is_ongoing = (
+            booking.status == "in_progress"
+        )
+
+        booking.is_completed_display = (
+            booking.status == "completed"
+        )
+
+    # ===================================
+    # PAGINATION
+    # ===================================
+
     paginator = Paginator(bookings, 12)
-    page = request.GET.get('page', 1)
-    
+
+    page = request.GET.get("page", 1)
+
     try:
         bookings_page = paginator.page(page)
+
     except PageNotAnInteger:
         bookings_page = paginator.page(1)
+
     except EmptyPage:
-        bookings_page = paginator.page(paginator.num_pages)
-    
+        bookings_page = paginator.page(
+            paginator.num_pages
+        )
+
     context = {
-        'bookings': bookings_page,
-        'total_bookings': total_bookings,
-        'pending_count': pending_count,
-        'confirmed_count': confirmed_count,
-        'ongoing_count': ongoing_count,
-        'completed_count': completed_count,
-        'today': today_date,
-        'agency': agency,
+        "bookings": bookings_page,
+        "total_bookings": total_bookings,
+        "pending_count": pending_count,
+        "confirmed_count": confirmed_count,
+        "ongoing_count": ongoing_count,
+        "completed_count": completed_count,
+        "today": today_date,
+        "agency": agency,
     }
-    
-    return render(request, 'agencies/bookings.html', context)
+
+    return render(
+        request,
+        "agencies/bookings.html",
+        context
+    )
 
 @login_required
 def agency_packages(request):
@@ -749,3 +801,33 @@ def booking_details_api(request, booking_id):
         return JsonResponse({'error': 'Booking not found'}, status=404)
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
+    
+
+@login_required
+def mark_package_completed(request, booking_id):
+
+    booking = get_object_or_404(
+        PackageBooking,
+        id=booking_id,
+        package__agency__user=request.user
+    )
+
+    if booking.can_mark_completed:
+
+        booking.complete_trip()
+
+        # Traveller notification
+        Notification.objects.create(
+            user=booking.traveller,
+            notification_type="booking",
+            message=f"Your trip '{booking.package.title}' has been marked as completed."
+        )
+
+        # Agency notification
+        Notification.objects.create(
+            user=booking.package.agency.user,
+            notification_type="booking",
+            message=f"Trip completed for {booking.package.title}"
+        )
+
+    return redirect("agencies:package_bookings")

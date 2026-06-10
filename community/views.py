@@ -76,9 +76,11 @@ def community_home(request):
     total_posts = Post.objects.count()
 
     private_trips = Trip.objects.filter(
-        creator=request.user,
         visibility="private"
-    ).select_related('creator').prefetch_related('participants').order_by('-created_at')[:6]
+    ).filter(
+        Q(creator=request.user) |           # trips I created
+        Q(participants__user=request.user)  # trips I joined
+    ).distinct().select_related('creator').prefetch_related('participants', 'images').order_by('-created_at')[:6]
 
     context = {
         'created_communities': created_communities,
@@ -663,42 +665,33 @@ def mark_all_notifications_read(request):
 
 @login_required
 def create_post(request, community_id):
-    """Create a new post in a community with optional poll and images"""
-    
     community = get_object_or_404(Community, id=community_id)
-    
-    # Check permissions
+
     is_member = community.members.filter(user=request.user).exists()
     is_creator = community.creator == request.user
-    
+
     if not is_member and not is_creator:
         messages.error(request, "You must join this community to create posts.")
         return redirect('community:community_detail', pk=community.id)
-    
+
     if request.method == "POST":
         form = PostForm(request.POST)
-        formset = PostImageFormSet(request.POST, request.FILES, queryset=PostImage.objects.none())
-        
+
         if form.is_valid():
-            # Create the post
             post = form.save(commit=False)
             post.user = request.user
             post.community = community
             post.save()
-            
-            # Save images from formset
-            for image_form in formset:
-                if image_form.is_valid() and image_form.cleaned_data.get('image'):
-                    PostImage.objects.create(
-                        post=post,
-                        image=image_form.cleaned_data['image']
-                    )
-            
-            # Handle poll creation (optional)
+
+            # ✅ Directly grab all uploaded images — no formset needed
+            images = request.FILES.getlist('images')
+            for image in images:
+                PostImage.objects.create(post=post, image=image)
+
+            # Handle optional poll
             poll_question = request.POST.get('poll_question', '').strip()
-            poll_options = request.POST.getlist('poll_options')
-            poll_options = [opt.strip() for opt in poll_options if opt.strip()]
-            
+            poll_options = [o.strip() for o in request.POST.getlist('poll_options') if o.strip()]
+
             if poll_question and len(poll_options) >= 2:
                 poll = Poll.objects.create(
                     community=community,
@@ -706,24 +699,19 @@ def create_post(request, community_id):
                     question=poll_question
                 )
                 for option_text in poll_options:
-                    PollOption.objects.create(
-                        poll=poll,
-                        option_text=option_text
-                    )
+                    PollOption.objects.create(poll=poll, option_text=option_text)
                 messages.success(request, "Post with poll created successfully!")
             else:
                 messages.success(request, "Post created successfully!")
-            
+
             return redirect('community:community_detail', pk=community.id)
         else:
             messages.error(request, "Please correct the errors below.")
     else:
         form = PostForm()
-        formset = PostImageFormSet(queryset=PostImage.objects.none())
-    
+
     context = {
         'form': form,
-        'formset': formset,
         'community': community,
     }
     return render(request, "community/create_post.html", context)
@@ -1614,13 +1602,25 @@ def get_trip_locations(request, trip_id):
 
 @login_required
 def private_trip_list(request):
-    trips = Trip.objects.filter(
+    # Trips I created
+    created_trips = Trip.objects.filter(
         creator=request.user,
         visibility="private"
-    ).order_by("-created_at")
-
+    ).prefetch_related('participants', 'images').order_by("-created_at")
+ 
+    # Trips I joined (but didn't create)
+    joined_trips = Trip.objects.filter(
+        visibility="private",
+        participants__user=request.user
+    ).exclude(
+        creator=request.user
+    ).distinct().prefetch_related('participants', 'images').order_by("-created_at")
+ 
     return render(request, "community/private_trip_list.html", {
-        "trips": trips
+        "created_trips": created_trips,
+        "joined_trips": joined_trips,
+        # keep a combined list for any template that uses `trips`
+        "trips": list(created_trips) + list(joined_trips),
     })
 
 

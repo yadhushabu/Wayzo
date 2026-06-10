@@ -28,17 +28,14 @@
 *,*::before,*::after{box-sizing:border-box;}
 body{font-family:'DM Sans',sans-serif;background:var(--gray-100);}
 
-/* ══════════════════════════════
-   HERO SECTION
-══════════════════════════════ */
+/* ══ HERO ══ */
 .trip-hero {
     position:relative; height:380px; overflow:hidden;
     background:linear-gradient(135deg,#0a3d3d,#0d2b2a);
 }
 .trip-hero-bg {
     position:absolute; inset:0;
-    background-size:cover; background-position:center;
-    z-index:0;
+    background-size:cover; background-position:center; z-index:0;
 }
 .trip-hero-bg::after {
     content:''; position:absolute; inset:0;
@@ -46,14 +43,12 @@ body{font-family:'DM Sans',sans-serif;background:var(--gray-100);}
 }
 .hero-fade-bottom {
     position:absolute; bottom:0; left:0; right:0; height:120px;
-    background:linear-gradient(to bottom,transparent,var(--gray-100));
-    z-index:3;
+    background:linear-gradient(to bottom,transparent,var(--gray-100)); z-index:3;
 }
 .trip-hero-content {
-    position:relative; z-index:4;
-    height:100%; display:flex; flex-direction:column;
-    justify-content:flex-end; padding:2rem 3rem 2.5rem;
-    max-width:1000px;
+    position:relative; z-index:4; height:100%;
+    display:flex; flex-direction:column; justify-content:flex-end;
+    padding:2rem 3rem 2.5rem; max-width:1000px;
 }
 .hero-eyebrow {
     display:inline-flex; align-items:center; gap:.45rem;
@@ -73,9 +68,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--gray-100);}
     color:white; line-height:1.15; margin-bottom:.4rem;
     text-shadow:0 2px 16px rgba(0,0,0,.35);
 }
-.trip-meta-chips {
-    display:flex; flex-wrap:wrap; gap:.5rem; margin-top:.6rem;
-}
+.trip-meta-chips { display:flex; flex-wrap:wrap; gap:.5rem; margin-top:.6rem; }
 .meta-chip {
     display:inline-flex; align-items:center; gap:.3rem;
     background:rgba(255,255,255,.12); backdrop-filter:blur(8px);
@@ -83,24 +76,18 @@ body{font-family:'DM Sans',sans-serif;background:var(--gray-100);}
     padding:.3rem .85rem; font-size:.72rem; color:rgba(255,255,255,.82);
 }
 
-/* ══════════════════════════════
-   PAGE BODY
-══════════════════════════════ */
+/* ══ PAGE BODY ══ */
 .page-body {
     position:relative; z-index:10;
-    padding:2rem 3rem 4rem;
-    max-width:1400px; margin:0 auto;
+    padding:2rem 3rem 4rem; max-width:1400px; margin:0 auto;
 }
 
-/* ══════════════════════════════
-   ACTION BAR
-══════════════════════════════ */
+/* ══ ACTION BAR ══ */
 .action-bar {
     background:white; border-radius:var(--radius);
     box-shadow:0 8px 32px rgba(0,0,0,.08);
     border:1px solid var(--gray-200);
-    padding:.85rem 1.5rem;
-    margin-bottom:2rem;
+    padding:.85rem 1.5rem; margin-bottom:2rem;
     display:flex; align-items:center; justify-content:space-between;
     flex-wrap:wrap; gap:.75rem;
 }
@@ -118,264 +105,174 @@ body{font-family:'DM Sans',sans-serif;background:var(--gray-100);}
 .action-btn-secondary:hover { border-color:var(--teal); color:var(--teal); }
 .action-btn-danger { background:var(--red-pale); color:var(--red); border:1px solid #fca5a5; }
 .action-btn-danger:hover { background:var(--red); color:white; }
-.action-btn-disabled { background:var(--gray-100); color:var(--muted); cursor:default; }
 
-/* ══════════════════════════════
-   MAIN GRID
-══════════════════════════════ */
+/* ══ LIVE LOCATION CARD ══ */
+.live-card {
+    background: white;
+    border: 1px solid var(--gray-200);
+    border-radius: var(--radius);
+    overflow: hidden;
+    margin-bottom: 1.5rem;
+}
+.live-card-header {
+    padding: .9rem 1.2rem;
+    border-bottom: 1px solid var(--gray-200);
+    background: var(--s2);
+    font-weight: 700;
+    display: flex; align-items: center; gap: .5rem;
+}
+.live-card-body { padding: 1.2rem; }
+
+/* Pulse dot for "sharing" state */
+.live-dot {
+    width: 10px; height: 10px; border-radius: 50%;
+    background: var(--gray-300); flex-shrink: 0;
+    transition: background .3s;
+}
+.live-dot.active {
+    background: var(--green);
+    box-shadow: 0 0 0 3px rgba(16,185,129,.25);
+    animation: livePulse 1.8s ease-in-out infinite;
+}
+@keyframes livePulse {
+    0%,100% { box-shadow: 0 0 0 3px rgba(16,185,129,.25); }
+    50%      { box-shadow: 0 0 0 7px rgba(16,185,129,.08); }
+}
+
+/* Share button states */
+.btn-share-location {
+    width: 100%; justify-content: center;
+    display: inline-flex; align-items: center; gap: .5rem;
+    padding: .65rem 1.2rem; border-radius: 40px;
+    font-size: .82rem; font-weight: 600;
+    cursor: pointer; border: none; transition: all .2s;
+}
+.btn-share-location.idle {
+    background: var(--teal); color: white;
+}
+.btn-share-location.idle:hover { background: var(--teal-dark); transform: translateY(-1px); }
+.btn-share-location.sharing {
+    background: var(--red-pale); color: var(--red);
+    border: 1px solid #fca5a5;
+}
+.btn-share-location.sharing:hover { background: var(--red); color: white; }
+
+.location-status-text {
+    font-size: .72rem; color: var(--muted);
+    text-align: center; margin-top: .6rem; line-height: 1.5;
+}
+.location-status-text.active { color: var(--green); font-weight: 600; }
+
+/* ══ MAIN GRID ══ */
 .content-grid {
-    display:grid;
-    grid-template-columns:1fr 360px;
-    gap:2rem;
-    align-items:start;
+    display:grid; grid-template-columns:1fr 360px;
+    gap:2rem; align-items:start;
 }
 .main-col { min-width:0; }
 .right-sidebar { position:sticky; top:90px; display:flex; flex-direction:column; gap:1.5rem; }
 
-/* ══════════════════════════════
-   IMAGE GALLERY
-══════════════════════════════ */
+/* ══ IMAGE GALLERY ══ */
 .image-gallery {
-    background:white;
-    border:1px solid var(--gray-200);
-    border-radius:var(--radius);
-    overflow:hidden;
-    margin-bottom:1.5rem;
-    box-shadow:var(--sh);
+    background:white; border:1px solid var(--gray-200);
+    border-radius:var(--radius); overflow:hidden;
+    margin-bottom:1.5rem; box-shadow:var(--sh);
 }
 .gallery-header {
-    padding:.9rem 1.2rem;
-    border-bottom:1px solid var(--gray-200);
-    background:var(--s2);
-    font-weight:700;
-    display:flex;
-    align-items:center;
-    gap:.5rem;
+    padding:.9rem 1.2rem; border-bottom:1px solid var(--gray-200);
+    background:var(--s2); font-weight:700;
+    display:flex; align-items:center; gap:.5rem;
 }
 .gallery-main {
-    position:relative;
-    height:400px;
-    background:var(--gray-150);
-    display:flex;
-    align-items:center;
-    justify-content:center;
+    position:relative; height:400px; background:var(--gray-150);
+    display:flex; align-items:center; justify-content:center;
 }
-.gallery-main-img {
-    width:100%;
-    height:100%;
-    object-fit:cover;
-}
+.gallery-main-img { width:100%; height:100%; object-fit:cover; }
 .gallery-thumbs {
-    display:flex;
-    gap:.5rem;
-    padding:1rem;
-    overflow-x:auto;
-    background:var(--s2);
-    border-top:1px solid var(--gray-200);
+    display:flex; gap:.5rem; padding:1rem; overflow-x:auto;
+    background:var(--s2); border-top:1px solid var(--gray-200);
 }
 .gallery-thumb {
-    width:80px;
-    height:80px;
-    border-radius:10px;
-    object-fit:cover;
-    cursor:pointer;
-    transition:all .2s;
-    border:2px solid transparent;
-    flex-shrink:0;
+    width:80px; height:80px; border-radius:10px; object-fit:cover;
+    cursor:pointer; transition:all .2s; border:2px solid transparent; flex-shrink:0;
 }
 .gallery-thumb:hover { transform:scale(1.05); }
 .gallery-thumb.active { border-color:var(--teal); }
 
-/* ══════════════════════════════
-   INFO CARDS
-══════════════════════════════ */
+/* ══ INFO CARDS ══ */
 .info-card {
-    background:white;
-    border:1px solid var(--gray-200);
-    border-radius:var(--radius);
-    overflow:hidden;
-    margin-bottom:1.5rem;
+    background:white; border:1px solid var(--gray-200);
+    border-radius:var(--radius); overflow:hidden; margin-bottom:1.5rem;
 }
 .info-card-header {
-    padding:.9rem 1.2rem;
-    border-bottom:1px solid var(--gray-200);
-    background:var(--s2);
-    font-weight:700;
-    display:flex;
-    align-items:center;
-    gap:.5rem;
+    padding:.9rem 1.2rem; border-bottom:1px solid var(--gray-200);
+    background:var(--s2); font-weight:700;
+    display:flex; align-items:center; gap:.5rem;
 }
 .info-card-body { padding:1.2rem; }
-
-.info-grid {
-    display:grid;
-    grid-template-columns:repeat(2,1fr);
-    gap:1rem;
-}
-.info-item {
-    background:var(--gray-100);
-    border-radius:var(--radius-sm);
-    padding:.8rem;
-}
-.info-label {
-    font-size:.65rem;
-    text-transform:uppercase;
-    letter-spacing:.05em;
-    color:var(--muted);
-    margin-bottom:.2rem;
-}
-.info-value {
-    font-size:.9rem;
-    font-weight:700;
-    color:var(--ink);
-}
-.info-text {
-    font-size:.85rem;
-    color:var(--text-soft);
-    line-height:1.6;
-}
+.info-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:1rem; }
+.info-item { background:var(--gray-100); border-radius:var(--radius-sm); padding:.8rem; }
+.info-label { font-size:.65rem; text-transform:uppercase; letter-spacing:.05em; color:var(--muted); margin-bottom:.2rem; }
+.info-value { font-size:.9rem; font-weight:700; color:var(--ink); }
+.info-text { font-size:.85rem; color:var(--text-soft); line-height:1.6; }
 
 /* Itinerary Timeline */
-.itinerary-timeline {
-    position:relative;
-    padding-left:2rem;
-}
+.itinerary-timeline { position:relative; padding-left:2rem; }
 .itinerary-timeline::before {
-    content:'';
-    position:absolute;
-    left:8px;
-    top:0;
-    bottom:0;
-    width:2px;
-    background:linear-gradient(to bottom,var(--teal),var(--gray-300));
+    content:''; position:absolute; left:8px; top:0; bottom:0;
+    width:2px; background:linear-gradient(to bottom,var(--teal),var(--gray-300));
 }
-.day-item {
-    position:relative;
-    margin-bottom:1.2rem;
-}
+.day-item { position:relative; margin-bottom:1.2rem; }
 .day-dot {
-    position:absolute;
-    left:-1.9rem;
-    top:0;
-    width:28px;
-    height:28px;
-    background:var(--teal);
-    border:3px solid white;
-    border-radius:50%;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    color:white;
-    font-weight:700;
-    font-size:.7rem;
+    position:absolute; left:-1.9rem; top:0;
+    width:28px; height:28px; background:var(--teal);
+    border:3px solid white; border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    color:white; font-weight:700; font-size:.7rem;
     box-shadow:0 2px 8px rgba(0,0,0,.1);
 }
 .day-content {
-    background:white;
-    border:1px solid var(--gray-200);
-    border-radius:var(--radius-sm);
-    padding:1rem;
-    transition:all .2s;
+    background:white; border:1px solid var(--gray-200);
+    border-radius:var(--radius-sm); padding:1rem; transition:all .2s;
 }
-.day-content:hover {
-    border-color:var(--teal-pale);
-    box-shadow:var(--sh);
-}
-.day-title {
-    font-weight:700;
-    font-size:.9rem;
-    color:var(--ink);
-    margin-bottom:.4rem;
-}
-.day-desc {
-    font-size:.8rem;
-    color:var(--text-soft);
-    line-height:1.6;
-}
+.day-content:hover { border-color:var(--teal-pale); box-shadow:var(--sh); }
+.day-title { font-weight:700; font-size:.9rem; color:var(--ink); margin-bottom:.4rem; }
+.day-desc { font-size:.8rem; color:var(--text-soft); line-height:1.6; }
 
-/* Sections */
-.section-divider {
-    margin:1rem 0 .5rem;
-    padding:.5rem 0 .2rem;
-    border-bottom:2px solid var(--teal-pale);
-}
-.section-title {
-    font-weight:700;
-    font-size:.9rem;
-    color:var(--ink);
-    display:flex;
-    align-items:center;
-    gap:.5rem;
-}
+.section-divider { margin:1rem 0 .5rem; padding:.5rem 0 .2rem; border-bottom:2px solid var(--teal-pale); }
+.section-title { font-weight:700; font-size:.9rem; color:var(--ink); display:flex; align-items:center; gap:.5rem; }
 
-/* Members List */
+/* Members */
 .member-item {
-    display:flex;
-    align-items:center;
-    gap:.75rem;
-    padding:.7rem 0;
-    border-bottom:1px solid var(--gray-150);
+    display:flex; align-items:center; gap:.75rem;
+    padding:.7rem 0; border-bottom:1px solid var(--gray-150);
     text-decoration:none;
 }
 .member-item:last-child { border-bottom:none; }
 .member-av {
-    width:40px;
-    height:40px;
-    border-radius:50%;
-    background:var(--teal-pale);
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    font-weight:700;
-    color:var(--teal);
-    overflow:hidden;
-    flex-shrink:0;
+    width:40px; height:40px; border-radius:50%;
+    background:var(--teal-pale); display:flex; align-items:center;
+    justify-content:center; font-weight:700; color:var(--teal);
+    overflow:hidden; flex-shrink:0;
 }
 .member-av img { width:100%; height:100%; object-fit:cover; }
 .member-info { flex:1; }
-.member-name {
-    font-weight:600;
-    font-size:.85rem;
-    color:var(--ink);
-    margin-bottom:.1rem;
-}
-.member-role {
-    font-size:.65rem;
-    color:var(--muted);
-}
-.member-status {
-    font-size:.7rem;
-    padding:.2rem .6rem;
-    border-radius:20px;
-    font-weight:600;
-}
+.member-name { font-weight:600; font-size:.85rem; color:var(--ink); margin-bottom:.1rem; }
+.member-role { font-size:.65rem; color:var(--muted); }
+.member-status { font-size:.7rem; padding:.2rem .6rem; border-radius:20px; font-weight:600; }
 .status-approved { background:var(--green-pale); color:var(--green); }
 .status-pending { background:var(--amber-pale); color:#92400e; }
 
-/* Promote Button */
 .btn-promote {
-    background:var(--amber-pale);
-    color:var(--amber);
-    border:1px solid #fcd34d;
-    padding:.2rem .8rem;
-    border-radius:20px;
-    font-size:.65rem;
-    font-weight:600;
-    cursor:pointer;
-    transition:all .2s;
+    background:var(--amber-pale); color:var(--amber);
+    border:1px solid #fcd34d; padding:.2rem .8rem;
+    border-radius:20px; font-size:.65rem; font-weight:600;
+    cursor:pointer; transition:all .2s;
 }
-.btn-promote:hover {
-    background:var(--amber);
-    color:white;
-}
+.btn-promote:hover { background:var(--amber); color:white; }
 
-/* Empty State */
 .empty-state {
-    text-align:center;
-    padding:2rem;
-    color:var(--muted);
-    background:var(--gray-100);
-    border-radius:var(--radius-sm);
+    text-align:center; padding:2rem; color:var(--muted);
+    background:var(--gray-100); border-radius:var(--radius-sm);
 }
 
 /* Responsive */
@@ -395,7 +292,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--gray-100);}
 
 {% block content %}
 
-<!-- ══ HERO SECTION ══ -->
+<!-- ══ HERO ══ -->
 <div class="trip-hero">
     {% with trip.images.first as hero_image %}
     <div class="trip-hero-bg" style="background-image:url('{% if hero_image %}{{ hero_image.image.url }}{% else %}https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1600&h=600&fit=crop{% endif %}');"></div>
@@ -448,32 +345,30 @@ body{font-family:'DM Sans',sans-serif;background:var(--gray-100);}
                 </button>
             </form>
             {% endif %}
-            
-            <!-- Group Chat Button - FIXED: uses trip_id parameter -->
+
             {% if is_joined or is_owner %}
             <a href="{% url 'travellers:inbox' %}?trip_id={{ trip.id }}" class="action-btn action-btn-primary">
                 <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
                 Group Chat
             </a>
             {% endif %}
-            
-            <!-- Live Tracking - Only for Owner and Coordinators -->
+
+            {# Coordinators & owner can view the live tracking map #}
             {% if can_view_map %}
             <a href="{% url 'community:trip_live_map' trip.id %}" class="action-btn action-btn-secondary">
-                <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                Live Tracking
+                <svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                Live Map
             </a>
             {% endif %}
-            
-            <!-- Show Invite Link ONLY for Private Trips (not in community) -->
+
             {% if trip.visibility == 'private' and trip.invite_code %}
             <button class="action-btn action-btn-secondary" onclick="copyInviteLink()">
-                <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><polyline points="13 13 11 13 11 8 9 8 9 12 11 12 11 13 13 13 13 8 15 8 15 13"/></svg>
+                <svg viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
                 Invite Friends
             </button>
             {% endif %}
         </div>
-        
+
         {% if seats_left > 0 and not is_owner and not is_joined %}
         <span style="font-size:.75rem;color:var(--green);font-weight:600;">✨ {{ seats_left }} seats left!</span>
         {% elif seats_left == 0 %}
@@ -484,7 +379,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--gray-100);}
     <!-- Main Content Grid -->
     <div class="content-grid">
 
-        <!-- LEFT COLUMN -->
+        <!-- ══ LEFT COLUMN ══ -->
         <div class="main-col">
 
             <!-- Image Gallery -->
@@ -501,8 +396,8 @@ body{font-family:'DM Sans',sans-serif;background:var(--gray-100);}
                 </div>
                 <div class="gallery-thumbs">
                     {% for img in trip.images.all %}
-                    <img class="gallery-thumb {% if forloop.first %}active{% endif %}" 
-                         src="{{ img.image.url }}" 
+                    <img class="gallery-thumb {% if forloop.first %}active{% endif %}"
+                         src="{{ img.image.url }}"
                          alt="Gallery image {{ forloop.counter }}"
                          onclick="setGalleryImage(this.src, this)">
                     {% endfor %}
@@ -523,7 +418,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--gray-100);}
             <!-- Description -->
             <div class="info-card">
                 <div class="info-card-header">
-                    <svg viewBox="0 0 24 24" width="16" height="16" stroke="var(--teal)" stroke-width="1.8"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+                    <svg viewBox="0 0 24 24" width="16" height="16" stroke="var(--teal)" stroke-width="1.8"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
                     About the Trip
                 </div>
                 <div class="info-card-body">
@@ -624,8 +519,8 @@ body{font-family:'DM Sans',sans-serif;background:var(--gray-100);}
             </div>
             {% endif %}
 
-            <!-- Things to Pack & Cancellation Policy -->
-            {% if trip.things_to_pack or trip.cancellation_policy %}
+            <!-- Things to Pack / Rules / Cancellation -->
+            {% if trip.things_to_pack or trip.cancellation_policy or trip.rules %}
             <div class="info-card">
                 <div class="info-card-header">
                     <svg viewBox="0 0 24 24" width="16" height="16" stroke="var(--teal)" stroke-width="1.8"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
@@ -637,13 +532,11 @@ body{font-family:'DM Sans',sans-serif;background:var(--gray-100);}
                     <div class="section-title">🎒 Things to Pack</div>
                     <p class="info-text">{{ trip.things_to_pack|linebreaks }}</p>
                     {% endif %}
-                    
                     {% if trip.rules %}
                     <div class="section-divider"></div>
                     <div class="section-title">📋 Trip Rules</div>
                     <p class="info-text">{{ trip.rules|linebreaks }}</p>
                     {% endif %}
-                    
                     {% if trip.cancellation_policy %}
                     <div class="section-divider"></div>
                     <div class="section-title">⚠️ Cancellation Policy</div>
@@ -655,7 +548,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--gray-100);}
 
         </div><!-- /main-col -->
 
-        <!-- RIGHT SIDEBAR -->
+        <!-- ══ RIGHT SIDEBAR ══ -->
         <div class="right-sidebar">
 
             <!-- Creator Info -->
@@ -678,38 +571,80 @@ body{font-family:'DM Sans',sans-serif;background:var(--gray-100);}
                             <div class="member-role">Trip Creator</div>
                         </div>
                     </a>
-                    
-                    <!-- Message Organizer - Only if buddies -->
                     {% if is_buddy %}
                     <a href="{% url 'travellers:inbox' %}?user_id={{ trip.creator.id }}" class="action-btn action-btn-secondary" style="width:100%;justify-content:center;margin-top:.5rem;">
                         <svg viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
                         Message Organizer
                     </a>
-                    {% elif not is_owner and not is_buddy %}
-                    <div class="empty-state" style="padding:.5rem; font-size:.7rem;">
-                        <span>🔒 Become buddies to message the organizer</span>
+                    {% elif not is_owner %}
+                    <div class="empty-state" style="padding:.5rem;font-size:.7rem;">
+                        🔒 Become buddies to message the organizer
                     </div>
                     {% endif %}
                 </div>
             </div>
 
-            <!-- Invite Link Section - ONLY for Private Trips -->
+            <!-- Invite Link — private trips only -->
             {% if trip.visibility == 'private' and trip.invite_code %}
             <div class="info-card">
                 <div class="info-card-header">
-                    <svg viewBox="0 0 24 24" width="16" height="16" stroke="var(--teal)" stroke-width="1.8"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><polyline points="13 13 11 13 11 8 9 8 9 12 11 12 11 13 13 13 13 8 15 8 15 13"/></svg>
+                    <svg viewBox="0 0 24 24" width="16" height="16" stroke="var(--teal)" stroke-width="1.8"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
                     Invite Friends
                 </div>
                 <div class="info-card-body">
-                    <input type="text" 
-                           id="inviteLink" 
+                    <input type="text" id="inviteLink"
                            value="{{ request.scheme }}://{{ request.get_host }}{% url 'community:invite_trip' trip.invite_code %}"
-                           readonly 
+                           readonly
                            style="width:100%;padding:.6rem;border:1px solid var(--gray-200);border-radius:var(--radius-sm);font-size:.75rem;margin-bottom:.6rem;">
                     <button onclick="copyInviteLink()" class="action-btn action-btn-primary" style="width:100%;justify-content:center;">
                         <svg viewBox="0 0 24 24"><polyline points="6 17 12 23 18 17"/><path d="M12 2v21"/></svg>
                         Copy Invite Link
                     </button>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- ══ LIVE LOCATION CARD ══
+                 WHO SEES WHAT:
+                 • All approved members  → Share Live Location (start/stop toggle)
+                 • Owner + Coordinator   → also see "View Live Map" button below share
+                 • Non-members           → card not shown at all
+            ══ -->
+            {% if is_joined or is_owner %}
+            <div class="live-card">
+                <div class="live-card-header">
+                    <div class="live-dot" id="liveDot"></div>
+                    <svg viewBox="0 0 24 24" width="16" height="16" stroke="var(--teal)" stroke-width="1.8" fill="none" style="margin-left:.2rem;"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                    Live Location
+                </div>
+                <div class="live-card-body">
+
+                    <!-- Share / Stop button — all members see this -->
+                    <button id="shareLocationBtn"
+                            class="btn-share-location idle"
+                            onclick="toggleLocationSharing()">
+                        <svg viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" fill="none" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                        <span id="shareLocationLabel">Share My Location</span>
+                    </button>
+                    <p class="location-status-text" id="locationStatusText">
+                        Let your group see where you are in real time.
+                    </p>
+
+                    {% if can_view_map %}
+                    <!-- View Map — only owner / coordinator -->
+                    <div style="margin-top:.85rem;padding-top:.85rem;border-top:1px solid var(--gray-200);">
+                        <a href="{% url 'community:trip_live_map' trip.id %}"
+                           class="action-btn action-btn-secondary"
+                           style="width:100%;justify-content:center;">
+                            <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="2"><polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"/><line x1="9" y1="3" x2="9" y2="18"/><line x1="15" y1="6" x2="15" y2="21"/></svg>
+                            View Live Map
+                        </a>
+                        <p class="location-status-text">
+                            See all members' live positions on the map.
+                        </p>
+                    </div>
+                    {% endif %}
+
                 </div>
             </div>
             {% endif %}
@@ -732,25 +667,18 @@ body{font-family:'DM Sans',sans-serif;background:var(--gray-100);}
                         </div>
                         <div class="member-info">
                             <div class="member-name">
-                                {% if p.user == trip.creator %}
                                 {{ p.user.get_full_name|default:p.user.username }}
-                                <span style="color:var(--amber);font-size:.7rem;">★</span>
-                                {% else %}
-                                {{ p.user.get_full_name|default:p.user.username }}
-                                {% endif %}
+                                {% if p.user == trip.creator %}<span style="color:var(--amber);font-size:.7rem;">★</span>{% endif %}
                             </div>
                             <div class="member-role">
                                 {% if p.role == 'coordinator' %}🚩 Coordinator{% else %}{{ p.get_role_display }}{% endif %}
                             </div>
                         </div>
-                        <span class="member-status status-{{ p.status }}">
-                            {{ p.status|title }}
-                        </span>
+                        <span class="member-status status-{{ p.status }}">{{ p.status|title }}</span>
                     </div>
-                    
-                    <!-- Admin actions (only for trip creator) -->
+
                     {% if is_owner and p.user != trip.creator %}
-                    <div style="display:flex; gap:.5rem; margin-left:3rem; margin-bottom:.5rem; flex-wrap:wrap;">
+                    <div style="display:flex;gap:.5rem;margin-left:3rem;margin-bottom:.5rem;flex-wrap:wrap;">
                         {% if p.status == "pending" %}
                         <form method="POST" action="{% url 'community:approve_participant' p.id %}" style="display:inline;">
                             {% csrf_token %}
@@ -762,41 +690,29 @@ body{font-family:'DM Sans',sans-serif;background:var(--gray-100);}
                         </form>
                         {% endif %}
                         {% if p.status == "approved" %}
-                        <!-- Promote to Coordinator button -->
                         {% if p.role != 'coordinator' %}
                         <form method="POST" action="{% url 'community:promote_to_coordinator' p.id %}" style="display:inline;">
                             {% csrf_token %}
-                            <button type="submit" class="btn-promote" onclick="return confirm('Promote {{ p.user.username }} to coordinator? They will have access to live tracking.')">
+                            <button type="submit" class="btn-promote" onclick="return confirm('Promote {{ p.user.username }} to coordinator? They will gain live map access.')">
                                 ⭐ Make Coordinator
                             </button>
                         </form>
                         {% else %}
                         <span class="btn-promote" style="background:var(--green-pale);color:var(--green);cursor:default;">✓ Coordinator</span>
                         {% endif %}
-                        
                         <form method="POST" action="{% url 'community:remove_participant' p.id %}" style="display:inline;">
                             {% csrf_token %}
-                            <button type="submit" class="action-btn action-btn-danger" style="padding:.25rem .8rem;font-size:.65rem;" onclick="return confirm('Remove this member?')">
-                                Remove
-                            </button>
+                            <button type="submit" class="action-btn action-btn-danger" style="padding:.25rem .8rem;font-size:.65rem;" onclick="return confirm('Remove this member?')">Remove</button>
                         </form>
-                        
-                        <!-- Message button - Only if buddies -->
                         {% if p.user.id in buddy_ids %}
-                        <a href="{% url 'travellers:inbox' %}?user_id={{ p.user.id }}" class="action-btn action-btn-secondary" style="padding:.25rem .8rem;font-size:.65rem;text-decoration:none;">
-                            💬 Message
-                        </a>
-                        {% elif p.user != request.user and not is_owner %}
-                        <span style="font-size:.6rem;color:var(--muted);padding:.25rem .5rem;">🔒 Not buddies</span>
+                        <a href="{% url 'travellers:inbox' %}?user_id={{ p.user.id }}" class="action-btn action-btn-secondary" style="padding:.25rem .8rem;font-size:.65rem;text-decoration:none;">💬 Message</a>
                         {% endif %}
                         {% endif %}
                     </div>
                     {% elif not is_owner and p.user == trip.creator %}
-                    <div style="margin-left:3rem; margin-bottom:.5rem;">
+                    <div style="margin-left:3rem;margin-bottom:.5rem;">
                         {% if is_buddy %}
-                        <a href="{% url 'travellers:inbox' %}?user_id={{ trip.creator.id }}" class="action-btn action-btn-secondary" style="padding:.25rem .8rem;font-size:.65rem;text-decoration:none;">
-                            💬 Message Organizer
-                        </a>
+                        <a href="{% url 'travellers:inbox' %}?user_id={{ trip.creator.id }}" class="action-btn action-btn-secondary" style="padding:.25rem .8rem;font-size:.65rem;text-decoration:none;">💬 Message Organizer</a>
                         {% else %}
                         <span style="font-size:.6rem;color:var(--muted);">🔒 Become buddies to message</span>
                         {% endif %}
@@ -808,102 +724,133 @@ body{font-family:'DM Sans',sans-serif;background:var(--gray-100);}
                 </div>
             </div>
 
-            <!-- Live Location Sharing - Only for Owner and Coordinators -->
-            {% if is_owner or is_coordinator %}
-            <div class="info-card">
-                <div class="info-card-header">
-                    <svg viewBox="0 0 24 24" width="16" height="16" stroke="var(--teal)" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                    Live Location
-                </div>
-                <div class="info-card-body">
-                    <button onclick="startSharing()" class="action-btn action-btn-primary" style="width:100%;justify-content:center;">
-                        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                        Share Live Location
-                    </button>
-                    <p class="info-text" style="font-size:.7rem;margin-top:.5rem;text-align:center;">
-                        Share your real-time location with group members during the trip
-                    </p>
-                </div>
-            </div>
-            {% elif can_view_map %}
-            <div class="info-card">
-                <div class="info-card-header">
-                    <svg viewBox="0 0 24 24" width="16" height="16" stroke="var(--teal)" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                    Live Tracking
-                </div>
-                <div class="info-card-body">
-                    <a href="{% url 'community:trip_live_map' trip.id %}" class="action-btn action-btn-secondary" style="width:100%;justify-content:center;">
-                        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                        View Live Map
-                    </a>
-                    <p class="info-text" style="font-size:.7rem;margin-top:.5rem;text-align:center;">
-                        View all participants' live locations on the map
-                    </p>
-                </div>
-            </div>
-            {% endif %}
-
         </div><!-- /right-sidebar -->
 
     </div><!-- /content-grid -->
 </div><!-- /page-body -->
 
 <script>
-// Gallery image switcher
-function setGalleryImage(src, element) {
+/* ── Gallery ── */
+function setGalleryImage(src, el) {
     document.getElementById('galleryMainImg').src = src;
-    document.querySelectorAll('.gallery-thumb').forEach(thumb => {
-        thumb.classList.remove('active');
-    });
-    element.classList.add('active');
+    document.querySelectorAll('.gallery-thumb').forEach(t => t.classList.remove('active'));
+    el.classList.add('active');
 }
 
-// Copy invite link (only used for private trips)
+/* ── Invite link ── */
 function copyInviteLink() {
-    const copyText = document.getElementById("inviteLink");
-    if (copyText) {
-        copyText.select();
-        copyText.setSelectionRange(0, 99999);
-        navigator.clipboard.writeText(copyText.value);
-        alert("Invite link copied!");
+    const el = document.getElementById('inviteLink');
+    if (!el) return;
+    el.select(); el.setSelectionRange(0, 99999);
+    navigator.clipboard.writeText(el.value).then(() => {
+        showToast('Invite link copied! 🎉');
+    });
+}
+
+/* ── Toast ── */
+function showToast(msg) {
+    const t = document.createElement('div');
+    t.textContent = msg;
+    t.style.cssText = 'position:fixed;bottom:24px;right:24px;background:#0e8a8a;color:white;padding:10px 18px;border-radius:10px;font-size:.82rem;font-weight:600;z-index:9999;box-shadow:0 4px 14px rgba(0,0,0,.15);animation:fadeUp .3s ease;';
+    document.body.appendChild(t);
+    setTimeout(() => t.remove(), 3000);
+}
+
+/* ── Live Location Sharing ──
+   ALL members (is_joined OR is_owner) can share.
+   The card is only rendered for them via Django template.
+   Coordinators/owner also see the "View Live Map" link.
+── */
+let watchId = null;
+let isSharing = false;
+
+function toggleLocationSharing() {
+    if (isSharing) {
+        stopSharing();
+    } else {
+        startSharing();
     }
 }
-
-// Live location sharing
-let watchId = null;
 
 function startSharing() {
     if (!navigator.geolocation) {
-        alert("Geolocation is not supported by your browser");
+        alert('Geolocation is not supported by your browser.');
         return;
     }
-    
-    watchId = navigator.geolocation.watchPosition(
-        function(position) {
-            fetch("{% url 'community:update_location' %}", {
-                method: "POST",
-                headers: {
-                    "X-CSRFToken": "{{ csrf_token }}"
+
+    navigator.geolocation.getCurrentPosition(
+        function() {
+            // Permission granted — start watching
+            watchId = navigator.geolocation.watchPosition(
+                function(position) {
+                    fetch("{% url 'community:update_location' %}", {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': '{{ csrf_token }}'
+                        },
+                        body: JSON.stringify({
+                            trip_id: '{{ trip.id }}',
+                            latitude: position.coords.latitude,
+                            longitude: position.coords.longitude,
+                            accuracy: position.coords.accuracy
+                        })
+                    });
                 },
-                body: JSON.stringify({
-                    trip_id: "{{ trip.id }}",
-                    latitude: position.coords.latitude,
-                    longitude: position.coords.longitude,
-                    accuracy: position.coords.accuracy
-                })
-            });
+                function(err) {
+                    console.error('Location watch error:', err);
+                    stopSharing();
+                    alert('Lost access to your location. Please check your browser settings.');
+                },
+                { enableHighAccuracy: true, maximumAge: 10000 }
+            );
+
+            isSharing = true;
+            updateSharingUI(true);
         },
-        function(error) {
-            console.error("Location error:", error);
-            alert("Unable to get your location. Please enable location services.");
-        },
-        { enableHighAccuracy: true }
+        function(err) {
+            if (err.code === err.PERMISSION_DENIED) {
+                alert('Location permission denied. Please allow location access in your browser settings.');
+            } else {
+                alert('Unable to get your location. Please try again.');
+            }
+        }
     );
-    
-    alert("Location sharing started! Your group can now see your location on the map.");
 }
 
-// Stop sharing when leaving page
+function stopSharing() {
+    if (watchId !== null) {
+        navigator.geolocation.clearWatch(watchId);
+        watchId = null;
+    }
+    isSharing = false;
+    updateSharingUI(false);
+}
+
+function updateSharingUI(sharing) {
+    const btn   = document.getElementById('shareLocationBtn');
+    const label = document.getElementById('shareLocationLabel');
+    const dot   = document.getElementById('liveDot');
+    const txt   = document.getElementById('locationStatusText');
+
+    if (!btn) return;
+
+    if (sharing) {
+        btn.className = 'btn-share-location sharing';
+        label.textContent = 'Stop Sharing';
+        dot.classList.add('active');
+        txt.className = 'location-status-text active';
+        txt.textContent = '📡 Sharing your live location with the group…';
+    } else {
+        btn.className = 'btn-share-location idle';
+        label.textContent = 'Share My Location';
+        dot.classList.remove('active');
+        txt.className = 'location-status-text';
+        txt.textContent = 'Let your group see where you are in real time.';
+    }
+}
+
+/* Stop sharing when leaving the page */
 window.addEventListener('beforeunload', function() {
     if (watchId !== null) {
         navigator.geolocation.clearWatch(watchId);

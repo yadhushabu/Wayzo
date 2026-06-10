@@ -1,3 +1,5 @@
+from decimal import Decimal
+
 from django.db import models
 from django.conf import settings
 from django.core.exceptions import ValidationError
@@ -317,6 +319,22 @@ class PackageBooking(models.Model):
 
         percentage = self.get_refund_percentage() or 0
         return (total * percentage) / 100
+    
+    def complete_trip(self):
+
+        self.status = "completed"
+        self.is_completed = True
+        self.completed_at = timezone.now()
+
+        if not self.platform_commission:
+
+            commission = self.total_amount * Decimal("0.30")
+            agency_amount = self.total_amount - commission
+
+            self.platform_commission = commission
+            self.agency_earnings = agency_amount
+
+        self.save()
 
     # ===============================
     # ⭐ REVIEW ELIGIBILITY
@@ -336,6 +354,12 @@ class PackageBooking(models.Model):
         return (
             self.status == "in_progress"
             and self.travel_date <= timezone.now().date()
+        )
+    
+    @property
+    def trip_end_date(self):
+        return self.travel_date + timedelta(
+            days=self.package.duration_days - 1
         )
 
     def __str__(self):

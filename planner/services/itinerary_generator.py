@@ -2,6 +2,7 @@
 
 from datetime import datetime, timedelta
 import math
+import random
 import re
 import uuid
 from planner.services.user_profile import UserProfile
@@ -1005,27 +1006,43 @@ class AIItineraryGenerator:
 
         return "night"
 
+
     def pick_nearby_restaurant(self, restaurants, current_location):
-        """Safely pick a nearby restaurant"""
+
         restaurants = self.safe_list(restaurants)
-        
+
         if not restaurants:
-            print("⚠️ No restaurants available - returning None")
+            print("⚠️ No restaurants available")
             return None
-        
-        if not current_location or not current_location.get("lat") or not current_location.get("lon"):
-            print(f"📍 No location data, returning first restaurant: {restaurants[0].get('name')}")
-            return restaurants[0]
-        
+
+        if (
+            not current_location
+            or not current_location.get("lat")
+            or not current_location.get("lon")
+        ):
+            result = random.choice(restaurants)
+
+            print(
+                f"📍 No location data, random restaurant: {result.get('name')}"
+            )
+
+            return result
+
         nearby = self.get_nearby_places(
             restaurants,
             current_location["lat"],
             current_location["lon"],
             max_km=5
         )
-        
-        result = nearby[0] if nearby else restaurants[0]
-        print(f"🍽️ Selected restaurant: {result.get('name')}")
+
+        candidates = nearby if nearby else restaurants
+
+        result = random.choice(candidates)
+
+        print(
+            f"🍽️ Selected restaurant: {result.get('name')}"
+        )
+
         return result
     
     def cluster_places(self, places, radius_km=8):

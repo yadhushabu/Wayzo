@@ -2,6 +2,8 @@ from django.db import models
 from django.conf import settings
 from multiselectfield import MultiSelectField
 from django.core.exceptions import ValidationError
+from decimal import Decimal
+from django.utils import timezone
 
 
 class RestaurantProfile(models.Model):
@@ -463,6 +465,26 @@ class RoomBooking(models.Model):
 
     special_request = models.TextField(blank=True)
 
+    platform_commission = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        null=True,
+        blank=True
+    )
+
+    restaurant_earnings = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        null=True,
+        blank=True
+    )
+    is_completed = models.BooleanField(default=False)
+
+    completed_at = models.DateTimeField(
+        null=True,
+        blank=True
+    )
+
     # =========================
     # TIMESTAMP
     # =========================
@@ -488,6 +510,29 @@ class RoomBooking(models.Model):
 
     def __str__(self):
         return f"{self.user} - {self.room.room_number}"
+    
+    @property
+    def can_mark_completed(self):
+        return (
+            self.status == "confirmed"
+            and self.check_out < timezone.now().date()
+        )
+    
+    def complete_booking(self):
+
+        self.status = "completed"
+        self.is_completed = True
+        self.completed_at = timezone.now()
+
+        if not self.platform_commission:
+
+            commission = self.total_amount * Decimal("0.30")
+            restaurant_amount = self.total_amount - commission
+
+            self.platform_commission = commission
+            self.restaurant_earnings = restaurant_amount
+
+        self.save()
 
 class PropertyMedia(models.Model):
 

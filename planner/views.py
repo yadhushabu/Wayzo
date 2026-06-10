@@ -7,7 +7,7 @@ from django.http import JsonResponse
 from django.conf import settings
 import json
 from django.contrib.auth.decorators import login_required
-
+from planner.models import SavedItinerary
 
 from .forms import TripForm
 from .models import SavedItinerary, TripRequest, Itinerary
@@ -173,6 +173,14 @@ def generate_itinerary(request):
         if not itinerary.get("days"):
             logger.error("❌ EMPTY DAYS BLOCK: %s", itinerary)
             raise ValueError("Itinerary has no 'days'")
+        
+        saved_itinerary = SavedItinerary.objects.create(
+            user=request.user,
+            itinerary_json=itinerary,
+            destination=trip_request.destination,
+            days=trip_request.days,
+            title=f"{trip_request.destination} Trip"
+        )
 
         stage = "SAVE_ITINERARY"
 
@@ -231,6 +239,7 @@ def generate_itinerary(request):
             'itinerary': itinerary_data,
             'trip': trip_request,
             'ai_insights': ai_insights,
+            "saved_itinerary_id": saved_itinerary.id,
             'GOOGLE_API_KEY': settings.GOOGLE_API_KEY,
         })
 

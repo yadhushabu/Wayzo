@@ -1,0 +1,865 @@
+{% extends "admin_app/base.html" %}
+{% load static %}
+
+{% block title %}Platform Revenue | Wayzo Admin{% endblock %}
+{% block nav_revenue %}active{% endblock %}
+
+{% block topbar_title %}Platform Revenue{% endblock %}
+{% block topbar_subtitle %}Track commissions and earnings across all booking types{% endblock %}
+
+{% block extra_styles %}
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Syne:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap');
+
+  :root {
+    --teal:       #0E8A8A;
+    --teal-dark:  #0A6B6B;
+    --teal-pale:  #EAF4F4;
+    --teal-mid:   #1aafaf;
+    --ink:        #111827;
+    --muted:      #6B7280;
+    --s2:         #F9FAFB;
+    --s3:         #F3F4F6;
+    --border:     #E5E7EB;
+    --amber:      #F59E0B;
+    --rose:       #F43F5E;
+    --green:      #10B981;
+    --indigo:     #4F46E5;
+    --card-shadow: 0 1px 4px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.04);
+  }
+
+  .page-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1.5rem;
+    margin-bottom: 1.75rem;
+    flex-wrap: wrap;
+  }
+  .page-breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.72rem;
+    color: #9CA3AF;
+    margin-bottom: 0.5rem;
+    font-family: 'DM Sans', sans-serif;
+  }
+  .page-breadcrumb a { color: #9CA3AF; text-decoration: none; }
+  .page-breadcrumb a:hover { color: var(--teal); }
+  .page-breadcrumb i { font-size: 0.55rem; }
+  .page-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: var(--ink);
+    letter-spacing: -0.02em;
+    margin-bottom: 0.2rem;
+  }
+  .page-desc {
+    font-size: 0.8rem;
+    color: var(--muted);
+    font-family: 'DM Sans', sans-serif;
+  }
+  .live-pill {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.72rem;
+    color: #9CA3AF;
+    font-family: 'DM Sans', sans-serif;
+    padding: 0.4rem 0.85rem;
+    background: var(--s2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    align-self: flex-end;
+    margin-bottom: 0.2rem;
+    white-space: nowrap;
+  }
+
+  /* REVENUE HERO */
+  .revenue-hero {
+    background: linear-gradient(135deg, #0d1117 0%, #0b3d4a 40%, #0a3d2e 100%);
+    border-radius: 20px;
+    padding: 2rem 2.2rem 2.4rem;
+    position: relative;
+    overflow: hidden;
+    margin-bottom: 1.5rem;
+  }
+  .revenue-hero::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.025'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+  }
+  .revenue-hero::after {
+    content: '';
+    position: absolute;
+    top: -80px; right: -80px;
+    width: 280px; height: 280px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(14,138,138,0.25) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .hero-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: wrap;
+    position: relative;
+    z-index: 1;
+    margin-bottom: 1.6rem;
+  }
+  .hero-label {
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: rgba(255,255,255,0.45);
+    font-family: 'DM Sans', sans-serif;
+    margin-bottom: 0.4rem;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+  .hero-total {
+    font-family: 'Syne', sans-serif;
+    font-size: 2.6rem;
+    font-weight: 700;
+    color: white;
+    line-height: 1;
+    margin-bottom: 0.3rem;
+  }
+  .hero-sub {
+    font-size: 0.8rem;
+    color: rgba(255,255,255,0.45);
+    font-family: 'DM Sans', sans-serif;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+  .hero-sub i { color: #34d399; font-size: 0.65rem; }
+
+  .hero-split {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1rem;
+    position: relative;
+    z-index: 1;
+  }
+  .hero-split-card {
+    background: rgba(255,255,255,0.07);
+    border: 1px solid rgba(255,255,255,0.1);
+    backdrop-filter: blur(8px);
+    border-radius: 12px;
+    padding: 1rem 1.2rem;
+    transition: background 0.2s;
+  }
+  .hero-split-card:hover { background: rgba(255,255,255,0.11); }
+  .hs-label {
+    font-size: 0.67rem;
+    color: rgba(255,255,255,0.4);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 0.45rem;
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 600;
+  }
+  .hs-value {
+    font-family: 'Syne', sans-serif;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: white;
+    line-height: 1;
+    margin-bottom: 0.25rem;
+  }
+  .hs-meta {
+    font-size: 0.67rem;
+    color: rgba(255,255,255,0.38);
+    font-family: 'DM Sans', sans-serif;
+  }
+  .hs-icon { font-size: 1rem; margin-bottom: 0.4rem; }
+
+  /* FILTER PANEL */
+  .filter-panel {
+    background: #ffffff;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+    margin-bottom: 1.25rem;
+    overflow: hidden;
+  }
+  .filter-panel-header {
+    padding: 0.85rem 1.4rem;
+    border-bottom: 1px solid var(--s3);
+    background: var(--s2);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .filter-panel-title {
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: #374151;
+    font-family: 'Inter', sans-serif;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .filter-panel-title i { color: var(--teal); font-size: 0.78rem; }
+
+  .quick-chips {
+    display: flex;
+    gap: 0.4rem;
+    flex-wrap: wrap;
+    padding: 0.85rem 1.4rem;
+    border-bottom: 1px solid var(--s3);
+  }
+  .quick-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.32rem 0.85rem;
+    border-radius: 99px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-decoration: none;
+    background: var(--s3);
+    color: var(--muted);
+    border: 1px solid var(--border);
+    font-family: 'DM Sans', sans-serif;
+    transition: all 0.15s;
+  }
+  .quick-chip i { font-size: 0.6rem; }
+  .quick-chip:hover { background: var(--teal-pale); color: var(--teal); border-color: var(--teal); }
+  .quick-chip.active { background: var(--teal); color: white; border-color: var(--teal); }
+
+  .filter-body { padding: 1.2rem 1.4rem; }
+  .filter-grid {
+    display: grid;
+    grid-template-columns: 1.6fr 1fr 1fr 1fr auto;
+    gap: 1rem;
+    align-items: end;
+  }
+  .filter-field { display: flex; flex-direction: column; gap: 0.4rem; }
+  .filter-label {
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: #9CA3AF;
+    font-family: 'DM Sans', sans-serif;
+  }
+  .filter-input,
+  .filter-select {
+    padding: 0.55rem 0.85rem;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 0.8rem;
+    font-family: 'DM Sans', sans-serif;
+    color: #374151;
+    background: var(--s2);
+    transition: all 0.15s;
+    width: 100%;
+  }
+  .filter-input:focus,
+  .filter-select:focus {
+    outline: none;
+    border-color: var(--teal);
+    background: white;
+    box-shadow: 0 0 0 3px rgba(14,138,138,0.08);
+  }
+  .filter-actions-group { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+  .btn-apply {
+    display: inline-flex; align-items: center; gap: 0.3rem;
+    padding: 0.55rem 1.1rem; border-radius: 8px;
+    font-size: 0.78rem; font-weight: 600;
+    background: var(--teal); color: white; border: none;
+    cursor: pointer; font-family: 'DM Sans', sans-serif;
+    transition: all 0.15s; white-space: nowrap; text-decoration: none;
+  }
+  .btn-apply:hover { background: var(--teal-dark); }
+  .btn-clear-f {
+    display: inline-flex; align-items: center; gap: 0.3rem;
+    padding: 0.55rem 1rem; border-radius: 8px;
+    font-size: 0.78rem; font-weight: 600;
+    background: var(--s3); color: var(--muted); border: 1px solid var(--border);
+    text-decoration: none; font-family: 'DM Sans', sans-serif;
+    transition: all 0.15s; white-space: nowrap;
+  }
+  .btn-clear-f:hover { background: var(--border); color: #374151; }
+
+  .active-filters {
+    display: flex; align-items: center; gap: 0.5rem;
+    flex-wrap: wrap; padding: 0.75rem 1.4rem;
+    border-top: 1px solid var(--s3); background: #FFFBEB;
+  }
+  .af-label {
+    font-size: 0.68rem; font-weight: 700; color: #92400E;
+    font-family: 'DM Sans', sans-serif;
+    text-transform: uppercase; letter-spacing: 0.06em;
+  }
+  .af-tag {
+    display: inline-flex; align-items: center; gap: 0.3rem;
+    padding: 0.2rem 0.6rem; background: #FEF3C7; color: #92400E;
+    border: 1px solid #FDE68A; border-radius: 99px;
+    font-size: 0.68rem; font-weight: 600; font-family: 'DM Sans', sans-serif;
+  }
+
+  /* TABLE PANEL */
+  .table-panel {
+    background: #ffffff;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+    overflow: hidden;
+    margin-bottom: 1.25rem;
+  }
+  .table-panel-header {
+    padding: 0.9rem 1.4rem;
+    border-bottom: 1px solid var(--s3);
+    background: var(--s2);
+    display: flex; align-items: center;
+    justify-content: space-between; gap: 1rem; flex-wrap: wrap;
+  }
+  .table-panel-title {
+    display: flex; align-items: center; gap: 0.6rem;
+    font-size: 0.82rem; font-weight: 700;
+    color: #374151; font-family: 'Inter', sans-serif;
+  }
+  .teal-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--teal); flex-shrink: 0; }
+  .indigo-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--indigo); flex-shrink: 0; }
+  .result-tag {
+    font-size: 0.65rem; font-weight: 700;
+    padding: 0.18rem 0.55rem; border-radius: 99px;
+    background: var(--teal-pale); color: var(--teal);
+    font-family: 'DM Sans', sans-serif;
+  }
+  .result-tag-indigo {
+    font-size: 0.65rem; font-weight: 700;
+    padding: 0.18rem 0.55rem; border-radius: 99px;
+    background: #EEF2FF; color: var(--indigo);
+    font-family: 'DM Sans', sans-serif;
+  }
+
+  /* REVENUE TABLE */
+  .rev-table { width: 100%; border-collapse: collapse; min-width: 860px; }
+  .rev-table thead th {
+    padding: 0.6rem 1.1rem;
+    text-align: left;
+    font-size: 0.68rem; font-weight: 700;
+    color: #9CA3AF; text-transform: uppercase;
+    letter-spacing: 0.07em;
+    background: var(--s2);
+    border-bottom: 1px solid var(--s3);
+    font-family: 'DM Sans', sans-serif;
+    white-space: nowrap;
+  }
+  .rev-table tbody td {
+    padding: 0.9rem 1.1rem;
+    font-size: 0.81rem; color: #374151;
+    border-bottom: 1px solid var(--s2);
+    vertical-align: middle;
+    font-family: 'DM Sans', sans-serif;
+  }
+  .rev-table tbody tr:last-child td { border-bottom: none; }
+  .rev-table tbody tr { transition: background 0.12s; }
+  .rev-table tbody tr:hover { background: #FAFBFC; }
+
+  .id-cell {
+    font-family: 'Inter', sans-serif;
+    font-size: 0.72rem;
+    color: #9CA3AF;
+    font-weight: 600;
+  }
+
+  .user-cell { display: flex; align-items: center; gap: 0.6rem; }
+  .mini-avatar {
+    width: 30px; height: 30px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--teal), var(--teal-mid));
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.6rem; font-weight: 700; color: white;
+    flex-shrink: 0; overflow: hidden; font-family: 'Inter', sans-serif;
+  }
+  .mini-avatar img { width: 100%; height: 100%; object-fit: cover; }
+  .u-name { font-weight: 600; color: var(--ink); font-size: 0.81rem; }
+  .u-handle { font-size: 0.67rem; color: #9CA3AF; }
+
+  .pkg-name {
+    font-weight: 600; color: var(--ink); font-size: 0.8rem;
+    max-width: 200px; overflow: hidden;
+    text-overflow: ellipsis; white-space: nowrap;
+  }
+  .room-info { display: flex; flex-direction: column; gap: 0.1rem; }
+  .room-name { font-weight: 600; color: var(--ink); font-size: 0.8rem; }
+  .room-meta { font-size: 0.67rem; color: #9CA3AF; }
+
+  .amt-total {
+    font-family: 'Inter', sans-serif;
+    font-weight: 700; color: var(--ink); font-size: 0.85rem;
+  }
+  .amt-commission {
+    font-family: 'Inter', sans-serif;
+    font-weight: 700; color: var(--teal); font-size: 0.85rem;
+  }
+  .amt-agency {
+    font-family: 'Inter', sans-serif;
+    font-weight: 700; color: #374151; font-size: 0.85rem;
+  }
+
+  .date-cell { font-size: 0.72rem; color: #9CA3AF; white-space: nowrap; }
+  .date-cell i { font-size: 0.6rem; margin-right: 0.2rem; }
+  .nights-badge {
+    display: inline-flex; align-items: center; gap: 0.2rem;
+    font-size: 0.67rem; font-weight: 600;
+    padding: 0.15rem 0.5rem; border-radius: 99px;
+    background: #EEF2FF; color: var(--indigo);
+    font-family: 'DM Sans', sans-serif;
+  }
+
+  /* EMPTY STATE */
+  .empty-row td { padding: 3rem 1.1rem !important; }
+  .empty-inner {
+    display: flex; flex-direction: column;
+    align-items: center; gap: 0.6rem; text-align: center;
+  }
+  .empty-circle {
+    width: 52px; height: 52px; border-radius: 50%;
+    background: var(--s3);
+    display: flex; align-items: center; justify-content: center;
+    color: var(--border); font-size: 1.3rem;
+  }
+  .empty-inner h4 { font-size: 0.88rem; font-weight: 700; color: #374151; font-family: 'Inter', sans-serif; }
+  .empty-inner p  { font-size: 0.75rem; color: #9CA3AF; font-family: 'DM Sans', sans-serif; }
+
+  /* PAGINATION */
+  .pagination-bar {
+    display: flex; align-items: center;
+    justify-content: space-between;
+    padding: 1rem 1.4rem;
+    border-top: 1px solid var(--s3);
+    flex-wrap: wrap; gap: 0.75rem;
+  }
+  .page-info-text { font-size: 0.75rem; color: #9CA3AF; font-family: 'DM Sans', sans-serif; }
+  .page-info-text strong { color: #374151; }
+  .pagination-controls { display: flex; align-items: center; gap: 0.3rem; }
+  .page-btn {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 32px; height: 32px; border-radius: 7px;
+    font-size: 0.75rem; font-weight: 600;
+    text-decoration: none; border: 1px solid var(--border);
+    background: white; color: #374151;
+    font-family: 'DM Sans', sans-serif; transition: all 0.15s;
+  }
+  .page-btn:hover { background: var(--s3); border-color: #D1D5DB; }
+  .page-btn.current { background: var(--teal); color: white; border-color: var(--teal); }
+  .page-btn.disabled { opacity: 0.35; pointer-events: none; }
+
+  .table-scroll { overflow-x: auto; }
+
+  @media (max-width: 1100px) {
+    .hero-split { grid-template-columns: repeat(2, 1fr); }
+    .filter-grid { grid-template-columns: 1fr 1fr; }
+  }
+  @media (max-width: 768px) {
+    .hero-total { font-size: 2rem; }
+    .filter-grid { grid-template-columns: 1fr; }
+    .page-header { flex-direction: column; gap: 0.75rem; }
+  }
+  @media (max-width: 480px) {
+    .hero-split { grid-template-columns: 1fr 1fr; }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- PAGE HEADER -->
+<div class="page-header">
+  <div>
+    <div class="page-breadcrumb">
+      <a href="{% url 'admin_app:admin_dashboard' %}">Dashboard</a>
+      <i class="fas fa-chevron-right"></i>
+      <span>Platform Revenue</span>
+    </div>
+    <div class="page-title">Platform Revenue</div>
+    <div class="page-desc">Commission earnings from completed package and room bookings.</div>
+  </div>
+  <div class="live-pill">
+    <i class="fas fa-circle" style="font-size:0.42rem;color:#10B981;"></i>
+    Completed bookings only
+  </div>
+</div>
+
+<!-- REVENUE HERO -->
+<div class="revenue-hero">
+  <div class="hero-top">
+    <div>
+      <div class="hero-label"><i class="fas fa-rupee-sign"></i> Total Platform Revenue</div>
+      <div class="hero-total">₹{{ total_revenue|floatformat:2 }}</div>
+      <div class="hero-sub">
+        <i class="fas fa-check-circle"></i>
+        Earned from all completed bookings
+      </div>
+    </div>
+  </div>
+  <div class="hero-split">
+    <div class="hero-split-card">
+      <div class="hs-icon">🧳</div>
+      <div class="hs-label">Package Commission</div>
+      <div class="hs-value">₹{{ package_commission|floatformat:2 }}</div>
+      <div class="hs-meta">{{ completed_package_bookings }} completed trips</div>
+    </div>
+    <div class="hero-split-card">
+      <div class="hs-icon">🏨</div>
+      <div class="hs-label">Room Commission</div>
+      <div class="hs-value">₹{{ room_commission|floatformat:2 }}</div>
+      <div class="hs-meta">{{ completed_room_bookings }} completed stays</div>
+    </div>
+    <div class="hero-split-card">
+      <div class="hs-icon">✅</div>
+      <div class="hs-label">Completed Trips</div>
+      <div class="hs-value">{{ completed_package_bookings }}</div>
+      <div class="hs-meta">Package bookings</div>
+    </div>
+    <div class="hero-split-card">
+      <div class="hs-icon">🛏️</div>
+      <div class="hs-label">Completed Stays</div>
+      <div class="hs-value">{{ completed_room_bookings }}</div>
+      <div class="hs-meta">Room bookings</div>
+    </div>
+  </div>
+</div>
+
+<!-- FILTER PANEL -->
+<div class="filter-panel">
+  <div class="filter-panel-header">
+    <div class="filter-panel-title">
+      <i class="fas fa-filter"></i> Filters & Search
+    </div>
+  </div>
+
+  <div class="quick-chips">
+    <a href="{% url 'admin_app:platform_revenue' %}"
+       class="quick-chip {% if not selected_type and not search and not date_from and not date_to %}active{% endif %}">
+      <i class="fas fa-th"></i> All Bookings
+    </a>
+    <a href="?type=package{% if search %}&search={{ search }}{% endif %}{% if date_from %}&date_from={{ date_from }}{% endif %}{% if date_to %}&date_to={{ date_to }}{% endif %}"
+       class="quick-chip {% if selected_type == 'package' %}active{% endif %}">
+      🧳 Packages
+    </a>
+    <a href="?type=room{% if search %}&search={{ search }}{% endif %}{% if date_from %}&date_from={{ date_from }}{% endif %}{% if date_to %}&date_to={{ date_to }}{% endif %}"
+       class="quick-chip {% if selected_type == 'room' %}active{% endif %}">
+      🏨 Room Stays
+    </a>
+  </div>
+
+  <div class="filter-body">
+    <form method="GET">
+      {% if selected_type %}<input type="hidden" name="type" value="{{ selected_type }}">{% endif %}
+      <div class="filter-grid">
+        <div class="filter-field">
+          <label class="filter-label"><i class="fas fa-search" style="margin-right:0.25rem;"></i>Search</label>
+          <input class="filter-input" type="text" name="search"
+            placeholder="{% if selected_type == 'room' %}Guest name, room number…{% else %}Traveller, package name…{% endif %}"
+            value="{{ search|default:'' }}">
+        </div>
+        <div class="filter-field">
+          <label class="filter-label"><i class="fas fa-tag" style="margin-right:0.25rem;"></i>Type</label>
+          <select class="filter-select" name="type">
+            <option value="">All Types</option>
+            <option value="package" {% if selected_type == 'package' %}selected{% endif %}>Packages</option>
+            <option value="room"    {% if selected_type == 'room' %}selected{% endif %}>Room Stays</option>
+          </select>
+        </div>
+        <div class="filter-field">
+          <label class="filter-label"><i class="fas fa-calendar-alt" style="margin-right:0.25rem;"></i>From Date</label>
+          <input class="filter-input" type="date" name="date_from" value="{{ date_from|default:'' }}">
+        </div>
+        <div class="filter-field">
+          <label class="filter-label"><i class="fas fa-calendar-alt" style="margin-right:0.25rem;"></i>To Date</label>
+          <input class="filter-input" type="date" name="date_to" value="{{ date_to|default:'' }}">
+        </div>
+        <div class="filter-field">
+          <label class="filter-label">&nbsp;</label>
+          <div class="filter-actions-group">
+            <button type="submit" class="btn-apply"><i class="fas fa-filter"></i> Apply</button>
+            <a href="{% url 'admin_app:platform_revenue' %}" class="btn-clear-f"><i class="fas fa-times"></i> Clear</a>
+          </div>
+        </div>
+      </div>
+    </form>
+  </div>
+
+  {% if search or selected_type or date_from or date_to %}
+  <div class="active-filters">
+    <span class="af-label"><i class="fas fa-filter" style="margin-right:0.3rem;"></i>Active:</span>
+    {% if search %}<span class="af-tag"><i class="fas fa-search"></i> "{{ search }}"</span>{% endif %}
+    {% if selected_type %}<span class="af-tag"><i class="fas fa-tag"></i> {{ selected_type|title }}</span>{% endif %}
+    {% if date_from %}<span class="af-tag"><i class="fas fa-calendar"></i> From {{ date_from }}</span>{% endif %}
+    {% if date_to %}<span class="af-tag"><i class="fas fa-calendar"></i> To {{ date_to }}</span>{% endif %}
+  </div>
+  {% endif %}
+</div>
+
+<!-- ═══ PACKAGE REVENUE TABLE ═══ -->
+{% if selected_type != 'room' %}
+<div class="table-panel">
+  <div class="table-panel-header">
+    <div class="table-panel-title">
+      <div class="teal-dot"></div>
+      🧳 Package Revenue
+      <span class="result-tag">{{ package_revenue.paginator.count }} records</span>
+    </div>
+    <span style="font-size:0.72rem;color:#9CA3AF;font-family:'DM Sans',sans-serif;">
+      Page {{ package_revenue.number }} of {{ package_revenue.paginator.num_pages }}
+    </span>
+  </div>
+
+  <div class="table-scroll">
+    <table class="rev-table">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Traveller</th>
+          <th>Package & Agency</th>
+          <th>Total Amount</th>
+          <th>Commission (30%)</th>
+          <th>Agency Earnings</th>
+          <th>Completed</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for booking in package_revenue %}
+        <tr>
+          <td><span class="id-cell">#{{ booking.id }}</span></td>
+          <td>
+            <div class="user-cell">
+              <div class="mini-avatar">
+                {% if booking.traveller.profile_picture %}
+                  <img src="{{ booking.traveller.profile_picture.url }}" alt="">
+                {% else %}
+                  {{ booking.traveller.username|slice:":2"|upper }}
+                {% endif %}
+              </div>
+              <div>
+                <div class="u-name">{{ booking.traveller.get_full_name|default:booking.traveller.username }}</div>
+                <div class="u-handle">@{{ booking.traveller.username }}</div>
+              </div>
+            </div>
+          </td>
+          <td>
+            <div>
+              <div class="pkg-name" title="{{ booking.package.title }}">{{ booking.package.title }}</div>
+              <div style="font-size:0.67rem;color:var(--teal);font-weight:600;margin-top:0.2rem;">
+                <i class="fas fa-building" style="font-size:0.6rem;"></i>
+                {{ booking.package.agency.business_name|default:booking.package.agency.agency_name|default:"—" }}
+              </div>
+              {% if booking.package.agency.contact_email %}
+              <div style="font-size:0.62rem;color:#9CA3AF;margin-top:0.1rem;">
+                <i class="fas fa-envelope" style="font-size:0.55rem;"></i>
+                {{ booking.package.agency.contact_email }}
+              </div>
+              {% endif %}
+            </div>
+          </td>
+          <td><span class="amt-total">₹{{ booking.total_amount|floatformat:2 }}</span></td>
+          <td><span class="amt-commission">₹{{ booking.platform_commission|floatformat:2 }}</span></td>
+          <td><span class="amt-agency">₹{{ booking.agency_earnings|floatformat:2 }}</span></td>
+          <td>
+            <div class="date-cell">
+              <i class="far fa-calendar-check"></i>
+              {{ booking.completed_at|date:"d M Y" }}
+            </div>
+          </td>
+        </tr>
+        {% empty %}
+        <tr class="empty-row">
+          <td colspan="7">
+            <div class="empty-inner">
+              <div class="empty-circle"><i class="fas fa-suitcase-rolling"></i></div>
+              <h4>No package revenue records</h4>
+              <p>No completed package bookings match your current filters.</p>
+              <a href="{% url 'admin_app:platform_revenue' %}" class="btn-apply" style="margin-top:0.5rem;">
+                <i class="fas fa-undo"></i> Clear Filters
+              </a>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  {% if package_revenue.paginator.num_pages > 1 %}
+  <div class="pagination-bar">
+    <div class="page-info-text">
+      Showing <strong>{{ package_revenue.start_index }}–{{ package_revenue.end_index }}</strong>
+      of <strong>{{ package_revenue.paginator.count }}</strong> records
+    </div>
+    <div class="pagination-controls">
+      {% if package_revenue.has_previous %}
+        <a class="page-btn" href="?pkg_page=1{% for k,v in request.GET.items %}{% if k != 'pkg_page' %}&{{ k }}={{ v }}{% endif %}{% endfor %}"><i class="fas fa-angle-double-left"></i></a>
+        <a class="page-btn" href="?pkg_page={{ package_revenue.previous_page_number }}{% for k,v in request.GET.items %}{% if k != 'pkg_page' %}&{{ k }}={{ v }}{% endif %}{% endfor %}"><i class="fas fa-angle-left"></i></a>
+      {% else %}
+        <span class="page-btn disabled"><i class="fas fa-angle-double-left"></i></span>
+        <span class="page-btn disabled"><i class="fas fa-angle-left"></i></span>
+      {% endif %}
+
+      {% for num in package_revenue.paginator.page_range %}
+        {% if package_revenue.number == num %}
+          <span class="page-btn current">{{ num }}</span>
+        {% elif num > package_revenue.number|add:'-3' and num < package_revenue.number|add:'3' %}
+          <a class="page-btn" href="?pkg_page={{ num }}{% for k,v in request.GET.items %}{% if k != 'pkg_page' %}&{{ k }}={{ v }}{% endif %}{% endfor %}">{{ num }}</a>
+        {% endif %}
+      {% endfor %}
+
+      {% if package_revenue.has_next %}
+        <a class="page-btn" href="?pkg_page={{ package_revenue.next_page_number }}{% for k,v in request.GET.items %}{% if k != 'pkg_page' %}&{{ k }}={{ v }}{% endif %}{% endfor %}"><i class="fas fa-angle-right"></i></a>
+        <a class="page-btn" href="?pkg_page={{ package_revenue.paginator.num_pages }}{% for k,v in request.GET.items %}{% if k != 'pkg_page' %}&{{ k }}={{ v }}{% endif %}{% endfor %}"><i class="fas fa-angle-double-right"></i></a>
+      {% else %}
+        <span class="page-btn disabled"><i class="fas fa-angle-right"></i></span>
+        <span class="page-btn disabled"><i class="fas fa-angle-double-right"></i></span>
+      {% endif %}
+    </div>
+  </div>
+  {% endif %}
+</div>
+{% endif %}
+
+<!-- ═══ ROOM REVENUE TABLE ═══ -->
+{% if selected_type != 'package' %}
+<div class="table-panel">
+  <div class="table-panel-header">
+    <div class="table-panel-title">
+      <div class="indigo-dot"></div>
+      🏨 Room Revenue
+      <span class="result-tag-indigo">{{ room_revenue.paginator.count }} records</span>
+    </div>
+    <span style="font-size:0.72rem;color:#9CA3AF;font-family:'DM Sans',sans-serif;">
+      Page {{ room_revenue.number }} of {{ room_revenue.paginator.num_pages }}
+    </span>
+  </div>
+
+  <div class="table-scroll">
+    <table class="rev-table">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Guest</th>
+          <th>Property & Room</th>
+          <th>Stay</th>
+          <th>Total Amount</th>
+          <th>Commission (30%)</th>
+          <th>Hotel Earnings</th>
+          <th>Completed</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for booking in room_revenue %}
+        <tr>
+          <td><span class="id-cell">#{{ booking.id }}</span></td>
+          <td>
+            <div class="user-cell">
+              <div class="mini-avatar" style="background: linear-gradient(135deg, #4F46E5, #818CF8);">
+                {% if booking.user.profile_picture %}
+                  <img src="{{ booking.user.profile_picture.url }}" alt="">
+                {% else %}
+                  {{ booking.user.username|slice:":2"|upper }}
+                {% endif %}
+              </div>
+              <div>
+                <div class="u-name">{{ booking.user.get_full_name|default:booking.user.username }}</div>
+                <div class="u-handle">@{{ booking.user.username }}</div>
+              </div>
+            </div>
+          </td>
+          <td>
+            <div class="room-info">
+              <div class="room-name">{{ booking.room.room_type.name }} <span style="color:#9CA3AF;font-weight:400;">· Room {{ booking.room.room_number }}</span></div>
+              <div class="room-meta">
+                {% if booking.room.room_type.variant == 'ac' %}❄️ AC{% else %}🌀 Non-AC{% endif %}
+                &nbsp;·&nbsp;
+                <i class="fas fa-user-friends" style="font-size:0.6rem;"></i> {{ booking.room.room_type.max_guests }} guests max
+              </div>
+              <div class="room-meta" style="margin-top:0.2rem;color:var(--teal);font-weight:600;">
+                <i class="fas fa-building" style="font-size:0.6rem;"></i>
+                {{ booking.room.room_type.restaurant }}
+              </div>
+            </div>
+          </td>
+          <td>
+            <div class="date-cell">
+              <i class="far fa-calendar-alt"></i>
+              {{ booking.check_in|date:"d M" }} – {{ booking.check_out|date:"d M Y" }}
+            </div>
+            <span class="nights-badge" style="margin-top:0.25rem;display:inline-flex;">
+              <i class="fas fa-moon" style="font-size:0.55rem;"></i> {{ booking.nights }} night{{ booking.nights|pluralize }}
+            </span>
+          </td>
+          <td><span class="amt-total">₹{{ booking.total_amount|floatformat:2 }}</span></td>
+          <td><span class="amt-commission">₹{{ booking.platform_commission|floatformat:2 }}</span></td>
+          <td><span class="amt-agency">₹{{ booking.restaurant_earnings|floatformat:2 }}</span></td>
+          <td>
+            <div class="date-cell">
+              <i class="far fa-calendar-check"></i>
+              {{ booking.completed_at|date:"d M Y" }}
+            </div>
+          </td>
+        </tr>
+        {% empty %}
+        <tr class="empty-row">
+          <td colspan="8">
+            <div class="empty-inner">
+              <div class="empty-circle"><i class="fas fa-hotel"></i></div>
+              <h4>No room revenue records</h4>
+              <p>No completed room bookings match your current filters.</p>
+              <a href="{% url 'admin_app:platform_revenue' %}" class="btn-apply" style="margin-top:0.5rem;">
+                <i class="fas fa-undo"></i> Clear Filters
+              </a>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  {% if room_revenue.paginator.num_pages > 1 %}
+  <div class="pagination-bar">
+    <div class="page-info-text">
+      Showing <strong>{{ room_revenue.start_index }}–{{ room_revenue.end_index }}</strong>
+      of <strong>{{ room_revenue.paginator.count }}</strong> records
+    </div>
+    <div class="pagination-controls">
+      {% if room_revenue.has_previous %}
+        <a class="page-btn" href="?room_page=1{% for k,v in request.GET.items %}{% if k != 'room_page' %}&{{ k }}={{ v }}{% endif %}{% endfor %}"><i class="fas fa-angle-double-left"></i></a>
+        <a class="page-btn" href="?room_page={{ room_revenue.previous_page_number }}{% for k,v in request.GET.items %}{% if k != 'room_page' %}&{{ k }}={{ v }}{% endif %}{% endfor %}"><i class="fas fa-angle-left"></i></a>
+      {% else %}
+        <span class="page-btn disabled"><i class="fas fa-angle-double-left"></i></span>
+        <span class="page-btn disabled"><i class="fas fa-angle-left"></i></span>
+      {% endif %}
+
+      {% for num in room_revenue.paginator.page_range %}
+        {% if room_revenue.number == num %}
+          <span class="page-btn current">{{ num }}</span>
+        {% elif num > room_revenue.number|add:'-3' and num < room_revenue.number|add:'3' %}
+          <a class="page-btn" href="?room_page={{ num }}{% for k,v in request.GET.items %}{% if k != 'room_page' %}&{{ k }}={{ v }}{% endif %}{% endfor %}">{{ num }}</a>
+        {% endif %}
+      {% endfor %}
+
+      {% if room_revenue.has_next %}
+        <a class="page-btn" href="?room_page={{ room_revenue.next_page_number }}{% for k,v in request.GET.items %}{% if k != 'room_page' %}&{{ k }}={{ v }}{% endif %}{% endfor %}"><i class="fas fa-angle-right"></i></a>
+        <a class="page-btn" href="?room_page={{ room_revenue.paginator.num_pages }}{% for k,v in request.GET.items %}{% if k != 'room_page' %}&{{ k }}={{ v }}{% endif %}{% endfor %}"><i class="fas fa-angle-double-right"></i></a>
+      {% else %}
+        <span class="page-btn disabled"><i class="fas fa-angle-right"></i></span>
+        <span class="page-btn disabled"><i class="fas fa-angle-double-right"></i></span>
+      {% endif %}
+    </div>
+  </div>
+  {% endif %}
+</div>
+{% endif %}
+
+{% endblock %}

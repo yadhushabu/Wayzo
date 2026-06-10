@@ -31,7 +31,7 @@
 body{font-family:'DM Sans',sans-serif;background:var(--gray-100);color:var(--text-dark);-webkit-font-smoothing:antialiased;}
 
 /* ══════════════════════════════
-   HERO — increased height to 320px
+   HERO
 ══════════════════════════════ */
 .community-hero {
     position:relative; height:320px; overflow:hidden;
@@ -92,7 +92,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--gray-100);color:var(--tex
 }
 
 /* ══════════════════════════════
-   PAGE BODY — with max-width and auto margins
+   PAGE BODY
 ══════════════════════════════ */
 .page-body {
     position:relative; z-index:10;
@@ -102,7 +102,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--gray-100);color:var(--tex
 }
 
 /* ══════════════════════════════
-   ACTION BAR — matches all_packages control-bar
+   ACTION BAR
 ══════════════════════════════ */
 .action-bar {
     background:white; border-radius:var(--radius);
@@ -129,7 +129,6 @@ body{font-family:'DM Sans',sans-serif;background:var(--gray-100);color:var(--tex
 .action-btn-ghost { background:transparent; color:var(--text-light); border:1px solid var(--gray-200); }
 .action-btn-ghost:hover { background:var(--s2); border-color:var(--gray-300); color:var(--ink); }
 
-/* Join/leave button styles */
 .join-btn { background:var(--teal); color:white; }
 .join-btn:hover { background:var(--teal-dark); color:white; }
 .leave-btn { background:var(--red-pale); color:var(--red); border:1px solid #fca5a5; }
@@ -152,7 +151,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--gray-100);color:var(--tex
 .right-sidebar { position:sticky; top:90px; display:flex; flex-direction:column; gap:1.5rem; }
 
 /* ══════════════════════════════
-   REQUEST SECTION (Admin Only)
+   REQUEST SECTION
 ══════════════════════════════ */
 .request-section {
     background:var(--amber-pale);
@@ -165,98 +164,36 @@ body{font-family:'DM Sans',sans-serif;background:var(--gray-100);color:var(--tex
     background:rgba(245,158,11,.15);
     padding:.9rem 1.2rem;
     border-bottom:1px solid rgba(245,158,11,.2);
-    font-weight:700;
-    font-size:.85rem;
-    color:#92400e;
-    display:flex;
-    align-items:center;
-    gap:.5rem;
+    font-weight:700; font-size:.85rem; color:#92400e;
+    display:flex; align-items:center; gap:.5rem;
 }
-.request-list {
-    padding:.5rem 0;
-}
+.request-list { padding:.5rem 0; }
 .request-item {
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
-    padding:.8rem 1.2rem;
-    border-bottom:1px solid rgba(245,158,11,.2);
+    display:flex; align-items:center; justify-content:space-between;
+    padding:.8rem 1.2rem; border-bottom:1px solid rgba(245,158,11,.2);
     transition:background .15s;
 }
-.request-item:hover {
-    background:rgba(245,158,11,.08);
-}
-.request-info {
-    display:flex;
-    align-items:center;
-    gap:.75rem;
-    flex:1;
-}
+.request-item:hover { background:rgba(245,158,11,.08); }
+.request-info { display:flex; align-items:center; gap:.75rem; flex:1; }
 .request-avatar {
-    width:40px;
-    height:40px;
-    border-radius:50%;
-    background:white;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    font-weight:700;
-    color:var(--teal);
-    overflow:hidden;
+    width:40px; height:40px; border-radius:50%;
+    background:white; display:flex; align-items:center; justify-content:center;
+    font-weight:700; color:var(--teal); overflow:hidden;
     box-shadow:0 2px 8px rgba(0,0,0,.05);
 }
-.request-avatar img {
-    width:100%;
-    height:100%;
-    object-fit:cover;
-}
-.request-user {
-    font-weight:600;
-    font-size:.85rem;
-    color:var(--ink);
-    margin-bottom:.1rem;
-}
-.request-date {
-    font-size:.65rem;
-    color:var(--muted);
-}
-.request-actions {
-    display:flex;
-    gap:.5rem;
-}
+.request-avatar img { width:100%; height:100%; object-fit:cover; }
+.request-user { font-weight:600; font-size:.85rem; color:var(--ink); margin-bottom:.1rem; }
+.request-date { font-size:.65rem; color:var(--muted); }
+.request-actions { display:flex; gap:.5rem; }
 .accept-req-btn, .reject-req-btn {
-    padding:.4rem 1rem;
-    border-radius:40px;
-    font-size:.72rem;
-    font-weight:600;
-    border:none;
-    cursor:pointer;
-    transition:all .2s;
-    font-family:'DM Sans',sans-serif;
+    padding:.4rem 1rem; border-radius:40px; font-size:.72rem; font-weight:600;
+    border:none; cursor:pointer; transition:all .2s; font-family:'DM Sans',sans-serif;
 }
-.accept-req-btn {
-    background:var(--green);
-    color:white;
-}
-.accept-req-btn:hover {
-    background:#0ea37a;
-    transform:translateY(-1px);
-}
-.reject-req-btn {
-    background:white;
-    color:var(--red);
-    border:1px solid var(--red-pale);
-}
-.reject-req-btn:hover {
-    background:var(--red-pale);
-    transform:translateY(-1px);
-}
-.no-requests {
-    padding:1.5rem;
-    text-align:center;
-    color:var(--muted);
-    font-size:.8rem;
-}
+.accept-req-btn { background:var(--green); color:white; }
+.accept-req-btn:hover { background:#0ea37a; transform:translateY(-1px); }
+.reject-req-btn { background:white; color:var(--red); border:1px solid var(--red-pale); }
+.reject-req-btn:hover { background:var(--red-pale); transform:translateY(-1px); }
+.no-requests { padding:1.5rem; text-align:center; color:var(--muted); font-size:.8rem; }
 
 /* ══════════════════════════════
    FEED SORT BAR
@@ -278,7 +215,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--gray-100);color:var(--tex
 .feed-sort-tab.active { background:var(--teal-pale); color:var(--teal-dark); }
 
 /* ══════════════════════════════
-   FEED CARDS — Reddit style
+   FEED CARDS
 ══════════════════════════════ */
 .feed { display:flex; flex-direction:column; gap:1rem; }
 
@@ -288,11 +225,8 @@ body{font-family:'DM Sans',sans-serif;background:var(--gray-100);color:var(--tex
     transition:box-shadow .2s,transform .2s;
     box-shadow:var(--sh);
 }
-.feed-card:hover {
-    box-shadow:var(--sh-lg); transform:translateY(-2px);
-}
+.feed-card:hover { box-shadow:var(--sh-lg); transform:translateY(-2px); }
 
-/* Left vote/type column */
 .feed-card-inner { display:flex; }
 .feed-vote-col {
     width:44px; flex-shrink:0; display:flex; flex-direction:column;
@@ -301,23 +235,17 @@ body{font-family:'DM Sans',sans-serif;background:var(--gray-100);color:var(--tex
     gap:.3rem;
 }
 .feed-type-icon { font-size:1rem; }
-.vote-count {
-    font-size:.7rem; font-weight:800; color:var(--ink);
-    line-height:1;
-}
+.vote-count { font-size:.7rem; font-weight:800; color:var(--ink); line-height:1; }
 .vote-label { font-size:.55rem; color:var(--muted); text-transform:uppercase; letter-spacing:.04em; }
 
-/* Type badge pill */
 .type-pill {
     display:inline-flex; align-items:center; gap:.3rem;
     padding:.18rem .6rem; border-radius:99px; font-size:.63rem;
-    font-weight:700; text-transform:uppercase; letter-spacing:.05em;
-    flex-shrink:0;
+    font-weight:700; text-transform:uppercase; letter-spacing:.05em; flex-shrink:0;
 }
 .type-pill.post { background:var(--teal-pale); color:var(--teal-dark); }
 .type-pill.poll { background:var(--amber-pale); color:#92400e; }
 
-/* Feed card body */
 .feed-card-body { flex:1; padding:.9rem 1.2rem; min-width:0; }
 
 .feed-card-meta {
@@ -325,9 +253,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--gray-100);color:var(--tex
     font-size:.7rem; color:var(--text-light);
     margin-bottom:.45rem; flex-wrap:wrap;
 }
-.feed-card-meta .author-link {
-    font-weight:600; color:var(--teal); text-decoration:none;
-}
+.feed-card-meta .author-link { font-weight:600; color:var(--teal); text-decoration:none; }
 .feed-card-meta .author-link:hover { text-decoration:underline; }
 .feed-card-meta .dot { opacity:.4; }
 .feed-card-meta .post-av {
@@ -348,18 +274,74 @@ body{font-family:'DM Sans',sans-serif;background:var(--gray-100);color:var(--tex
     margin-bottom:.65rem;
 }
 
-/* Post images grid */
-.post-images-grid {
-    display:grid; gap:.5rem;
-    grid-template-columns:repeat(auto-fill,minmax(180px,1fr));
-    margin-bottom:.65rem;
+/* ══════════════════════════════
+   INSTAGRAM-STYLE POST IMAGES
+══════════════════════════════ */
+.post-images-wrap {
+    margin: 0 -1.2rem .65rem -1.2rem;  /* bleed to card edges */
+    overflow: hidden;
 }
-.post-img-item { border-radius:10px; overflow:hidden; cursor:pointer; }
-.post-img-item img { width:100%; height:140px; object-fit:cover; transition:transform .3s; display:block; }
-.post-img-item:hover img { transform:scale(1.04); }
 
-/* Poll options */
-.poll-options { display:flex; flex-direction:column; gap:.45rem; margin-bottom:.65rem; }
+/* grid container shared by all layouts */
+.img-grid { display:grid; gap:2px; }
+
+/* — 1 image: tall portrait — */
+.post-images-wrap.count-1 .img-grid { grid-template-columns:1fr; }
+.post-images-wrap.count-1 .post-img-item { height:380px; }
+
+/* — 2 images: side by side — */
+.post-images-wrap.count-2 .img-grid { grid-template-columns:1fr 1fr; }
+.post-images-wrap.count-2 .post-img-item { height:280px; }
+
+/* — 3 images: big left + 2 stacked right — */
+.post-images-wrap.count-3 .img-grid {
+    grid-template-columns: 3fr 2fr;
+    grid-template-rows: 1fr 1fr;
+}
+.post-images-wrap.count-3 .post-img-item:first-child {
+    grid-row: 1 / 3;
+    height:320px;
+}
+.post-images-wrap.count-3 .post-img-item:not(:first-child) { height:159px; }
+
+/* — 4 images: 2×2 grid — */
+.post-images-wrap.count-4 .img-grid { grid-template-columns:1fr 1fr; }
+.post-images-wrap.count-4 .post-img-item { height:220px; }
+
+/* — 5+ images: big top + 4 thumbnails — */
+.post-images-wrap.count-more .img-grid {
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 260px 160px;
+}
+.post-images-wrap.count-more .post-img-item:first-child {
+    grid-column: 1 / -1;
+}
+
+/* shared tile styles */
+.post-img-item {
+    position:relative; overflow:hidden; cursor:pointer; display:block;
+}
+.post-img-item img {
+    width:100%; height:100%; object-fit:cover;
+    display:block; transition:transform .4s cubic-bezier(.25,.46,.45,.94);
+}
+.post-img-item:hover img { transform:scale(1.06); }
+
+/* +N more overlay */
+.img-more-overlay {
+    position:absolute; inset:0;
+    background:rgba(0,0,0,.55);
+    display:flex; align-items:center; justify-content:center;
+    font-size:1.8rem; font-weight:800; color:white;
+    letter-spacing:-.03em;
+    pointer-events:none;
+    backdrop-filter:blur(2px);
+}
+
+/* ══════════════════════════════
+   POLL OPTIONS — enhanced with total votes
+══════════════════════════════ */
+.poll-options { display:flex; flex-direction:column; gap:.45rem; margin-bottom:.5rem; }
 .poll-option-btn {
     width:100%; background:none; border:1.5px solid var(--gray-200);
     border-radius:10px; padding:.6rem .9rem; text-align:left;
@@ -370,14 +352,30 @@ body{font-family:'DM Sans',sans-serif;background:var(--gray-100);color:var(--tex
 .poll-option-btn:hover { border-color:var(--teal); background:var(--teal-pale); }
 .poll-option-btn .poll-bar {
     position:absolute; left:0; top:0; bottom:0;
-    background:rgba(14,138,138,.07); transition:width .5s ease;
+    background:rgba(14,138,138,.08); transition:width .6s cubic-bezier(.25,.46,.45,.94);
     pointer-events:none;
 }
-.poll-option-text { flex:1; z-index:1; position:relative; }
+.poll-option-text { flex:1; z-index:1; position:relative; font-weight:500; }
 .poll-option-img { width:36px; height:36px; border-radius:7px; object-fit:cover; flex-shrink:0; }
 .poll-vote-count { font-size:.7rem; color:var(--muted); font-weight:600; z-index:1; position:relative; }
 
-/* Card footer / actions */
+/* Total votes row */
+.poll-total-row {
+    display:flex; align-items:center; justify-content:space-between;
+    padding:.5rem .2rem 0;
+    border-top:1px solid var(--gray-150);
+    margin-top:.35rem;
+}
+.poll-total-count {
+    font-size:.75rem; font-weight:700; color:var(--ink);
+    display:flex; align-items:center; gap:.35rem;
+}
+.poll-total-count svg { width:13px; height:13px; stroke:var(--teal); fill:none; stroke-width:2; }
+.poll-total-label { font-size:.72rem; color:var(--muted); }
+
+/* ══════════════════════════════
+   CARD FOOTER / ACTIONS
+══════════════════════════════ */
 .feed-card-footer {
     display:flex; align-items:center; gap:.25rem;
     padding-top:.7rem; border-top:1px solid var(--gray-150);
@@ -404,7 +402,9 @@ body{font-family:'DM Sans',sans-serif;background:var(--gray-100);color:var(--tex
 }
 .delete-btn:hover { background:var(--red-pale); color:var(--red); }
 
-/* Comments drawer */
+/* ══════════════════════════════
+   COMMENTS DRAWER
+══════════════════════════════ */
 .comments-drawer {
     max-height:0; overflow:hidden;
     transition:max-height .35s ease;
@@ -461,23 +461,20 @@ body{font-family:'DM Sans',sans-serif;background:var(--gray-100);color:var(--tex
 }
 .sidebar-card-body { padding:.75rem 1.2rem; }
 
-/* Stats in sidebar */
 .stat-row {
     display:flex; align-items:center; justify-content:space-between;
-    padding:.5rem 0; border-bottom:1px solid var(--gray-150);
-    font-size:.8rem;
+    padding:.5rem 0; border-bottom:1px solid var(--gray-150); font-size:.8rem;
 }
 .stat-row:last-child { border-bottom:none; }
 .stat-row span { color:var(--muted); display:flex; align-items:center; gap:.4rem; }
 .stat-row strong { font-weight:700; color:var(--ink); }
 
-/* Members list */
 .member-item {
     display:flex; align-items:center; gap:.7rem;
-    padding:.5rem 0; border-bottom:1px solid var(--gray-150);
+    padding:.5rem .4rem; margin:0 -.4rem;
+    border-bottom:1px solid var(--gray-150);
     text-decoration:none; transition:background .15s;
-    border-radius:8px; padding:.5rem .4rem;
-    margin:0 -.4rem;
+    border-radius:8px;
 }
 .member-item:last-child { border-bottom:none; }
 .member-item:hover { background:var(--teal-pale); }
@@ -489,22 +486,17 @@ body{font-family:'DM Sans',sans-serif;background:var(--gray-100);color:var(--tex
     border:2px solid white; box-shadow:0 1px 4px rgba(0,0,0,.1);
 }
 .member-av img { width:100%; height:100%; object-fit:cover; }
-.member-name {
-    font-size:.8rem; font-weight:500; color:var(--text-dark);
-    flex:1; min-width:0;
-}
+.member-name { font-size:.8rem; font-weight:500; color:var(--text-dark); flex:1; min-width:0; }
 .member-name small { display:block; font-size:.65rem; color:var(--muted); font-weight:400; }
 .creator-badge {
     font-size:.62rem; font-weight:700; color:var(--amber);
     background:var(--amber-pale); padding:.1rem .45rem; border-radius:99px;
 }
 
-/* Trip cards in sidebar */
 .trip-item {
     display:flex; align-items:center; gap:.75rem;
     padding:.65rem 0; border-bottom:1px solid var(--gray-150);
-    text-decoration:none; transition:all .15s;
-    cursor:pointer;
+    text-decoration:none; transition:all .15s; cursor:pointer;
 }
 .trip-item:last-child { border-bottom:none; }
 .trip-item:hover { opacity:.85; }
@@ -518,7 +510,6 @@ body{font-family:'DM Sans',sans-serif;background:var(--gray-100);color:var(--tex
 .trip-title-sm { font-size:.82rem; font-weight:600; color:var(--ink); margin-bottom:.15rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .trip-meta-sm { font-size:.68rem; color:var(--muted); display:flex; gap:.5rem; }
 
-/* Empty feed state */
 .feed-empty {
     text-align:center; padding:3rem 2rem;
     background:white; border:1.5px dashed var(--gray-300);
@@ -528,7 +519,9 @@ body{font-family:'DM Sans',sans-serif;background:var(--gray-100);color:var(--tex
 .feed-empty h4 { font-size:.9rem; color:var(--gray-700); margin-bottom:.3rem; }
 .feed-empty p { font-size:.78rem; color:var(--muted); }
 
-/* Lightbox */
+/* ══════════════════════════════
+   LIGHTBOX
+══════════════════════════════ */
 .lightbox {
     display:none; position:fixed; inset:0;
     background:rgba(0,0,0,.92); z-index:9000;
@@ -543,21 +536,23 @@ body{font-family:'DM Sans',sans-serif;background:var(--gray-100);color:var(--tex
 }
 .lb-close:hover { opacity:1; }
 
-/* Responsive */
-@media(max-width:1200px){
-    .page-body{padding:1.5rem 2rem 3rem;}
-}
-@media(max-width:1024px){ 
-    .content-grid{grid-template-columns:1fr;} 
-    .right-sidebar{position:static; margin-top:1.5rem;} 
+/* ══════════════════════════════
+   RESPONSIVE
+══════════════════════════════ */
+@media(max-width:1200px){ .page-body{padding:1.5rem 2rem 3rem;} }
+@media(max-width:1024px){
+    .content-grid{grid-template-columns:1fr;}
+    .right-sidebar{position:static; margin-top:1.5rem;}
 }
 @media(max-width:768px){
     .community-hero{height:260px;}
     .community-hero-content{padding:1.5rem 1.2rem 2rem;}
     .page-body{padding:1rem 1rem 2rem;}
     .action-bar{padding:.75rem 1rem;}
-    .post-images-grid{grid-template-columns:1fr 1fr;}
     .feed-vote-col{width:38px;}
+    .post-images-wrap.count-1 .post-img-item { height:280px; }
+    .post-images-wrap.count-3 .post-img-item:first-child { height:220px; }
+    .post-images-wrap.count-more .img-grid { grid-template-rows:200px 120px; }
 }
 
 @keyframes fadeUp{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
@@ -570,7 +565,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--gray-100);color:var(--tex
 
 {% block content %}
 
-<!-- ══ HERO — increased height 320px ══ -->
+<!-- ══ HERO ══ -->
 <div class="community-hero">
     {% if community.cover_image %}
     <div class="community-hero-bg" style="background-image:url('{{ community.cover_image.url }}');"></div>
@@ -622,7 +617,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--gray-100);color:var(--tex
                 Join to post
             </span>
             {% endif %}
-            
+
             {% if request.user == community.creator %}
             <a href="{% url 'community:edit_community' community.id %}" class="action-btn action-btn-ghost">
                 <svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
@@ -630,7 +625,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--gray-100);color:var(--tex
             </a>
             {% endif %}
         </div>
-        
+
         <!-- Join/Leave button -->
         <div>
             {% if request.user.is_authenticated %}
@@ -719,7 +714,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--gray-100);color:var(--tex
                 </div>
             </div>
 
-            <!-- UNIFIED FEED — posts + polls interleaved -->
+            <!-- UNIFIED FEED -->
             <div class="feed" id="communityFeed">
 
                 <!-- ── POSTS ── -->
@@ -756,15 +751,26 @@ body{font-family:'DM Sans',sans-serif;background:var(--gray-100);color:var(--tex
                             <h3 class="feed-card-title">{{ post.title }}</h3>
                             <p class="feed-card-content">{{ post.content }}</p>
 
-                            {% if post.images.all %}
-                            <div class="post-images-grid">
-                                {% for img in post.images.all|slice:":4" %}
-                                <div class="post-img-item" onclick="openLightbox('{{ img.image.url }}')">
-                                    <img src="{{ img.image.url }}" alt="Post image" loading="lazy">
+                            <!-- ── INSTAGRAM-STYLE IMAGES ── -->
+                            {% with imgs=post.images.all %}
+                            {% if imgs %}
+                            {% with c=imgs|length %}
+                            <div class="post-images-wrap {% if c == 1 %}count-1{% elif c == 2 %}count-2{% elif c == 3 %}count-3{% elif c == 4 %}count-4{% else %}count-more{% endif %}">
+                                <div class="img-grid">
+                                    {% for img in imgs|slice:":4" %}
+                                    <div class="post-img-item" onclick="openLightbox('{{ img.image.url }}')">
+                                        <img src="{{ img.image.url }}" alt="Post image" loading="lazy">
+                                        {% if forloop.last and c > 4 %}
+                                        <div class="img-more-overlay">+{{ c|add:"-4" }}</div>
+                                        {% endif %}
+                                    </div>
+                                    {% endfor %}
                                 </div>
-                                {% endfor %}
                             </div>
+                            {% endwith %}
                             {% endif %}
+                            {% endwith %}
+                            <!-- ── END IMAGES ── -->
 
                             <!-- Footer actions -->
                             <div class="feed-card-footer">
@@ -832,8 +838,8 @@ body{font-family:'DM Sans',sans-serif;background:var(--gray-100);color:var(--tex
                         <!-- Vote / type col -->
                         <div class="feed-vote-col">
                             <span class="feed-type-icon">📊</span>
-                            <span class="vote-count">{{ poll.options.count }}</span>
-                            <span class="vote-label">options</span>
+                            <span class="vote-count">{{ poll.total_votes }}</span>
+                            <span class="vote-label">votes</span>
                         </div>
 
                         <!-- Content -->
@@ -864,7 +870,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--gray-100);color:var(--tex
                                 <form method="POST" action="{% url 'community:vote_poll' option.id %}">
                                     {% csrf_token %}
                                     <button type="submit" class="poll-option-btn" {% if not is_member %}disabled style="opacity:0.6;cursor:not-allowed;"{% endif %}>
-                                        <div class="poll-bar" style="width:{{ option.pollvote_set.count|default:0 }}%;"></div>
+                                        <div class="poll-bar" style="width:{% if poll.total_votes > 0 %}{% widthratio option.pollvote_set.count poll.total_votes 100 %}{% else %}0{% endif %}%;"></div>
                                         {% if option.image %}
                                         <img src="{{ option.image.url }}" class="poll-option-img" alt="{{ option.option_text }}">
                                         {% endif %}
@@ -875,13 +881,21 @@ body{font-family:'DM Sans',sans-serif;background:var(--gray-100);color:var(--tex
                                 {% endfor %}
                             </div>
 
-                            <div class="feed-card-footer">
-                                <span class="feed-action-btn" style="cursor:default;color:var(--muted);">
-                                    <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                                    Total votes: {{ poll.total_votes }}
+                            <!-- Total votes row -->
+                            <div class="poll-total-row">
+                                <span class="poll-total-count">
+                                    <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                                    {{ poll.total_votes }} total vote{{ poll.total_votes|pluralize }}
                                 </span>
+                                <span class="poll-total-label">{{ poll.options.count }} option{{ poll.options.count|pluralize }}</span>
+                            </div>
+
+                            <div class="feed-card-footer">
                                 {% if not is_member %}
-                                <span class="feed-action-btn" style="cursor:default;opacity:0.5;">Join to vote</span>
+                                <span class="feed-action-btn" style="cursor:default;opacity:0.5;">
+                                    <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                                    Join to vote
+                                </span>
                                 {% endif %}
                             </div>
                         </div>
@@ -922,7 +936,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--gray-100);color:var(--tex
                 </div>
             </div>
 
-            <!-- Trips Section (Full) -->
+            <!-- Trips Section -->
             {% if trips %}
             <div class="sidebar-card">
                 <div class="sidebar-card-head">
@@ -965,7 +979,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--gray-100);color:var(--tex
             </div>
             {% endif %}
 
-            <!-- Members — all clickable -->
+            <!-- Members -->
             <div class="sidebar-card">
                 <div class="sidebar-card-head">
                     👥 Members ({{ members_count }})

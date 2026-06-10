@@ -43,7 +43,6 @@ urlpatterns = [
     views_dynamic.get_alternatives,
     name="alternatives"
 ),
-    path("replace-activity/", views.replace_activity, name="replace_activity"),
 
     path(
     'api/save-itinerary/',
@@ -51,6 +50,12 @@ urlpatterns = [
     name='save_itinerary'
 ),
     path('planner/replace-hotel/', views.replace_hotel, name='replace_hotel'),
+
+    path(
+    "replace-activity/",
+    views_dynamic.replace_activity,
+    name="replace_activity"
+)
 
 
 ]

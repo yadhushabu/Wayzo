@@ -105,9 +105,7 @@
         margin-bottom: 2rem;
         flex-wrap: wrap;
     }
-    .hero-stat {
-        text-align: left;
-    }
+    .hero-stat { text-align: left; }
     .hero-stat-number {
         font-size: 2rem;
         font-weight: 800;
@@ -145,35 +143,23 @@
         color: white;
         box-shadow: 0 8px 25px rgba(14,138,138,0.35);
     }
-    .hero-btn.primary:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 12px 30px rgba(14,138,138,0.45);
-    }
+    .hero-btn.primary:hover { transform: translateY(-3px); box-shadow: 0 12px 30px rgba(14,138,138,0.45); }
     .hero-btn.secondary {
         background: rgba(255,255,255,0.12);
         backdrop-filter: blur(10px);
         color: white;
         border: 1.5px solid rgba(255,255,255,0.25);
     }
-    .hero-btn.secondary:hover {
-        background: rgba(255,255,255,0.22);
-        transform: translateY(-3px);
-    }
-    .hero-btn svg {
-        width: 18px;
-        height: 18px;
-        stroke: currentColor;
-        stroke-width: 2;
-        fill: none;
-    }
-    
+    .hero-btn.secondary:hover { background: rgba(255,255,255,0.22); transform: translateY(-3px); }
+    .hero-btn svg { width: 18px; height: 18px; stroke: currentColor; stroke-width: 2; fill: none; }
+
     /* Page Body */
     .page-body {
         padding: 0 2rem 4rem;
         max-width: 1400px;
         margin: 0 auto;
     }
-    
+
     /* Stats Cards Row */
     .stats-row {
         display: grid;
@@ -194,59 +180,28 @@
     .stat-card::before {
         content: '';
         position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
+        top: 0; left: 0; right: 0;
         height: 3px;
         background: linear-gradient(90deg, var(--teal), var(--teal-dark));
         transform: scaleX(0);
         transition: transform 0.3s;
     }
-    .stat-card:hover::before {
-        transform: scaleX(1);
-    }
-    .stat-card:hover {
-        transform: translateY(-4px);
-        box-shadow: 0 12px 30px rgba(0,0,0,0.08);
-        border-color: var(--teal-pale);
-    }
+    .stat-card:hover::before { transform: scaleX(1); }
+    .stat-card:hover { transform: translateY(-4px); box-shadow: 0 12px 30px rgba(0,0,0,0.08); border-color: var(--teal-pale); }
     .stat-icon {
-        width: 55px;
-        height: 55px;
+        width: 55px; height: 55px;
         background: var(--teal-pale);
         border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
+        display: flex; align-items: center; justify-content: center;
         margin: 0 auto 1rem;
         transition: all 0.3s;
     }
-    .stat-card:hover .stat-icon {
-        background: var(--teal);
-    }
-    .stat-card:hover .stat-icon svg {
-        stroke: white;
-    }
-    .stat-icon svg {
-        width: 24px;
-        height: 24px;
-        stroke: var(--teal);
-        stroke-width: 1.8;
-        fill: none;
-        transition: all 0.3s;
-    }
-    .stat-number {
-        font-size: 2rem;
-        font-weight: 800;
-        color: var(--gray-900);
-        margin-bottom: 0.25rem;
-    }
-    .stat-label {
-        font-size: 0.8rem;
-        color: var(--text-light);
-        font-weight: 500;
-    }
-    
+    .stat-card:hover .stat-icon { background: var(--teal); }
+    .stat-card:hover .stat-icon svg { stroke: white; }
+    .stat-icon svg { width: 24px; height: 24px; stroke: var(--teal); stroke-width: 1.8; fill: none; transition: all 0.3s; }
+    .stat-number { font-size: 2rem; font-weight: 800; color: var(--gray-900); margin-bottom: 0.25rem; }
+    .stat-label { font-size: 0.8rem; color: var(--text-light); font-weight: 500; }
+
     /* Feature Cards */
     .feature-cards {
         display: grid;
@@ -262,79 +217,27 @@
         transition: all 0.3s;
         position: relative;
     }
-    .feature-card:hover {
-        transform: translateY(-6px);
-        box-shadow: 0 16px 40px rgba(0,0,0,0.1);
-    }
-    .feature-thumb {
-        height: 140px;
-        overflow: hidden;
-        position: relative;
-    }
-    .feature-thumb img {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-        transition: transform 0.5s;
-    }
-    .feature-card:hover .feature-thumb img {
-        transform: scale(1.08);
-    }
-    .feature-icon-wrap {
-        position: relative;
-        display: flex;
-        justify-content: center;
-        margin-top: -22px;
-        z-index: 2;
-    }
+    .feature-card:hover { transform: translateY(-6px); box-shadow: 0 16px 40px rgba(0,0,0,0.1); }
+    .feature-thumb { height: 140px; overflow: hidden; position: relative; }
+    .feature-thumb img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s; }
+    .feature-card:hover .feature-thumb img { transform: scale(1.08); }
+    .feature-icon-wrap { position: relative; display: flex; justify-content: center; margin-top: -22px; z-index: 2; }
     .feature-icon {
-        width: 44px;
-        height: 44px;
+        width: 44px; height: 44px;
         border-radius: 50%;
         background: var(--teal);
         border: 3px solid white;
-        display: flex;
-        align-items: center;
-        justify-content: center;
+        display: flex; align-items: center; justify-content: center;
         box-shadow: 0 4px 12px rgba(0,0,0,0.1);
         transition: all 0.3s;
     }
-    .feature-card:hover .feature-icon {
-        background: var(--teal-dark);
-        transform: scale(1.1);
-    }
-    .feature-icon svg {
-        width: 20px;
-        height: 20px;
-        stroke: white;
-        stroke-width: 1.8;
-        fill: none;
-    }
-    .feature-body {
-        padding: 0.75rem 1.2rem 1.2rem;
-        text-align: center;
-    }
-    .feature-tag {
-        font-size: 0.6rem;
-        font-weight: 700;
-        letter-spacing: 0.12em;
-        text-transform: uppercase;
-        color: var(--teal);
-        margin-bottom: 0.5rem;
-    }
-    .feature-body h3 {
-        font-family: 'Playfair Display', serif;
-        font-size: 1.1rem;
-        font-weight: 600;
-        margin-bottom: 0.5rem;
-        color: var(--gray-800);
-    }
-    .feature-body p {
-        font-size: 0.8rem;
-        color: var(--text-light);
-        line-height: 1.6;
-    }
-    
+    .feature-card:hover .feature-icon { background: var(--teal-dark); transform: scale(1.1); }
+    .feature-icon svg { width: 20px; height: 20px; stroke: white; stroke-width: 1.8; fill: none; }
+    .feature-body { padding: 0.75rem 1.2rem 1.2rem; text-align: center; }
+    .feature-tag { font-size: 0.6rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--teal); margin-bottom: 0.5rem; }
+    .feature-body h3 { font-family: 'Playfair Display', serif; font-size: 1.1rem; font-weight: 600; margin-bottom: 0.5rem; color: var(--gray-800); }
+    .feature-body p { font-size: 0.8rem; color: var(--text-light); line-height: 1.6; }
+
     /* Section Header */
     .section-header {
         display: flex;
@@ -344,18 +247,9 @@
         flex-wrap: wrap;
         gap: 1rem;
     }
-    .section-title h3 {
-        font-family: 'Playfair Display', serif;
-        font-size: 1.4rem;
-        font-weight: 700;
-        color: var(--gray-900);
-        margin-bottom: 0.25rem;
-    }
-    .section-title p {
-        font-size: 0.8rem;
-        color: var(--text-light);
-    }
-    
+    .section-title h3 { font-family: 'Playfair Display', serif; font-size: 1.4rem; font-weight: 700; color: var(--gray-900); margin-bottom: 0.25rem; }
+    .section-title p { font-size: 0.8rem; color: var(--text-light); }
+
     /* Action Buttons */
     .action-btn {
         display: inline-flex;
@@ -376,30 +270,16 @@
         color: white;
         box-shadow: 0 4px 12px rgba(14,138,138,0.25);
     }
-    .action-btn.primary:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 20px rgba(14,138,138,0.35);
-    }
+    .action-btn.primary:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(14,138,138,0.35); }
     .action-btn.secondary {
         background: var(--gray-100);
         color: var(--text-soft);
         border: 1px solid var(--gray-200);
     }
-    .action-btn.secondary:hover {
-        border-color: var(--teal);
-        color: var(--teal);
-        background: var(--teal-pale);
-        transform: translateY(-2px);
-    }
-    .action-btn svg {
-        width: 16px;
-        height: 16px;
-        stroke: currentColor;
-        stroke-width: 2;
-        fill: none;
-    }
-    
-    /* Private Trips Grid - Enhanced */
+    .action-btn.secondary:hover { border-color: var(--teal); color: var(--teal); background: var(--teal-pale); transform: translateY(-2px); }
+    .action-btn svg { width: 16px; height: 16px; stroke: currentColor; stroke-width: 2; fill: none; }
+
+    /* Private Trips Grid */
     .private-trips-grid {
         display: grid;
         grid-template-columns: repeat(3, 1fr);
@@ -415,44 +295,28 @@
         text-decoration: none;
         display: block;
     }
-    .private-trip-item:hover {
-        transform: translateY(-4px);
-        box-shadow: 0 12px 32px rgba(0,0,0,0.1);
-        border-color: #667eea;
-    }
+    .private-trip-item:hover { transform: translateY(-4px); box-shadow: 0 12px 32px rgba(0,0,0,0.1); border-color: #667eea; }
     .private-trip-thumb {
         height: 180px;
         position: relative;
         overflow: hidden;
         background: linear-gradient(135deg, #667eea, #764ba2);
     }
-    .private-trip-thumb img {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-        transition: transform 0.5s ease;
-    }
-    .private-trip-item:hover .private-trip-thumb img {
-        transform: scale(1.08);
-    }
+    .private-trip-thumb img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s ease; }
+    .private-trip-item:hover .private-trip-thumb img { transform: scale(1.08); }
     .private-trip-thumb-placeholder {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
+        display: flex; flex-direction: column;
+        align-items: center; justify-content: center;
         height: 100%;
         background: linear-gradient(135deg, #667eea, #764ba2);
-        color: white;
-        font-size: 2.5rem;
+        color: white; font-size: 2.5rem;
     }
     .private-trip-badge {
         position: absolute;
-        top: 0.75rem;
-        left: 0.75rem;
+        top: 0.75rem; left: 0.75rem;
         background: linear-gradient(135deg, rgba(244,63,94,0.95), rgba(244,63,94,0.8));
         color: white;
-        font-size: 0.6rem;
-        font-weight: 700;
+        font-size: 0.6rem; font-weight: 700;
         padding: 0.25rem 0.7rem;
         border-radius: 20px;
         z-index: 2;
@@ -460,77 +324,92 @@
         letter-spacing: 0.06em;
         text-transform: uppercase;
     }
-    .private-trip-body {
-        padding: 1rem 1.2rem;
+    /* Badge: joined trip (top-right, indigo) */
+    .private-trip-badge.joined {
+        left: auto; right: 0.75rem;
+        background: linear-gradient(135deg, rgba(102,126,234,0.95), rgba(118,75,162,0.9));
     }
-    .private-trip-body h4 {
-        font-size: 1rem;
-        font-weight: 700;
-        margin-bottom: 0.4rem;
-        color: var(--gray-900);
+    /* Badge: owner (amber) */
+    .private-trip-badge.owner {
+        background: linear-gradient(135deg, rgba(245,158,11,0.95), rgba(217,119,6,0.9));
     }
+    .private-trip-body { padding: 1rem 1.2rem; }
+    .private-trip-body h4 { font-size: 1rem; font-weight: 700; margin-bottom: 0.4rem; color: var(--gray-900); }
     .private-trip-desc {
-        font-size: 0.75rem;
-        color: var(--text-light);
-        line-height: 1.5;
+        font-size: 0.75rem; color: var(--text-light); line-height: 1.5;
         margin-bottom: 0.8rem;
-        display: -webkit-box;
-        -webkit-line-clamp: 2;
-        -webkit-box-orient: vertical;
-        overflow: hidden;
+        display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
     }
-    .private-trip-meta {
-        display: flex;
-        gap: 1rem;
-        font-size: 0.7rem;
-        color: var(--text-light);
-        flex-wrap: wrap;
-        margin-bottom: 0.5rem;
-    }
-    .private-trip-meta span {
-        display: flex;
-        align-items: center;
-        gap: 0.3rem;
-    }
-    .private-trip-meta svg {
-        width: 12px;
-        height: 12px;
-        stroke: currentColor;
-        stroke-width: 2;
-        fill: none;
-    }
+    .private-trip-meta { display: flex; gap: 1rem; font-size: 0.7rem; color: var(--text-light); flex-wrap: wrap; margin-bottom: 0.5rem; }
+    .private-trip-meta span { display: flex; align-items: center; gap: 0.3rem; }
+    .private-trip-meta svg { width: 12px; height: 12px; stroke: currentColor; stroke-width: 2; fill: none; }
     .private-trip-footer {
         padding: 0.75rem 1.2rem;
         border-top: 1px solid var(--gray-200);
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
+        display: flex; justify-content: space-between; align-items: center;
     }
     .private-trip-tag {
-        font-size: 0.7rem;
-        padding: 0.25rem 0.8rem;
+        font-size: 0.7rem; padding: 0.25rem 0.8rem;
         background: linear-gradient(135deg, #667eea20, #764ba220);
-        color: #667eea;
-        border-radius: 20px;
-        font-weight: 600;
+        color: #667eea; border-radius: 20px; font-weight: 600;
     }
     .private-trip-arrow {
-        width: 28px;
-        height: 28px;
-        border-radius: 50%;
+        width: 28px; height: 28px; border-radius: 50%;
         background: var(--gray-100);
-        display: flex;
-        align-items: center;
-        justify-content: center;
+        display: flex; align-items: center; justify-content: center;
         transition: all 0.2s;
     }
-    .private-trip-item:hover .private-trip-arrow {
-        background: #667eea;
+    .private-trip-item:hover .private-trip-arrow { background: #667eea; }
+    .private-trip-item:hover .private-trip-arrow svg { stroke: white; }
+
+    /* ── PRIVATE TRIP EMPTY STATE ── */
+    .private-trip-empty {
+        background: white;
+        border: 2px dashed #c4b5fd;
+        border-radius: 24px;
+        padding: 3rem 2rem;
+        text-align: center;
+        transition: all 0.3s;
+        grid-column: 1 / -1;
     }
-    .private-trip-item:hover .private-trip-arrow svg {
-        stroke: white;
+    .private-trip-empty:hover {
+        border-color: #7c3aed;
+        background: #faf5ff;
     }
-    
+    .private-trip-empty-icon {
+        width: 80px; height: 80px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #667eea18, #764ba218);
+        border: 2px dashed #c4b5fd;
+        display: flex; align-items: center; justify-content: center;
+        margin: 0 auto 1.2rem;
+        font-size: 2rem;
+        transition: all 0.3s;
+    }
+    .private-trip-empty:hover .private-trip-empty-icon {
+        background: linear-gradient(135deg, #667eea25, #764ba225);
+        border-color: #7c3aed;
+        transform: scale(1.06);
+    }
+    .private-trip-empty h4 { font-size: 1.15rem; font-weight: 700; color: var(--gray-800); margin-bottom: 0.5rem; }
+    .private-trip-empty p { font-size: 0.82rem; color: var(--text-light); line-height: 1.6; margin-bottom: 1.5rem; max-width: 380px; margin-left: auto; margin-right: auto; }
+    .btn-create-trip {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.55rem;
+        padding: 0.75rem 1.8rem;
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        color: white;
+        border-radius: 40px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        text-decoration: none;
+        transition: all 0.3s;
+        box-shadow: 0 4px 14px rgba(102,126,234,0.35);
+    }
+    .btn-create-trip:hover { transform: translateY(-2px); box-shadow: 0 8px 22px rgba(102,126,234,0.45); color: white; }
+    .btn-create-trip svg { width: 16px; height: 16px; stroke: currentColor; stroke-width: 2.2; fill: none; }
+
     /* Community Grid */
     .community-grid {
         display: grid;
@@ -547,112 +426,43 @@
         text-decoration: none;
         display: block;
     }
-    .community-card:hover {
-        transform: translateY(-4px);
-        box-shadow: 0 12px 32px rgba(0,0,0,0.1);
-        border-color: var(--teal-pale);
-    }
-    .community-thumb {
-        height: 150px;
-        position: relative;
-        overflow: hidden;
-        background: var(--gray-150);
-    }
-    .community-thumb img {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-        transition: transform 0.5s;
-    }
-    .community-card:hover .community-thumb img {
-        transform: scale(1.08);
-    }
+    .community-card:hover { transform: translateY(-4px); box-shadow: 0 12px 32px rgba(0,0,0,0.1); border-color: var(--teal-pale); }
+    .community-thumb { height: 150px; position: relative; overflow: hidden; background: var(--gray-150); }
+    .community-thumb img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s; }
+    .community-card:hover .community-thumb img { transform: scale(1.08); }
     .community-owner-badge {
-        position: absolute;
-        top: 0.75rem;
-        left: 0.75rem;
+        position: absolute; top: 0.75rem; left: 0.75rem;
         background: linear-gradient(135deg, var(--teal), var(--teal-dark));
-        color: white;
-        font-size: 0.6rem;
-        font-weight: 700;
-        padding: 0.25rem 0.7rem;
-        border-radius: 20px;
-        z-index: 2;
+        color: white; font-size: 0.6rem; font-weight: 700;
+        padding: 0.25rem 0.7rem; border-radius: 20px; z-index: 2;
         box-shadow: 0 2px 8px rgba(0,0,0,0.15);
     }
-    .community-body {
-        padding: 1rem 1.2rem;
-    }
-    .community-body h4 {
-        font-size: 1rem;
-        font-weight: 700;
-        margin-bottom: 0.3rem;
-        color: var(--gray-900);
-    }
+    .community-body { padding: 1rem 1.2rem; }
+    .community-body h4 { font-size: 1rem; font-weight: 700; margin-bottom: 0.3rem; color: var(--gray-900); }
     .community-desc {
-        font-size: 0.75rem;
-        color: var(--text-light);
-        line-height: 1.5;
-        margin-bottom: 0.8rem;
-        display: -webkit-box;
-        -webkit-line-clamp: 2;
-        -webkit-box-orient: vertical;
-        overflow: hidden;
+        font-size: 0.75rem; color: var(--text-light); line-height: 1.5; margin-bottom: 0.8rem;
+        display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
     }
-    .community-meta {
-        display: flex;
-        gap: 1rem;
-        font-size: 0.7rem;
-        color: var(--text-light);
-    }
-    .community-meta span {
-        display: flex;
-        align-items: center;
-        gap: 0.3rem;
-    }
-    .community-meta svg {
-        width: 12px;
-        height: 12px;
-        stroke: currentColor;
-    }
+    .community-meta { display: flex; gap: 1rem; font-size: 0.7rem; color: var(--text-light); }
+    .community-meta span { display: flex; align-items: center; gap: 0.3rem; }
+    .community-meta svg { width: 12px; height: 12px; stroke: currentColor; }
     .community-footer {
         padding: 0.75rem 1.2rem;
         border-top: 1px solid var(--gray-200);
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
+        display: flex; justify-content: space-between; align-items: center;
     }
-    .community-tag {
-        font-size: 0.7rem;
-        padding: 0.25rem 0.8rem;
-        background: var(--teal-pale);
-        color: var(--teal);
-        border-radius: 20px;
-        font-weight: 600;
-    }
+    .community-tag { font-size: 0.7rem; padding: 0.25rem 0.8rem; background: var(--teal-pale); color: var(--teal); border-radius: 20px; font-weight: 600; }
     .community-arrow {
-        width: 28px;
-        height: 28px;
-        border-radius: 50%;
+        width: 28px; height: 28px; border-radius: 50%;
         background: var(--gray-100);
-        display: flex;
-        align-items: center;
-        justify-content: center;
+        display: flex; align-items: center; justify-content: center;
         transition: all 0.2s;
     }
-    .community-arrow svg {
-        width: 14px;
-        height: 14px;
-        stroke: var(--text-light);
-    }
-    .community-card:hover .community-arrow {
-        background: var(--teal);
-    }
-    .community-card:hover .community-arrow svg {
-        stroke: white;
-    }
-    
-    /* Empty State */
+    .community-arrow svg { width: 14px; height: 14px; stroke: var(--text-light); }
+    .community-card:hover .community-arrow { background: var(--teal); }
+    .community-card:hover .community-arrow svg { stroke: white; }
+
+    /* Empty State (community) */
     .empty-state {
         background: white;
         border: 2px dashed var(--gray-300);
@@ -662,42 +472,18 @@
         grid-column: 1 / -1;
         transition: all 0.3s;
     }
-    .empty-state:hover {
-        border-color: var(--teal);
-        background: var(--teal-pale);
-    }
-    .empty-state svg {
-        width: 80px;
-        height: 80px;
-        stroke: var(--gray-300);
-        margin-bottom: 1rem;
-    }
-    .empty-state h4 {
-        font-size: 1.2rem;
-        font-weight: 600;
-        margin-bottom: 0.5rem;
-        color: var(--gray-800);
-    }
-    .empty-state p {
-        color: var(--text-light);
-        margin-bottom: 1.5rem;
-    }
-    .empty-actions {
-        display: flex;
-        gap: 1rem;
-        justify-content: center;
-        flex-wrap: wrap;
-    }
-    
+    .empty-state:hover { border-color: var(--teal); background: var(--teal-pale); }
+    .empty-state svg { width: 80px; height: 80px; stroke: var(--gray-300); margin-bottom: 1rem; }
+    .empty-state h4 { font-size: 1.2rem; font-weight: 600; margin-bottom: 0.5rem; color: var(--gray-800); }
+    .empty-state p { color: var(--text-light); margin-bottom: 1.5rem; }
+    .empty-actions { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
+
     /* Animations */
     @keyframes fadeUp {
         from { opacity: 0; transform: translateY(30px); }
-        to { opacity: 1; transform: translateY(0); }
+        to   { opacity: 1; transform: translateY(0); }
     }
-    
-    .stat-card, .feature-card, .community-card, .private-trip-item {
-        animation: fadeUp 0.5s ease both;
-    }
+    .stat-card, .feature-card, .community-card, .private-trip-item { animation: fadeUp 0.5s ease both; }
     .stat-card:nth-child(1) { animation-delay: 0.05s; }
     .stat-card:nth-child(2) { animation-delay: 0.1s; }
     .stat-card:nth-child(3) { animation-delay: 0.15s; }
@@ -705,47 +491,21 @@
     .feature-card:nth-child(1) { animation-delay: 0.25s; }
     .feature-card:nth-child(2) { animation-delay: 0.3s; }
     .feature-card:nth-child(3) { animation-delay: 0.35s; }
-    
+
     /* Responsive */
     @media (max-width: 1024px) {
-        .stats-row {
-            grid-template-columns: repeat(2, 1fr);
-        }
-        .feature-cards,
-        .community-grid,
-        .private-trips-grid {
-            grid-template-columns: repeat(2, 1fr);
-        }
+        .stats-row { grid-template-columns: repeat(2, 1fr); }
+        .feature-cards, .community-grid, .private-trips-grid { grid-template-columns: repeat(2, 1fr); }
     }
-    
     @media (max-width: 768px) {
-        .hero-content {
-            padding: 3rem 1.5rem 4rem;
-        }
-        .hero-stats {
-            gap: 1.5rem;
-        }
-        .hero-stat-number {
-            font-size: 1.5rem;
-        }
-        .stats-row {
-            grid-template-columns: 1fr;
-        }
-        .feature-cards,
-        .community-grid,
-        .private-trips-grid {
-            grid-template-columns: 1fr;
-        }
-        .page-body {
-            padding: 0 1rem 3rem;
-        }
-        .section-header {
-            flex-direction: column;
-            align-items: flex-start;
-        }
-        .private-trip-thumb {
-            height: 160px;
-        }
+        .hero-content { padding: 3rem 1.5rem 4rem; }
+        .hero-stats { gap: 1.5rem; }
+        .hero-stat-number { font-size: 1.5rem; }
+        .stats-row { grid-template-columns: 1fr; }
+        .feature-cards, .community-grid, .private-trips-grid { grid-template-columns: 1fr; }
+        .page-body { padding: 0 1rem 3rem; }
+        .section-header { flex-direction: column; align-items: flex-start; }
+        .private-trip-thumb { height: 160px; }
     }
 </style>
 {% endblock %}
@@ -761,7 +521,7 @@
         <h1>Discover communities that<br>share <em>your journey.</em></h1>
         <div class="hero-divider"></div>
         <p>Join fellow travellers, share experiences, get local tips and build friendships that last beyond the journey.</p>
-        
+
         <div class="hero-stats">
             <div class="hero-stat">
                 <div class="hero-stat-number">{{ total_communities|default:"0" }}</div>
@@ -776,7 +536,7 @@
                 <div class="hero-stat-label">Posts</div>
             </div>
         </div>
-        
+
         <div class="hero-actions">
             <a href="{% url 'community:create_community' %}" class="hero-btn primary">
                 <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
@@ -791,7 +551,7 @@
 </div>
 
 <div class="page-body">
-    
+
     <!-- Stats Row -->
     <div class="stats-row">
         <div class="stat-card">
@@ -873,12 +633,11 @@
         </div>
     </div>
 
-    <!-- Private Trips Section -->
-    {% if private_trips %}
+    <!-- ── PRIVATE TRIPS SECTION — always visible ── -->
     <div class="section-header">
         <div class="section-title">
             <h3>🔒 My Private Trips</h3>
-            <p>Trips you've created for you and your friends</p>
+            <p>Exclusive trips shared only with invited friends</p>
         </div>
         <a href="{% url 'community:create_private_trip' %}" class="action-btn primary">
             <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
@@ -887,50 +646,76 @@
     </div>
 
     <div class="private-trips-grid">
-        {% for trip in private_trips %}
-        <a href="{% url 'community:trip_detail' trip.id %}" class="private-trip-item">
-            <div class="private-trip-thumb">
-                {% with trip.images.first as first_image %}
-                    {% if first_image %}
-                        <img src="{{ first_image.image.url }}" alt="{{ trip.title }}" loading="lazy">
+        {% if private_trips %}
+            {% for trip in private_trips %}
+            <a href="{% url 'community:trip_detail' trip.id %}" class="private-trip-item">
+                <div class="private-trip-thumb">
+                    {% with trip.images.first as first_image %}
+                        {% if first_image %}
+                            <img src="{{ first_image.image.url }}" alt="{{ trip.title }}" loading="lazy">
+                        {% else %}
+                            <div class="private-trip-thumb-placeholder">🔒</div>
+                        {% endif %}
+                    {% endwith %}
+                    {# Left badge: always shows Private lock #}
+                    <span class="private-trip-badge">🔒 Private</span>
+                    {# Right badge: Owner (amber) if created by user, Joined (indigo) if not #}
+                    {% if trip.creator == request.user %}
+                        <span class="private-trip-badge owner" style="left:auto;right:0.75rem;">👑 Owner</span>
                     {% else %}
-                        <div class="private-trip-thumb-placeholder">
-                            🔒
-                        </div>
+                        <span class="private-trip-badge joined">✈️ Joined</span>
                     {% endif %}
-                {% endwith %}
-                <span class="private-trip-badge">🔒 Private</span>
-            </div>
-            <div class="private-trip-body">
-                <h4>{{ trip.title }}</h4>
-                <p class="private-trip-desc">{{ trip.description|truncatechars:80 }}</p>
-                <div class="private-trip-meta">
-                    <span>
-                        <svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-                        {{ trip.places_covered|default:"Various places"|truncatechars:25 }}
-                    </span>
-                    <span>
-                        <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
-                        {{ trip.participants.count }} member{{ trip.participants.count|pluralize }}
-                    </span>
-                    <span>
-                        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                        {{ trip.duration_days }} days
-                    </span>
                 </div>
-            </div>
-            <div class="private-trip-footer">
-                <span class="private-trip-tag">
-                    {{ trip.start_date|date:"M d" }} - {{ trip.end_date|date:"M d" }}
-                </span>
-                <div class="private-trip-arrow">
-                    <svg viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                <div class="private-trip-body">
+                    <h4>{{ trip.title }}</h4>
+                    <p class="private-trip-desc">{{ trip.description|truncatechars:80 }}</p>
+                    <div class="private-trip-meta">
+                        <span>
+                            <svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                            {{ trip.places_covered|default:"Various places"|truncatechars:25 }}
+                        </span>
+                        <span>
+                            <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+                            {{ trip.participants.count }} member{{ trip.participants.count|pluralize }}
+                        </span>
+                        <span>
+                            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                            {{ trip.duration_days }} days
+                        </span>
+                    </div>
                 </div>
+                <div class="private-trip-footer">
+                    <span class="private-trip-tag">
+                        {{ trip.start_date|date:"M d" }} – {{ trip.end_date|date:"M d" }}
+                    </span>
+                    <div style="display:flex;align-items:center;gap:0.5rem;">
+                        {% if trip.creator != request.user %}
+                            <span style="font-size:0.65rem;color:var(--text-light);">
+                                by {{ trip.creator.first_name }}
+                            </span>
+                        {% endif %}
+                        <div class="private-trip-arrow">
+                            <svg viewBox="0 0 24 24" style="width:14px;height:14px;stroke:var(--text-light);stroke-width:2;fill:none;">
+                                <path d="M5 12h14M12 5l7 7-7 7"/>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+            </a>
+            {% endfor %}
+        {% else %}
+            <!-- Empty state — always shown when no trips exist -->
+            <div class="private-trip-empty">
+                <div class="private-trip-empty-icon">🔒</div>
+                <h4>No private trips yet</h4>
+                <p>Create a private trip to plan an exclusive adventure with your friends, or join one when someone invites you.</p>
+                <a href="{% url 'community:create_private_trip' %}" class="btn-create-trip">
+                    <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                    Create Your First Private Trip
+                </a>
             </div>
-        </a>
-        {% endfor %}
+        {% endif %}
     </div>
-    {% endif %}
 
     <!-- My Communities Section -->
     {% if created_communities or joined_communities %}
@@ -946,16 +731,13 @@
     </div>
 
     <div class="community-grid">
-        <!-- Created Communities -->
         {% for community in created_communities %}
         <a href="{% url 'community:community_detail' community.id %}" class="community-card">
             <div class="community-thumb">
                 {% if community.cover_image %}
                     <img src="{{ community.cover_image.url }}" alt="{{ community.name }}">
                 {% else %}
-                    <div style="display: flex; align-items: center; justify-content: center; height: 100%; background: linear-gradient(135deg, var(--teal-pale), var(--teal)); color: white; font-size: 2rem;">
-                        🏘️
-                    </div>
+                    <div style="display:flex;align-items:center;justify-content:center;height:100%;background:linear-gradient(135deg,var(--teal-pale),var(--teal));color:white;font-size:2rem;">🏘️</div>
                 {% endif %}
                 <span class="community-owner-badge">👑 Owner</span>
             </div>
@@ -982,16 +764,13 @@
         </a>
         {% endfor %}
 
-        <!-- Joined Communities -->
         {% for community in joined_communities %}
         <a href="{% url 'community:community_detail' community.id %}" class="community-card">
             <div class="community-thumb">
                 {% if community.cover_image %}
                     <img src="{{ community.cover_image.url }}" alt="{{ community.name }}">
                 {% else %}
-                    <div style="display: flex; align-items: center; justify-content: center; height: 100%; background: linear-gradient(135deg, var(--gray-150), var(--gray-200)); font-size: 2rem;">
-                        🏘️
-                    </div>
+                    <div style="display:flex;align-items:center;justify-content:center;height:100%;background:linear-gradient(135deg,var(--gray-150),var(--gray-200));font-size:2rem;">🏘️</div>
                 {% endif %}
             </div>
             <div class="community-body">
@@ -1017,16 +796,15 @@
         </a>
         {% endfor %}
     </div>
-    
+
     {% else %}
-    <!-- Empty State -->
     <div class="section-header">
         <div class="section-title">
             <h3>🌍 Get Started</h3>
             <p>Create or join your first community</p>
         </div>
     </div>
-    
+
     <div class="empty-state">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
             <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
@@ -1048,6 +826,6 @@
         </div>
     </div>
     {% endif %}
-    
+
 </div>
 {% endblock %}

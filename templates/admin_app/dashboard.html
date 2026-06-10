@@ -139,6 +139,149 @@
     margin-bottom: 0.6rem;
   }
 
+  /* ── REVENUE STRIP ── */
+  .revenue-strip {
+    display: grid;
+    grid-template-columns: 1.6fr 1fr 1fr;
+    gap: 1rem;
+    margin-bottom: 2rem;
+  }
+  .rev-card {
+    border-radius: 16px;
+    padding: 1.4rem 1.6rem;
+    position: relative;
+    overflow: hidden;
+    border: 1px solid transparent;
+    transition: transform 0.25s, box-shadow 0.25s;
+  }
+  .rev-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+  }
+  /* Total Revenue — dark teal gradient (flagship) */
+  .rev-card-total {
+    background: linear-gradient(135deg, #0d2b2b 0%, #0a3d3d 60%, #0b4a3a 100%);
+    border-color: rgba(14,138,138,0.3);
+  }
+  .rev-card-total::after {
+    content: '';
+    position: absolute;
+    top: -40px; right: -40px;
+    width: 160px; height: 160px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(14,138,138,0.3) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  /* Package Commission — warm amber-dark */
+  .rev-card-package {
+    background: white;
+    border-color: var(--border);
+    box-shadow: var(--card-shadow);
+  }
+  .rev-card-package::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    border-radius: 16px 16px 0 0;
+    background: linear-gradient(90deg, #F59E0B, #fbbf24);
+  }
+  /* Room Commission — indigo tint */
+  .rev-card-room {
+    background: white;
+    border-color: var(--border);
+    box-shadow: var(--card-shadow);
+  }
+  .rev-card-room::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    border-radius: 16px 16px 0 0;
+    background: linear-gradient(90deg, #4F46E5, #818cf8);
+  }
+
+  .rev-label {
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 0.6rem;
+    font-family: 'DM Sans', sans-serif;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+  .rev-card-total .rev-label { color: rgba(255,255,255,0.5); }
+  .rev-card-package .rev-label { color: #92400e; }
+  .rev-card-room .rev-label { color: #3730a3; }
+
+  .rev-value {
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    line-height: 1;
+    margin-bottom: 0.5rem;
+    position: relative;
+    z-index: 1;
+  }
+  .rev-card-total .rev-value { font-size: 2rem; color: white; }
+  .rev-card-package .rev-value { font-size: 1.6rem; color: var(--ink); }
+  .rev-card-room .rev-value { font-size: 1.6rem; color: var(--ink); }
+
+  .rev-sub {
+    font-size: 0.72rem;
+    font-family: 'DM Sans', sans-serif;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+  .rev-card-total .rev-sub { color: rgba(255,255,255,0.45); }
+  .rev-card-package .rev-sub { color: var(--muted); }
+  .rev-card-room .rev-sub { color: var(--muted); }
+
+  .rev-icon-bg {
+    position: absolute;
+    bottom: -10px; right: -10px;
+    font-size: 4rem;
+    opacity: 0.07;
+    line-height: 1;
+    pointer-events: none;
+  }
+  .rev-card-total .rev-icon-bg { opacity: 0.12; }
+
+  .rev-breakdown {
+    display: flex;
+    gap: 1rem;
+    margin-top: 0.9rem;
+    padding-top: 0.9rem;
+    border-top: 1px solid rgba(255,255,255,0.1);
+    position: relative;
+    z-index: 1;
+  }
+  .rev-breakdown-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+  }
+  .rev-breakdown-label {
+    font-size: 0.65rem;
+    color: rgba(255,255,255,0.4);
+    font-family: 'DM Sans', sans-serif;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+  .rev-breakdown-val {
+    font-family: 'Syne', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: rgba(255,255,255,0.85);
+  }
+  .rev-divider {
+    width: 1px;
+    background: rgba(255,255,255,0.1);
+    align-self: stretch;
+  }
+
   /* ── SECTION HEADER ── */
   .section-header {
     display: flex;
@@ -520,6 +663,8 @@
   /* ── RESPONSIVE ── */
   @media (max-width: 1100px) {
     .dash-two-col { grid-template-columns: 1fr; }
+    .revenue-strip { grid-template-columns: 1fr 1fr; }
+    .rev-card-total { grid-column: 1 / -1; }
   }
   @media (max-width: 768px) {
     .hero-stats { grid-template-columns: 1fr 1fr; }
@@ -527,6 +672,8 @@
     .search-box input { width: 130px; }
     .dash-hero { padding: 1.4rem 1.4rem 2rem; }
     .hero-greeting { font-size: 1.3rem; }
+    .revenue-strip { grid-template-columns: 1fr; }
+    .rev-card-total { grid-column: auto; }
   }
   @media (max-width: 480px) {
     .hero-stats { grid-template-columns: 1fr 1fr; }
@@ -582,6 +729,66 @@
       </div>
     </div>
   </div>
+</div>
+
+<!-- ═══════════════════════════ REVENUE STRIP ════════════════════════ -->
+<div class="revenue-strip">
+
+  <!-- Total Revenue (flagship) -->
+  <div class="rev-card rev-card-total">
+    <div class="rev-label">
+      <i class="fas fa-rupee-sign"></i> Total Platform Revenue
+    </div>
+    <div class="rev-value">₹{{ total_platform_revenue|floatformat:2 }}</div>
+    <div class="rev-sub">
+      <i class="fas fa-check-circle" style="color:#34d399;"></i>
+      From completed bookings only
+    </div>
+    <div class="rev-breakdown">
+      <div class="rev-breakdown-item">
+        <div class="rev-breakdown-label">Packages</div>
+        <div class="rev-breakdown-val">{{ completed_package_bookings }}</div>
+      </div>
+      <div class="rev-divider"></div>
+      <div class="rev-breakdown-item">
+        <div class="rev-breakdown-label">Room Stays</div>
+        <div class="rev-breakdown-val">{{ completed_room_bookings }}</div>
+      </div>
+      <div class="rev-divider"></div>
+      <div class="rev-breakdown-item">
+        <div class="rev-breakdown-label">Total Bookings</div>
+        <div class="rev-breakdown-val">{{ total_bookings }}</div>
+      </div>
+    </div>
+    <div class="rev-icon-bg">₹</div>
+  </div>
+
+  <!-- Package Commission -->
+  <div class="rev-card rev-card-package">
+    <div class="rev-label">
+      🧳 Package Commission
+    </div>
+    <div class="rev-value">₹{{ package_commission|floatformat:2 }}</div>
+    <div class="rev-sub">
+      <i class="fas fa-box" style="color:var(--amber);"></i>
+      {{ completed_package_bookings }} completed packages
+    </div>
+    <div class="rev-icon-bg">🧳</div>
+  </div>
+
+  <!-- Room Commission -->
+  <div class="rev-card rev-card-room">
+    <div class="rev-label">
+      🏨 Room Commission
+    </div>
+    <div class="rev-value">₹{{ room_commission|floatformat:2 }}</div>
+    <div class="rev-sub">
+      <i class="fas fa-bed" style="color:var(--indigo);"></i>
+      {{ completed_room_bookings }} completed stays
+    </div>
+    <div class="rev-icon-bg">🏨</div>
+  </div>
+
 </div>
 
 <!-- ═══════════════════════════ OVERVIEW CARDS ════════════════════════ -->

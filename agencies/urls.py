@@ -23,11 +23,9 @@ urlpatterns = [
     ),
 
     path('api/booking-details/<int:booking_id>/', views.booking_details_api, name='booking_details_api'),
-
-    # path(
-    #     "support/",
-    #     views.support_center,
-    #     name="support_center"
-    # ),
-
+    path(
+        "package-booking/<int:booking_id>/complete/",
+        views.mark_package_completed,
+        name="mark_package_completed",
+    ),
 ]

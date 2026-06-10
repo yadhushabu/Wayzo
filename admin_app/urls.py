@@ -30,4 +30,10 @@ urlpatterns = [
         views.audit_logs_export,
         name="audit_logs_export"
     ),
+
+    path(
+        "revenue/",
+        views.platform_revenue,
+        name="platform_revenue"
+    ),
 ]

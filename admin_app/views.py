@@ -3,7 +3,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import get_user_model
 from django.contrib import messages
 from django.utils import timezone
-from datetime import timedelta
+from datetime import datetime, timedelta
 from django.db.models import Q, Count, F, Sum
 from accounts.models import CustomUser
 from admin_app.models import AuditLog
@@ -112,6 +112,37 @@ def admin_dashboard(request):
     )
 
     # =====================================
+    # PLATFORM REVENUE
+    # =====================================
+
+    package_commission = PackageBooking.objects.filter(
+        status="completed"
+    ).aggregate(
+        total=Sum("platform_commission")
+    )["total"] or 0
+
+
+    room_commission = RoomBooking.objects.filter(
+        status="completed"
+    ).aggregate(
+        total=Sum("platform_commission")
+    )["total"] or 0
+
+
+    total_platform_revenue = (
+        package_commission +
+        room_commission
+    )
+
+    completed_package_bookings = PackageBooking.objects.filter(
+        status="completed"
+    ).count()
+
+    completed_room_bookings = RoomBooking.objects.filter(
+        status="completed"
+    ).count()
+    
+    # =====================================
     # APPROVALS
     # =====================================
 
@@ -130,6 +161,8 @@ def admin_dashboard(request):
     pending_restaurants = RestaurantProfile.objects.filter(
         is_approved=False
     ).count()
+
+    
     
     # =====================================
     # COMPLAINTS
@@ -175,6 +208,14 @@ def admin_dashboard(request):
         "travellers_count": travellers_count,
         "agencies_count": agencies_count,
         "restaurants_count": restaurants_count,
+
+        # Revenue
+        "package_commission": package_commission,
+        "room_commission": room_commission,
+        "total_platform_revenue": total_platform_revenue,
+
+        "completed_package_bookings": completed_package_bookings,
+        "completed_room_bookings": completed_room_bookings,
         
         "total_users": total_users,
         "active_users": active_users,
@@ -825,3 +866,92 @@ def audit_logs_export(request):
         ])
 
     return response
+
+
+@login_required
+def platform_revenue(request):
+    if request.user.role != "admin" and not request.user.is_superuser:
+        messages.error(request, "Access denied.")
+        return redirect("login")
+
+    search        = request.GET.get("search", "").strip()
+    selected_type = request.GET.get("type", "").strip()
+    date_from     = request.GET.get("date_from", "").strip()
+    date_to       = request.GET.get("date_to", "").strip()
+
+    # Packages: load package → agency profile
+    pkg_qs = PackageBooking.objects.filter(
+        status="completed"
+    ).select_related("traveller", "package", "package__agency")
+
+    # Rooms: load room → room_type → restaurant profile
+    room_qs = RoomBooking.objects.filter(
+        status="completed"
+    ).select_related("user", "room", "room__room_type", "room__room_type__restaurant")
+
+    # ── SUMMARY STATS (before type filter, after date/search) ──
+    package_commission         = pkg_qs.aggregate(total=Sum("platform_commission"))["total"] or 0
+    room_commission            = room_qs.aggregate(total=Sum("platform_commission"))["total"] or 0
+    total_revenue              = package_commission + room_commission
+    completed_package_bookings = pkg_qs.count()
+    completed_room_bookings    = room_qs.count()
+
+    # ── APPLY SEARCH ──
+    if search:
+        pkg_qs = pkg_qs.filter(
+            Q(traveller__username__icontains=search) |
+            Q(traveller__first_name__icontains=search) |
+            Q(traveller__last_name__icontains=search) |
+            Q(package__title__icontains=search)
+        )
+        room_qs = room_qs.filter(
+            Q(user__username__icontains=search) |
+            Q(user__first_name__icontains=search) |
+            Q(user__last_name__icontains=search) |
+            Q(room__room_number__icontains=search)
+        )
+
+    # ── APPLY DATE FILTERS ──
+    if date_from:
+        try:
+            df = datetime.strptime(date_from, "%Y-%m-%d")
+            pkg_qs  = pkg_qs.filter(completed_at__date__gte=df)
+            room_qs = room_qs.filter(completed_at__date__gte=df)
+        except ValueError:
+            pass
+
+    if date_to:
+        try:
+            dt = datetime.strptime(date_to, "%Y-%m-%d")
+            pkg_qs  = pkg_qs.filter(completed_at__date__lte=dt)
+            room_qs = room_qs.filter(completed_at__date__lte=dt)
+        except ValueError:
+            pass
+
+    pkg_qs  = pkg_qs.order_by("-id")
+    room_qs = room_qs.order_by("-id")
+
+    # ── PAGINATION ──
+    pkg_paginator  = Paginator(pkg_qs, 20)
+    room_paginator = Paginator(room_qs, 20)
+
+    pkg_page  = request.GET.get("pkg_page")
+    room_page = request.GET.get("room_page")
+
+    package_revenue = pkg_paginator.get_page(pkg_page)
+    room_revenue    = room_paginator.get_page(room_page)
+
+    context = {
+        "total_revenue":               total_revenue,
+        "package_commission":          package_commission,
+        "room_commission":             room_commission,
+        "package_revenue":             package_revenue,
+        "room_revenue":                room_revenue,
+        "completed_package_bookings":  completed_package_bookings,
+        "completed_room_bookings":     completed_room_bookings,
+        "search":                      search,
+        "selected_type":               selected_type,
+        "date_from":                   date_from,
+        "date_to":                     date_to,
+    }
+    return render(request, "admin_app/platform_revenue.html", context)

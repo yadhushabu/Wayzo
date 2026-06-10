@@ -63,24 +63,31 @@ class SerpAPIDestinationService:
             query = f"best {meal_type} restaurants in {destination}"
 
         params = {
-            "engine": "google",
+            "engine": "google_maps",
             "q": query,
-            "num": limit,
+            "type": "search",
             "api_key": self.api_key
         }
+
+        print(
+                f"🍽️ QUERY={query} | LIMIT={limit}"
+            )
 
         results = self._safe_search(params)
 
         restaurants = []
 
+        print(results.keys())
+
+        places = []
+
         local_results = results.get("local_results")
 
         if isinstance(local_results, dict):
             places = local_results.get("places", [])
+
         elif isinstance(local_results, list):
             places = local_results
-        else:
-            places = []
 
         # =========================================
         # BUILD RESTAURANTS

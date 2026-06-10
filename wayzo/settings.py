@@ -51,6 +51,7 @@ INSTALLED_APPS = [
      'planner',
      'destinations',
      "support",
+     "chatbot",
 
 ]
 

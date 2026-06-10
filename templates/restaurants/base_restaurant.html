@@ -738,10 +738,6 @@
         </a>
         
         <span class="nav-group-label">Account</span>
-        <a href="{% url 'manage_property' %}?tab=profile" class="nav-item">
-            <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-            Property Settings
-        </a>
         
         <form action="{% url 'logout' %}" method="post" style="width: 100%;">
             {% csrf_token %}

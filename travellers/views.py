@@ -1,5 +1,6 @@
 import razorpay
 from django.conf import settings
+from decimal import Decimal
 
 from admin_app.utils import create_audit_log
 
@@ -2671,6 +2672,8 @@ def remaining_payment_success(request, id):
 
         booking.payment_status = "paid"
         booking.remaining_amount = 0
+
+        booking.save()
 
         # Generate invoice number
         if not booking.invoice_number:

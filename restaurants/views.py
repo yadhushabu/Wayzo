@@ -13,6 +13,7 @@ from django.db.models import Count
 from django.db.models import Sum
 from django.db.models.functions import TruncMonth
 import json
+from restaurants.utils import auto_complete_room_bookings
 
 from restaurants.models import (
     RestaurantProfile, Review, Table, TableBooking, TableSlot,
@@ -601,7 +602,7 @@ def update_restaurant_rating(restaurant):
 def restaurant_dashboard(request):
     from django.db.models import Sum
     from django.db.models.functions import TruncMonth
-    
+    auto_complete_room_bookings()
     restaurant = request.user.restaurantprofile
     
     # Basic Counts

@@ -1,0 +1,1393 @@
+{% extends 'travellers/base.html' %}
+{% load static %}
+
+{% block title %}Wayzo | AI Travel Assistant{% endblock %}
+
+{% block nav_chatbot %}active{% endblock %}
+
+{% block extra_styles %}
+
+/* ── Hide base.html's floating close button — chatbot uses hamburger X state ── */
+.sidebar-close-btn {
+    display: none !important;
+}
+
+/* ── RESET topbar absolute positioning from base ── */
+.chat-page-wrapper {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    overflow: hidden;
+    background: var(--gray-100);
+}
+
+/* ── CHAT TOPBAR ── */
+.chat-topbar {
+    position: relative;
+    z-index: 200;
+    background: var(--gray-950);
+    padding: 0 1.5rem;
+    height: 70px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    border-bottom: 1px solid rgba(255,255,255,0.07);
+    flex-shrink: 0;
+}
+
+.chat-topbar-left {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+    flex: 1;
+    min-width: 0;
+}
+
+.chat-topbar-title h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.15rem;
+    font-weight: 500;
+    color: white;
+    margin: 0;
+    line-height: 1.2;
+}
+
+.chat-topbar-title p {
+    font-size: 0.7rem;
+    color: rgba(255,255,255,0.38);
+    margin: 2px 0 0;
+}
+
+.chat-topbar-right {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+    flex-shrink: 0;
+}
+
+/* ── HAMBURGER BUTTONS ── */
+.hbg-btn {
+    width: 38px;
+    height: 38px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    background: rgba(255,255,255,0.1);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255,255,255,0.16);
+    cursor: pointer;
+    border-radius: 10px;
+    flex-shrink: 0;
+    transition: background 0.2s, border-color 0.2s;
+    padding: 0;
+}
+
+.hbg-btn:hover {
+    background: rgba(255,255,255,0.18);
+    border-color: rgba(255,255,255,0.28);
+}
+
+.hbg-btn span {
+    display: block;
+    width: 17px;
+    height: 1.8px;
+    background: rgba(255,255,255,0.85);
+    border-radius: 2px;
+    transition: transform 0.28s cubic-bezier(0.4,0,0.2,1), opacity 0.2s, width 0.2s;
+    pointer-events: none;
+}
+
+/* Active X state */
+.hbg-btn.is-open span:nth-child(1) { transform: translateY(6.8px) rotate(45deg); }
+.hbg-btn.is-open span:nth-child(2) { opacity: 0; width: 0; }
+.hbg-btn.is-open span:nth-child(3) { transform: translateY(-6.8px) rotate(-45deg); }
+
+/* Sessions sidebar hamburger — teal tint when active */
+.hbg-sessions.is-open {
+    background: rgba(14,138,138,0.22);
+    border-color: rgba(14,138,138,0.4);
+}
+.hbg-sessions.is-open span { background: #5FC5C5; }
+
+/* Bot status pill */
+.bot-status {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    background: rgba(14,138,138,0.14);
+    border: 1px solid rgba(14,138,138,0.28);
+    padding: 0.3rem 0.75rem;
+    border-radius: 40px;
+}
+
+.bot-status-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #5FC5C5;
+    animation: pulseGlow 2s ease-in-out infinite;
+    flex-shrink: 0;
+}
+
+.bot-status span {
+    font-size: 0.69rem;
+    font-weight: 500;
+    color: #5FC5C5;
+    letter-spacing: 0.04em;
+    white-space: nowrap;
+}
+
+@keyframes pulseGlow {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50%       { opacity: 0.5; transform: scale(0.82); }
+}
+
+/* ── CHAT LAYOUT ── */
+.chat-layout {
+    flex: 1;
+    display: flex;
+    min-height: 0;
+    overflow: hidden;
+}
+
+/* ── SESSION SIDEBAR ── */
+/* Desktop: always visible, static */
+.chat-sidebar {
+    width: 272px;
+    background: var(--gray-950);
+    border-right: 1px solid rgba(255,255,255,0.07);
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+    overflow: hidden;
+    /* no transition needed on desktop — it's always open */
+}
+
+/* Hide the sessions hamburger on desktop — sidebar is always visible */
+#sessionsHamburger {
+    display: none;
+}
+
+/* Mobile: sessions sidebar slides in as overlay; hamburger shown */
+@media (max-width: 860px) {
+    #sessionsHamburger {
+        display: flex;
+    }
+    .chat-sidebar {
+        position: fixed;
+        top: 70px;
+        left: 0;
+        height: calc(100vh - 70px);
+        z-index: 150;
+        transform: translateX(-100%);
+        width: 272px;
+        border-radius: 0 16px 16px 0;
+        transition: transform 0.32s cubic-bezier(0.4,0,0.2,1);
+    }
+    .chat-sidebar.open {
+        transform: translateX(0);
+    }
+}
+
+.sidebar-sessions-header {
+    padding: 1.1rem 1.1rem 0.85rem;
+    border-bottom: 1px solid rgba(255,255,255,0.07);
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.sidebar-header-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.sidebar-label {
+    font-size: 0.6rem;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.22);
+    margin: 0;
+}
+
+.new-chat-btn {
+    width: 100%;
+    padding: 0.62rem 0.9rem;
+    background: rgba(14,138,138,0.18);
+    border: 1px solid rgba(14,138,138,0.3);
+    border-radius: 10px;
+    color: #5FC5C5;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.79rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s, border-color 0.2s, transform 0.15s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.new-chat-btn:hover {
+    background: rgba(14,138,138,0.28);
+    border-color: rgba(14,138,138,0.5);
+    transform: translateY(-1px);
+}
+
+.new-chat-btn svg { flex-shrink: 0; }
+
+.sessions-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 0.7rem 0.7rem;
+}
+
+.sessions-list::-webkit-scrollbar { width: 3px; }
+.sessions-list::-webkit-scrollbar-track { background: transparent; }
+.sessions-list::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 2px; }
+
+.session-item {
+    padding: 0.65rem 0.75rem;
+    border-radius: 9px;
+    cursor: pointer;
+    transition: background 0.2s, border-color 0.2s;
+    margin-bottom: 3px;
+    border: 1px solid transparent;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+}
+
+.session-item:hover { background: rgba(255,255,255,0.06); border-color: rgba(255,255,255,0.07); }
+.session-item.active { background: rgba(14,138,138,0.18); border-color: rgba(14,138,138,0.3); }
+
+.session-item-body { overflow: hidden; flex: 1; }
+
+.session-title {
+    font-size: 0.77rem;
+    font-weight: 500;
+    color: rgba(255,255,255,0.65);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    margin-bottom: 2px;
+}
+
+.session-item.active .session-title { color: #5FC5C5; }
+.session-date { font-size: 0.62rem; color: rgba(255,255,255,0.22); }
+
+.delete-session {
+    opacity: 0;
+    transition: opacity 0.18s;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: rgba(255,255,255,0.28);
+    padding: 3px;
+    border-radius: 5px;
+    line-height: 0;
+    flex-shrink: 0;
+}
+
+.session-item:hover .delete-session { opacity: 1; }
+.delete-session:hover { color: var(--rose); background: rgba(244,63,94,0.12); }
+
+/* Mobile session sidebar overlay backdrop */
+.sessions-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    top: 70px;
+    background: rgba(0,0,0,0.48);
+    z-index: 140;
+    backdrop-filter: blur(2px);
+    opacity: 0;
+    transition: opacity 0.25s;
+}
+
+.sessions-overlay.visible {
+    display: block;
+    opacity: 1;
+}
+
+/* ── MAIN CHAT ── */
+.chat-main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background: var(--gray-100);
+    min-width: 0;
+    overflow: hidden;
+}
+
+/* Messages area */
+.messages-area {
+    flex: 1;
+    overflow-y: auto;
+    padding: 1.8rem 2rem 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.1rem;
+}
+
+.messages-area::-webkit-scrollbar { width: 4px; }
+.messages-area::-webkit-scrollbar-track { background: transparent; }
+.messages-area::-webkit-scrollbar-thumb { background: var(--gray-300); border-radius: 2px; }
+
+.message {
+    display: flex;
+    gap: 0.8rem;
+    animation: msgIn 0.26s ease both;
+}
+
+.message.user {
+    justify-content: flex-end;
+    align-self: flex-end;
+    max-width: 75%;
+}
+
+.message.assistant {
+    align-self: flex-start;
+    max-width: 78%;
+}
+
+@keyframes msgIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+.message-avatar {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+.message.user .message-avatar {
+    background: var(--teal);
+    color: white;
+    order: 2;
+}
+
+.message.assistant .message-avatar {
+    background: var(--gray-900);
+    color: #5FC5C5;
+    border: 1px solid rgba(14,138,138,0.3);
+}
+
+.message-body { display: flex; flex-direction: column; }
+.message.user .message-body { align-items: flex-end; }
+
+.message-content {
+    padding: 0.82rem 1.05rem;
+    border-radius: 16px;
+    font-size: 0.85rem;
+    line-height: 1.65;
+    word-wrap: break-word;
+}
+
+.message.user .message-content {
+    background: var(--teal);
+    color: white;
+    border-bottom-right-radius: 4px;
+}
+
+.message.assistant .message-content {
+    background: white;
+    color: var(--text-dark);
+    border: 1px solid var(--gray-200);
+    border-bottom-left-radius: 4px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+}
+
+.message-time {
+    font-size: 0.61rem;
+    color: var(--gray-400);
+    margin-top: 0.28rem;
+    padding: 0 0.2rem;
+}
+
+/* ── ITINERARY CARD ── */
+.itinerary-card {
+    margin-top: 0.5rem;
+    background: linear-gradient(135deg, #f0fafa 0%, #e8f6f6 100%);
+    border: 1px solid rgba(14,138,138,0.2);
+    border-radius: 14px;
+    padding: 1.1rem;
+    font-size: 0.82rem;
+}
+
+.itinerary-card-header {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    margin-bottom: 0.9rem;
+    padding-bottom: 0.7rem;
+    border-bottom: 1px solid rgba(14,138,138,0.15);
+}
+
+.itinerary-card-header .icon {
+    width: 36px; height: 36px;
+    background: var(--teal);
+    border-radius: 9px;
+    display: flex; align-items: center; justify-content: center;
+    color: white; font-size: 16px; flex-shrink: 0;
+}
+
+.itinerary-card-header h4 {
+    font-family: 'Playfair Display', serif;
+    font-size: 0.98rem;
+    font-weight: 600;
+    color: var(--gray-900);
+    margin: 0 0 2px;
+}
+
+.itinerary-card-header p { font-size: 0.7rem; color: var(--text-light); margin: 0; }
+
+.itinerary-day { margin-bottom: 0.8rem; }
+
+.itinerary-day-label {
+    font-size: 0.66rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--teal);
+    margin-bottom: 0.38rem;
+}
+
+.itinerary-day-items { display: flex; flex-direction: column; gap: 0.28rem; }
+
+.itinerary-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+    padding: 0.38rem 0.55rem;
+    background: white;
+    border-radius: 8px;
+    border: 1px solid rgba(14,138,138,0.1);
+}
+
+.itinerary-item-time {
+    font-size: 0.67rem;
+    font-weight: 600;
+    color: var(--teal);
+    white-space: nowrap;
+    min-width: 54px;
+    padding-top: 1px;
+}
+
+.itinerary-item-desc { font-size: 0.77rem; color: var(--text-dark); line-height: 1.45; }
+
+.itinerary-actions {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    margin-top: 0.85rem;
+    padding-top: 0.7rem;
+    border-top: 1px solid rgba(14,138,138,0.15);
+}
+
+.itin-action-btn {
+    padding: 0.36rem 0.78rem;
+    border-radius: 8px;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.72rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 0.32rem;
+}
+
+.itin-action-btn.primary {
+    background: var(--teal);
+    border: none;
+    color: white;
+}
+
+.itin-action-btn.primary:hover { background: var(--teal-dark); transform: translateY(-1px); }
+
+.itin-action-btn.secondary {
+    background: white;
+    border: 1px solid rgba(14,138,138,0.3);
+    color: var(--teal);
+}
+
+.itin-action-btn.secondary:hover { background: var(--teal-pale); }
+
+/* Welcome card */
+.welcome-card {
+    background: white;
+    border: 1px solid var(--gray-200);
+    border-radius: 18px;
+    padding: 1.5rem;
+    max-width: 500px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+}
+
+.welcome-card-header {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    margin-bottom: 0.9rem;
+}
+
+.welcome-avatar {
+    width: 44px; height: 44px;
+    border-radius: 12px;
+    background: var(--gray-900);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px;
+    border: 1px solid rgba(14,138,138,0.3);
+}
+
+.welcome-card h3 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: var(--gray-900);
+    margin: 0 0 2px;
+}
+
+.welcome-card h3 em { font-style: italic; color: var(--teal); }
+
+.welcome-card > p {
+    font-size: 0.81rem;
+    color: var(--text-light);
+    line-height: 1.65;
+    margin-bottom: 0.9rem;
+}
+
+.welcome-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.45rem;
+}
+
+.welcome-chip {
+    background: var(--gray-100);
+    border: 1px solid var(--gray-200);
+    border-radius: 8px;
+    padding: 0.32rem 0.65rem;
+    font-size: 0.73rem;
+    color: var(--text-soft);
+    display: flex;
+    align-items: center;
+    gap: 0.28rem;
+}
+
+/* Typing indicator */
+.typing-wrap {
+    display: flex;
+    gap: 0.8rem;
+    align-items: flex-end;
+    align-self: flex-start;
+}
+
+.typing-dots {
+    background: white;
+    border: 1px solid var(--gray-200);
+    border-radius: 16px;
+    border-bottom-left-radius: 4px;
+    padding: 0.88rem 0.95rem;
+    display: flex;
+    gap: 5px;
+    align-items: center;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+}
+
+.typing-dots span {
+    width: 7px; height: 7px;
+    background: var(--teal);
+    border-radius: 50%;
+    animation: typingBounce 1.3s infinite;
+    opacity: 0.7;
+}
+
+.typing-dots span:nth-child(2) { animation-delay: 0.17s; }
+.typing-dots span:nth-child(3) { animation-delay: 0.34s; }
+
+@keyframes typingBounce {
+    0%, 60%, 100% { transform: translateY(0); }
+    30%            { transform: translateY(-8px); }
+}
+
+/* ── QUICK ACTIONS ── */
+.quick-actions-bar {
+    padding: 0.75rem 1.5rem;
+    background: white;
+    border-top: 1px solid var(--gray-200);
+    display: flex;
+    gap: 0.45rem;
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    flex-shrink: 0;
+}
+
+.quick-actions-bar::-webkit-scrollbar { height: 0; }
+
+.quick-btn {
+    padding: 0.38rem 0.8rem;
+    background: var(--gray-100);
+    border: 1px solid var(--gray-200);
+    border-radius: 20px;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.73rem;
+    font-weight: 500;
+    color: var(--text-soft);
+    cursor: pointer;
+    transition: background 0.2s, border-color 0.2s, color 0.2s;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.quick-btn:hover {
+    background: var(--teal-pale);
+    border-color: rgba(14,138,138,0.3);
+    color: var(--teal-dark);
+}
+
+/* ── INPUT AREA ── */
+.chat-input-zone {
+    padding: 0.9rem 1.5rem 1.2rem;
+    background: white;
+    border-top: 1px solid var(--gray-200);
+    flex-shrink: 0;
+}
+
+.input-row {
+    display: flex;
+    gap: 0.7rem;
+    align-items: flex-end;
+    background: var(--gray-100);
+    border: 1.5px solid var(--gray-200);
+    border-radius: 16px;
+    padding: 0.48rem 0.48rem 0.48rem 1rem;
+    transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+}
+
+.input-row:focus-within {
+    border-color: var(--teal);
+    box-shadow: 0 0 0 3px rgba(14,138,138,0.08);
+    background: white;
+}
+
+.chat-input {
+    flex: 1;
+    padding: 0.48rem 0;
+    border: none;
+    background: transparent;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.85rem;
+    color: var(--text-dark);
+    resize: none;
+    max-height: 100px;
+    line-height: 1.55;
+}
+
+.chat-input:focus { outline: none; }
+.chat-input::placeholder { color: var(--gray-400); }
+
+.send-btn {
+    width: 40px; height: 40px;
+    background: var(--teal);
+    border: none;
+    border-radius: 10px;
+    color: white;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.15s, opacity 0.2s;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+}
+
+.send-btn:hover:not(:disabled) { background: var(--teal-dark); transform: scale(1.05); }
+.send-btn:disabled { opacity: 0.38; cursor: not-allowed; transform: none; }
+.send-btn svg { width: 16px; height: 16px; stroke: white; fill: none; stroke-width: 2.2; }
+
+.input-hint {
+    font-size: 0.64rem;
+    color: var(--gray-400);
+    margin-top: 0.38rem;
+    padding-left: 0.2rem;
+}
+
+/* ── RESPONSIVE ── */
+@media (max-width: 860px) {
+    .messages-area { padding: 1.2rem 1rem 0.8rem; }
+    .quick-actions-bar { padding: 0.65rem 1rem; }
+    .chat-input-zone { padding: 0.75rem 1rem 1rem; }
+    .chat-topbar { padding: 0 1rem; }
+    .bot-status span { display: none; }
+    .bot-status { padding: 0.3rem 0.5rem; }
+}
+
+@media (max-width: 480px) {
+    .message.user, .message.assistant { max-width: 92%; }
+}
+
+{% endblock %}
+
+{% block topbar %}
+{# Override base topbar entirely — we render our own below #}
+{% endblock %}
+
+{% block content %}
+<div class="chat-page-wrapper">
+
+    <!-- ── TOPBAR ── -->
+    <div class="chat-topbar">
+        <div class="chat-topbar-left">
+
+            <!-- Main nav sidebar hamburger (opens base sidebar) -->
+            <button class="hbg-btn" id="mainNavHamburger" aria-label="Toggle navigation sidebar" title="Navigation menu">
+                <span></span><span></span><span></span>
+            </button>
+
+            <!-- Sessions sidebar hamburger -->
+            <button class="hbg-btn hbg-sessions" id="sessionsHamburger" aria-label="Toggle conversations sidebar" title="Conversations">
+                <span></span><span></span><span></span>
+            </button>
+
+            <div class="chat-topbar-title">
+                <h1>AI Travel Assistant</h1>
+                <p>Powered by Wayzo Intelligence</p>
+            </div>
+        </div>
+
+        <div class="chat-topbar-right">
+            <div class="bot-status">
+                <div class="bot-status-dot"></div>
+                <span>Online</span>
+            </div>
+
+            <!-- Notification button (same as base) -->
+            <button class="notification-btn" id="notificationBtn" onclick="toggleNotificationDropdown()" aria-label="Notifications">
+                <svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+                <span class="notification-badge" id="notificationBadge">{{ unread_notifications|default:"0" }}</span>
+            </button>
+
+            <!-- Notification Dropdown -->
+            <div class="notification-dropdown" id="notificationDropdown">
+                <div class="notification-header">
+                    <h4>Notifications</h4>
+                    <a href="{% url 'community:notifications' %}" class="see-all-link">See all</a>
+                </div>
+                <div class="notification-list" id="notificationList">
+                    <div class="notification-loading">Loading notifications...</div>
+                </div>
+            </div>
+
+            <!-- Avatar dropdown -->
+            <div class="avatar-menu" id="avatarMenu">
+                <div class="avatar-trigger" id="avatarTrigger">
+                    <div class="avatar-img">
+                        {% if request.user.profile_picture %}
+                            <img src="{{ request.user.profile_picture.url }}" alt="{{ request.user.first_name }}">
+                        {% else %}
+                            {{ request.user.first_name|first|upper }}{{ request.user.last_name|first|upper }}
+                        {% endif %}
+                    </div>
+                    <span class="avatar-name">{{ request.user.first_name }}</span>
+                </div>
+                <div class="dropdown-popup" id="dropdownPopup">
+                    <div class="dropdown-info">
+                        <p>{{ request.user.first_name }} {{ request.user.last_name }}</p>
+                        <span>{{ request.user.email }}</span>
+                    </div>
+                    <a href="{% url 'travellers:user_profile' user_id=request.user.id %}" class="dropdown-item">My Profile</a>
+                    <a href="{% url 'travellers:edit_profile' %}" class="dropdown-item">Profile Settings</a>
+                    <a href="{% url 'travellers:buddy_requests' %}" class="dropdown-item">Buddy Requests</a>
+                    <hr style="margin:0.4rem 0;">
+                    <a href="{% url 'logout' %}" class="dropdown-item">Sign Out</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sessions overlay (mobile) -->
+    <div class="sessions-overlay" id="sessionsOverlay"></div>
+
+    <!-- ── MAIN LAYOUT ── -->
+    <div class="chat-layout">
+
+        <!-- Session Sidebar -->
+        <div class="chat-sidebar" id="chatSidebar">
+            <div class="sidebar-sessions-header">
+                <div class="sidebar-header-top">
+                    <p class="sidebar-label">Conversations</p>
+                </div>
+                <button class="new-chat-btn" id="newChatBtn">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                        <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+                    </svg>
+                    New Chat
+                </button>
+            </div>
+            <div class="sessions-list" id="sessions-list">
+                <div style="padding:2rem 1rem;text-align:center;color:rgba(255,255,255,0.18);font-size:0.76rem;">Loading…</div>
+            </div>
+        </div>
+
+        <!-- Main Chat -->
+        <div class="chat-main">
+            <div class="messages-area" id="messages-area"></div>
+
+            <!-- Quick action chips -->
+            <div class="quick-actions-bar">
+                <button class="quick-btn" onclick="sendQuickMessage('Generate a 3-day itinerary for Paris')">✈️ Generate Itinerary</button>
+                <button class="quick-btn" onclick="sendQuickMessage('Explore top destinations')">🌍 Destinations</button>
+                <button class="quick-btn" onclick="sendQuickMessage('Show me available travel packages')">🧳 Travel Packages</button>
+                <button class="quick-btn" onclick="sendQuickMessage('How do I book a restaurant table?')">🍽️ Restaurant Booking</button>
+                <button class="quick-btn" onclick="sendQuickMessage('What are the best budget travel tips?')">💡 Travel Tips</button>
+                <button class="quick-btn" onclick="sendQuickMessage('Show my upcoming bookings')">📋 My Bookings</button>
+            </div>
+
+            <!-- Input -->
+            <div class="chat-input-zone">
+                <div class="input-row">
+                    <textarea
+                        class="chat-input"
+                        id="chat-input"
+                        placeholder="Ask about destinations, packages, itineraries, or bookings…"
+                        rows="1"
+                    ></textarea>
+                    <button class="send-btn" id="send-btn" title="Send message">
+                        <svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                    </button>
+                </div>
+                <p class="input-hint">Enter to send · Shift+Enter for new line · Try "5-day Tokyo itinerary"</p>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script>
+(function () {
+    'use strict';
+
+    /* ─────────────────────────────────────────────────────
+       SIDEBAR MANAGERS
+    ───────────────────────────────────────────────────── */
+
+    const MOBILE_BP = 860;
+    function isMobile() { return window.innerWidth <= MOBILE_BP; }
+
+    /* ── 1. MAIN NAV SIDEBAR (from base.html) ──
+       Opens/closes on ALL screen sizes via the left hamburger.
+       On desktop: slides in/out pushing content (margin-left on .main).
+       On mobile:  overlays from the left. */
+    const mainNavHamburger = document.getElementById('mainNavHamburger');
+    const mainSidebar      = document.getElementById('sidebar');       // injected by base.html
+    const mainOverlay      = document.getElementById('sidebarOverlay');
+    const mainContent      = document.getElementById('mainContent');
+
+    function isMainNavOpen() {
+        if (!mainSidebar) return false;
+        return isMobile()
+            ? mainSidebar.classList.contains('open')
+            : !mainSidebar.classList.contains('collapsed');
+    }
+
+    function setMainNav(open) {
+        if (!mainSidebar) return;
+        document.body.classList.toggle('sidebar-is-open', open);
+
+        if (isMobile()) {
+            mainSidebar.classList.toggle('open', open);
+            if (mainOverlay) mainOverlay.classList.toggle('visible', open);
+            document.body.style.overflow = open ? 'hidden' : '';
+        } else {
+            mainSidebar.classList.toggle('collapsed', !open);
+            if (mainContent) mainContent.classList.toggle('sidebar-collapsed', !open);
+            if (mainOverlay) mainOverlay.classList.remove('visible');
+        }
+
+        if (mainNavHamburger) mainNavHamburger.classList.toggle('is-open', open);
+    }
+
+    if (mainNavHamburger) {
+        mainNavHamburger.addEventListener('click', () => setMainNav(!isMainNavOpen()));
+    }
+    if (mainOverlay) {
+        mainOverlay.addEventListener('click', () => setMainNav(false));
+    }
+
+    /* Start with main nav collapsed (matches base.html default behaviour) */
+    if (mainSidebar) {
+        mainSidebar.classList.add('collapsed');
+        if (mainContent) mainContent.classList.add('sidebar-collapsed');
+    }
+
+
+    /* ── 2. SESSION SIDEBAR ──
+       Desktop : always visible (static). Hamburger hidden via CSS.
+       Mobile  : hidden off-screen, slides in when hamburger is tapped. */
+    const sessionsHamburger = document.getElementById('sessionsHamburger');
+    const chatSidebar       = document.getElementById('chatSidebar');
+    const sessionsOverlay   = document.getElementById('sessionsOverlay');
+
+    function isSessionOpen() {
+        return chatSidebar ? chatSidebar.classList.contains('open') : false;
+    }
+
+    function setSessionSidebar(open) {
+        if (!chatSidebar || !isMobile()) return; // desktop: always open, no toggle
+        chatSidebar.classList.toggle('open', open);
+        if (sessionsOverlay) sessionsOverlay.classList.toggle('visible', open);
+        if (sessionsHamburger) sessionsHamburger.classList.toggle('is-open', open);
+    }
+
+    if (sessionsHamburger) {
+        sessionsHamburger.addEventListener('click', () => setSessionSidebar(!isSessionOpen()));
+    }
+    if (sessionsOverlay) {
+        sessionsOverlay.addEventListener('click', () => setSessionSidebar(false));
+    }
+
+    /* On resize: reset states cleanly */
+    window.addEventListener('resize', function () {
+        if (!isMobile()) {
+            /* Desktop — close any mobile overlays */
+            document.body.style.overflow = '';
+            if (sessionsOverlay) sessionsOverlay.classList.remove('visible');
+            if (mainOverlay) mainOverlay.classList.remove('visible');
+            if (chatSidebar) {
+                chatSidebar.classList.remove('open'); // irrelevant on desktop, clean up
+            }
+        }
+    });
+
+    /* ─────────────────────────────────────────────────────
+       CHAT LOGIC
+    ───────────────────────────────────────────────────── */
+
+    let currentSessionId = null;
+    let isTyping  = false;
+    let isSending = false;
+    let sessionsLoaded = false;
+
+    const API_BASE = '/chatbot/';
+
+    document.addEventListener('DOMContentLoaded', function () {
+        loadSessions();
+
+        const sendBtn = document.getElementById('send-btn');
+        const newChatBtn = document.getElementById('newChatBtn');
+        const textarea = document.getElementById('chat-input');
+
+        sendBtn   && sendBtn.addEventListener('click', sendMessage);
+        newChatBtn && newChatBtn.addEventListener('click', startNewChat);
+
+        if (textarea) {
+            textarea.addEventListener('keydown', function (e) {
+                if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+            });
+            textarea.addEventListener('input', function () {
+                this.style.height = 'auto';
+                this.style.height = Math.min(this.scrollHeight, 100) + 'px';
+            });
+            textarea.focus();
+        }
+    });
+
+    /* ── Sessions ── */
+    window.loadSessions = function () {
+        fetch(API_BASE + 'sessions/')
+            .then(r => { if (!r.ok) throw new Error(r.status); return r.json(); })
+            .then(data => {
+                const list = document.getElementById('sessions-list');
+                list.innerHTML = '';
+
+                if (data.sessions && data.sessions.length > 0) {
+                    data.sessions.forEach(s => {
+                        const el = document.createElement('div');
+                        el.className = 'session-item' + (s.is_active ? ' active' : '');
+                        el.innerHTML = `
+                            <div class="session-item-body">
+                                <div class="session-title">${escapeHtml(s.title)}</div>
+                                <div class="session-date">${formatDate(s.updated_at)}</div>
+                            </div>
+                            <button class="delete-session" onclick="event.stopPropagation(); deleteSession(${s.id})" title="Delete">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polyline points="3 6 5 6 21 6"/>
+                                    <path d="M19 6l-1 14H6L5 6"/>
+                                    <path d="M10 11v6M14 11v6"/>
+                                    <path d="M9 6V4h6v2"/>
+                                </svg>
+                            </button>`;
+                        el.addEventListener('click', () => loadChatSession(s.id));
+                        list.appendChild(el);
+
+                        if (s.is_active && !sessionsLoaded) {
+                            currentSessionId = s.id;
+                            loadChatHistory(s.id);
+                            sessionsLoaded = true;
+                        }
+                    });
+                    if (!sessionsLoaded) { showWelcomeMessage(); sessionsLoaded = true; }
+                } else {
+                    list.innerHTML = `
+                        <div style="padding:2.5rem 1rem;text-align:center;color:rgba(255,255,255,0.18);">
+                            <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"
+                                 style="opacity:.3;margin:0 auto .5rem;display:block;">
+                                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                            </svg>
+                            <p style="font-size:.74rem;">No conversations yet</p>
+                            <p style="font-size:.64rem;margin-top:3px;opacity:.55;">Start a new chat above</p>
+                        </div>`;
+                    if (!sessionsLoaded) { startNewChat(); sessionsLoaded = true; }
+                }
+            })
+            .catch(() => {
+                const list = document.getElementById('sessions-list');
+                if (list) list.innerHTML =
+                    '<div style="padding:1rem;text-align:center;color:rgba(255,255,255,0.18);font-size:.74rem;">Could not load chats</div>';
+            });
+    };
+
+    window.deleteSession = function (id) {
+        if (!confirm('Delete this conversation?')) return;
+        fetch(API_BASE + `delete-session/${id}/`, {
+            method: 'DELETE',
+            headers: { 'X-CSRFToken': getCookie('csrftoken') }
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                if (currentSessionId === id) startNewChat();
+                else loadSessions();
+            }
+        });
+    };
+
+    function loadChatSession(id) {
+        if (currentSessionId === id) return;
+        currentSessionId = id;
+        loadChatHistory(id);
+        loadSessions();
+        if (isMobile()) setSessionSidebar(false);
+    }
+
+    function loadChatHistory(id) {
+        fetch(API_BASE + `history/${id}/`)
+            .then(r => r.json())
+            .then(data => {
+                const area = document.getElementById('messages-area');
+                area.innerHTML = '';
+                if (data.messages && data.messages.length > 0) {
+                    data.messages.forEach(m => addMessageToUI(m.role, m.content, m.created_at));
+                } else {
+                    showWelcomeMessage();
+                }
+                scrollToBottom();
+            });
+    }
+
+    /* ── Messaging ── */
+    window.sendQuickMessage = function (msg) {
+        const input = document.getElementById('chat-input');
+        if (input) { input.value = msg; sendMessage(); }
+    };
+
+    function sendMessage() {
+        if (isSending) return;
+        const input = document.getElementById('chat-input');
+        const msg = (input ? input.value : '').trim();
+        if (!msg || isTyping) return;
+
+        input.value = '';
+        input.style.height = 'auto';
+        addMessageToUI('user', msg, new Date().toISOString());
+        showTypingIndicator();
+        isTyping  = true;
+        isSending = true;
+
+        const sendBtn = document.getElementById('send-btn');
+        if (sendBtn) sendBtn.disabled = true;
+
+        fetch(API_BASE + 'send/', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
+            body: JSON.stringify({ message: msg, session_id: currentSessionId })
+        })
+        .then(r => { if (!r.ok) throw new Error(r.status); return r.json(); })
+        .then(data => {
+            hideTypingIndicator();
+            if (data.success) {
+                if (!currentSessionId) currentSessionId = data.session_id;
+                addMessageToUI('assistant', data.assistant_message.content, data.assistant_message.created_at);
+                loadSessions();
+            } else {
+                addMessageToUI('assistant', 'Sorry, something went wrong: ' + (data.error || 'Unknown error'), new Date().toISOString());
+            }
+        })
+        .catch(() => {
+            hideTypingIndicator();
+            addMessageToUI('assistant', 'Network error — please check your connection and try again.', new Date().toISOString());
+        })
+        .finally(() => {
+            isTyping  = false;
+            isSending = false;
+            if (sendBtn) sendBtn.disabled = false;
+            scrollToBottom();
+        });
+    }
+
+    /* ── Itinerary detection ── */
+    function detectAndRenderItinerary(content) {
+        const dayPattern = /\b(day\s*[1-9]|day\s+one|day\s+two|day\s+three)\b/i;
+        if (!dayPattern.test(content)) return null;
+
+        const lines = content.split('\n').map(l => l.trim()).filter(Boolean);
+        const days = [];
+        let currentDay = null;
+
+        lines.forEach(line => {
+            const dayMatch = line.match(/^(day\s*\d+|day\s+one|day\s+two|day\s+three|day\s+four|day\s+five)/i);
+            if (dayMatch) {
+                currentDay = { label: line.replace(/[*:#]/g, '').trim(), items: [] };
+                days.push(currentDay);
+            } else if (currentDay && line.length > 3) {
+                const timeMatch = line.match(/^(\d{1,2}[:\.]?\d{0,2}\s*(?:am|pm)?|morning|afternoon|evening|night)\s*[-–:]\s*/i);
+                if (timeMatch) {
+                    currentDay.items.push({
+                        time: timeMatch[0].replace(/[-–:]\s*$/, '').trim(),
+                        desc: line.replace(timeMatch[0], '').replace(/^[*•-]\s*/, '').trim()
+                    });
+                } else {
+                    const cleaned = line.replace(/^[*•\-#]+\s*/, '').trim();
+                    if (cleaned) currentDay.items.push({ time: '', desc: cleaned });
+                }
+            }
+        });
+
+        if (days.length === 0) return null;
+
+        const destMatch = content.match(/(?:itinerary\s+for|trip\s+to|visit(?:ing)?\s+)\s*([A-Z][a-zA-Z\s,]+?)(?:\n|,|\.|:)/);
+        const destination = destMatch ? destMatch[1].trim() : 'Your Trip';
+        return { destination, days };
+    }
+
+    function renderItineraryCard(itin, timestamp) {
+        let time;
+        try { time = new Date(timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }); }
+        catch (e) { time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }); }
+
+        const daysHtml = itin.days.map(day => `
+            <div class="itinerary-day">
+                <div class="itinerary-day-label">${escapeHtml(day.label)}</div>
+                <div class="itinerary-day-items">
+                    ${day.items.map(item => `
+                        <div class="itinerary-item">
+                            ${item.time ? `<span class="itinerary-item-time">${escapeHtml(item.time)}</span>` : ''}
+                            <span class="itinerary-item-desc">${escapeHtml(item.desc)}</span>
+                        </div>`).join('')}
+                </div>
+            </div>`).join('');
+
+        const div = document.createElement('div');
+        div.className = 'message assistant';
+        div.innerHTML = `
+            <div class="message-avatar">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#5FC5C5" stroke-width="2">
+                    <rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/>
+                </svg>
+            </div>
+            <div class="message-body">
+                <div class="message-content">
+                    <div class="itinerary-card">
+                        <div class="itinerary-card-header">
+                            <div class="icon">🗺️</div>
+                            <div>
+                                <h4>${escapeHtml(itin.destination)} Itinerary</h4>
+                                <p>${itin.days.length}-day travel plan · Wayzo AI</p>
+                            </div>
+                        </div>
+                        ${daysHtml}
+                        <div class="itinerary-actions">
+                            <button class="itin-action-btn primary" onclick="sendQuickMessage('Add more details to this itinerary')">
+                                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                                    <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+                                </svg>
+                                Expand Plan
+                            </button>
+                            <button class="itin-action-btn secondary" onclick="sendQuickMessage('Suggest budget hotels for this itinerary')">🏨 Hotels</button>
+                            <button class="itin-action-btn secondary" onclick="sendQuickMessage('What travel packages match this itinerary?')">🧳 Packages</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="message-time">${time}</div>
+            </div>`;
+        return div;
+    }
+
+    window.addMessageToUI = function (role, content, timestamp) {
+        const area = document.getElementById('messages-area');
+        if (!area) return;
+
+        let time;
+        try { time = new Date(timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }); }
+        catch (e) { time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }); }
+
+        if (role === 'assistant') {
+            const itin = detectAndRenderItinerary(content);
+            if (itin) { area.appendChild(renderItineraryCard(itin, timestamp)); scrollToBottom(); return; }
+        }
+
+        const div = document.createElement('div');
+        div.className = `message ${role}`;
+
+        if (role === 'user') {
+            div.innerHTML = `
+                <div class="message-body">
+                    <div class="message-content">${escapeHtml(content)}</div>
+                    <div class="message-time">${time}</div>
+                </div>
+                <div class="message-avatar">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+                    </svg>
+                </div>`;
+        } else {
+            div.innerHTML = `
+                <div class="message-avatar">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#5FC5C5" stroke-width="2">
+                        <rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/>
+                    </svg>
+                </div>
+                <div class="message-body">
+                    <div class="message-content">${formatMessage(content)}</div>
+                    <div class="message-time">${time}</div>
+                </div>`;
+        }
+        area.appendChild(div);
+        scrollToBottom();
+    };
+
+    function showWelcomeMessage() {
+        const area = document.getElementById('messages-area');
+        if (!area) return;
+        const div = document.createElement('div');
+        div.className = 'message assistant';
+        div.innerHTML = `
+            <div class="message-avatar">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#5FC5C5" stroke-width="2">
+                    <rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/>
+                </svg>
+            </div>
+            <div class="message-body">
+                <div class="welcome-card">
+                    <div class="welcome-card-header">
+                        <div class="welcome-avatar">🌐</div>
+                        <div>
+                            <h3>Meet <em>WayzoBot</em></h3>
+                            <p style="font-size:.7rem;color:var(--text-light);margin:0;">Your AI travel planning companion</p>
+                        </div>
+                    </div>
+                    <p>Hello! I can craft personalised day-by-day travel itineraries, help you discover destinations, compare travel packages, book restaurants, and answer any platform questions — all in one chat.</p>
+                    <div class="welcome-chips">
+                        <span class="welcome-chip">🗺️ AI Itineraries</span>
+                        <span class="welcome-chip">🌍 Destinations</span>
+                        <span class="welcome-chip">🧳 Travel Packages</span>
+                        <span class="welcome-chip">🍽️ Restaurants</span>
+                        <span class="welcome-chip">📋 Bookings</span>
+                    </div>
+                </div>
+                <div class="message-time">Just now</div>
+            </div>`;
+        area.appendChild(div);
+    }
+
+    function showTypingIndicator() {
+        hideTypingIndicator();
+        const area = document.getElementById('messages-area');
+        const div = document.createElement('div');
+        div.id = 'typing-indicator';
+        div.className = 'typing-wrap';
+        div.innerHTML = `
+            <div class="message-avatar" style="width:34px;height:34px;border-radius:50%;background:var(--gray-900);border:1px solid rgba(14,138,138,0.3);display:flex;align-items:center;justify-content:center;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#5FC5C5" stroke-width="2">
+                    <rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/>
+                </svg>
+            </div>
+            <div class="typing-dots"><span></span><span></span><span></span></div>`;
+        area.appendChild(div);
+        scrollToBottom();
+    }
+
+    function hideTypingIndicator() {
+        const el = document.getElementById('typing-indicator');
+        if (el) el.remove();
+    }
+
+    window.startNewChat = function () {
+        fetch(API_BASE + 'clear/', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') }
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                currentSessionId = data.session_id;
+                document.getElementById('messages-area').innerHTML = '';
+                showWelcomeMessage();
+                loadSessions();
+                if (isMobile()) setSessionSidebar(false);
+            }
+        });
+    };
+
+    /* ── Helpers ── */
+    function formatMessage(content) {
+        let f = escapeHtml(content);
+        f = f.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+        f = f.replace(/\*(.*?)\*/g, '<em>$1</em>');
+        f = f.replace(/\n/g, '<br>');
+        f = f.replace(/^- /gm, '• ');
+        return f;
+    }
+
+    function scrollToBottom() {
+        const area = document.getElementById('messages-area');
+        if (area) area.scrollTo({ top: area.scrollHeight, behavior: 'smooth' });
+    }
+
+    function escapeHtml(t) {
+        const d = document.createElement('div');
+        d.textContent = String(t);
+        return d.innerHTML;
+    }
+
+    function formatDate(ds) {
+        const d = new Date(ds), now = new Date(), diff = now - d;
+        if (diff < 3600000)   return 'Just now';
+        if (diff < 86400000)  return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        if (diff < 604800000) return d.toLocaleDateString([], { weekday: 'short' });
+        return d.toLocaleDateString();
+    }
+
+    function getCookie(name) {
+        let v = null;
+        document.cookie.split(';').forEach(c => {
+            c = c.trim();
+            if (c.startsWith(name + '=')) v = decodeURIComponent(c.substring(name.length + 1));
+        });
+        return v;
+    }
+
+})();
+</script>
+{% endblock %}
