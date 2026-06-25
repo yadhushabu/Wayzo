@@ -10,15 +10,14 @@ class PlaceVectorDatabase:
     """
     
     def __init__(self):
-        # Load pre-trained embedding model (free, works for any place)
-        self.encoder = None
+        self._encoder = None      # ✅ underscore prefix, not "encoder"
         self.index = None
         self.places = []
 
     @property
     def encoder(self):
         if self._encoder is None:
-            from sentence_transformers import SentenceTransformer  # import deferred too
+            from sentence_transformers import SentenceTransformer
             self._encoder = SentenceTransformer('all-MiniLM-L6-v2')
         return self._encoder
         
