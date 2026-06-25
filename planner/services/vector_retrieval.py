@@ -11,9 +11,16 @@ class PlaceVectorDatabase:
     
     def __init__(self):
         # Load pre-trained embedding model (free, works for any place)
-        self.encoder = SentenceTransformer('all-MiniLM-L6-v2')
+        self.encoder = None
         self.index = None
         self.places = []
+
+    @property
+    def encoder(self):
+        if self._encoder is None:
+            from sentence_transformers import SentenceTransformer  # import deferred too
+            self._encoder = SentenceTransformer('all-MiniLM-L6-v2')
+        return self._encoder
         
     def build_index_from_osm(self, lat, lon, radius_km=20):
         """
