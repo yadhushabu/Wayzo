@@ -24,7 +24,7 @@ class SerpAPIDestinationService:
         if not self.google_api_key:
             print("⚠️ WARNING: GOOGLE_API_KEY missing (reviews fallback will be limited)")
 
-        print("✅ SerpAPI initialized")
+        print(" SerpAPI initialized")
 
 
     # =====================================================
@@ -70,7 +70,7 @@ class SerpAPIDestinationService:
         }
 
         print(
-                f"🍽️ QUERY={query} | LIMIT={limit}"
+                f" QUERY={query} | LIMIT={limit}"
             )
 
         results = self._safe_search(params)

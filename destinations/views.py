@@ -55,7 +55,7 @@ def add_destination(request):
 
         if form.is_valid():
 
-            print("✅ Form is valid!")
+            print(" Form is valid!")
 
             destination = form.save(commit=False)
 

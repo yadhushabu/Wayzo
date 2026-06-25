@@ -20,4 +20,4 @@ for r in RestaurantProfile.objects.all():
 
     r.save()
 
-print("✅ Data fully updated")
+print(" Data fully updated")
